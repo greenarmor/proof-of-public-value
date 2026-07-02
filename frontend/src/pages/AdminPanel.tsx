@@ -1,0 +1,198 @@
+import { useState } from "react";
+import { useWallet } from "../wallet";
+
+const ROLES = [
+  "Citizen", "Engineer", "Inspector", "Contractor", "Supplier",
+  "ProjectManager", "GovernmentAgency", "Auditor", "CommissionOnAudit",
+  "AntiCorruptionAgency", "FundingAgency", "InternationalDonor",
+  "Administrator", "AIAuditor",
+] as const;
+
+interface SystemHealth {
+  label: string;
+  value: string;
+  status: "healthy" | "warning" | "error";
+}
+
+export function AdminPanel() {
+  const { address, connected, connect } = useWallet();
+  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health">("roles");
+
+  if (!connected) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Wallet Connection Required</h2>
+        <p className="text-gray-500 mb-4">Connect your Administrator wallet to manage the system.</p>
+        <button onClick={connect} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+          Connect Wallet
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
+      <p className="text-gray-500 mb-6">Manage roles, handle disputes, and monitor system health.</p>
+
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {(["roles", "disputes", "health"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab === "roles" && "👥 Role Management"}
+            {tab === "disputes" && "⚖️ Dispute Resolution"}
+            {tab === "health" && "📊 System Health"}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "roles" && <RoleManagement />}
+      {activeTab === "disputes" && <DisputeResolution />}
+      {activeTab === "health" && <SystemHealthMonitor />}
+    </div>
+  );
+}
+
+function RoleManagement() {
+  const [userAddress, setUserAddress] = useState("");
+  const [role, setRole] = useState<string>("Contractor");
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
+        <h2 className="text-lg font-semibold mb-4">Assign Role</h2>
+        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">User Address</label>
+            <input type="text" value={userAddress} onChange={(e) => setUserAddress(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-purple-500"
+              placeholder="G...address" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+              {ROLES.map((r) => <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>)}
+            </select>
+          </div>
+          <button type="submit" className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+            Assign Role
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
+        <h2 className="text-lg font-semibold mb-4">Revoke Role</h2>
+        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">User Address</label>
+            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+              placeholder="G...address" />
+          </div>
+          <button type="submit" className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Revoke Role
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function DisputeResolution() {
+  const disputes = [
+    { id: 1, escrowId: 1, disputer: "G...ACMSV", reason: "Quality concerns", status: "Open" },
+  ];
+
+  return (
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Open Disputes</dt><dd className="text-2xl font-bold text-yellow-600">1</dd></div>
+        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Resolved</dt><dd className="text-2xl font-bold text-green-600">0</dd></div>
+        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Avg Resolution</dt><dd className="text-2xl font-bold text-gray-900">—</dd></div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">ID</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Escrow</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Disputer</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Reason</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {disputes.map((d) => (
+              <tr key={d.id} className="border-t border-gray-100">
+                <td className="px-4 py-3 font-mono text-xs">#{d.id}</td>
+                <td className="px-4 py-3">#{d.escrowId}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.disputer}</td>
+                <td className="px-4 py-3">{d.reason}</td>
+                <td className="px-4 py-3"><span className="px-2 py-0.5 text-xs rounded bg-yellow-50 text-yellow-700">{d.status}</span></td>
+                <td className="px-4 py-3 flex gap-2">
+                  <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">Resolve</button>
+                  <button className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">Dismiss</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {disputes.length === 0 && <div className="text-center py-8 text-gray-400">No open disputes.</div>}
+      </div>
+    </div>
+  );
+}
+
+function SystemHealthMonitor() {
+  const health: SystemHealth[] = [
+    { label: "PVO Core Contract", value: "v0.1.0", status: "healthy" },
+    { label: "Escrow Contract", value: "v0.1.0", status: "healthy" },
+    { label: "Reputation Ledger", value: "v0.1.0", status: "healthy" },
+    { label: "Community Oracle", value: "v0.1.0", status: "healthy" },
+    { label: "Access Control", value: "v0.1.0", status: "healthy" },
+    { label: "Audit Trail", value: "v0.1.0", status: "healthy" },
+    { label: "Value Score", value: "v0.1.0", status: "healthy" },
+    { label: "Testnet RPC", value: "soroban-testnet.stellar.org", status: "healthy" },
+  ];
+
+  const colors = { healthy: "bg-green-100 text-green-700", warning: "bg-yellow-100 text-yellow-700", error: "bg-red-100 text-red-700" };
+  const dots = { healthy: "bg-green-500", warning: "bg-yellow-500", error: "bg-red-500" };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 className="font-semibold">System Status</h3>
+        <span className="flex items-center gap-1.5 text-sm text-green-600">
+          <span className="w-2 h-2 rounded-full bg-green-500" />
+          All Systems Operational
+        </span>
+      </div>
+      <table className="w-full text-sm">
+        <tbody>
+          {health.map((h) => (
+            <tr key={h.label} className="border-t border-gray-50">
+              <td className="px-4 py-3 font-medium text-gray-900">{h.label}</td>
+              <td className="px-4 py-3 text-gray-500">{h.value}</td>
+              <td className="px-4 py-3">
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded ${colors[h.status]}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${dots[h.status]}`} />
+                  {h.status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="p-4 border-t border-gray-100 text-xs text-gray-400">
+        Last checked: {new Date().toLocaleString()}
+      </div>
+    </div>
+  );
+}
