@@ -72,7 +72,8 @@ fn test_verify_report() {
         &make_string(&env, "h1"), &1, &2,
     );
 
-    client.verify_report(&id, &20);
+    let verifier = Address::generate(&env);
+    client.verify_report(&verifier, &id, &20);
 
     let report = client.get_report(&id).unwrap();
     assert!(report.verified);
@@ -84,9 +85,10 @@ fn test_verify_report() {
 
 #[test]
 fn test_calculate_confidence_no_reports() {
-    let (_env, client) = setup();
+    let (env, client) = setup();
+    let caller = Address::generate(&env);
 
-    let score = client.calculate_confidence(&1, &1);
+    let score = client.calculate_confidence(&caller, &1, &1);
     assert_eq!(score, 0);
 }
 
@@ -101,9 +103,11 @@ fn test_calculate_confidence_multiple_reports() {
     let _r2 = client.submit_report(&c2, &1, &1, &ReportType::CompletionVerification, &make_string(&env, "h2"), &1, &2);
     let _r3 = client.submit_report(&c3, &1, &1, &ReportType::CompletionVerification, &make_string(&env, "h3"), &1, &2);
 
-    client.verify_report(&r1, &30);
+    let verifier = Address::generate(&env);
+    client.verify_report(&verifier, &r1, &30);
 
-    let score = client.calculate_confidence(&1, &1);
+    let caller = Address::generate(&env);
+    let score = client.calculate_confidence(&caller, &1, &1);
     assert!(score > 0);
 }
 
@@ -153,10 +157,11 @@ fn test_citizen_confidence_grows() {
     let citizen = Address::generate(&env);
 
     let id1 = client.submit_report(&citizen, &1, &1, &ReportType::GpsPhoto, &make_string(&env, "h1"), &1, &2);
-    client.verify_report(&id1, &20);
+    let verifier = Address::generate(&env);
+    client.verify_report(&verifier, &id1, &20);
 
     let id2 = client.submit_report(&citizen, &2, &1, &ReportType::GpsPhoto, &make_string(&env, "h2"), &1, &2);
-    client.verify_report(&id2, &20);
+    client.verify_report(&verifier, &id2, &20);
 
     let rep = client.get_citizen_reputation(&citizen).unwrap();
     assert_eq!(rep.total_reports, 2);

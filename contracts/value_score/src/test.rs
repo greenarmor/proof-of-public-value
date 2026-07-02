@@ -127,7 +127,8 @@ fn test_department_index() {
     let evaluator = Address::generate(&env);
 
     client.submit_score(&evaluator, &1, &ScoreCategory::EngineeringQuality, &80, &50);
-    client.update_department_index(&make_string(&env, "DPWH"), &1);
+    let caller = Address::generate(&env);
+    client.update_department_index(&caller, &make_string(&env, "DPWH"), &1);
 
     let entry = client.get_department_index(&make_string(&env, "DPWH")).unwrap();
     assert_eq!(entry.avg_score, 80);
@@ -141,10 +142,11 @@ fn test_department_index_multiple_pvos() {
     let dept = make_string(&env, "DPWH");
 
     client.submit_score(&evaluator, &1, &ScoreCategory::EngineeringQuality, &80, &50);
-    client.update_department_index(&dept, &1);
+    let caller = Address::generate(&env);
+    client.update_department_index(&caller, &dept, &1);
 
     client.submit_score(&evaluator, &2, &ScoreCategory::EngineeringQuality, &90, &50);
-    client.update_department_index(&dept, &2);
+    client.update_department_index(&caller, &dept, &2);
 
     let entry = client.get_department_index(&dept).unwrap();
     assert_eq!(entry.pvo_count, 2);
@@ -157,10 +159,12 @@ fn test_get_all_department_indices() {
     let evaluator = Address::generate(&env);
 
     client.submit_score(&evaluator, &1, &ScoreCategory::EngineeringQuality, &80, &50);
-    client.update_department_index(&make_string(&env, "DPWH"), &1);
+    let caller = Address::generate(&env);
+    client.update_department_index(&caller, &make_string(&env, "DPWH"), &1);
 
     client.submit_score(&evaluator, &2, &ScoreCategory::EngineeringQuality, &70, &50);
-    client.update_department_index(&make_string(&env, "DOH"), &2);
+    let caller = Address::generate(&env);
+    client.update_department_index(&caller, &make_string(&env, "DOH"), &2);
 
     let indices = client.get_all_department_indices();
     assert_eq!(indices.len(), 2);

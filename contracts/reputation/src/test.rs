@@ -58,7 +58,8 @@ fn test_record_completion_on_time_within_budget() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
-    client.record_completion(&contractor, &90, &true, &true);
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &contractor, &90, &true, &true);
 
     let record = client.get_reputation(&contractor).unwrap();
     assert_eq!(record.completed_projects, 1);
@@ -73,7 +74,8 @@ fn test_record_completion_delayed() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
-    client.record_completion(&contractor, &60, &false, &true);
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &contractor, &60, &false, &true);
 
     let record = client.get_reputation(&contractor).unwrap();
     assert_eq!(record.delayed_projects, 1);
@@ -87,7 +89,8 @@ fn test_record_completion_budget_overrun() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
-    client.record_completion(&contractor, &70, &true, &false);
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &contractor, &70, &true, &false);
 
     let record = client.get_reputation(&contractor).unwrap();
     assert_eq!(record.budget_overruns, 1);
@@ -100,8 +103,9 @@ fn test_multiple_completions_average() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
-    client.record_completion(&contractor, &80, &true, &true);
-    client.record_completion(&contractor, &90, &true, &true);
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &contractor, &80, &true, &true);
+    client.record_completion(&caller, &contractor, &90, &true, &true);
 
     let record = client.get_reputation(&contractor).unwrap();
     assert_eq!(record.completed_projects, 2);
@@ -114,8 +118,9 @@ fn test_audit_finding_reduces_score() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
+    let caller = Address::generate(&env);
     let before = client.get_reputation(&contractor).unwrap().reputation_score;
-    client.record_audit_finding(&contractor, &3);
+    client.record_audit_finding(&caller, &contractor, &3);
     let after = client.get_reputation(&contractor).unwrap().reputation_score;
 
     assert_eq!(after, before.saturating_sub(15));
@@ -127,8 +132,9 @@ fn test_safety_violation() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
+    let caller = Address::generate(&env);
     let before = client.get_reputation(&contractor).unwrap().reputation_score;
-    client.record_safety_violation(&contractor, &2);
+    client.record_safety_violation(&caller, &contractor, &2);
     let after = client.get_reputation(&contractor).unwrap().reputation_score;
 
     assert_eq!(after, before.saturating_sub(20));
@@ -174,7 +180,8 @@ fn test_verify_complaint() {
         &3,
     );
 
-    client.verify_complaint(&id);
+    let caller = Address::generate(&env);
+    client.verify_complaint(&caller, &id);
 
     let complaint = client.get_complaint(&id).unwrap();
     assert!(complaint.verified);
@@ -205,8 +212,9 @@ fn test_get_entities_by_reputation() {
     client.register_entity(&good_contractor, &EntityType::Contractor);
     client.register_entity(&bad_contractor, &EntityType::Contractor);
 
-    client.record_completion(&good_contractor, &95, &true, &true);
-    client.record_safety_violation(&bad_contractor, &5);
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &good_contractor, &95, &true, &true);
+    client.record_safety_violation(&caller, &bad_contractor, &5);
 
     let reputable = client.get_entities_by_reputation(&EntityType::Contractor, &50);
     assert!(reputable.len() >= 1);
@@ -252,8 +260,9 @@ fn test_reputation_score_floor_at_zero() {
     let contractor = Address::generate(&env);
     client.register_entity(&contractor, &EntityType::Contractor);
 
+    let caller = Address::generate(&env);
     for _ in 0..10 {
-        client.record_safety_violation(&contractor, &10);
+        client.record_safety_violation(&caller, &contractor, &10);
     }
 
     let record = client.get_reputation(&contractor).unwrap();

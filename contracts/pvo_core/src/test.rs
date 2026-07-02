@@ -78,7 +78,8 @@ fn test_update_value_score() {
     let (env, client) = setup();
     let id = create_test_pvo(&env, &client);
 
-    client.update_value_score(&id, &85);
+    let updater = Address::generate(&env);
+    client.update_value_score(&updater, &id, &85);
     let pvo = client.get_pvo(&id).unwrap();
     assert_eq!(pvo.public_value_score, 85);
 }
@@ -179,14 +180,19 @@ fn test_full_milestone_release_flow() {
     client.submit_evidence(&submitter, &pvo_id, &mid, &EvidenceType::GpsCoordinates, &make_string(&env, "h2"), &make_string(&env, ""));
 
     client.engineer_approve(&engineer, &mid);
-    client.ai_validate(&mid, &true);
-    client.compliance_check(&mid, &true);
-    client.add_community_verification(&mid);
-    client.add_community_verification(&mid);
+    let auditor = Address::generate(&env);
+    let officer = Address::generate(&env);
+    let citizen1 = Address::generate(&env);
+    let citizen2 = Address::generate(&env);
+    let caller = Address::generate(&env);
+    client.ai_validate(&auditor, &mid, &true);
+    client.compliance_check(&officer, &mid, &true);
+    client.add_community_verification(&citizen1, &mid);
+    client.add_community_verification(&citizen2, &mid);
 
     assert!(client.check_milestone_ready(&mid));
 
-    let released = client.release_milestone(&mid);
+    let released = client.release_milestone(&caller, &mid);
     assert!(released);
 
     let milestone = client.get_milestone(&mid).unwrap();
@@ -212,7 +218,8 @@ fn test_milestone_not_ready_without_all_checks() {
 
     assert!(!client.check_milestone_ready(&mid));
 
-    let released = client.release_milestone(&mid);
+    let caller = Address::generate(&env);
+    let released = client.release_milestone(&caller, &mid);
     assert!(!released);
 }
 
@@ -296,12 +303,15 @@ fn test_community_verification_threshold() {
 
     client.submit_evidence(&submitter, &pvo_id, &mid, &EvidenceType::DroneImagery, &make_string(&env, "h1"), &make_string(&env, ""));
 
-    client.add_community_verification(&mid);
+    let c1 = Address::generate(&env);
+    let c2 = Address::generate(&env);
+    let c3 = Address::generate(&env);
+    client.add_community_verification(&c1, &mid);
     assert_eq!(client.get_milestone(&mid).unwrap().community_confirmations, 1);
     assert_ne!(client.get_milestone(&mid).unwrap().status, MilestoneStatus::CommunityVerified);
 
-    client.add_community_verification(&mid);
-    client.add_community_verification(&mid);
+    client.add_community_verification(&c2, &mid);
+    client.add_community_verification(&c3, &mid);
     assert_eq!(client.get_milestone(&mid).unwrap().status, MilestoneStatus::CommunityVerified);
 }
 
@@ -321,10 +331,13 @@ fn test_submit_evidence_to_released_milestone() {
         &1_000_000, &required, &0,
     );
 
+    let auditor = Address::generate(&env);
+    let officer = Address::generate(&env);
+    let caller = Address::generate(&env);
     client.engineer_approve(&Address::generate(&env), &mid);
-    client.ai_validate(&mid, &true);
-    client.compliance_check(&mid, &true);
-    assert!(client.release_milestone(&mid));
+    client.ai_validate(&auditor, &mid, &true);
+    client.compliance_check(&officer, &mid, &true);
+    assert!(client.release_milestone(&caller, &mid));
 
     client.submit_evidence(&submitter, &pvo_id, &mid, &EvidenceType::DroneImagery, &make_string(&env, "h1"), &make_string(&env, ""));
 }

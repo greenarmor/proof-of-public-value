@@ -214,7 +214,8 @@ impl PVOCore {
         PVOStatusChangedEvent { id: pvo_id, old_status, new_status }.publish(&env);
     }
 
-    pub fn update_value_score(env: Env, pvo_id: u32, score: u32) {
+    pub fn update_value_score(env: Env, updater: Address, pvo_id: u32, score: u32) {
+        updater.require_auth();
         let storage = env.storage().persistent();
         let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
         let mut pvo = pvos.get(pvo_id).expect("PVO not found");
@@ -338,7 +339,8 @@ impl PVOCore {
         }.publish(&env);
     }
 
-    pub fn ai_validate(env: Env, milestone_id: u32, passed: bool) {
+    pub fn ai_validate(env: Env, auditor: Address, milestone_id: u32, passed: bool) {
+        auditor.require_auth();
         let storage = env.storage().persistent();
         let mut milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
@@ -351,7 +353,8 @@ impl PVOCore {
         storage.set(&MILESTONES, &milestones);
     }
 
-    pub fn compliance_check(env: Env, milestone_id: u32, passed: bool) {
+    pub fn compliance_check(env: Env, officer: Address, milestone_id: u32, passed: bool) {
+        officer.require_auth();
         let storage = env.storage().persistent();
         let mut milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
@@ -364,12 +367,13 @@ impl PVOCore {
         storage.set(&MILESTONES, &milestones);
     }
 
-    pub fn add_community_verification(env: Env, milestone_id: u32) {
+    pub fn add_community_verification(env: Env, citizen: Address, milestone_id: u32) {
+        citizen.require_auth();
         let storage = env.storage().persistent();
         let mut milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
 
-        milestone.community_confirmations += 1;
+        milestone.community_confirmations = milestone.community_confirmations.saturating_add(1);
 
         if milestone.community_confirmations >= milestone.community_required {
             milestone.status = MilestoneStatus::CommunityVerified;
@@ -392,7 +396,8 @@ impl PVOCore {
             && has_required_evidence
     }
 
-    pub fn release_milestone(env: Env, milestone_id: u32) -> bool {
+    pub fn release_milestone(env: Env, caller: Address, milestone_id: u32) -> bool {
+        caller.require_auth();
         if !Self::check_milestone_ready(env.clone(), milestone_id) {
             return false;
         }

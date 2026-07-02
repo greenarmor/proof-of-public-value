@@ -131,7 +131,7 @@ impl ValueScore {
             pvo_score.category_scores.push_back(category_score);
         }
 
-        pvo_score.total_evaluations += 1;
+        pvo_score.total_evaluations = pvo_score.total_evaluations.saturating_add(1);
         pvo_score.overall_score = Self::calculate_weighted_score(&pvo_score);
         pvo_score.last_updated = now;
 
@@ -189,7 +189,8 @@ impl ValueScore {
         (total_weighted / total_weight) as u32
     }
 
-    pub fn update_department_index(env: Env, department: String, pvo_id: u32) {
+    pub fn update_department_index(env: Env, caller: Address, department: String, pvo_id: u32) {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let scores: Map<u32, PVOScore> = storage.get(&SCORES).unwrap_or_else(|| Map::new(&env));
         let pvo_score = match scores.get(pvo_id) {
@@ -208,7 +209,7 @@ impl ValueScore {
         let old_total = (entry.avg_score as u64) * (entry.pvo_count as u64);
         let new_count = entry.pvo_count + 1;
         entry.avg_score = ((old_total + pvo_score.overall_score as u64) / new_count as u64) as u32;
-        entry.pvo_count = new_count;
+        entry.pvo_count = entry.pvo_count.saturating_add(1);
 
         let avg = entry.avg_score;
         dept_index.set(department.clone(), entry);

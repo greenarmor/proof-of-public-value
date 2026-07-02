@@ -119,7 +119,7 @@ impl CommunityOracle {
             verified_reports: 0,
             confidence_rating: 50,
         });
-        rep.total_reports += 1;
+        rep.total_reports = rep.total_reports.saturating_add(1);
         citizen_rep.set(citizen.clone(), rep);
         storage.set(&CITIZEN_REP, &citizen_rep);
 
@@ -128,7 +128,8 @@ impl CommunityOracle {
         id
     }
 
-    pub fn calculate_confidence(env: Env, pvo_id: u32, milestone_id: u32) -> u32 {
+    pub fn calculate_confidence(env: Env, caller: Address, pvo_id: u32, milestone_id: u32) -> u32 {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
 
@@ -158,16 +159,16 @@ impl CommunityOracle {
 
         for i in 0..matching.len() {
             if let Some(report) = matching.get(i) {
-                total_reports += 1;
+                total_reports = total_reports.saturating_add(1);
                 let rep = citizen_rep.get(report.citizen.clone()).unwrap_or(CitizenReputation {
                     address: report.citizen.clone(),
                     total_reports: 0,
                     verified_reports: 0,
                     confidence_rating: 50,
                 });
-                total_citizen_rating += rep.confidence_rating;
+                total_citizen_rating = total_citizen_rating.saturating_add(rep.confidence_rating);
                 if report.verified {
-                    verified_count += 1;
+                    verified_count = verified_count.saturating_add(1);
                 }
             }
         }
@@ -177,7 +178,7 @@ impl CommunityOracle {
         }
 
         let avg_rating = total_citizen_rating / total_reports;
-        let verification_ratio = verified_count * 100 / total_reports;
+        let verification_ratio = verified_count.saturating_mul(100) / total_reports;
         let confidence = (avg_rating + verification_ratio) / 2;
 
         let mut all_reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
@@ -195,7 +196,8 @@ impl CommunityOracle {
         confidence
     }
 
-    pub fn verify_report(env: Env, report_id: u32, verifier_weight: u32) {
+    pub fn verify_report(env: Env, verifier: Address, report_id: u32, verifier_weight: u32) {
+        verifier.require_auth();
         let storage = env.storage().persistent();
         let mut reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
         let mut report = reports.get(report_id).expect("report not found");
@@ -214,8 +216,8 @@ impl CommunityOracle {
             verified_reports: 0,
             confidence_rating: 50,
         });
-        rep.verified_reports += 1;
-        rep.confidence_rating = (rep.confidence_rating + verifier_weight).min(100);
+        rep.verified_reports = rep.verified_reports.saturating_add(1);
+        rep.confidence_rating = rep.confidence_rating.saturating_add(verifier_weight).min(100);
         citizen_rep.set(citizen, rep);
         storage.set(&CITIZEN_REP, &citizen_rep);
 

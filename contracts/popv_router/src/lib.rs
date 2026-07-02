@@ -175,7 +175,7 @@ impl PoPVRouter {
         pvo_client.engineer_approve(&engineer, &milestone_id);
 
         let escrow_client = DynamicEscrowClient::new(&env, &addrs.escrow);
-        escrow_client.engineer_approve(&escrow_id);
+        escrow_client.engineer_approve(&engineer, &escrow_id);
 
         let audit_client = AuditTrailClient::new(&env, &addrs.audit_trail);
         audit_client.record_decision(
@@ -205,12 +205,12 @@ impl PoPVRouter {
         let addrs = Self::get_addresses(env.clone());
 
         let pvo_client = PVOCoreClient::new(&env, &addrs.pvo_core);
-        pvo_client.ai_validate(&milestone_id, &ai_passed);
-        pvo_client.compliance_check(&milestone_id, &compliance_passed);
+        pvo_client.ai_validate(&auditor, &milestone_id, &ai_passed);
+        pvo_client.compliance_check(&auditor, &milestone_id, &compliance_passed);
 
         let escrow_client = DynamicEscrowClient::new(&env, &addrs.escrow);
-        escrow_client.ai_validate(&escrow_id, &ai_passed);
-        escrow_client.compliance_validate(&escrow_id, &compliance_passed);
+        escrow_client.ai_validate(&auditor, &escrow_id, &ai_passed);
+        escrow_client.compliance_validate(&auditor, &escrow_id, &compliance_passed);
 
         let audit_client = AuditTrailClient::new(&env, &addrs.audit_trail);
         let risk_score: u32 = if ai_passed { 10 } else { 80 };
@@ -230,11 +230,13 @@ impl PoPVRouter {
 
     pub fn add_community_verifications(
         env: Env,
+        citizen: Address,
         _pvo_id: u32,
         milestone_id: u32,
         escrow_id: u32,
         count: u32,
     ) {
+        citizen.require_auth();
         let addrs = Self::get_addresses(env.clone());
 
         let pvo_client = PVOCoreClient::new(&env, &addrs.pvo_core);
@@ -242,9 +244,9 @@ impl PoPVRouter {
 
         let mut i = 0u32;
         while i < count {
-            pvo_client.add_community_verification(&milestone_id);
-            escrow_client.add_community_confirmation(&escrow_id);
-            i += 1;
+            pvo_client.add_community_verification(&citizen, &milestone_id);
+            escrow_client.add_community_confirmation(&citizen, &escrow_id);
+            i = i.saturating_add(1);
         }
     }
 
@@ -276,7 +278,7 @@ impl PoPVRouter {
             None => panic!("milestone not found"),
         }
 
-        let released = pvo_client.release_milestone(&milestone_id);
+        let released = pvo_client.release_milestone(&caller, &milestone_id);
         if !released {
             return false;
         }
@@ -293,7 +295,7 @@ impl PoPVRouter {
             &value_score,
             &50,
         );
-        pvo_client.update_value_score(&pvo_id, &value_score);
+        pvo_client.update_value_score(&caller, &pvo_id, &value_score);
 
         audit_client.record_decision(
             &caller,
@@ -383,14 +385,16 @@ impl PoPVRouter {
 
     pub fn record_contractor_completion(
         env: Env,
+        caller: Address,
         contractor: Address,
         value_score: u32,
         on_time: bool,
         within_budget: bool,
     ) {
+        caller.require_auth();
         let addrs = Self::get_addresses(env.clone());
         let rep_client = ReputationLedgerClient::new(&env, &addrs.reputation);
-        rep_client.record_completion(&contractor, &value_score, &on_time, &within_budget);
+        rep_client.record_completion(&caller, &contractor, &value_score, &on_time, &within_budget);
     }
 
     pub fn submit_citizen_report_wrapped(

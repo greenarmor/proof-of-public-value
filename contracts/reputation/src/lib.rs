@@ -112,26 +112,27 @@ impl ReputationLedger {
         storage.set(&REPUTATIONS, &reputations);
     }
 
-    pub fn record_completion(env: Env, entity: Address, value_score: u32, on_time: bool, within_budget: bool) {
+    pub fn record_completion(env: Env, caller: Address, entity: Address, value_score: u32, on_time: bool, within_budget: bool) {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let mut reputations: Map<Address, ReputationRecord> = storage.get(&REPUTATIONS).unwrap_or_else(|| Map::new(&env));
         let mut record = reputations.get(entity.clone()).expect("entity not registered");
 
-        record.completed_projects += 1;
+        record.completed_projects = record.completed_projects.saturating_add(1);
         if !on_time {
-            record.delayed_projects += 1;
+            record.delayed_projects = record.delayed_projects.saturating_add(1);
         }
         if !within_budget {
-            record.budget_overruns += 1;
+            record.budget_overruns = record.budget_overruns.saturating_add(1);
         }
 
-        let total = record.completed_projects as u32;
-        let on_time_count = total - record.delayed_projects;
-        record.success_rate = (on_time_count * 100) / total;
+        let total = record.completed_projects;
+        let on_time_count = total.saturating_sub(record.delayed_projects);
+        record.success_rate = if total > 0 { on_time_count.saturating_mul(100) / total } else { 100 };
 
-        let prev_total = (record.completed_projects - 1) as u32;
+        let prev_total = record.completed_projects.saturating_sub(1);
         if prev_total > 0 {
-            record.average_value_score = (record.average_value_score * prev_total + value_score) / total;
+            record.average_value_score = (record.average_value_score.saturating_mul(prev_total).saturating_add(value_score)) / total;
         } else {
             record.average_value_score = value_score;
         }
@@ -145,13 +146,14 @@ impl ReputationLedger {
         ReputationUpdatedEvent { entity, reputation_score: 0 }.publish(&env);
     }
 
-    pub fn record_audit_finding(env: Env, entity: Address, severity: u32) {
+    pub fn record_audit_finding(env: Env, caller: Address, entity: Address, severity: u32) {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let mut reputations: Map<Address, ReputationRecord> = storage.get(&REPUTATIONS).unwrap_or_else(|| Map::new(&env));
         let mut record = reputations.get(entity.clone()).expect("entity not registered");
 
-        record.audit_findings += 1;
-        record.reputation_score = record.reputation_score.saturating_sub(severity * 5);
+        record.audit_findings = record.audit_findings.saturating_add(1);
+        record.reputation_score = record.reputation_score.saturating_sub(severity.saturating_mul(5));
         record.last_updated = env.ledger().timestamp();
 
         reputations.set(entity.clone(), record);
@@ -160,13 +162,14 @@ impl ReputationLedger {
         ReputationUpdatedEvent { entity, reputation_score: 0 }.publish(&env);
     }
 
-    pub fn record_safety_violation(env: Env, entity: Address, severity: u32) {
+    pub fn record_safety_violation(env: Env, caller: Address, entity: Address, severity: u32) {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let mut reputations: Map<Address, ReputationRecord> = storage.get(&REPUTATIONS).unwrap_or_else(|| Map::new(&env));
         let mut record = reputations.get(entity.clone()).expect("entity not registered");
 
-        record.safety_violations += 1;
-        record.reputation_score = record.reputation_score.saturating_sub(severity * 10);
+        record.safety_violations = record.safety_violations.saturating_add(1);
+        record.reputation_score = record.reputation_score.saturating_sub(severity.saturating_mul(10));
         record.last_updated = env.ledger().timestamp();
 
         reputations.set(entity.clone(), record);
@@ -202,7 +205,7 @@ impl ReputationLedger {
 
         let mut reputations: Map<Address, ReputationRecord> = storage.get(&REPUTATIONS).unwrap_or_else(|| Map::new(&env));
         let mut record = reputations.get(entity.clone()).expect("entity not registered");
-        record.community_complaints += 1;
+        record.community_complaints = record.community_complaints.saturating_add(1);
         record.reputation_score = record.reputation_score.saturating_sub(severity);
         record.last_updated = env.ledger().timestamp();
         reputations.set(entity.clone(), record);
@@ -213,7 +216,8 @@ impl ReputationLedger {
         id
     }
 
-    pub fn verify_complaint(env: Env, complaint_id: u32) {
+    pub fn verify_complaint(env: Env, caller: Address, complaint_id: u32) {
+        caller.require_auth();
         let storage = env.storage().persistent();
         let mut complaints: Map<u32, ComplaintRecord> = storage.get(&COMPLAINTS).unwrap_or_else(|| Map::new(&env));
         let mut complaint = complaints.get(complaint_id).expect("complaint not found");

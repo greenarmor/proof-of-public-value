@@ -83,11 +83,17 @@ fn test_full_unlock_and_release() {
     let funder = client.get_escrow(&id).unwrap().funder;
     client.fund_escrow(&funder, &id, &1_000_000);
 
-    client.engineer_approve(&id);
-    client.ai_validate(&id, &true);
-    client.compliance_validate(&id, &true);
-    client.add_community_confirmation(&id);
-    client.add_community_confirmation(&id);
+    let engineer = Address::generate(&env);
+    let auditor = Address::generate(&env);
+    let officer = Address::generate(&env);
+    let citizen1 = Address::generate(&env);
+    let citizen2 = Address::generate(&env);
+
+    client.engineer_approve(&engineer, &id);
+    client.ai_validate(&auditor, &id, &true);
+    client.compliance_validate(&officer, &id, &true);
+    client.add_community_confirmation(&citizen1, &id);
+    client.add_community_confirmation(&citizen2, &id);
 
     let escrow = client.get_escrow(&id).unwrap();
     assert_eq!(escrow.status, EscrowStatus::Ready);
@@ -108,7 +114,8 @@ fn test_release_fails_without_conditions() {
     let funder = client.get_escrow(&id).unwrap().funder;
     client.fund_escrow(&funder, &id, &1_000_000);
 
-    client.engineer_approve(&id);
+    let engineer = Address::generate(&env);
+    client.engineer_approve(&engineer, &id);
 
     let caller = Address::generate(&env);
     let released = client.release(&caller, &id);
@@ -139,11 +146,17 @@ fn test_refund_after_release() {
     let funder = client.get_escrow(&id).unwrap().funder;
     client.fund_escrow(&funder, &id, &1_000_000);
 
-    client.engineer_approve(&id);
-    client.ai_validate(&id, &true);
-    client.compliance_validate(&id, &true);
-    client.add_community_confirmation(&id);
-    client.add_community_confirmation(&id);
+    let engineer = Address::generate(&env);
+    let auditor = Address::generate(&env);
+    let officer = Address::generate(&env);
+    let citizen1 = Address::generate(&env);
+    let citizen2 = Address::generate(&env);
+
+    client.engineer_approve(&engineer, &id);
+    client.ai_validate(&auditor, &id, &true);
+    client.compliance_validate(&officer, &id, &true);
+    client.add_community_confirmation(&citizen1, &id);
+    client.add_community_confirmation(&citizen2, &id);
 
     let caller = Address::generate(&env);
     client.release(&caller, &id);
@@ -213,8 +226,10 @@ fn test_ai_validation_failure() {
     let funder = client.get_escrow(&id).unwrap().funder;
     client.fund_escrow(&funder, &id, &1_000_000);
 
-    client.engineer_approve(&id);
-    client.ai_validate(&id, &false);
+    let engineer = Address::generate(&env);
+    let auditor = Address::generate(&env);
+    client.engineer_approve(&engineer, &id);
+    client.ai_validate(&auditor, &id, &false);
 
     let escrow = client.get_escrow(&id).unwrap();
     assert!(!escrow.conditions.ai_risk_check);

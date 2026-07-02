@@ -164,7 +164,7 @@ impl DynamicEscrow {
 
         let mut balances: Map<Address, i128> = storage.get(&BALANCES).unwrap_or_else(|| Map::new(&env));
         let current = balances.get(funder.clone()).unwrap_or(0);
-        balances.set(funder.clone(), current + amount);
+        balances.set(funder.clone(), current.saturating_add(amount));
 
         escrow.status = EscrowStatus::Funded;
         escrows.set(escrow_id, escrow);
@@ -175,7 +175,8 @@ impl DynamicEscrow {
         EscrowFundedEvent { id: escrow_id, amount }.publish(&env);
     }
 
-    pub fn engineer_approve(env: Env, escrow_id: u32) {
+    pub fn engineer_approve(env: Env, engineer: Address, escrow_id: u32) {
+        engineer.require_auth();
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
@@ -188,7 +189,8 @@ impl DynamicEscrow {
         Self::try_advance(&env, escrow_id);
     }
 
-    pub fn ai_validate(env: Env, escrow_id: u32, passed: bool) {
+    pub fn ai_validate(env: Env, auditor: Address, escrow_id: u32, passed: bool) {
+        auditor.require_auth();
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
@@ -204,7 +206,8 @@ impl DynamicEscrow {
         Self::try_advance(&env, escrow_id);
     }
 
-    pub fn compliance_validate(env: Env, escrow_id: u32, passed: bool) {
+    pub fn compliance_validate(env: Env, compliance_officer: Address, escrow_id: u32, passed: bool) {
+        compliance_officer.require_auth();
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
@@ -220,12 +223,13 @@ impl DynamicEscrow {
         Self::try_advance(&env, escrow_id);
     }
 
-    pub fn add_community_confirmation(env: Env, escrow_id: u32) {
+    pub fn add_community_confirmation(env: Env, citizen: Address, escrow_id: u32) {
+        citizen.require_auth();
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
-        escrow.conditions.community_confirmation += 1;
+        escrow.conditions.community_confirmation = escrow.conditions.community_confirmation.saturating_add(1);
 
         if escrow.conditions.community_confirmation >= escrow.conditions.community_required {
             escrow.status = EscrowStatus::CommunityVerified;

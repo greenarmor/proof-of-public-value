@@ -22,6 +22,7 @@ struct FullSystem {
     contractor: Address,
     engineer: Address,
     citizen: Address,
+    auditor: Address,
     router_client: PoPVRouterClient<'static>,
     ac_client: AccessControlClient<'static>,
     pvo_client: PVOCoreClient<'static>,
@@ -40,6 +41,7 @@ fn setup_full_system() -> FullSystem {
     let contractor = Address::generate(&env);
     let engineer = Address::generate(&env);
     let citizen = Address::generate(&env);
+    let auditor = Address::generate(&env);
 
     let ac_id = env.register(AccessControl, ());
     let pvo_id_addr = env.register(PVOCore, ());
@@ -56,7 +58,6 @@ fn setup_full_system() -> FullSystem {
     let oracle_client = CommunityOracleClient::new(&env, &oracle_id_addr);
     let rep_client = ReputationLedgerClient::new(&env, &rep_id_addr);
     let audit_client = AuditTrailClient::new(&env, &audit_id_addr);
-    let value_client = ValueScoreClient::new(&env, &value_id_addr);
     let router_client = PoPVRouterClient::new(&env, &router_id);
 
     ac_client.initialize(&admin);
@@ -65,7 +66,7 @@ fn setup_full_system() -> FullSystem {
     oracle_client.initialize();
     rep_client.initialize();
     audit_client.initialize();
-    value_client.initialize();
+    value_score::ValueScoreClient::new(&env, &value_id_addr).initialize();
 
     let addresses = ContractAddresses {
         access_control: ac_id,
@@ -86,6 +87,7 @@ fn setup_full_system() -> FullSystem {
         contractor,
         engineer,
         citizen,
+        auditor,
         router_client,
         ac_client,
         pvo_client,
@@ -164,6 +166,7 @@ fn test_register_contractor_and_record() {
     assert_eq!(record.reputation_score, 100);
 
     system.router_client.record_contractor_completion(
+        &system.admin,
         &system.contractor,
         &90,
         &true,
@@ -312,7 +315,7 @@ fn test_full_end_to_end_workflow() {
     );
 
     system.router_client.validate_and_compliance(
-        &system.admin,
+        &system.auditor,
         &pvo_id,
         &milestone_id,
         &escrow_id,
@@ -321,6 +324,7 @@ fn test_full_end_to_end_workflow() {
     );
 
     system.router_client.add_community_verifications(
+        &system.citizen,
         &pvo_id,
         &milestone_id,
         &escrow_id,
