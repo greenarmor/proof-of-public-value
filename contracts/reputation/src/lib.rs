@@ -155,10 +155,11 @@ impl ReputationLedger {
         record.reputation_score = Self::calculate_reputation(&record);
         record.last_updated = env.ledger().timestamp();
 
+        let score = record.reputation_score;
         reputations.set(entity.clone(), record);
         storage.set(&REPUTATIONS, &reputations);
 
-        ReputationUpdatedEvent { entity, reputation_score: 0 }.publish(&env);
+        ReputationUpdatedEvent { entity, reputation_score: score }.publish(&env);
     }
 
     pub fn record_audit_finding(env: Env, caller: Address, entity: Address, severity: u32) {
@@ -171,10 +172,11 @@ impl ReputationLedger {
         record.reputation_score = record.reputation_score.saturating_sub(severity.saturating_mul(5));
         record.last_updated = env.ledger().timestamp();
 
+        let score = record.reputation_score;
         reputations.set(entity.clone(), record);
         storage.set(&REPUTATIONS, &reputations);
 
-        ReputationUpdatedEvent { entity, reputation_score: 0 }.publish(&env);
+        ReputationUpdatedEvent { entity, reputation_score: score }.publish(&env);
     }
 
     pub fn record_safety_violation(env: Env, caller: Address, entity: Address, severity: u32) {
@@ -187,10 +189,11 @@ impl ReputationLedger {
         record.reputation_score = record.reputation_score.saturating_sub(severity.saturating_mul(10));
         record.last_updated = env.ledger().timestamp();
 
-        reputations.set(entity.clone(), record.clone());
+        let score = record.reputation_score;
+        reputations.set(entity.clone(), record);
         storage.set(&REPUTATIONS, &reputations);
 
-        ReputationUpdatedEvent { entity, reputation_score: record.reputation_score }.publish(&env);
+        ReputationUpdatedEvent { entity, reputation_score: score }.publish(&env);
     }
 
     pub fn file_complaint(

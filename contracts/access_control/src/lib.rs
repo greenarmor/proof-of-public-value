@@ -133,10 +133,16 @@ impl AccessControl {
     }
 
     pub fn has_any_role(env: Env, address: Address, roles: Vec<Role>) -> bool {
+        let storage = env.storage().persistent();
+        let assignments: Map<Address, RoleAssignment> = storage.get(&ROLES).unwrap_or_else(|| Map::new(&env));
+        let assignment = assignments.get(address);
+
         for i in 0..roles.len() {
             if let Some(role) = roles.get(i) {
-                if Self::has_role(env.clone(), address.clone(), role) {
-                    return true;
+                if let Some(ref a) = assignment {
+                    if a.active && a.role == role {
+                        return true;
+                    }
                 }
             }
         }

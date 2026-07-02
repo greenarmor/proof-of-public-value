@@ -355,14 +355,16 @@ impl PVOCore {
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
 
         milestone.ai_validated = passed;
+        let mut new_status = None;
         if passed {
             milestone.status = MilestoneStatus::AIValidated;
+            new_status = Some(milestone.status.clone());
         }
-        milestones.set(milestone_id, milestone.clone());
+        milestones.set(milestone_id, milestone);
         storage.set(&MILESTONES, &milestones);
 
-        if passed {
-            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        if let Some(status) = new_status {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: status }.publish(&env);
         }
     }
 
@@ -373,14 +375,16 @@ impl PVOCore {
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
 
         milestone.compliance_passed = passed;
+        let mut new_status = None;
         if passed {
             milestone.status = MilestoneStatus::CompliancePassed;
+            new_status = Some(milestone.status.clone());
         }
-        milestones.set(milestone_id, milestone.clone());
+        milestones.set(milestone_id, milestone);
         storage.set(&MILESTONES, &milestones);
 
-        if passed {
-            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        if let Some(status) = new_status {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: status }.publish(&env);
         }
     }
 
@@ -392,15 +396,17 @@ impl PVOCore {
 
         milestone.community_confirmations = milestone.community_confirmations.saturating_add(1);
 
+        let mut new_status = None;
         if milestone.community_confirmations >= milestone.community_required {
             milestone.status = MilestoneStatus::CommunityVerified;
+            new_status = Some(milestone.status.clone());
         }
 
-        milestones.set(milestone_id, milestone.clone());
+        milestones.set(milestone_id, milestone);
         storage.set(&MILESTONES, &milestones);
 
-        if milestone.community_confirmations >= milestone.community_required {
-            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        if let Some(status) = new_status {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: status }.publish(&env);
         }
     }
 
@@ -419,13 +425,22 @@ impl PVOCore {
 
     pub fn release_milestone(env: Env, caller: Address, milestone_id: u32) -> bool {
         caller.require_auth();
-        if !Self::check_milestone_ready(env.clone(), milestone_id) {
-            return false;
-        }
 
         let storage = env.storage().persistent();
         let mut milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));
         let mut milestone = milestones.get(milestone_id).expect("milestone not found");
+
+        let has_required_evidence = Self::has_all_evidence_types(&milestone);
+        let ready = milestone.engineer_approved
+            && milestone.ai_validated
+            && milestone.compliance_passed
+            && milestone.community_confirmations >= milestone.community_required
+            && has_required_evidence;
+
+        if !ready {
+            return false;
+        }
+
         milestone.status = MilestoneStatus::Released;
         milestones.set(milestone_id, milestone);
         storage.set(&MILESTONES, &milestones);
@@ -496,24 +511,16 @@ impl PVOCore {
     }
 
     fn has_all_evidence_types(milestone: &Milestone) -> bool {
-        let required: Vec<EvidenceType> = milestone.required_evidence.clone();
-        if required.is_empty() {
+        if milestone.required_evidence.is_empty() {
             return true;
         }
 
-        let mut submitted: Vec<EvidenceType> = Vec::new(&required.env());
-        for i in 0..milestone.submitted_evidence.len() {
-            if let Some(ev) = milestone.submitted_evidence.get(i) {
-                submitted.push_back(ev.evidence_type);
-            }
-        }
-
-        for i in 0..required.len() {
-            if let Some(req) = required.get(i) {
+        for i in 0..milestone.required_evidence.len() {
+            if let Some(req) = milestone.required_evidence.get(i) {
                 let mut found = false;
-                for j in 0..submitted.len() {
-                    if let Some(sub) = submitted.get(j) {
-                        if req == sub {
+                for j in 0..milestone.submitted_evidence.len() {
+                    if let Some(ev) = milestone.submitted_evidence.get(j) {
+                        if ev.evidence_type == req {
                             found = true;
                             break;
                         }

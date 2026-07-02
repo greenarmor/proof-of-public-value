@@ -139,17 +139,17 @@ impl CommunityOracle {
     pub fn calculate_confidence(env: Env, caller: Address, pvo_id: u32, milestone_id: u32) -> u32 {
         caller.require_auth();
         let storage = env.storage().persistent();
-        let reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
+        let mut reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
 
         let pvo_index: Map<u32, Vec<u32>> = storage.get(&PVO_INDEX).unwrap_or_else(|| Map::new(&env));
         let pvo_report_ids = pvo_index.get(pvo_id).unwrap_or_else(|| Vec::new(&env));
 
-        let mut matching: Vec<CommunityReport> = Vec::new(&env);
+        let mut matching: Vec<u32> = Vec::new(&env);
         for i in 0..pvo_report_ids.len() {
             if let Some(rid) = pvo_report_ids.get(i) {
                 if let Some(report) = reports.get(rid) {
                     if report.milestone_id == milestone_id {
-                        matching.push_back(report);
+                        matching.push_back(rid);
                     }
                 }
             }
@@ -166,17 +166,19 @@ impl CommunityOracle {
         let citizen_rep: Map<Address, CitizenReputation> = storage.get(&CITIZEN_REP).unwrap_or_else(|| Map::new(&env));
 
         for i in 0..matching.len() {
-            if let Some(report) = matching.get(i) {
-                total_reports = total_reports.saturating_add(1);
-                let rep = citizen_rep.get(report.citizen.clone()).unwrap_or(CitizenReputation {
-                    address: report.citizen.clone(),
-                    total_reports: 0,
-                    verified_reports: 0,
-                    confidence_rating: 50,
-                });
-                total_citizen_rating = total_citizen_rating.saturating_add(rep.confidence_rating);
-                if report.verified {
-                    verified_count = verified_count.saturating_add(1);
+            if let Some(rid) = matching.get(i) {
+                if let Some(report) = reports.get(rid) {
+                    total_reports = total_reports.saturating_add(1);
+                    let rep = citizen_rep.get(report.citizen.clone()).unwrap_or(CitizenReputation {
+                        address: report.citizen.clone(),
+                        total_reports: 0,
+                        verified_reports: 0,
+                        confidence_rating: 50,
+                    });
+                    total_citizen_rating = total_citizen_rating.saturating_add(rep.confidence_rating);
+                    if report.verified {
+                        verified_count = verified_count.saturating_add(1);
+                    }
                 }
             }
         }
@@ -189,17 +191,16 @@ impl CommunityOracle {
         let verification_ratio = verified_count.saturating_mul(100) / total_reports;
         let confidence = (avg_rating + verification_ratio) / 2;
 
-        let mut all_reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
         for i in 0..matching.len() {
-            if let Some(report) = matching.get(i) {
-                if let Some(r) = all_reports.get(report.id) {
+            if let Some(rid) = matching.get(i) {
+                if let Some(r) = reports.get(rid) {
                     let mut updated = r;
                     updated.confidence_score = confidence;
-                    all_reports.set(report.id, updated);
+                    reports.set(rid, updated);
                 }
             }
         }
-        storage.set(&REPORTS, &all_reports);
+        storage.set(&REPORTS, &reports);
 
         ConfidenceCalculatedEvent { pvo_id, milestone_id, confidence }.publish(&env);
 

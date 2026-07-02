@@ -197,12 +197,12 @@ impl DynamicEscrow {
 
         escrow.conditions.engineer_approval = true;
         escrow.status = EscrowStatus::EngineerApproved;
-        escrows.set(escrow_id, escrow.clone());
+        Self::advance_if_ready(&mut escrow);
+        let new_status = escrow.status.clone();
+        escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 
-        EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
-
-        Self::try_advance(&env, escrow_id);
+        EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
     }
 
     pub fn ai_validate(env: Env, auditor: Address, escrow_id: u32, passed: bool) {
@@ -211,19 +211,21 @@ impl DynamicEscrow {
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
+        let mut status_changed = false;
         if passed {
             escrow.conditions.ai_risk_check = true;
             escrow.status = EscrowStatus::AIValidated;
+            status_changed = true;
         }
 
-        escrows.set(escrow_id, escrow.clone());
+        Self::advance_if_ready(&mut escrow);
+        let new_status = escrow.status.clone();
+        escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 
-        if passed {
-            EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
+        if status_changed {
+            EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
         }
-
-        Self::try_advance(&env, escrow_id);
     }
 
     pub fn compliance_validate(env: Env, compliance_officer: Address, escrow_id: u32, passed: bool) {
@@ -232,19 +234,21 @@ impl DynamicEscrow {
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
+        let mut status_changed = false;
         if passed {
             escrow.conditions.compliance_validation = true;
             escrow.status = EscrowStatus::CompliancePassed;
+            status_changed = true;
         }
 
-        escrows.set(escrow_id, escrow.clone());
+        Self::advance_if_ready(&mut escrow);
+        let new_status = escrow.status.clone();
+        escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 
-        if passed {
-            EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
+        if status_changed {
+            EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
         }
-
-        Self::try_advance(&env, escrow_id);
     }
 
     pub fn add_community_confirmation(env: Env, citizen: Address, escrow_id: u32) {
@@ -259,12 +263,12 @@ impl DynamicEscrow {
             escrow.status = EscrowStatus::CommunityVerified;
         }
 
-        escrows.set(escrow_id, escrow.clone());
+        Self::advance_if_ready(&mut escrow);
+        let new_status = escrow.status.clone();
+        escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 
-        EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
-
-        Self::try_advance(&env, escrow_id);
+        EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
     }
 
     pub fn check_conditions(env: Env, escrow_id: u32) -> bool {
@@ -394,15 +398,9 @@ impl DynamicEscrow {
             && escrow.conditions.community_confirmation >= escrow.conditions.community_required
     }
 
-    fn try_advance(env: &Env, escrow_id: u32) {
-        let storage = env.storage().persistent();
-        let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
-        let mut escrow = escrows.get(escrow_id).expect("escrow not found");
-
-        if Self::is_unlocked(&escrow) && escrow.status != EscrowStatus::Released {
+    fn advance_if_ready(escrow: &mut Escrow) {
+        if Self::is_unlocked(escrow) && escrow.status != EscrowStatus::Released {
             escrow.status = EscrowStatus::Ready;
-            escrows.set(escrow_id, escrow);
-            storage.set(&ESCROWS, &escrows);
         }
     }
 
