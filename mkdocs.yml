@@ -1,0 +1,61 @@
+site_name: Proof of Public Value (PoPV)
+site_description: "Programmable public spending on Stellar Soroban. No Proof. No Payment."
+site_author: greenarmor
+site_url: ""
+
+repo_url: https://github.com/greenarmor/proof-of-public-value
+repo_name: proof-of-public-value
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Creating Projects: creating-projects.md
+  - Submitting Evidence: submitting-evidence.md
+  - Approving Milestones: approving-milestones.md
+  - Community Verification: community-verification.md
+  - Audit Trail: audit-trail.md
+  - Appendices:
+      - Escrow Deep Dive: escrow-deep-dive.md
