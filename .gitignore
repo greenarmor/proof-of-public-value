@@ -1,0 +1,19 @@
+.dev-logs/
+
+# Rust
+target/
+test_snapshots/
+
+# Stellar
+.stellar/history/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Env
+.env
+.env.local
