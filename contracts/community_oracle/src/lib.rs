@@ -55,6 +55,14 @@ pub struct ReportVerifiedEvent {
     pub confidence_score: u32,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ConfidenceCalculatedEvent {
+    pub pvo_id: u32,
+    pub milestone_id: u32,
+    pub confidence: u32,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const REPORTS: Symbol = symbol_short!("REPORTS");
 const CITIZEN_REP: Symbol = symbol_short!("CITIZEN_R");
@@ -192,6 +200,8 @@ impl CommunityOracle {
             }
         }
         storage.set(&REPORTS, &all_reports);
+
+        ConfidenceCalculatedEvent { pvo_id, milestone_id, confidence }.publish(&env);
 
         confidence
     }

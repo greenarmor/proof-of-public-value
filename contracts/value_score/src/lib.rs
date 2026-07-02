@@ -242,8 +242,8 @@ impl ValueScore {
         let mut n = sorted.len();
         for i in 0..n {
             for j in 0..n.saturating_sub(1).saturating_sub(i) {
-                let a = sorted.get(j).unwrap();
-                let b = sorted.get(j + 1).unwrap();
+                let a = sorted.get(j).expect("sorted index j within bounds");
+                let b = sorted.get(j + 1).expect("sorted index j+1 within bounds");
                 if a.avg_score < b.avg_score {
                     sorted.set(j, b.clone());
                     sorted.set(j + 1, a);

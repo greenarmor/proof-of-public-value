@@ -75,6 +75,20 @@ pub struct EscrowRefundedEvent {
     pub funder: Address,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowConditionUpdatedEvent {
+    pub id: u32,
+    pub status: EscrowStatus,
+}
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowDisputedEvent {
+    pub id: u32,
+    pub disputer: Address,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const ESCROWS: Symbol = symbol_short!("ESCROWS");
 const BALANCES: Symbol = symbol_short!("BALANCES");
@@ -183,8 +197,10 @@ impl DynamicEscrow {
 
         escrow.conditions.engineer_approval = true;
         escrow.status = EscrowStatus::EngineerApproved;
-        escrows.set(escrow_id, escrow);
+        escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
 
         Self::try_advance(&env, escrow_id);
     }
@@ -200,8 +216,12 @@ impl DynamicEscrow {
             escrow.status = EscrowStatus::AIValidated;
         }
 
-        escrows.set(escrow_id, escrow);
+        escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        if passed {
+            EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
+        }
 
         Self::try_advance(&env, escrow_id);
     }
@@ -217,8 +237,12 @@ impl DynamicEscrow {
             escrow.status = EscrowStatus::CompliancePassed;
         }
 
-        escrows.set(escrow_id, escrow);
+        escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        if passed {
+            EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
+        }
 
         Self::try_advance(&env, escrow_id);
     }
@@ -235,8 +259,10 @@ impl DynamicEscrow {
             escrow.status = EscrowStatus::CommunityVerified;
         }
 
-        escrows.set(escrow_id, escrow);
+        escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        EscrowConditionUpdatedEvent { id: escrow_id, status: escrow.status }.publish(&env);
 
         Self::try_advance(&env, escrow_id);
     }
@@ -330,8 +356,10 @@ impl DynamicEscrow {
         }
 
         escrow.status = EscrowStatus::Disputed;
-        escrows.set(escrow_id, escrow);
+        escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        EscrowDisputedEvent { id: escrow_id, disputer }.publish(&env);
     }
 
     pub fn get_escrow(env: Env, escrow_id: u32) -> Option<Escrow> {

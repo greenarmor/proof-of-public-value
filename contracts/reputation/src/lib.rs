@@ -62,6 +62,19 @@ pub struct ComplaintFiledEvent {
     pub severity: u32,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EntityRegisteredEvent {
+    pub entity: Address,
+    pub entity_type: EntityType,
+}
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ComplaintVerifiedEvent {
+    pub complaint_id: u32,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const REPUTATIONS: Symbol = symbol_short!("REPUTAT");
 const COMPLAINTS: Symbol = symbol_short!("COMPLAIN");
@@ -94,7 +107,7 @@ impl ReputationLedger {
         let record = ReputationRecord {
             id: Self::next_id(&env),
             entity: entity.clone(),
-            entity_type,
+            entity_type: entity_type.clone(),
             completed_projects: 0,
             delayed_projects: 0,
             budget_overruns: 0,
@@ -108,8 +121,10 @@ impl ReputationLedger {
             last_updated: env.ledger().timestamp(),
         };
 
-        reputations.set(entity, record);
+        reputations.set(entity.clone(), record);
         storage.set(&REPUTATIONS, &reputations);
+
+        EntityRegisteredEvent { entity: entity.clone(), entity_type }.publish(&env);
     }
 
     pub fn record_completion(env: Env, caller: Address, entity: Address, value_score: u32, on_time: bool, within_budget: bool) {
@@ -172,8 +187,10 @@ impl ReputationLedger {
         record.reputation_score = record.reputation_score.saturating_sub(severity.saturating_mul(10));
         record.last_updated = env.ledger().timestamp();
 
-        reputations.set(entity.clone(), record);
+        reputations.set(entity.clone(), record.clone());
         storage.set(&REPUTATIONS, &reputations);
+
+        ReputationUpdatedEvent { entity, reputation_score: record.reputation_score }.publish(&env);
     }
 
     pub fn file_complaint(
@@ -225,6 +242,8 @@ impl ReputationLedger {
         complaint.verified = true;
         complaints.set(complaint_id, complaint);
         storage.set(&COMPLAINTS, &complaints);
+
+        ComplaintVerifiedEvent { complaint_id }.publish(&env);
     }
 
     pub fn get_reputation(env: Env, entity: Address) -> Option<ReputationRecord> {

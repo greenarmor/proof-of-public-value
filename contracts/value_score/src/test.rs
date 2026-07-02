@@ -232,3 +232,49 @@ fn test_multiple_pvo_isolation() {
     assert_eq!(client.get_overall_score(&1), 90);
     assert_eq!(client.get_overall_score(&2), 40);
 }
+
+#[test]
+fn test_score_boundary_zero() {
+    let (env, client) = setup();
+    let evaluator = Address::generate(&env);
+
+    client.submit_score(&evaluator, &1, &ScoreCategory::Safety, &0, &50);
+    assert_eq!(client.get_overall_score(&1), 0);
+}
+
+#[test]
+fn test_score_boundary_hundred() {
+    let (env, client) = setup();
+    let evaluator = Address::generate(&env);
+
+    client.submit_score(&evaluator, &1, &ScoreCategory::Safety, &100, &50);
+    assert_eq!(client.get_overall_score(&1), 100);
+}
+
+#[test]
+fn test_all_categories_weighted_average() {
+    let (env, client) = setup();
+    let evaluator = Address::generate(&env);
+
+    let cats = [
+        ScoreCategory::EngineeringQuality,
+        ScoreCategory::BudgetEfficiency,
+        ScoreCategory::SchedulePerformance,
+        ScoreCategory::EnvironmentalImpact,
+        ScoreCategory::Safety,
+        ScoreCategory::FloodReduction,
+        ScoreCategory::CitizenSatisfaction,
+        ScoreCategory::Transparency,
+        ScoreCategory::Compliance,
+        ScoreCategory::MaintenanceReadiness,
+    ];
+
+    for (i, cat) in cats.iter().enumerate() {
+        client.submit_score(&evaluator, &1, cat, &((i as u32 + 1) * 10), &10);
+    }
+
+    let score = client.get_score(&1).unwrap();
+    assert_eq!(score.category_scores.len(), 10);
+    assert!(score.overall_score > 0);
+    assert!(score.overall_score <= 100);
+}

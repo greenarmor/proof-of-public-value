@@ -133,6 +133,13 @@ pub struct MilestoneStatusChangedEvent {
     pub new_status: MilestoneStatus,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValueScoreUpdatedEvent {
+    pub pvo_id: u32,
+    pub score: u32,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const PVOS: Symbol = symbol_short!("PVOS");
 const MILESTONES: Symbol = symbol_short!("MSTNS");
@@ -223,6 +230,8 @@ impl PVOCore {
         pvo.updated_at = env.ledger().timestamp();
         pvos.set(pvo_id, pvo);
         storage.set(&PVOS, &pvos);
+
+        ValueScoreUpdatedEvent { pvo_id, score }.publish(&env);
     }
 
     pub fn create_milestone(
@@ -349,8 +358,12 @@ impl PVOCore {
         if passed {
             milestone.status = MilestoneStatus::AIValidated;
         }
-        milestones.set(milestone_id, milestone);
+        milestones.set(milestone_id, milestone.clone());
         storage.set(&MILESTONES, &milestones);
+
+        if passed {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        }
     }
 
     pub fn compliance_check(env: Env, officer: Address, milestone_id: u32, passed: bool) {
@@ -363,8 +376,12 @@ impl PVOCore {
         if passed {
             milestone.status = MilestoneStatus::CompliancePassed;
         }
-        milestones.set(milestone_id, milestone);
+        milestones.set(milestone_id, milestone.clone());
         storage.set(&MILESTONES, &milestones);
+
+        if passed {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        }
     }
 
     pub fn add_community_verification(env: Env, citizen: Address, milestone_id: u32) {
@@ -379,8 +396,12 @@ impl PVOCore {
             milestone.status = MilestoneStatus::CommunityVerified;
         }
 
-        milestones.set(milestone_id, milestone);
+        milestones.set(milestone_id, milestone.clone());
         storage.set(&MILESTONES, &milestones);
+
+        if milestone.community_confirmations >= milestone.community_required {
+            MilestoneStatusChangedEvent { pvo_id: 0, milestone_id, new_status: milestone.status }.publish(&env);
+        }
     }
 
     pub fn check_milestone_ready(env: Env, milestone_id: u32) -> bool {

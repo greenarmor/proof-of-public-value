@@ -268,3 +268,36 @@ fn test_reputation_score_floor_at_zero() {
     let record = client.get_reputation(&contractor).unwrap();
     assert_eq!(record.reputation_score, 0);
 }
+
+#[test]
+fn test_reputation_stays_at_ceiling_with_perfect_record() {
+    let (env, client) = setup();
+    let contractor = Address::generate(&env);
+    client.register_entity(&contractor, &EntityType::Contractor);
+
+    let caller = Address::generate(&env);
+    client.record_completion(&caller, &contractor, &100, &true, &true);
+    client.record_completion(&caller, &contractor, &100, &true, &true);
+    client.record_completion(&caller, &contractor, &100, &true, &true);
+
+    let record = client.get_reputation(&contractor).unwrap();
+    assert_eq!(record.reputation_score, 100);
+    assert_eq!(record.success_rate, 100);
+    assert_eq!(record.completed_projects, 3);
+}
+
+#[test]
+fn test_reputation_recovery_after_violations() {
+    let (env, client) = setup();
+    let contractor = Address::generate(&env);
+    client.register_entity(&contractor, &EntityType::Contractor);
+
+    let caller = Address::generate(&env);
+    client.record_safety_violation(&caller, &contractor, &3);
+    let after_violation = client.get_reputation(&contractor).unwrap().reputation_score;
+    assert!(after_violation < 100);
+
+    client.record_completion(&caller, &contractor, &95, &true, &true);
+    let after_recovery = client.get_reputation(&contractor).unwrap().reputation_score;
+    assert!(after_recovery > after_violation);
+}

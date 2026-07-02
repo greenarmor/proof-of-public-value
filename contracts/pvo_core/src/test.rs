@@ -341,3 +341,66 @@ fn test_submit_evidence_to_released_milestone() {
 
     client.submit_evidence(&submitter, &pvo_id, &mid, &EvidenceType::DroneImagery, &make_string(&env, "h1"), &make_string(&env, ""));
 }
+
+#[test]
+fn test_max_budget_pvo() {
+    let (env, client) = setup();
+    let creator = Address::generate(&env);
+    let agency = Address::generate(&env);
+    let contractor = Address::generate(&env);
+    let pm = Address::generate(&env);
+
+    let max_budget = i128::MAX;
+    let id = client.create_pvo(
+        &creator,
+        &make_string(&env, "Mega Infrastructure"),
+        &make_string(&env, "National-scale project"),
+        &agency, &contractor, &pm,
+        &make_string(&env, "DPWH"), &make_string(&env, "Manila"),
+        &max_budget, &make_string(&env, "Sovereign Fund"),
+    );
+
+    let pvo = client.get_pvo(&id).unwrap();
+    assert_eq!(pvo.total_budget, max_budget);
+}
+
+#[test]
+fn test_milestone_budget_equals_pvo_budget() {
+    let (env, client) = setup();
+    let pvo_id = create_test_pvo(&env, &client);
+
+    let creator = Address::generate(&env);
+    let required = Vec::from_array(&env, [EvidenceType::DroneImagery]);
+
+    let mid = client.create_milestone(
+        &creator, &pvo_id,
+        &make_string(&env, "Full Budget"), &make_string(&env, ""),
+        &10_000_000, &required, &1,
+    );
+
+    let pvo = client.get_pvo(&pvo_id).unwrap();
+    let milestone = client.get_milestone(&mid).unwrap();
+    assert_eq!(milestone.budget, pvo.total_budget);
+}
+
+#[test]
+fn test_long_strings() {
+    let (env, client) = setup();
+    let creator = Address::generate(&env);
+    let agency = Address::generate(&env);
+    let contractor = Address::generate(&env);
+    let pm = Address::generate(&env);
+
+    let long_title = make_string(&env, "A");
+    let long_desc = make_string(&env, "This is a very detailed project description that tests string handling");
+
+    let id = client.create_pvo(
+        &creator, &long_title, &long_desc,
+        &agency, &contractor, &pm,
+        &make_string(&env, "DPWH"), &make_string(&env, "QC"),
+        &5_000_000, &make_string(&env, "Budget 2026"),
+    );
+
+    let pvo = client.get_pvo(&id).unwrap();
+    assert_eq!(pvo.title, long_title);
+}
