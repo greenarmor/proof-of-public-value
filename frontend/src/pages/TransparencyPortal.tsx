@@ -7,17 +7,9 @@ import "leaflet/dist/leaflet.css";
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
 interface PVOData {
-  id: number;
-  title: string;
-  description: string;
-  department: string;
-  municipality: string;
-  total_budget: string;
-  status: string;
-  contractor: string;
-  public_value_score: number;
-  milestones: number[];
-  created_at: number;
+  id: number; title: string; description: string; department: string;
+  municipality: string; total_budget: string; status: string;
+  contractor: string; public_value_score: number; milestones: number[]; created_at: number;
 }
 
 export function TransparencyPortal() {
@@ -28,101 +20,58 @@ export function TransparencyPortal() {
   const loadPVOs = useCallback(async () => {
     setLoading(true);
     try {
-      const pvoClient = new PvoCoreClient({
-        contractId: CONTRACT_IDS.pvo_core,
-        networkPassphrase: NETWORK_PASSPHRASE,
-        rpcUrl: RPC_URL,
-      });
-
-      const countResult = await pvoClient.get_pvo_count();
-      const count = countResult.result;
-
+      const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const cnt = await client.get_pvo_count();
       const pvoList: PVOData[] = [];
-      for (let i = 1; i <= count; i++) {
+      for (let i = 1; i <= Number(cnt.result); i++) {
         try {
-          const result = await pvoClient.get_pvo({ pvo_id: i });
-          const pvo = result.result;
-          if (pvo) {
-            pvoList.push({
-              id: pvo.id,
-              title: pvo.title,
-              description: pvo.description,
-              department: pvo.department,
-              municipality: pvo.municipality,
-              total_budget: String(pvo.total_budget),
-              status: statusToString(pvo.status),
-              contractor: pvo.contractor,
-              public_value_score: pvo.public_value_score,
-              milestones: pvo.milestones as unknown as number[],
-              created_at: Number(pvo.created_at),
-            });
-          }
-        } catch (e) {
-          console.error(`Failed to load PVO ${i}:`, e);
-        }
+          const r = await client.get_pvo({ pvo_id: i });
+          if (r.result) pvoList.push({ id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at) });
+        } catch {}
       }
       setPvos(pvoList);
-    } catch (e) {
-      console.error("Failed to load PVOs:", e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    loadPVOs();
-  }, [loadPVOs]);
+  useEffect(() => { loadPVOs(); }, [loadPVOs]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-500 text-lg">Loading public projects...</div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="space-y-4">
+      {[...Array(3)].map((_, i) => <div key={i} className="skeleton-shimmer h-32 rounded-xl" />)}
+    </div>
+  );
 
-  if (selectedPvo) {
-    return <PVODetail pvo={selectedPvo} onBack={() => setSelectedPvo(null)} />;
-  }
+  if (selectedPvo) return <PVODetail pvo={selectedPvo} onBack={() => setSelectedPvo(null)} />;
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Public Transparency Portal</h1>
-        <p className="text-gray-500">
-          Browse all government infrastructure projects on-chain. {pvos.length} projects tracked.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Public Transparency Portal</h1>
+        <p className="text-slate-500">{pvos.length} project{pvos.length !== 1 ? "s" : ""} tracked on-chain · No wallet required</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {pvos.map((pvo) => (
-          <button
-            key={pvo.id}
-            onClick={() => setSelectedPvo(pvo)}
-            className="text-left bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow"
-          >
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {pvos.map(pvo => (
+          <button key={pvo.id} onClick={() => setSelectedPvo(pvo)}
+            className="card-interactive text-left p-5 group">
             <div className="flex items-start justify-between mb-3">
-              <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-blue-50 text-blue-700">
-                {pvo.status}
-              </span>
-              <span className="text-sm text-gray-400">#{pvo.id}</span>
+              <span className="badge-blue">{pvo.status}</span>
+              <span className="text-xs text-slate-400 font-mono">#{pvo.id}</span>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1 truncate">{pvo.title}</h3>
-            <p className="text-sm text-gray-500 mb-3">{pvo.department} · {pvo.municipality}</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-mono text-gray-700">⨎ {formatBudget(pvo.total_budget)}</span>
-              <span className="text-gray-400">{pvo.milestones.length} milestones</span>
+            <h3 className="font-semibold text-slate-900 mb-1 truncate group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
+            <p className="text-sm text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
+            <div className="flex items-center justify-between text-sm mb-3">
+              <span className="font-mono text-slate-700 font-medium">⨎ {formatBudget(pvo.total_budget)}</span>
+              <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length !== 1 ? "s" : ""}</span>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-400">Value Score</span>
-                <span className="font-semibold text-gray-700">{pvo.public_value_score}/100</span>
+            <div className="pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-400">Value Score</span>
+                <span className="font-semibold text-slate-700">{pvo.public_value_score}/100</span>
               </div>
-              <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
-                  style={{ width: `${pvo.public_value_score}%` }}
-                />
+              <div className="progress-bar">
+                <div className="progress-fill progress-green" style={{ width: `${pvo.public_value_score}%` }} />
               </div>
             </div>
           </button>
@@ -130,15 +79,16 @@ export function TransparencyPortal() {
       </div>
 
       {pvos.length === 0 && (
-        <div className="text-center py-20 text-gray-400">
-          No projects found on-chain yet.
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">📭</div>
+          <p className="text-lg text-slate-400">No projects found on-chain yet.</p>
         </div>
       )}
 
       {pvos.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">🗺️ Project Map</h2>
-          <Suspense fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center text-gray-400">Loading map...</div>}>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">🗺️ Project Map</h2>
+          <Suspense fallback={<div className="skeleton-shimmer h-96 rounded-xl" />}>
             <ProjectMap pvos={pvos} />
           </Suspense>
         </div>
@@ -150,78 +100,49 @@ export function TransparencyPortal() {
 function PVODetail({ pvo, onBack }: { pvo: PVOData; onBack: () => void }) {
   return (
     <div>
-      <button onClick={onBack} className="mb-4 text-sm text-gray-500 hover:text-gray-700">
-        ← Back to all projects
-      </button>
+      <button onClick={onBack} className="btn-ghost mb-4">← Back to all projects</button>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
+      <div className="card p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{pvo.title}</h1>
-            <p className="text-gray-500 mt-1">{pvo.description}</p>
+            <h1 className="text-2xl font-bold text-slate-900">{pvo.title}</h1>
+            <p className="text-slate-500 mt-1">{pvo.description}</p>
           </div>
-          <span className="inline-block px-3 py-1 text-sm font-medium rounded bg-blue-50 text-blue-700">
-            {pvo.status}
-          </span>
+          <span className="badge-blue self-start shrink-0">{pvo.status}</span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Department</dt>
-            <dd className="text-sm font-medium text-gray-900 mt-1">{pvo.department}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Location</dt>
-            <dd className="text-sm font-medium text-gray-900 mt-1">{pvo.municipality}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Budget</dt>
-            <dd className="text-sm font-medium text-gray-900 mt-1">⨎ {formatBudget(pvo.total_budget)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Contractor</dt>
-            <dd className="text-sm font-mono text-gray-900 mt-1">{formatAddress(pvo.contractor)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Created</dt>
-            <dd className="text-sm font-medium text-gray-900 mt-1">{formatTimestamp(pvo.created_at)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-gray-400 uppercase tracking-wide">Value Score</dt>
-            <dd className="text-sm font-medium text-gray-900 mt-1">{pvo.public_value_score}/100</dd>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
-        <h2 className="text-lg font-semibold mb-4">📸 Citizen Reports</h2>
-        <CitizenReportFeed pvoId={pvo.id} />
-      </div>
-    </div>
-  );
-}
-
-function CitizenReportFeed({ pvoId }: { pvoId: number }) {
-  const reports = [
-    { id: 1, type: "GpsPhoto", milestone: "Site Preparation", citizen: "G...ACMSV", confidence: 70, ts: "Jul 3, 2026" },
-  ];
-
-  return (
-    <div>
-      {reports.map((r) => (
-        <div key={r.id} className="flex items-start gap-4 py-3 border-b border-gray-100 last:border-0">
-          <span className="text-2xl">📸</span>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 text-xs rounded bg-green-50 text-green-700">{r.type}</span>
-              <span className="text-sm text-gray-500">{r.ts}</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+          {[
+            ["Department", pvo.department],
+            ["Location", pvo.municipality],
+            ["Budget", `⨎ ${formatBudget(pvo.total_budget)}`],
+            ["Contractor", formatAddress(pvo.contractor)],
+            ["Created", formatTimestamp(pvo.created_at)],
+            ["Value Score", `${pvo.public_value_score}/100`],
+          ].map(([label, value]) => (
+            <div key={label as string}>
+              <dt className="stat-label">{label as string}</dt>
+              <dd className="text-sm font-medium text-slate-900 mt-1">{value}</dd>
             </div>
-            <p className="text-sm text-gray-700 mt-1">Milestone: {r.milestone}</p>
-            <p className="text-xs text-gray-400 mt-0.5">By {r.citizen} · Confidence {r.confidence}%</p>
-          </div>
+          ))}
         </div>
-      ))}
-      {reports.length === 0 && <p className="text-sm text-gray-400 py-4">No citizen reports for this project yet.</p>}
+      </div>
+
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">📸 Citizen Reports</h2>
+        <div className="space-y-3">
+          {[{ id: 1, type: "GpsPhoto", milestone: "Site Preparation", citizen: "G...ACMSV", confidence: 70 }].map(r => (
+            <div key={r.id} className="flex items-start gap-4 py-3 border-b border-slate-100 last:border-0">
+              <span className="text-2xl">📸</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2"><span className="badge-green">{r.type}</span></div>
+                <p className="text-sm text-slate-700 mt-1">Milestone: {r.milestone}</p>
+                <p className="text-xs text-slate-400 mt-0.5">By {r.citizen} · {r.confidence}% confidence</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
