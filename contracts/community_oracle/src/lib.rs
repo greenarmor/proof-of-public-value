@@ -2,7 +2,7 @@
 
 use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, String, Symbol, Vec};
 
-const NATIVE_XLM: &str = "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA";
+const RPT_ASSET: &str = "CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ";
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -108,9 +108,9 @@ impl CommunityOracle {
         let min_balance: i128 = storage.get(&MIN_BALANCE).unwrap_or(0);
 
         if min_balance > 0 {
-            let native = token::Client::new(&env, &Address::from_string(&String::from_str(&env, NATIVE_XLM)));
-            let balance = native.balance(&citizen);
-            assert!(balance >= min_balance, "insufficient XLM balance to report");
+            let rpt = token::Client::new(&env, &Address::from_string(&String::from_str(&env, RPT_ASSET)));
+            let balance = rpt.balance(&citizen);
+            assert!(balance >= min_balance, "insufficient RPT balance to report");
         }
 
         let id = Self::next_id(&env);
