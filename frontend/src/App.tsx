@@ -44,9 +44,14 @@ function AccessDenied() {
       <h2 className="text-xl font-semibold text-gray-700 mb-2">Access Denied</h2>
       <p className="text-gray-500 mb-4">Your wallet does not have the required role for this dashboard.</p>
       {!connected ? (
-        <button onClick={connect} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-          Connect Wallet
-        </button>
+        <div className="max-w-md">
+          <button onClick={connect} className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 mb-3">
+            Connect Wallet
+          </button>
+          <p className="text-sm text-gray-400">
+            You need the <a href="https://freighter.app" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">Freighter</a> browser extension to connect your wallet.
+          </p>
+        </div>
       ) : (
         <>
           <p className="text-sm text-gray-400 mb-4">Connected wallet does not have authorization.</p>
@@ -103,9 +108,15 @@ function Header() {
               </button>
             </div>
           ) : (
-            <button onClick={connect} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
-              Connect Wallet
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={connect} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                Connect Wallet
+              </button>
+              <a href="https://freighter.app" target="_blank" rel="noopener noreferrer"
+                className="hidden sm:block text-xs text-gray-400 hover:text-purple-600 transition">
+                Need Freighter? →
+              </a>
+            </div>
           )}
         </div>
       </div>
