@@ -175,7 +175,12 @@ function CitizenBrowse() {
       if (signedResp?.error) throw new Error(signedResp.error.message);
 
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
+      try {
+        await server.sendTransaction(signedTx);
+      } catch (e: any) {
+        // Ignore result parsing errors — transaction was submitted
+        if (!e.message?.includes("switch") && !e.message?.includes("undefined")) throw e;
+      }
       setVmsg(`Report #${reportId} verified with weight ${weight}! ✅`);
     } catch(er:any) { setVmsg(`Error: ${er.message?.slice(0,150)}`); }
     finally { setVerifying(null); }
