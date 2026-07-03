@@ -66,25 +66,54 @@ function CitizenDashboard() {
     setRptBalance(null);
     setTrustlineChecked(false);
     (async () => {
+      // Load reputation
       try {
         const client = new CommunityOracleClient({
           contractId: CONTRACT_IDS.community_oracle,
           networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL,
         });
-        try { const rep = await client.get_citizen_reputation({ citizen: address }); setReputation(rep.result); } catch {}
+        const rep = await client.get_citizen_reputation({ citizen: address });
+        setReputation(rep.result);
       } catch {}
-      // Check RPT balance via SAC token contract
+
+      // Check RPT balance — use direct RPC simulate, no account needed
       try {
         const { rpc: srpc, TransactionBuilder, Contract, Address } = await import("@stellar/stellar-sdk");
         const server = new srpc.Server(RPC_URL);
-        const account = await server.getAccount(address);
-        const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-          .addOperation(new Contract(RPT_ASSET).call("balance", new Address(address).toScVal()))
-          .setTimeout(30).build();
-        const sim = await server.simulateTransaction(tx);
-        try { setRptBalance(Number((sim as any).result?.retval ?? (sim as any).retval ?? 0)); } catch { setRptBalance(0); }
-      } catch (e: any) {
-        // Simulation error = no trustline or no balance
+        const contract = new Contract(RPT_ASSET);
+        const scVal = new Address(address).toScVal();
+
+        // Use fake account — simulation doesn't need real sequence
+        const tx = new TransactionBuilder(
+          { source: address, sequence: "0" } as any,
+          { fee: "0", networkPassphrase: NETWORK_PASSPHRASE }
+        )
+          .addOperation(contract.call("balance", scVal))
+          .setTimeout(30)
+          .build();
+
+        const sim: any = await server.simulateTransaction(tx);
+
+        if (sim?.error) {
+          // Trustline missing = balance 0
+          setRptBalance(0);
+        } else {
+          // Try to extract return value
+          const raw = sim?.result?.retval;
+          if (raw === undefined || raw === null) {
+            setRptBalance(0);
+          } else if (typeof raw === "number") {
+            setRptBalance(raw);
+          } else if (typeof raw === "string") {
+            setRptBalance(Number(raw) || 0);
+          } else if (raw?.value !== undefined) {
+            setRptBalance(Number(raw.value) || 0);
+          } else {
+            // Try parsing as i128 map
+            try { setRptBalance(Number(raw.toString()) || 0); } catch { setRptBalance(0); }
+          }
+        }
+      } catch {
         setRptBalance(0);
       }
       setTrustlineChecked(true);
