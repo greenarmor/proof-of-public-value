@@ -69,7 +69,7 @@ export default function CitizenReportForm() {
         new Address(address).toScVal(),
         nativeToScVal(pvoNum, { type: "u32" } as any),
         nativeToScVal(milNum, { type: "u32" } as any),
-        nativeToScVal({ tag, values: [] }, { type: "custom" } as any),
+        nativeToScVal([tag], { type: "vec" } as any),
         nativeToScVal(hash, { type: "string" } as any),
         nativeToScVal(gpsLat, { type: "i128" } as any),
         nativeToScVal(gpsLon, { type: "i128" } as any),
