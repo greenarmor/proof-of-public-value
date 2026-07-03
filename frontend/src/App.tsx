@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
@@ -12,24 +13,53 @@ import { ProcurementMarketplace } from "./pages/ProcurementMarketplace";
 import { EconomicMemory } from "./pages/EconomicMemory";
 import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
+import { InspectorPanel } from "./pages/InspectorPanel";
+import { SupplierPortal } from "./pages/SupplierPortal";
+import { ProjectManagerDashboard } from "./pages/ProjectManagerDashboard";
+import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
+import { FunderDashboard } from "./pages/FunderDashboard";
+import { DonorDashboard } from "./pages/DonorDashboard";
 import { formatAddress } from "./helpers";
 
-interface NavItem { to: string; label: string; icon: string; roles?: string[]; color?: string; }
+interface NavItem { to: string; label: string; icon: string; roles?: string[]; group: string; }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Projects", icon: "🏛️", color: "from-blue-500 to-cyan-400" },
-  { to: "/index", label: "Index", icon: "🏆", color: "from-amber-500 to-yellow-400" },
-  { to: "/memory", label: "Search", icon: "🔍", color: "from-slate-500 to-slate-400" },
-  { to: "/citizen", label: "Citizen", icon: "📸", roles: ["Citizen", "Administrator"], color: "from-green-500 to-emerald-400" },
-  { to: "/agency", label: "Agency", icon: "🏢", roles: ["GovernmentAgency", "Administrator"], color: "from-brand-600 to-brand-400" },
-  { to: "/contractor", label: "Contractor", icon: "🚧", roles: ["Contractor", "Administrator"], color: "from-orange-500 to-amber-400" },
-  { to: "/engineer", label: "Engineer", icon: "🔧", roles: ["Engineer", "Administrator"], color: "from-teal-500 to-cyan-400" },
-  { to: "/auditor", label: "Auditor", icon: "📊", roles: ["Auditor", "CommissionOnAudit", "Administrator"], color: "from-red-500 to-pink-400" },
-  { to: "/procurement", label: "Tenders", icon: "🏗️", roles: ["GovernmentAgency", "Administrator"], color: "from-indigo-500 to-blue-400" },
-  { to: "/ai", label: "AI", icon: "🤖", roles: ["AIAuditor", "Administrator"], color: "from-purple-500 to-violet-400" },
-  { to: "/compliance", label: "Comply", icon: "⚖️", roles: ["Auditor", "CommissionOnAudit", "Administrator"], color: "from-rose-500 to-red-400" },
-  { to: "/admin", label: "Admin", icon: "⚙️", roles: ["Administrator"], color: "from-slate-600 to-slate-500" },
+  { to: "/", label: "Projects", icon: "🏛️", group: "public" },
+  { to: "/index", label: "Index", icon: "🏆", group: "public" },
+  { to: "/memory", label: "Search", icon: "🔍", group: "public" },
+
+  { to: "/citizen", label: "Citizen", icon: "📸", roles: ["Citizen", "Administrator"], group: "engagement" },
+
+  { to: "/agency", label: "Agency", icon: "🏢", roles: ["GovernmentAgency", "Administrator"], group: "government" },
+  { to: "/procurement", label: "Tenders", icon: "🏗️", roles: ["GovernmentAgency", "Administrator"], group: "government" },
+
+  { to: "/contractor", label: "Contractor", icon: "🚧", roles: ["Contractor", "Administrator"], group: "delivery" },
+  { to: "/engineer", label: "Engineer", icon: "🔧", roles: ["Engineer", "Administrator"], group: "delivery" },
+  { to: "/inspector", label: "Inspector", icon: "🔎", roles: ["Inspector", "Administrator"], group: "delivery" },
+  { to: "/pm", label: "Project Manager", icon: "📋", roles: ["ProjectManager", "Administrator"], group: "delivery" },
+  { to: "/supplier", label: "Supplier", icon: "📦", roles: ["Supplier", "Administrator"], group: "delivery" },
+
+  { to: "/auditor", label: "Auditor", icon: "📊", roles: ["Auditor", "CommissionOnAudit", "Administrator"], group: "oversight" },
+  { to: "/compliance", label: "Compliance", icon: "⚖️", roles: ["Auditor", "CommissionOnAudit", "Administrator"], group: "oversight" },
+  { to: "/anticorruption", label: "Anti-Corruption", icon: "🛡️", roles: ["AntiCorruptionAgency", "Administrator"], group: "oversight" },
+  { to: "/ai", label: "AI Oracle", icon: "🤖", roles: ["AIAuditor", "Administrator"], group: "oversight" },
+
+  { to: "/funder", label: "Funding Agency", icon: "💰", roles: ["FundingAgency", "Administrator"], group: "finance" },
+  { to: "/donor", label: "Int'l Donor", icon: "🌍", roles: ["InternationalDonor", "Administrator"], group: "finance" },
+
+  { to: "/admin", label: "Admin Panel", icon: "⚙️", roles: ["Administrator"], group: "system" },
 ];
+
+const GROUP_LABELS: Record<string, string> = {
+  engagement: "Community",
+  government: "Government",
+  delivery: "Project Delivery",
+  oversight: "Oversight & Audit",
+  finance: "Funding",
+  system: "System",
+};
+
+const GROUP_ORDER = ["engagement", "government", "delivery", "oversight", "finance", "system"];
 
 function AccessDenied() {
   const { connect, connected } = useWallet();
@@ -54,13 +84,32 @@ function AccessDenied() {
 }
 
 function Header() {
-  const { address, connected, connect, disconnect, hasRole } = useWallet();
+  const { address, connected, connect, disconnect, roles, hasRole } = useWallet();
+  const [dashboardsOpen, setDashboardsOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const visibleItems = NAV_ITEMS.filter(item => {
-    if (!item.roles || item.roles.length === 0) return true;
+  const publicItems = NAV_ITEMS.filter(i => i.group === "public");
+  const roleItems = NAV_ITEMS.filter(i => i.group !== "public" && i.group !== "system");
+  const systemItems = NAV_ITEMS.filter(i => i.group === "system");
+
+  const visibleRoleItems = roleItems.filter(item => {
     if (!connected) return false;
-    return hasRole(...item.roles);
+    return hasRole(...(item.roles || []));
   });
+  const visibleSystemItems = systemItems.filter(item => {
+    if (!connected) return false;
+    return hasRole(...(item.roles || []));
+  });
+
+  const grouped = GROUP_ORDER
+    .filter(g => g !== "public")
+    .map(g => ({ group: g, items: visibleRoleItems.filter(i => i.group === g) }))
+    .filter(g => g.items.length > 0);
+
+  const activeRoleLabel = [...visibleRoleItems, ...visibleSystemItems].find(i =>
+    window.location.pathname === i.to
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/80">
@@ -70,23 +119,76 @@ function Header() {
             <span className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center text-white text-sm">P</span>
             <span className="hidden sm:inline">PoPV</span>
           </NavLink>
+
+          {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
-            {visibleItems.map(item => (
+            {publicItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.to === "/"}
                 className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`}>
                 <span className="mr-1">{item.icon}</span>{item.label}
               </NavLink>
             ))}
+
+            {/* Dashboards dropdown */}
+            {visibleRoleItems.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setDashboardsOpen(o => !o)}
+                  onBlur={() => setTimeout(() => setDashboardsOpen(false), 150)}
+                  className={`nav-link ${dashboardsOpen || activeRoleLabel ? "nav-link-active" : "nav-link-inactive"}`}>
+                  <span className="mr-1">📊</span>Dashboards
+                  <span className="ml-1 text-[9px]">{visibleRoleItems.length > 0 ? `${visibleRoleItems.length}` : ""}</span>
+                  <svg className={`w-3 h-3 ml-0.5 transition-transform ${dashboardsOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {dashboardsOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-[420px] bg-white rounded-xl shadow-xl border border-slate-200 p-2 grid grid-cols-2 gap-x-1 gap-y-0.5">
+                    {grouped.map(({ group, items }) => (
+                      <div key={group} className={group === "system" ? "col-span-2 mt-1 pt-1 border-t border-slate-100" : ""}>
+                        {group !== "system" && (
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 py-1">{GROUP_LABELS[group]}</p>
+                        )}
+                        {items.map(item => (
+                          <NavLink key={item.to} to={item.to}
+                            onClick={() => setDashboardsOpen(false)}
+                            className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                            <span className="text-base">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
+                    ))}
+                    {visibleSystemItems.length > 0 && (
+                      <div className="col-span-2 mt-1 pt-1 border-t border-slate-100">
+                        {visibleSystemItems.map(item => (
+                          <NavLink key={item.to} to={item.to}
+                            onClick={() => setDashboardsOpen(false)}
+                            className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                            <span className="text-base">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
         </div>
+
         <div className="flex items-center gap-3">
           {connected ? (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-sm font-mono text-slate-700">{formatAddress(address!, 4)}</span>
+                {roles.length > 0 && (
+                  <span className="hidden sm:inline text-[10px] text-slate-400 ml-1">· {roles.join(", ")}</span>
+                )}
               </div>
-              <button onClick={disconnect} className="text-sm text-slate-400 hover:text-red-500 transition-colors">Disconnect</button>
+              <button onClick={disconnect} className="hidden sm:inline text-sm text-slate-400 hover:text-red-500 transition-colors">Disconnect</button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
@@ -98,14 +200,58 @@ function Header() {
               </a>
             </div>
           )}
+
           {/* Mobile menu toggle */}
-          <button className="lg:hidden btn-ghost p-2" onClick={() => {}}>
+          <button className="lg:hidden btn-ghost p-2" onClick={() => setMobileOpen(o => !o)}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              {mobileOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
             </svg>
           </button>
         </div>
       </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="lg:hidden border-t border-slate-200 bg-white max-h-[80vh] overflow-y-auto">
+          <nav className="px-4 py-3 space-y-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Public</p>
+              {publicItems.map(item => (
+                <NavLink key={item.to} to={item.to} end={item.to === "/"} onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                  <span>{item.icon}</span>{item.label}
+                </NavLink>
+              ))}
+            </div>
+            {grouped.map(({ group, items }) => (
+              <div key={group}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{GROUP_LABELS[group]}</p>
+                {items.map(item => (
+                  <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                    <span>{item.icon}</span>{item.label}
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+            {visibleSystemItems.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">System</p>
+                {visibleSystemItems.map(item => (
+                  <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                    <span>{item.icon}</span>{item.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
@@ -137,6 +283,12 @@ function App() {
               <Route path="/procurement" element={<ProtectedRoute element={<ProcurementMarketplace />} roles={["GovernmentAgency", "Administrator"]} />} />
               <Route path="/ai" element={<ProtectedRoute element={<AIDashboard />} roles={["AIAuditor", "Administrator"]} />} />
               <Route path="/compliance" element={<ProtectedRoute element={<ComplianceDashboard />} roles={["Auditor", "CommissionOnAudit", "Administrator"]} />} />
+              <Route path="/inspector" element={<ProtectedRoute element={<InspectorPanel />} roles={["Inspector", "Administrator"]} />} />
+              <Route path="/supplier" element={<ProtectedRoute element={<SupplierPortal />} roles={["Supplier", "Administrator"]} />} />
+              <Route path="/pm" element={<ProtectedRoute element={<ProjectManagerDashboard />} roles={["ProjectManager", "Administrator"]} />} />
+              <Route path="/funder" element={<ProtectedRoute element={<FunderDashboard />} roles={["FundingAgency", "Administrator"]} />} />
+              <Route path="/donor" element={<ProtectedRoute element={<DonorDashboard />} roles={["InternationalDonor", "Administrator"]} />} />
+              <Route path="/anticorruption" element={<ProtectedRoute element={<AntiCorruptionDashboard />} roles={["AntiCorruptionAgency", "Administrator"]} />} />
               <Route path="/admin" element={<ProtectedRoute element={<AdminPanel />} roles={["Administrator"]} />} />
             </Routes>
           </main>

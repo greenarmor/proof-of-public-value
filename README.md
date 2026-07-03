@@ -68,17 +68,23 @@ National Budget → PVO → Milestones → Evidence Collection
 
 ## Dashboard Access Control
 
-| Role | Can Access |
-|------|-----------|
-| Administrator | All dashboards |
-| GovernmentAgency | Agency Dashboard, Procurement Marketplace, Public |
-| Contractor | Contractor Portal, Public |
-| Engineer | Engineer Panel, Public |
-| Auditor | Auditor Dashboard, Compliance Dashboard, Public |
-| CommissionOnAudit | Auditor Dashboard, Compliance Dashboard, Public |
-| AIAuditor | AI Monitor, Public |
-| Citizen | Citizen Interface, Public |
-| No role | Public pages only |
+| # | Role | Route | Dashboard |
+|---|------|-------|----------|
+| 1 | Administrator | `/admin` | All dashboards (full access) |
+| 2 | GovernmentAgency | `/agency`, `/procurement` | Agency Dashboard, Procurement Marketplace |
+| 3 | Contractor | `/contractor` | Contractor Portal |
+| 4 | Engineer | `/engineer` | Engineer Panel |
+| 5 | Inspector | `/inspector` | Inspector Panel |
+| 6 | Auditor | `/auditor`, `/compliance` | Auditor Dashboard, Compliance Dashboard |
+| 7 | CommissionOnAudit | `/auditor`, `/compliance` | Auditor Dashboard, Compliance Dashboard |
+| 8 | Supplier | `/supplier` | Supplier Portal |
+| 9 | ProjectManager | `/pm` | Project Manager Dashboard |
+| 10 | AntiCorruptionAgency | `/anticorruption` | Anti-Corruption Dashboard |
+| 11 | FundingAgency | `/funder` | Funding Agency Dashboard (Escrow) |
+| 12 | InternationalDonor | `/donor` | International Donor Dashboard |
+| 13 | AIAuditor | `/ai` | AI Monitor |
+| 14 | Citizen | `/citizen` | Citizen Interface |
+| — | No role | `/`, `/index`, `/memory` | Public pages only |
 
 ---
 
@@ -151,7 +157,7 @@ stellar/
 │   ├── public_index/      # National department rankings
 │   ├── compliance_engine/ # Auto-pause on violations
 │   └── procurement_market/# Integrity-weighted bidding
-├── frontend/              # React + TypeScript (13 dashboards)
+├── frontend/              # React + TypeScript (19 dashboards, 14 role-based + 3 public)
 ├── mobile/                # Flutter (11 screens)
 ├── services/event-indexer/# Stellar event monitoring
 ├── scripts/deploy.sh      # Deployment automation
