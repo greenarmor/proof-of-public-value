@@ -114,6 +114,8 @@ function RoleManagement() {
       const roleMap: Record<string, any> = {};
       ROLES.forEach((r: string) => { roleMap[r] = { tag: r, values: void 0 }; });
 
+      const { signTransaction } = await import("@stellar/freighter-api");
+
       const tx = await client.assign_role({
         address: userAddress,
         role: roleMap[role],
@@ -121,7 +123,10 @@ function RoleManagement() {
       });
 
       setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
-      const result = await tx.signAndSend();
+      await tx.signAndSend({
+        signTransaction: (xdr: string, opts: any) =>
+          signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE }),
+      } as any);
       setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!`, ok: true });
       setUserAddress("");
       await loadAssignments();
@@ -147,6 +152,8 @@ function RoleManagement() {
       const roleMap: Record<string, any> = {};
       ROLES.forEach((role: string) => { roleMap[role] = { tag: role, values: void 0 }; });
 
+      const { signTransaction } = await import("@stellar/freighter-api");
+
       const tx = await client.revoke_role({
         revoker: address,
         address: addr,
@@ -154,7 +161,10 @@ function RoleManagement() {
       });
 
       setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
-      await tx.signAndSend();
+      await tx.signAndSend({
+        signTransaction: (xdr: string, opts: any) =>
+          signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE }),
+      } as any);
       setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}.`, ok: true });
       await loadAssignments();
     } catch (err: any) {
