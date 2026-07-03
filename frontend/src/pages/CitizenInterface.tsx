@@ -104,8 +104,13 @@ function CitizenDashboard() {
         .addOperation(Operation.changeTrust({ asset })).setTimeout(30).build();
 
       setMessage({ text: "Check Freighter popup to sign...", ok: true });
-      const signedResp = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE } as any);
-      const result = await server.sendTransaction(signedResp as any);
+      const signedResp: any = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+
+      if (signedResp?.error) {
+        throw new Error(signedResp.error.message || "Freighter signing failed");
+      }
+
+      const result = await server.sendTransaction(signedResp.signedTxXdr);
 
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
         setMessage({ text: "✅ RPT trustline created! Admin can now mint tokens to your wallet.", ok: true });

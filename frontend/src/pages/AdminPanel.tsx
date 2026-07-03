@@ -126,8 +126,11 @@ function RoleManagement() {
 
       setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
       await tx.signAndSend({
-        signTransaction: (xdr: string, opts: any) =>
-          signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE }),
+        signTransaction: async (xdr: string, opts: any) => {
+          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
+          if (resp?.error) throw new Error(resp.error.message);
+          return resp.signedTxXdr;
+        },
       } as any);
       setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!`, ok: true });
       setUserAddress("");
@@ -164,8 +167,11 @@ function RoleManagement() {
 
       setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
       await tx.signAndSend({
-        signTransaction: (xdr: string, opts: any) =>
-          signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE }),
+        signTransaction: async (xdr: string, opts: any) => {
+          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
+          if (resp?.error) throw new Error(resp.error.message);
+          return resp.signedTxXdr;
+        },
       } as any);
       setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}.`, ok: true });
       await loadAssignments();
@@ -291,11 +297,15 @@ function MintRPT() {
         throw new Error(`Simulation failed: ${simStr.slice(0, 200)}`);
       }
       const prepared = await server.prepareTransaction(tx);
-      const signedResp = await signTransaction(prepared.toXDR(), {
+      const signedResp: any = await signTransaction(prepared.toXDR(), {
         networkPassphrase: NETWORK_PASSPHRASE,
-      } as any);
+      });
 
-      const result = await server.sendTransaction(signedResp as any);
+      if (signedResp?.error) {
+        throw new Error(signedResp.error.message || "Freighter signing failed");
+      }
+
+      const result = await server.sendTransaction(signedResp.signedTxXdr);
 
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
         setMessage({ text: `Minted ${amount} RPT to ${formatAddress(wallet, 8)}! Tx: ${result.hash.slice(0, 10)}...`, ok: true });
