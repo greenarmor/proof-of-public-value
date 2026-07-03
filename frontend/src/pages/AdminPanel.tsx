@@ -283,6 +283,13 @@ function MintRPT() {
         .build();
 
       const sim = await server.simulateTransaction(tx);
+      const simStr = JSON.stringify(sim);
+      if (simStr.includes("trustline entry is missing")) {
+        throw new Error(`Wallet ${formatAddress(wallet, 8)} has no RPT trustline. Ask them to create it on the Citizen page first.`);
+      }
+      if (simStr.includes("Error")) {
+        throw new Error(`Simulation failed: ${simStr.slice(0, 200)}`);
+      }
       const prepared = await server.prepareTransaction(tx);
       const signedResp = await signTransaction(prepared.toXDR(), {
         networkPassphrase: NETWORK_PASSPHRASE,
