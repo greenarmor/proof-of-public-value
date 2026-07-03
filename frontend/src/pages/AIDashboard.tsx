@@ -14,7 +14,7 @@ interface FraudResult {
 }
 
 export function AIDashboard() {
-  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin">("fraud");
+  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps">("fraud");
   const [fraudResults, setFraudResults] = useState<FraudResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +81,7 @@ export function AIDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["fraud", "risk", "image", "twin"] as const).map((tab) => (
+        {(["fraud", "risk", "image", "twin", "geo", "gps"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
@@ -90,6 +90,8 @@ export function AIDashboard() {
             {tab === "risk" && "📈 Risk Prediction"}
             {tab === "image" && "🛰️ Image Verification"}
             {tab === "twin" && "🏗️ Digital Twin"}
+            {tab === "geo" && "🌍 Geo Risk"}
+            {tab === "gps" && "📍 GPS Valid"}
           </button>
         ))}
       </div>
@@ -100,6 +102,8 @@ export function AIDashboard() {
       {activeTab === "risk" && <RiskTab />}
       {activeTab === "image" && <ImageTab />}
       {activeTab === "twin" && <DigitalTwinTab />}
+      {activeTab === "geo" && <GeoRiskTab pvoId={1} />}
+      {activeTab === "gps" && <GpsValidationTab />}
     </div>
   );
 }
@@ -241,6 +245,83 @@ function DigitalTwinTab() {
                 <dd className={`font-semibold mt-1 ${t.laborIndex > 100 ? "text-red-600" : "text-green-600"}`}>{t.laborIndex}%</dd>
               </div>
             </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GeoRiskTab({ pvoId }: { pvoId: number }) {
+  const [risk, setRisk] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new AIOracleClient({
+          contractId: CONTRACT_IDS.ai_oracle,
+          networkPassphrase: NETWORK_PASSPHRASE,
+          rpcUrl: RPC_URL,
+        });
+        const r = await client.get_geo_risk({ pvo_id: pvoId });
+        setRisk(r.result);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [pvoId]);
+
+  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>;
+  if (!risk) return <div className="text-center py-10 text-gray-400">No geo risk data for PVO #{pvoId}.</div>;
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <h3 className="font-semibold mb-4">Geographic Risk — {risk.region}</h3>
+      <p className="text-sm text-gray-400 mb-6">Flood, seismic, and landslide risk assessment.</p>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[
+          { label: "Flood", val: risk.flood_risk, c: "bg-blue-500" },
+          { label: "Seismic", val: risk.seismic_risk, c: "bg-orange-500" },
+          { label: "Landslide", val: risk.landslide_risk, c: "bg-amber-700" },
+        ].map((r) => (
+          <div key={r.label} className="border rounded-lg p-4">
+            <div className="flex justify-between text-sm text-gray-500 mb-2">{r.label}<span>{r.val}%</span></div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className={`h-full ${r.c} rounded-full`} style={{ width: `${r.val}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between border-t pt-4">
+        <span className="text-sm text-gray-500">Overall Score</span>
+        <span className="font-bold text-lg">{risk.overall_risk_score}/100</span>
+      </div>
+    </div>
+  );
+}
+
+function GpsValidationTab() {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <h3 className="font-semibold mb-4">GPS Coordinate Validation</h3>
+      <p className="text-sm text-gray-400 mb-6">AI validation of submitted GPS coordinates vs expected project locations.</p>
+      <div className="space-y-4">
+        {[{ evidenceId: 3, expected: "14.599512, 120.984220", reported: "14.599520, 120.984230", ok: true, dist: "~10m" }].map((v, i) => (
+          <div key={i} className={`border rounded-lg p-4 ${v.ok ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-medium">Evidence #{v.evidenceId}</span>
+              <span className={`px-2 py-0.5 text-xs rounded ${v.ok ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
+                {v.ok ? "✅ Within Range" : "❌ Out of Range"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div><dt className="text-gray-400">Expected</dt><dd className="font-mono text-gray-700 mt-0.5">{v.expected}</dd></div>
+              <div><dt className="text-gray-400">Reported</dt><dd className="font-mono text-gray-700 mt-0.5">{v.reported}</dd></div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Distance: {v.dist}</p>
           </div>
         ))}
       </div>

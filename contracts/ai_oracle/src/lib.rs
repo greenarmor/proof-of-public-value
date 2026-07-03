@@ -64,6 +64,34 @@ pub struct DigitalTwin {
     pub last_updated: u64,
 }
 
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeoRiskAssessment {
+    pub pvo_id: u32,
+    pub region: String,
+    pub flood_risk: u32,
+    pub seismic_risk: u32,
+    pub landslide_risk: u32,
+    pub overall_risk_score: u32,
+    pub auditor: Address,
+    pub timestamp: u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GpsValidation {
+    pub id: u32,
+    pub evidence_id: u32,
+    pub expected_lat: i128,
+    pub expected_lon: i128,
+    pub reported_lat: i128,
+    pub reported_lon: i128,
+    pub distance_meters: u32,
+    pub within_range: bool,
+    pub auditor: Address,
+    pub timestamp: u64,
+}
+
 #[contractevent]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FraudDetectedEvent {
@@ -94,6 +122,22 @@ pub struct DigitalTwinUpdatedEvent {
     pub deviation_alert: bool,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeoRiskAssessedEvent {
+    pub pvo_id: u32,
+    pub region: String,
+    pub overall_risk_score: u32,
+}
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GpsValidatedEvent {
+    pub evidence_id: u32,
+    pub within_range: bool,
+    pub distance_meters: u32,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const FRAUD_RESULTS: Symbol = symbol_short!("FRAUDRES");
 const RISK_PREDICTIONS: Symbol = symbol_short!("RISKPRED");
@@ -101,6 +145,8 @@ const IMAGE_VERIFICATIONS: Symbol = symbol_short!("IMGVERIF");
 const DIGITAL_TWINS: Symbol = symbol_short!("DIGITWIN");
 const AI_AUDITORS: Symbol = symbol_short!("AIAUDIT");
 const PVO_FRAUD_IDX: Symbol = symbol_short!("PVOFRAUD");
+const GEO_RISKS: Symbol = symbol_short!("GEORISKS");
+const GPS_VALIDATIONS: Symbol = symbol_short!("GPSVAL");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 
 #[contract]
@@ -271,6 +317,95 @@ impl AIOracle {
         DigitalTwinUpdatedEvent { pvo_id, expected_cost, deviation_alert }.publish(&env);
     }
 
+    /// Submit geographic risk assessment (flood, seismic, landslide per region)
+    pub fn submit_geo_risk(
+        env: Env,
+        auditor: Address,
+        pvo_id: u32,
+        region: String,
+        flood_risk: u32,
+        seismic_risk: u32,
+        landslide_risk: u32,
+    ) {
+        auditor.require_auth();
+        assert!(Self::is_ai_auditor(&env, &auditor), "only AI auditors can submit");
+
+        let max_risk = flood_risk.max(seismic_risk).max(landslide_risk);
+        let avg_risk = (flood_risk.saturating_add(seismic_risk).saturating_add(landslide_risk)) / 3;
+        let overall = (max_risk.saturating_mul(60).saturating_add(avg_risk.saturating_mul(40))) / 100;
+
+        let assessment = GeoRiskAssessment {
+            pvo_id,
+            region: region.clone(),
+            flood_risk: flood_risk.min(100),
+            seismic_risk: seismic_risk.min(100),
+            landslide_risk: landslide_risk.min(100),
+            overall_risk_score: overall.min(100),
+            auditor,
+            timestamp: env.ledger().timestamp(),
+        };
+
+        let storage = env.storage().persistent();
+        let mut risks: Map<u32, GeoRiskAssessment> = storage.get(&GEO_RISKS).unwrap_or_else(|| Map::new(&env));
+        risks.set(pvo_id, assessment);
+        storage.set(&GEO_RISKS, &risks);
+
+        GeoRiskAssessedEvent { pvo_id, region, overall_risk_score: overall }.publish(&env);
+    }
+
+    /// Submit GPS coordinate validation (compare expected vs reported)
+    pub fn submit_gps_validation(
+        env: Env,
+        auditor: Address,
+        evidence_id: u32,
+        expected_lat: i128,
+        expected_lon: i128,
+        reported_lat: i128,
+        reported_lon: i128,
+        max_distance_m: u32,
+    ) -> u32 {
+        auditor.require_auth();
+        assert!(Self::is_ai_auditor(&env, &auditor), "only AI auditors can submit");
+
+        let d_lat = if expected_lat > reported_lat {
+            expected_lat.saturating_sub(reported_lat)
+        } else {
+            reported_lat.saturating_sub(expected_lat)
+        };
+        let d_lon = if expected_lon > reported_lon {
+            expected_lon.saturating_sub(reported_lon)
+        } else {
+            reported_lon.saturating_sub(expected_lon)
+        };
+
+        // Microdegrees: 1 microdegree ≈ 0.11m. Convert threshold to microdegrees.
+        let threshold_udeg = (max_distance_m as i128).saturating_mul(9);
+        let within_range = d_lat <= threshold_udeg && d_lon <= threshold_udeg;
+        let distance = (d_lat.max(d_lon) as u32).min(u32::MAX / 2);
+
+        let id = Self::next_id(&env);
+        let validation = GpsValidation {
+            id,
+            evidence_id,
+            expected_lat,
+            expected_lon,
+            reported_lat,
+            reported_lon,
+            distance_meters: distance,
+            within_range,
+            auditor,
+            timestamp: env.ledger().timestamp(),
+        };
+
+        let storage = env.storage().persistent();
+        let mut validations: Map<u32, GpsValidation> = storage.get(&GPS_VALIDATIONS).unwrap_or_else(|| Map::new(&env));
+        validations.set(id, validation);
+        storage.set(&GPS_VALIDATIONS, &validations);
+
+        GpsValidatedEvent { evidence_id, within_range, distance_meters: distance }.publish(&env);
+        id
+    }
+
     // ─── Queries ───
 
     pub fn get_fraud_detection(env: Env, id: u32) -> Option<FraudDetectionResult> {
@@ -328,6 +463,18 @@ impl AIOracle {
         let storage = env.storage().persistent();
         let results: Map<u32, FraudDetectionResult> = storage.get(&FRAUD_RESULTS).unwrap_or_else(|| Map::new(&env));
         results.len() as u32
+    }
+
+    pub fn get_geo_risk(env: Env, pvo_id: u32) -> Option<GeoRiskAssessment> {
+        let storage = env.storage().persistent();
+        let risks: Map<u32, GeoRiskAssessment> = storage.get(&GEO_RISKS).unwrap_or_else(|| Map::new(&env));
+        risks.get(pvo_id)
+    }
+
+    pub fn get_gps_validation(env: Env, id: u32) -> Option<GpsValidation> {
+        let storage = env.storage().persistent();
+        let validations: Map<u32, GpsValidation> = storage.get(&GPS_VALIDATIONS).unwrap_or_else(|| Map::new(&env));
+        validations.get(id)
     }
 
     // ─── Helpers ───

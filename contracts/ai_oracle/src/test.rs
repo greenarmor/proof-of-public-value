@@ -241,3 +241,97 @@ fn test_risk_score_clamped() {
     assert_eq!(result.risk_score, 100);
     assert_eq!(result.confidence, 100);
 }
+
+#[test]
+fn test_submit_geo_risk() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let auditor = Address::generate(&env);
+
+    client.add_ai_auditor(&admin, &auditor);
+
+    client.submit_geo_risk(
+        &auditor,
+        &1,
+        &make_string(&env, "Quezon City"),
+        &60,
+        &30,
+        &15,
+    );
+
+    let risk = client.get_geo_risk(&1).unwrap();
+    assert_eq!(risk.flood_risk, 60);
+    assert_eq!(risk.seismic_risk, 30);
+    assert_eq!(risk.landslide_risk, 15);
+    assert_eq!(risk.region, make_string(&env, "Quezon City"));
+    assert!(risk.overall_risk_score > 0);
+}
+
+#[test]
+fn test_submit_gps_validation_within_range() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let auditor = Address::generate(&env);
+
+    client.add_ai_auditor(&admin, &auditor);
+
+    // Expected: 14.599512, 120.984220 — Reported: 14.599520, 120.984230 (~10m apart)
+    let id = client.submit_gps_validation(
+        &auditor,
+        &3,
+        &14_599512_i128,
+        &120_984220_i128,
+        &14_599520_i128,
+        &120_984230_i128,
+        &1000,
+    );
+
+    let validation = client.get_gps_validation(&id).unwrap();
+    assert_eq!(validation.evidence_id, 3);
+    assert!(validation.within_range);
+}
+
+#[test]
+fn test_submit_gps_validation_out_of_range() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let auditor = Address::generate(&env);
+
+    client.add_ai_auditor(&admin, &auditor);
+
+    let id = client.submit_gps_validation(
+        &auditor,
+        &4,
+        &14_599512_i128,
+        &120_984220_i128,
+        &15_000000_i128,
+        &121_500000_i128,
+        &100,
+    );
+
+    let validation = client.get_gps_validation(&id).unwrap();
+    assert!(!validation.within_range);
+}
+
+#[test]
+fn test_geo_risk_overwrite() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let auditor = Address::generate(&env);
+
+    client.add_ai_auditor(&admin, &auditor);
+
+    client.submit_geo_risk(
+        &auditor, &1, &make_string(&env, "Manila"),
+        &80, &50, &40,
+    );
+
+    assert_eq!(client.get_geo_risk(&1).unwrap().flood_risk, 80);
+
+    client.submit_geo_risk(
+        &auditor, &1, &make_string(&env, "Manila Bay"),
+        &40, &20, &10,
+    );
+
+    assert_eq!(client.get_geo_risk(&1).unwrap().flood_risk, 40);
+}
