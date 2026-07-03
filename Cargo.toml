@@ -15,6 +15,7 @@ audit_trail = { path = "contracts/audit_trail" }
 value_score = { path = "contracts/value_score" }
 ai_oracle = { path = "contracts/ai_oracle" }
 public_index = { path = "contracts/public_index" }
+compliance_engine = { path = "contracts/compliance_engine" }
 
 [profile.release]
 opt-level = "z"

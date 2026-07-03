@@ -7,6 +7,7 @@ import { EngineerPanel } from "./pages/EngineerPanel";
 import { CitizenInterface } from "./pages/CitizenInterface";
 import { AuditorDashboard } from "./pages/AuditorDashboard";
 import { IndexLeaderboard } from "./pages/IndexLeaderboard";
+import { ComplianceDashboard } from "./pages/ComplianceDashboard";
 import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
 import { formatAddress } from "./helpers";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { to: "/citizen", label: "📸 Citizen" },
   { to: "/index", label: "🏆 National Index" },
   { to: "/ai", label: "🤖 AI Monitor" },
+  { to: "/compliance", label: "⚖️ Compliance" },
   { to: "/admin", label: "⚙️ Admin" },
 ];
 
@@ -89,6 +91,7 @@ function App() {
               <Route path="/citizen" element={<CitizenInterface />} />
               <Route path="/auditor" element={<AuditorDashboard />} />
               <Route path="/index" element={<IndexLeaderboard />} />\n              <Route path="/ai" element={<AIDashboard />} />
+              <Route path="/compliance" element={<ComplianceDashboard />} />
               <Route path="/admin" element={<AdminPanel />} />
             </Routes>
           </main>

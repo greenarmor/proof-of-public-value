@@ -22,6 +22,7 @@ audit_trail = { workspace = true }
 value_score = { workspace = true }
 ai_oracle = { workspace = true }
 public_index = { workspace = true }
+compliance_engine = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
@@ -34,3 +35,4 @@ audit_trail = { workspace = true, features = ["testutils"] }
 value_score = { workspace = true, features = ["testutils"] }
 ai_oracle = { workspace = true, features = ["testutils"] }
 public_index = { workspace = true, features = ["testutils"] }
+compliance_engine = { workspace = true, features = ["testutils"] }
