@@ -1,7 +1,7 @@
 site_name: Proof of Public Value (PoPV)
 site_description: "Programmable public spending on Stellar Soroban. No Proof. No Payment."
 site_author: greenarmor
-site_url: ""
+site_url: "https://greenarmor.github.io/proof-of-public-value"
 
 repo_url: https://github.com/greenarmor/proof-of-public-value
 repo_name: proof-of-public-value
