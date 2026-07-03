@@ -71,7 +71,7 @@ export default function CitizenReportForm() {
         citizen: address,
         pvo_id: pvoNum,
         milestone_id: milNum,
-        report_type: { tag } as any,
+        report_type: { tag, values: [] } as any,
         data_hash: hash,
         gps_lat: gpsLat as any,
         gps_lon: gpsLon as any,
