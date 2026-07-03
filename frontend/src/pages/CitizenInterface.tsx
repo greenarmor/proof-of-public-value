@@ -71,17 +71,26 @@ function CitizenDashboard() {
         });
         try { const rep = await client.get_citizen_reputation({ citizen: address }); setReputation(rep.result); } catch {}
       } catch {}
+      // Check RPT balance - if trustline missing, show setup button
       try {
-        const resp = await fetch(RPC_URL, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "simulateTransaction",
-            params: { transaction: { source: address, fee: "100", networkPassphrase: NETWORK_PASSPHRASE,
-              operations: [{ type: "invokeHostFunction", function: { type: "HostFunctionTypeInvokeContract",
-                contractId: RPT_ASSET, functionName: "balance", args: [address] } }] } } }),
-        });
-        const data = await resp.json();
-        if (data.result?.result !== undefined) { setRptBalance(Number(data.result.result)); setHasTrustline(true); }
-      } catch { setHasTrustline(false); }
+        const { rpc: srpc } = await import("@stellar/stellar-sdk");
+        const server = new srpc.Server(RPC_URL);
+        const account = await server.getAccount(address);
+        const { TransactionBuilder, Contract, Address } = await import("@stellar/stellar-sdk");
+        const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(new Contract(RPT_ASSET).call("balance", new Address(address).toScVal()))
+          .setTimeout(30).build();
+        const sim = await server.simulateTransaction(tx);
+        // If we got here without error, trustline exists
+        setHasTrustline(true);
+        // Try to parse the balance from return value
+        try { setRptBalance(Number((sim as any).result.retval ?? (sim as any).retval ?? 0)); } catch {}
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        if (msg.includes("trustline") || msg.includes("missing") || msg.includes("#13")) {
+          setHasTrustline(false);
+        }
+      }
     })();
   }, [address]);
 
