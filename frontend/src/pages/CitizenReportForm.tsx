@@ -47,10 +47,13 @@ export default function CitizenReportForm() {
 
     try {
       const { signTransaction } = await import("@stellar/freighter-api");
-      const { Contract, Address, rpc, TransactionBuilder, nativeToScVal } = await import("@stellar/stellar-sdk");
 
-      const server = new rpc.Server(RPC_URL);
-      const account = await server.getAccount(address);
+      const client = new CommunityOracleClient({
+        contractId: CONTRACT_IDS.community_oracle,
+        networkPassphrase: NETWORK_PASSPHRASE,
+        rpcUrl: RPC_URL,
+        publicKey: address,
+      });
 
       const pvoNum = Number(pvoId);
       const milNum = Number(milestoneId);
@@ -63,39 +66,28 @@ export default function CitizenReportForm() {
       const gpsLat = lat ? Number(lat) : 0;
       const gpsLon = lon ? Number(lon) : 0;
 
-      // Build transaction manually (bypass generated client)
-      const contract = new Contract(CONTRACT_IDS.community_oracle);
-      const op = contract.call("submit_report",
-        new Address(address).toScVal(),
-        nativeToScVal(pvoNum, { type: "u32" } as any),
-        nativeToScVal(milNum, { type: "u32" } as any),
-        nativeToScVal([tag], { type: "vec" } as any),
-        nativeToScVal(hash, { type: "string" } as any),
-        nativeToScVal(gpsLat, { type: "i128" } as any),
-        nativeToScVal(gpsLon, { type: "i128" } as any),
-      );
-
-      const tx = new TransactionBuilder(account, {
-        fee: "100000",
-        networkPassphrase: NETWORK_PASSPHRASE,
-      }).addOperation(op).setTimeout(30).build();
+      // Pass tag directly as string — generated client handles enum serialization
+      const tx = await client.submit_report({
+        citizen: address,
+        pvo_id: pvoNum,
+        milestone_id: milNum,
+        report_type: tag as any,
+        data_hash: hash,
+        gps_lat: gpsLat as any,
+        gps_lon: gpsLon as any,
+      });
 
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
-      const sim = await server.simulateTransaction(tx);
-      const simStr = JSON.stringify(sim);
-      if (simStr.includes("Error") || simStr.includes("error")) {
-        throw new Error(`Simulation failed. ${simStr.slice(0, 300)}`);
-      }
+      await tx.signAndSend({
+        signTransaction: async (xdr: string) => {
+          const resp = await signTransaction(xdr, { networkPassphrase: NETWORK_PASSPHRASE });
+          if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
+          return resp.signedTxXdr;
+        },
+      } as any);
 
-      const prepared = await server.prepareTransaction(tx);
-      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message || "Freighter rejected");
-
-      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-
-      setMessage({ text: `Report submitted! Tx: ${result.hash.slice(0,12)}...`, ok: true });
+      setMessage({ text: `Report submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (er: any) {
       const msg = String(er?.message || er);
