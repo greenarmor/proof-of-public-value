@@ -19,7 +19,7 @@ interface SystemHealth {
 
 export function AdminPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health" | "upgrade">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "mint" | "disputes" | "health" | "upgrade">("roles");
 
   if (!connected) {
     return (
@@ -39,7 +39,7 @@ export function AdminPanel() {
       <p className="text-gray-500 mb-6">Manage roles, handle disputes, and monitor system health.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["roles", "disputes", "health", "upgrade"] as const).map((tab) => (
+        {(["roles", "mint", "disputes", "health", "upgrade"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -47,7 +47,8 @@ export function AdminPanel() {
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            {tab === "roles" && "👥 Role Management"}
+            {tab === "roles" && "👥 Roles"}
+            {tab === "mint" && "🪙 Mint RPT"}
             {tab === "disputes" && "⚖️ Dispute Resolution"}
             {tab === "health" && "📊 Health"}
             {tab === "upgrade" && "🔄 Upgrade"}
@@ -56,6 +57,7 @@ export function AdminPanel() {
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
+      {activeTab === "mint" && <MintRPT />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
@@ -244,6 +246,115 @@ function RoleManagement() {
           <div className="text-center py-8 text-gray-400">No roles assigned yet. Use the form above to assign roles.</div>
         )}
       </div>
+    </div>
+  );
+}
+
+function MintRPT() {
+  const { address } = useWallet();
+  const [wallet, setWallet] = useState("");
+  const [amount, setAmount] = useState("10");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [recentMints, setRecentMints] = useState<{ to: string; amount: string }[]>([]);
+
+  const handleMint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !wallet) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const { Contract, Address, rpc, TransactionBuilder, nativeToScVal } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+
+      const rptContract = new Contract("CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ");
+      const toScVal = new Address(wallet).toScVal();
+      const amountScVal = nativeToScVal(Number(amount), { type: "i128" } as any);
+
+      const tx = new TransactionBuilder(account, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(rptContract.call("mint", toScVal, amountScVal))
+        .setTimeout(30)
+        .build();
+
+      const sim = await server.simulateTransaction(tx);
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp = await signTransaction(prepared.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      } as any);
+
+      const result = await server.sendTransaction(signedResp as any);
+
+      if (result.status === "PENDING" || result.status === "DUPLICATE") {
+        setMessage({ text: `Minted ${amount} RPT to ${formatAddress(wallet, 8)}! Tx: ${result.hash.slice(0, 10)}...`, ok: true });
+        setRecentMints((prev) => [{ to: wallet, amount }, ...prev].slice(0, 5));
+        setWallet("");
+      } else {
+        throw new Error(`Transaction status: ${result.status}`);
+      }
+    } catch (err: any) {
+      setMessage({ text: `Error: ${err.message || err}. Did you sign in Freighter?`, ok: false });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-lg">
+      {message && (
+        <div className={`p-4 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {message.text}
+        </div>
+      )}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-2">🪙 Mint RPT Tokens</h2>
+        <p className="text-sm text-gray-400 mb-4">Mint RPT to any wallet that has a trustline. Wallet must create trustline first via the Citizen page.</p>
+        <form className="space-y-4" onSubmit={handleMint}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Wallet (G...)</label>
+            <input type="text" value={wallet} onChange={(e) => setWallet(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-purple-500"
+              placeholder="G..." required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              min="1" required />
+          </div>
+          <button type="submit" disabled={submitting}
+            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
+            {submitting ? "Opening Freighter..." : "Mint RPT"}
+          </button>
+        </form>
+      </div>
+
+      {recentMints.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <h3 className="p-4 font-semibold border-b border-gray-100">Recent Mints (This Session)</h3>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-2 font-medium text-gray-500">To</th>
+                <th className="text-left px-4 py-2 font-medium text-gray-500">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentMints.map((m, i) => (
+                <tr key={i} className="border-t border-gray-100">
+                  <td className="px-4 py-2 font-mono text-xs text-gray-600">{formatAddress(m.to, 8)}</td>
+                  <td className="px-4 py-2 font-medium text-purple-600">{m.amount} RPT</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
