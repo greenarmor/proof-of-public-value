@@ -16,6 +16,7 @@ value_score = { path = "contracts/value_score" }
 ai_oracle = { path = "contracts/ai_oracle" }
 public_index = { path = "contracts/public_index" }
 compliance_engine = { path = "contracts/compliance_engine" }
+procurement_market = { path = "contracts/procurement_market" }
 
 [profile.release]
 opt-level = "z"
