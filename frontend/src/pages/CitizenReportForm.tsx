@@ -79,7 +79,8 @@ export default function CitizenReportForm() {
 
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
-      await tx.signAndSend({
+      // Sign
+      const signed = await tx.sign({
         signTransaction: async (xdr: string, opts: any) => {
           const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
           if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
@@ -87,6 +88,8 @@ export default function CitizenReportForm() {
         },
       } as any);
 
+      // Send and poll
+      const sent = await (tx as any).send();
       setMessage({ text: `Report submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (er: any) {
