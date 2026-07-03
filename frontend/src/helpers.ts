@@ -15,7 +15,9 @@ export function formatAddress(addr: string, chars = 6): string {
 }
 
 export function formatBudget(budget: string | number | bigint): string {
-  const num = typeof budget === "bigint" ? Number(budget) : Number(budget);
+  const str = typeof budget === "string" ? budget.replace(/,/g, "") : String(budget);
+  const num = Number(str);
+  if (isNaN(num)) return "0";
   if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;

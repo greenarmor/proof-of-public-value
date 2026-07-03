@@ -52,7 +52,7 @@ export function AgencyDashboard() {
 
 function ProjectOverview() {
   const projects = [
-    { id: 1, title: "Road Paving Project", department: "DPWH", location: "Quezon City", budget: "10,000,000", status: "Proposed", milestones: 1, score: 0, contractor: "G...ACMSV" },
+    { id: 1, title: "Road Paving Project", department: "DPWH", location: "Quezon City", budget: "10000000", status: "Proposed", milestones: 1, score: 0, contractor: "G...ACMSV" },
   ];
 
   return (
