@@ -1,5 +1,8 @@
 .dev-logs/
 
+# Dependencies
+node_modules/
+
 # Rust
 target/
 test_snapshots/
