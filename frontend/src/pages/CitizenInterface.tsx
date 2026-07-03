@@ -193,9 +193,13 @@ function CitizenBrowse() {
       <div className="text-xs text-slate-400 mb-2">By {formatAddress(r.citizen)}·{r.confidence_score||0}% confidence</div>
       {!r.verified && (
         <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+          {r.citizen === address ? (
+            <span className="text-xs text-slate-400 italic self-center">You cannot verify your own report</span>
+          ) : (<>
           <button onClick={()=>doVerify(r.id,30)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">✅ Verify (30%)</button>
           <button onClick={()=>doVerify(r.id,10)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50">⚠️ Low (10%)</button>
           <button onClick={()=>doVerify(r.id,60)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">💎 High (60%)</button>
+          </>)}
         </div>
       )}
     </div>))}{reports.length===0&&<div className="text-center py-16 text-slate-400">No community reports yet.</div>}</div>);
