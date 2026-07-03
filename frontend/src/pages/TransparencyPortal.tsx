@@ -12,135 +12,117 @@ interface PVOData {
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  Proposed: "bg-blue-50 text-blue-700 border-blue-200",
+  Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "In Progress": "bg-amber-50 text-amber-700 border-amber-200",
+  "Under Review": "bg-purple-50 text-purple-700 border-purple-200",
+  Completed: "bg-green-50 text-green-700 border-green-200",
+  Suspended: "bg-red-50 text-red-700 border-red-200",
+  Terminated: "bg-slate-50 text-slate-700 border-slate-200",
+};
+
 export function TransparencyPortal() {
   const [pvos, setPvos] = useState<PVOData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPvo, setSelectedPvo] = useState<PVOData | null>(null);
+  const [selected, setSelected] = useState<PVOData | null>(null);
+  const [filter, setFilter] = useState("");
 
   const loadPVOs = useCallback(async () => {
     setLoading(true);
     try {
       const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const cnt = await client.get_pvo_count();
-      const pvoList: PVOData[] = [];
+      const list: PVOData[] = [];
       for (let i = 1; i <= Number(cnt.result); i++) {
         try {
           const r = await client.get_pvo({ pvo_id: i });
-          if (r.result) pvoList.push({ id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at) });
+          if (r.result) list.push({ id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at) });
         } catch {}
       }
-      setPvos(pvoList);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+      setPvos(list);
+    } catch {} finally { setLoading(false); }
   }, []);
 
   useEffect(() => { loadPVOs(); }, [loadPVOs]);
 
+  const filtered = filter ? pvos.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.department.toLowerCase().includes(filter.toLowerCase()) || p.municipality.toLowerCase().includes(filter.toLowerCase())) : pvos;
+
   if (loading) return (
-    <div className="space-y-4">
-      {[...Array(3)].map((_, i) => <div key={i} className="skeleton-shimmer h-32 rounded-xl" />)}
+    <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="text-center"><div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin"/><p className="text-slate-400">Loading projects from Stellar testnet...</p></div>
     </div>
   );
 
-  if (selectedPvo) return <PVODetail pvo={selectedPvo} onBack={() => setSelectedPvo(null)} />;
+  if (selected) return (
+    <div>
+      <button onClick={() => setSelected(null)} className="btn-ghost mb-4">← Back to all projects</button>
+      <div className="card p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2"><span className="font-mono text-sm text-slate-400">PVO #{selected.id}</span><span className={`badge ${STATUS_COLORS[selected.status] || "badge-blue"}`}>{selected.status}</span></div>
+            <h1 className="text-2xl font-bold text-slate-900">{selected.title}</h1><p className="text-slate-500 mt-1">{selected.description}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+          {[["Department",selected.department],["Location",selected.municipality],["Budget",formatBudget(selected.total_budget)],["Contractor",formatAddress(selected.contractor)],["Created",formatTimestamp(selected.created_at)],["Score",`${selected.public_value_score}/100`],["Milestones",selected.milestones.length]].map(([l,v])=>(
+            <div key={l as string}><dt className="stat-label">{l}</dt><dd className="text-sm font-medium text-slate-900 mt-1">{v}</dd></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Public Transparency Portal</h1>
-        <p className="text-slate-500">{pvos.length} project{pvos.length !== 1 ? "s" : ""} tracked on-chain · No wallet required</p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {pvos.map(pvo => (
-          <button key={pvo.id} onClick={() => setSelectedPvo(pvo)}
-            className="card-interactive text-left p-5 group">
-            <div className="flex items-start justify-between mb-3">
-              <span className="badge-blue">{pvo.status}</span>
-              <span className="text-xs text-slate-400 font-mono">#{pvo.id}</span>
-            </div>
-            <h3 className="font-semibold text-slate-900 mb-1 truncate group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
-            <p className="text-sm text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
-            <div className="flex items-center justify-between text-sm mb-3">
-              <span className="font-mono text-slate-700 font-medium">₱ {formatBudget(pvo.total_budget)}</span>
-              <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length !== 1 ? "s" : ""}</span>
-            </div>
-            <div className="pt-3 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-slate-400">Value Score</span>
-                <span className="font-semibold text-slate-700">{pvo.public_value_score}/100</span>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill progress-green" style={{ width: `${pvo.public_value_score}%` }} />
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {pvos.length === 0 && (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">📭</div>
-          <p className="text-lg text-slate-400">No projects found on-chain yet.</p>
+      {/* Header */}
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Public Transparency Portal</h1>
+          <p className="text-slate-500 text-sm">{pvos.length} project{pvos.length!==1?"s":""} tracked on-chain · No wallet required</p>
         </div>
-      )}
+        <div className="flex items-center gap-2">
+          <input type="text" placeholder="Filter by name, dept, location..." value={filter} onChange={e=>setFilter(e.target.value)} className="input max-w-[260px] text-sm" />
+          {filter&&<button onClick={()=>setFilter("")} className="text-xs text-brand-600 hover:underline">Clear</button>}
+        </div>
+      </div>
 
-      {pvos.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">🗺️ Project Map</h2>
-          <Suspense fallback={<div className="skeleton-shimmer h-96 rounded-xl" />}>
-            <ProjectMap pvos={pvos} />
+      {/* Split: Map + Grid */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
+          <Suspense fallback={<div className="skeleton-shimmer h-[60vh] rounded-xl"/>}>
+            <div className="rounded-xl overflow-hidden border-2 border-brand-100 shadow-lg">
+              <ProjectMap pvos={filtered} />
+            </div>
           </Suspense>
         </div>
-      )}
-    </div>
-  );
-}
-
-function PVODetail({ pvo, onBack }: { pvo: PVOData; onBack: () => void }) {
-  return (
-    <div>
-      <button onClick={onBack} className="btn-ghost mb-4">← Back to all projects</button>
-
-      <div className="card p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{pvo.title}</h1>
-            <p className="text-slate-500 mt-1">{pvo.description}</p>
-          </div>
-          <span className="badge-blue self-start shrink-0">{pvo.status}</span>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-          {[
-            ["Department", pvo.department],
-            ["Location", pvo.municipality],
-            ["Budget", `₱ ${formatBudget(pvo.total_budget)}`],
-            ["Contractor", formatAddress(pvo.contractor)],
-            ["Created", formatTimestamp(pvo.created_at)],
-            ["Value Score", `${pvo.public_value_score}/100`],
-          ].map(([label, value]) => (
-            <div key={label as string}>
-              <dt className="stat-label">{label as string}</dt>
-              <dd className="text-sm font-medium text-slate-900 mt-1">{value}</dd>
+        <div className="flex-1">
+          {filtered.length===0?(
+            <div className="flex flex-col items-center justify-center py-20 text-center"><div className="text-5xl mb-4">📭</div><p className="text-lg text-slate-400">{filter?"No projects match":"No projects on-chain yet"}</p></div>
+          ):(
+            <div className="grid gap-3 sm:grid-cols-1 xl:grid-cols-2">
+              {filtered.map(pvo=>(
+                <button key={pvo.id} onClick={()=>setSelected(pvo)} className="card-interactive text-left p-4 group">
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="font-mono text-[11px] text-slate-400">#{pvo.id}</span>
+                    <span className={`badge text-[10px] ${STATUS_COLORS[pvo.status]||"badge-blue"}`}>{pvo.status}</span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
+                  <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
+                  <div className="flex items-center justify-between text-xs mb-3">
+                    <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
+                    <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/100</span>
+                    </div>
+                    <div className="progress-bar"><div className={`progress-fill ${pvo.public_value_score>=75?"progress-green":pvo.public_value_score>=50?"progress-amber":"progress-red"}`} style={{width:`${pvo.public_value_score}%`}}/></div>
+                  </div>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">📸 Citizen Reports</h2>
-        <div className="space-y-3">
-          {[{ id: 1, type: "GpsPhoto", milestone: "Site Preparation", citizen: "G...ACMSV", confidence: 70 }].map(r => (
-            <div key={r.id} className="flex items-start gap-4 py-3 border-b border-slate-100 last:border-0">
-              <span className="text-2xl">📸</span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2"><span className="badge-green">{r.type}</span></div>
-                <p className="text-sm text-slate-700 mt-1">Milestone: {r.milestone}</p>
-                <p className="text-xs text-slate-400 mt-0.5">By {r.citizen} · {r.confidence}% confidence</p>
-              </div>
-            </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

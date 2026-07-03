@@ -17,7 +17,7 @@ interface PVOData {
 
 export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
   return (
-    <div className="h-96 rounded-lg overflow-hidden border border-gray-200">
+    <div className="min-h-[60vh] lg:min-h-[75vh] rounded-lg overflow-hidden">
       <MapContainer center={[14.5995, 120.9842]} zoom={6} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
