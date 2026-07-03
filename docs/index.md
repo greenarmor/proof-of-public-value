@@ -1,38 +1,209 @@
-# Proof of Public Value — User Manual
+# Proof of Public Value — Hackathon User Manual
 
-Welcome to the **Proof of Public Value (PoPV)** platform.
+> **Track:** Local Finance & Real World Access — Stellar Build Better Hackathon
 
-> **No Proof. No Payment.**
->
-> Every public peso must prove measurable public value before it moves.
+---
 
-This manual teaches you how to use the PoPV platform with hands-on exercises.
+## The Problem
 
-## What Is PoPV?
+Every year, governments lose **$2.6 trillion to corruption** — ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.
 
-PoPV makes government money accountable. Every project becomes a **Public Value Object** — a living digital record that tracks budget, milestones, evidence, approvals, and impact.
+The root cause: **public money is released based on signatures and paperwork, not on proof that value was actually created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
 
-Funds are locked in escrow and released **only** after:
+## What PoPV Solves
 
-- Engineers verify the work
-- AI validates for fraud risk
-- Compliance checks pass
-- Citizens confirm the results
+Proof of Public Value enforces one rule: **No Proof. No Payment.**
 
-## Who Is This Manual For?
+Every public project becomes a **Public Value Object (PVO)** — a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released **only after passing 5 independent verification gates:**
 
-| You Are | Start Here |
-|---------|------------|
-| New to PoPV | [Chapter 1: Getting Started](getting-started.md) |
-| Government agency | [Chapter 2: Creating Projects](creating-projects.md) |
-| Contractor | [Chapter 3: Submitting Evidence](submitting-evidence.md) |
-| Engineer | [Chapter 4: Approving Milestones](approving-milestones.md) |
-| Citizen | [Chapter 5: Community Verification](community-verification.md) |
-| Auditor | [Chapter 6: Audit Trail](audit-trail.md) |
+| Gate | Who Verifies | What They Check |
+|------|-------------|-----------------|
+| 1. Evidence | Contractor | Drone imagery, GPS, photos, engineering reports |
+| 2. Engineer | Licensed Professional | Physical work meets specifications |
+| 3. AI Risk | Artificial Intelligence | Fraud detection, anomaly scanning |
+| 4. Compliance | Auditor / COA | Procurement law, budget rules, safety |
+| 5. Community | Citizens | GPS-tagged photos, flood reports, quality checks |
+
+If **any gate fails**, funds remain locked. No single person can release money — it requires cryptographic consensus.
+
+---
+
+## Stellar Integration (DeFi Escrow)
+
+PoPV is **serverless** — there is no backend, no database, no centralized server. **The Stellar blockchain is the infrastructure.**
+
+### Dynamic DeFi Escrow
+
+Every milestone has an independent escrow contract on Stellar. Funds are deposited and locked with multi-condition unlock rules:
+
+```rust
+// Funds release only when all 5 conditions are met
+if !engineer_approved { return false; }
+if !ai_validated { return false; }
+if !compliance_passed { return false; }
+if community_confirmations < required { return false; }
+if !evidence_submitted { return false; }
+// Release payment via Stellar rails
+escrow.release(funds, recipient);
+```
+
+### On-Chain Audit Trail
+
+Every decision is immutably recorded on Stellar:
+- **Who** approved (cryptographic address)
+- **What** they approved (milestone ID, evidence hash)
+- **When** (blockchain timestamp)
+- **Why** (rationale, supporting IPFS documents)
+- **Risk score** and compliance result
+
+### Soroban Events
+
+All 11 contracts emit typed Stellar events for real-time indexing. Every state change — from PVO creation to payment release — is publicly auditable.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     PoPV Contract System                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────┐     ┌─────────────────────────────┐   │
+│  │  access_control  │────▶│        pvo_core              │   │
+│  │  14 roles        │     │  PVO + Milestones + Evidence │   │
+│  └─────────────────┘     └──────────┬──────────────────┘   │
+│                                      │                       │
+│                    ┌─────────────────┼─────────────────┐   │
+│                    │                 │                   │   │
+│                    ▼                 ▼                   ▼   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │   escrow     │  │ community_   │  │  reputation      │  │
+│  │  DeFi locks  │  │ oracle       │  │  Integrity Graph │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │ audit_trail  │  │ value_score  │  │   ai_oracle      │  │
+│  │ Black Box    │  │ Public Value │  │  Fraud Detection │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │public_index  │  │ compliance_  │  │ procurement_     │  │
+│  │Nat'l Rankings│  │ engine       │  │ market           │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Deployed Contracts (Testnet)
+
+| Contract | ID | Functions | Tests |
+|----------|----|-----------|-------|
+| `access_control` | `CCJK...BCMVP` | 9 | 11 |
+| `pvo_core` | `CAJH...MVNOD` | 17 | 18 |
+| `escrow` | `CDTH...EDZT3` | 14 | 15 |
+| `community_oracle` | `CDTZ...K7RS` | 8 | 12 |
+| `reputation` | `CACW...4ADN` | 12 | 19 |
+| `audit_trail` | `CA2O...BROZ` | 10 | 12 |
+| `value_score` | `CCTC...3YN` | 11 | 20 |
+| `ai_oracle` | `CDR5...ID43` | 13 | 17 |
+| `public_index` | `CCN7...JG7J` | 7 | 7 |
+| `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
+| `procurement_market` | `CCPQ...JBW3` | 5 | 5 |
+
+**154 tests, all passing. 0 npm vulnerabilities.**
+
+---
+
+## Try It Live
+
+**Frontend:** `http://localhost:5174` (run `npm run dev` in `frontend/`)
+
+1. **Public pages** — Browse projects, national index, search — no wallet needed
+2. **Connect Freighter** — Click "Connect Wallet" (install [Freighter](https://freighter.app) first)
+3. **Citizen** — Connect citizen wallet → click "Create RPT Trustline" → submit GPS report
+4. **Admin** — Connect alice wallet → assign roles → mint RPT → manage system
+
+### Demo Wallets (Testnet)
+
+| Role | Address |
+|------|---------|
+| Administrator | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
+| GovernmentAgency | `GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN` |
+| Contractor | `GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW` |
+| Engineer | `GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN` |
+| Auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
+| Citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+
+> Secret keys in `.dev-logs/role-credentials.md` (gitignored)
+
+---
+
+## Quick Start
+
+```bash
+# Run frontend
+cd frontend && npm install && npm run dev
+
+# Build contracts
+stellar contract build
+
+# Run all tests
+cargo test
+
+# Deploy all contracts
+./scripts/deploy.sh
+
+# Run e2e
+cd frontend && npx tsx e2e-test.ts
+```
+
+---
 
 ## Exercises
 
-Each chapter includes numbered exercises with exact commands to run. Complete them in order.
+### Exercise 1: Explore Without Login
+1. Open the Public Transparency Portal
+2. Browse available projects — see budgets, status, value scores
+3. View the National Index with department rankings
+4. Use the Economic Memory search
 
-!!! info "Prerequisites"
-    Complete [Chapter 1: Getting Started](getting-started.md) before any other chapter.
+### Exercise 2: Citizen Verification
+1. Connect the citizen wallet in Freighter
+2. Go to Citizen Interface → check RPT status
+3. Click "Create RPT Trustline" → sign in Freighter
+4. Admin mints RPT tokens to you via Admin Panel
+5. Submit a GPS-tagged photo report
+6. Check your reputation score
+
+### Exercise 3: Full Payment Flow
+1. Create a PVO (Agency Dashboard)
+2. Define a milestone with evidence requirements
+3. Fund the escrow
+4. Contractor submits evidence (drone imagery, GPS)
+5. Engineer approves → AI validates → Compliance checks → Citizens verify
+6. Release milestone payment
+7. Verify audit trail entry is recorded
+
+### Exercise 4: Admin Operations
+1. Assign roles to wallet addresses
+2. Mint RPT tokens to citizen wallets
+3. Check system health monitor
+4. Change currency symbol setting
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Blockchain | Stellar Testnet |
+| Smart Contracts | Soroban SDK v26, Rust (#![no_std]) |
+| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS v4 |
+| Mobile | Flutter 3.x (Android/iOS) |
+| DeFi | Dynamic escrow, conditional payments, auto-pause |
+| Identity | Stellar key pairs + Freighter wallet |
+| Storage | Soroban persistent storage + IPFS for evidence |
+| Events | Soroban contract events with event indexer |
+| RPC | `soroban-testnet.stellar.org:443` |
