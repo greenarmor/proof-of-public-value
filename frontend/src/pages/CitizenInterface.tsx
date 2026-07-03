@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
-import { Client as ReputationClient } from "../contracts/reputation/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
@@ -32,6 +31,8 @@ export function CitizenInterface() {
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Citizen Interface</h1>
       <p className="text-gray-500 mb-6">Browse infrastructure projects, submit reports, and track your civic reputation.</p>
 
+      <CitizenDashboard />
+
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {(["browse", "report", "my"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
@@ -48,6 +49,107 @@ export function CitizenInterface() {
       {activeTab === "browse" && <CitizenBrowse />}
       {activeTab === "report" && <CitizenReport />}
       {activeTab === "my" && <CitizenReputation />}
+    </div>
+  );
+}
+
+function CitizenDashboard() {
+  const { address } = useWallet();
+  const [rptBalance, setRptBalance] = useState<number | null>(null);
+  const [hasTrustline, setHasTrustline] = useState<boolean | null>(null);
+  const [reputation, setReputation] = useState<any>(null);
+  const [trustlineLoading, setTrustlineLoading] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!address) return;
+    (async () => {
+      try {
+        const client = new CommunityOracleClient({
+          contractId: CONTRACT_IDS.community_oracle,
+          networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL,
+        });
+        try { const rep = await client.get_citizen_reputation({ citizen: address }); setReputation(rep.result); } catch {}
+      } catch {}
+      try {
+        const resp = await fetch(RPC_URL, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "simulateTransaction",
+            params: { transaction: { source: address, fee: "100", networkPassphrase: NETWORK_PASSPHRASE,
+              operations: [{ type: "invokeHostFunction", function: { type: "HostFunctionTypeInvokeContract",
+                contractId: RPT_ASSET, functionName: "balance", args: [address] } }] } } }),
+        });
+        const data = await resp.json();
+        if (data.result?.result !== undefined) { setRptBalance(Number(data.result.result)); setHasTrustline(true); }
+      } catch { setHasTrustline(false); }
+    })();
+  }, [address]);
+
+  const setupTrustline = async () => {
+    if (!address) return;
+    setTrustlineLoading(true); setMessage(null);
+    try {
+      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const asset = new Asset("RPT", "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
+      const server = new rpc.Server(RPC_URL);
+      const acct = await server.getAccount(address);
+      const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(Operation.changeTrust({ asset })).setTimeout(30).build();
+      await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      setHasTrustline(true);
+      setMessage({ text: "RPT trustline created!", ok: true });
+    } catch (err: any) {
+      if (err.message?.includes("already") || err.message?.includes("exist")) {
+        setHasTrustline(true); setMessage({ text: "Trustline already exists!", ok: true });
+      } else { setMessage({ text: `Failed: ${err.message}`, ok: false }); }
+    } finally { setTrustlineLoading(false); }
+  };
+
+  const canReport = hasTrustline && rptBalance !== null && rptBalance >= RPT_MIN_BALANCE;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className={`border rounded-lg p-4 ${canReport ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-medium text-sm">🪙 RPT Token</span>
+          <span className={`text-xs font-bold ${canReport ? "text-green-600" : "text-amber-600"}`}>
+            {canReport ? "✅ Ready" : "⚠️ Setup Needed"}
+          </span>
+        </div>
+        {hasTrustline === false && (
+          <div>
+            <p className="text-xs text-amber-700 mb-2">Trustline required to hold RPT</p>
+            <button onClick={setupTrustline} disabled={trustlineLoading}
+              className="w-full px-3 py-2 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 disabled:opacity-50">
+              {trustlineLoading ? "Opening Freighter..." : "🔓 Create RPT Trustline"}
+            </button>
+          </div>
+        )}
+        {hasTrustline && rptBalance !== null && (
+          <div>
+            <span className="text-2xl font-bold text-purple-600">{rptBalance}</span>
+            <span className="text-xs text-gray-500 ml-1">RPT</span>
+            {!canReport && <p className="text-xs text-amber-600 mt-1">Need {RPT_MIN_BALANCE}+ RPT</p>}
+          </div>
+        )}
+        {message && <p className={`text-xs mt-2 ${message.ok ? "text-green-600" : "text-red-600"}`}>{message.text}</p>}
+      </div>
+      <div className="border rounded-lg p-4 bg-white">
+        <span className="font-medium text-sm">⭐ Reputation</span>
+        <div className="grid grid-cols-3 gap-2 mt-2 text-center">
+          <div><div className="text-xl font-bold text-purple-600">{reputation?.total_reports ?? 0}</div><div className="text-[10px] text-gray-400">Reports</div></div>
+          <div><div className="text-xl font-bold text-green-600">{reputation?.verified_reports ?? 0}</div><div className="text-[10px] text-gray-400">Verified</div></div>
+          <div><div className="text-xl font-bold text-blue-600">{reputation?.confidence_rating ?? 50}%</div><div className="text-[10px] text-gray-400">Confidence</div></div>
+        </div>
+      </div>
+      <div className="border rounded-lg p-4 bg-white">
+        <span className="font-medium text-sm">⚡ Quick Actions</span>
+        <div className="mt-2 space-y-1.5">
+          <a href="#report" className="block text-xs text-purple-600 hover:underline">📸 Submit Report</a>
+          <a href="#browse" className="block text-xs text-purple-600 hover:underline">🗺️ Browse Projects</a>
+        </div>
+      </div>
     </div>
   );
 }
@@ -113,6 +215,46 @@ function CitizenReport() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [trustlineLoading, setTrustlineLoading] = useState(false);
+
+  const setupTrustline = async () => {
+    if (!address) return;
+    setTrustlineLoading(true);
+    setMessage(null);
+    try {
+      setMessage({ text: "Opening Freighter to sign trustline... Check your wallet popup.", ok: true });
+      
+      // Build and sign a trust operation via the Stellar SDK
+      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const asset = new Asset("RPT", "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
+      const server = new rpc.Server(RPC_URL);
+      const acct = await server.getAccount(address);
+
+      const tx = new TransactionBuilder(acct, {
+        fee: "100000",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
+        .addOperation(Operation.changeTrust({ asset }))
+        .setTimeout(30)
+        .build();
+
+      const signedResp = await signTransaction(tx.toXDR(), {
+        networkPassphrase: NETWORK_PASSPHRASE,
+      });
+
+      setMessage({ text: "RPT trustline created! You can now receive tokens.", ok: true });
+    } catch (err: any) {
+      if (err.message?.includes("already") || err.message?.includes("exist")) {
+        setMessage({ text: "Trustline already exists. You're all set!", ok: true });
+      } else {
+        setMessage({ text: `Failed: ${err.message || err}`, ok: false });
+      }
+    } finally {
+      setTrustlineLoading(false);
+    }
+  };
 
   const uploadToIPFS = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -219,9 +361,7 @@ function CitizenReport() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
           <strong>🪙 RPT Tokens Required</strong><br/>
-          Must hold {RPT_MIN_BALANCE}+ RPT ({RPT_ASSET.slice(0,8)}...) to submit reports.
-          <br/>
-          <span className="text-purple-500">Request RPT from admin via CLI: <code className="text-xs">stellar contract invoke --id {RPT_ASSET.slice(0,8)}... -- mint --to YOUR_WALLET --amount 10</code></span>
+          Must hold {RPT_MIN_BALANCE}+ RPT to submit reports.
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
