@@ -305,7 +305,8 @@ function MintRPT() {
         throw new Error(signedResp.error.message || "Freighter signing failed");
       }
 
-      const result = await server.sendTransaction(signedResp.signedTxXdr);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      const result = await server.sendTransaction(signedTx);
 
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
         setMessage({ text: `Minted ${amount} RPT to ${formatAddress(wallet, 8)}! Tx: ${result.hash.slice(0, 10)}...`, ok: true });

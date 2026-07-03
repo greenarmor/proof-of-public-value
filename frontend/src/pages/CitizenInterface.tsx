@@ -110,7 +110,8 @@ function CitizenDashboard() {
         throw new Error(signedResp.error.message || "Freighter signing failed");
       }
 
-      const result = await server.sendTransaction(signedResp.signedTxXdr);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      const result = await server.sendTransaction(signedTx);
 
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
         setMessage({ text: "✅ RPT trustline created! Admin can now mint tokens to your wallet.", ok: true });
