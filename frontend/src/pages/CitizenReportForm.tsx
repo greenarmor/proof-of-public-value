@@ -63,15 +63,15 @@ export default function CitizenReportForm() {
       }
 
       const tag = REPORT_TYPES.indexOf(reportType as any) >= 0 ? reportType : "GpsPhoto";
-      const gpsLat = lat ? BigInt(Math.round(Number(lat))) : 0n;
-      const gpsLon = lon ? BigInt(Math.round(Number(lon))) : 0n;
+      const gpsLat = lat ? Number(lat) : 0;
+      const gpsLon = lon ? Number(lon) : 0;
 
       // Pass tag directly as string — generated client handles enum serialization
       const tx = await client.submit_report({
         citizen: address,
         pvo_id: pvoNum,
         milestone_id: milNum,
-        report_type: { tag, values: [] } as any,
+        report_type: { tag } as any,
         data_hash: hash,
         gps_lat: gpsLat as any,
         gps_lon: gpsLon as any,
