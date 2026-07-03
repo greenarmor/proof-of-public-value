@@ -56,17 +56,17 @@ export default function CitizenReportForm() {
       });
 
       const tag = REPORT_TYPES.indexOf(reportType as any) >= 0 ? reportType : "GpsPhoto";
-      const reportTypeScVal = { tag, values: undefined as any } as ReportType;
+      const reportTypeScVal = { tag, values: [] as any } as ReportType;
 
       const pvoNum = Number(pvoId);
       const milNum = Number(milestoneId);
       if (!pvoNum || pvoNum <= 0 || !milNum || milNum <= 0) {
-        setMessage({ text: "❌ PVO ID and Milestone ID must be positive numbers.", ok: false });
+        setMessage({ text: "❌ PVO ID and Milestone ID must be positive.", ok: false });
         setSubmitting(false); return;
       }
 
-      const gpsLat = lat ? BigInt(Math.round(Number(lat))) : 0n;
-      const gpsLon = lon ? BigInt(Math.round(Number(lon))) : 0n;
+      const gpsLat = lat ? Number(lat) : 0;
+      const gpsLon = lon ? Number(lon) : 0;
 
       const tx = await client.submit_report({
         citizen: address,
@@ -74,8 +74,8 @@ export default function CitizenReportForm() {
         milestone_id: milNum,
         report_type: reportTypeScVal,
         data_hash: hash,
-        gps_lat: gpsLat,
-        gps_lon: gpsLon,
+        gps_lat: gpsLat as any,
+        gps_lon: gpsLon as any,
       });
 
       setMessage({ text: "Check Freighter to sign...", ok: true });
