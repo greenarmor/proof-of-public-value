@@ -155,13 +155,29 @@ function CitizenBrowse() {
     if (!address) return;
     setVerifying(reportId); setVmsg(null);
     try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
-      const client = new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL,publicKey:address});
-      const tx = await client.verify_report({ verifier: address, report_id: reportId, verifier_weight: weight });
-      await tx.signAndSend({ signTransaction: async (xdr:string,opts:any) => { const resp = await signTransaction(xdr,{...opts,networkPassphrase:NETWORK_PASSPHRASE}); if(resp?.error) throw new Error(resp.error.message); return resp.signedTxXdr; } } as any);
-      setVmsg(`Report #${reportId} verified with weight ${weight}!`);
-      setTimeout(() => { const c = new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL}); const cnt = c.get_report_count().then; window.location.reload(); }, 2000);
-    } catch(er:any) { setVmsg(`Error: ${er.message?.slice(0,100)}`); }
+
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.community_oracle);
+      const op = contract.call("verify_report",
+        new Address(address).toScVal(),  // verifier: Address
+        xdr.ScVal.scvU32(reportId),       // report_id: u32
+        xdr.ScVal.scvU32(weight),         // verifier_weight: u32
+      );
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setVmsg(`Report #${reportId} verified with weight ${weight}! ✅`);
+    } catch(er:any) { setVmsg(`Error: ${er.message?.slice(0,150)}`); }
     finally { setVerifying(null); }
   };
 
