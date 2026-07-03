@@ -146,11 +146,38 @@ function CitizenDashboard() {
 }
 
 function CitizenBrowse() {
-  const [reports,setReports]=useState<any[]>([]);const[loading,setLoading]=useState(true);
+  const { address } = useWallet();
+  const [reports,setReports]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[verifying,setVerifying]=useState<number|null>(null);const[vmsg,setVmsg]=useState<string|null>(null);
   useEffect(()=>{(async()=>{
     try{const c=new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL});const cnt=await c.get_report_count();const items:any[]=[];for(let i=1;i<=Number(cnt.result)&&i<=20;i++){try{const r=await c.get_report({report_id:i});if(r.result)items.push(r.result)}catch{}}setReports(items)}catch(e){console.error(e)}finally{setLoading(false)}})()},[]);
+
+  const doVerify = async (reportId: number, weight: number) => {
+    if (!address) return;
+    setVerifying(reportId); setVmsg(null);
+    try {
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const client = new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL,publicKey:address});
+      const tx = await client.verify_report({ verifier: address, report_id: reportId, verifier_weight: weight });
+      await tx.signAndSend({ signTransaction: async (xdr:string,opts:any) => { const resp = await signTransaction(xdr,{...opts,networkPassphrase:NETWORK_PASSPHRASE}); if(resp?.error) throw new Error(resp.error.message); return resp.signedTxXdr; } } as any);
+      setVmsg(`Report #${reportId} verified with weight ${weight}!`);
+      setTimeout(() => { const c = new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL}); const cnt = c.get_report_count().then; window.location.reload(); }, 2000);
+    } catch(er:any) { setVmsg(`Error: ${er.message?.slice(0,100)}`); }
+    finally { setVerifying(null); }
+  };
+
   if(loading)return<div className="space-y-3">{[...Array(3)].map((_,i)=><div key={i}className="skeleton-shimmer h-20 rounded-xl"/>)}</div>;
-  return( <div className="space-y-3">{reports.map((r:any)=>(<div key={r.id}className="card p-4"><div className="flex items-start justify-between mb-2"><div><span className="badge-green">{typeof r.report_type==="string"?r.report_type:r.report_type?.tag}</span><span className="ml-2 text-sm text-slate-500">PVO #{r.pvo_id}·M#{r.milestone_id}</span></div>{r.verified?<span className="badge-green">✅ Verified</span>:<span className="badge-amber">⏳ Pending</span>}</div><div className="text-xs text-slate-400">By {formatAddress(r.citizen)}·{r.confidence_score||0}% confidence</div></div>))}{reports.length===0&&<div className="text-center py-16 text-slate-400">No community reports yet.</div>}</div>);
+  return( <div className="space-y-3">
+    {vmsg && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">{vmsg}</div>}
+    {reports.map((r:any)=>(<div key={r.id}className="card p-4"><div className="flex items-start justify-between mb-2"><div><span className="badge-green">{typeof r.report_type==="string"?r.report_type:r.report_type?.tag}</span><span className="ml-2 text-sm text-slate-500">PVO #{r.pvo_id}·M#{r.milestone_id}</span></div>{r.verified?<span className="badge-green">✅ Verified</span>:<span className="badge-amber">⏳ Pending</span>}</div>
+      <div className="text-xs text-slate-400 mb-2">By {formatAddress(r.citizen)}·{r.confidence_score||0}% confidence</div>
+      {!r.verified && (
+        <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+          <button onClick={()=>doVerify(r.id,30)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">✅ Verify (30%)</button>
+          <button onClick={()=>doVerify(r.id,10)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50">⚠️ Low (10%)</button>
+          <button onClick={()=>doVerify(r.id,60)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">💎 High (60%)</button>
+        </div>
+      )}
+    </div>))}{reports.length===0&&<div className="text-center py-16 text-slate-400">No community reports yet.</div>}</div>);
 }
 
 function CitizenReputation() {
