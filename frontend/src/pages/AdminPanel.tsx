@@ -115,10 +115,9 @@ function RoleManagement() {
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.access_control);
       const op = contract.call("assign_role",
-        new Address(address).toScVal(),
-        new Address(userAddress).toScVal(),
-        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]),
-        new Address(address).toScVal(),
+        new Address(address).toScVal(),      // assigner: Address
+        new Address(userAddress).toScVal(), // address: Address
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]), // role: Role enum
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
