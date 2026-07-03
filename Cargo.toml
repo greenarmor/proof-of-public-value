@@ -14,6 +14,7 @@ reputation = { path = "contracts/reputation" }
 audit_trail = { path = "contracts/audit_trail" }
 value_score = { path = "contracts/value_score" }
 ai_oracle = { path = "contracts/ai_oracle" }
+public_index = { path = "contracts/public_index" }
 
 [profile.release]
 opt-level = "z"
