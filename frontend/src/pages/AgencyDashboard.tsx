@@ -60,7 +60,7 @@ function ProjectOverview() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total Projects", value: projects.length, color: "text-gray-900" },
-          { label: "Total Budget", value: `⨎ ${projects.reduce((s, p) => s + Number(p.budget), 0).toLocaleString()}`, color: "text-purple-600" },
+          { label: "Total Budget", value: `₱ ${projects.reduce((s, p) => s + Number(p.budget), 0).toLocaleString()}`, color: "text-purple-600" },
           { label: "Active Milestones", value: projects.reduce((s, p) => s + p.milestones, 0), color: "text-blue-600" },
           { label: "Avg Value Score", value: `${projects.reduce((s, p) => s + p.score, 0) / projects.length}/100`, color: "text-green-600" },
         ].map((stat) => (
@@ -89,7 +89,7 @@ function ProjectOverview() {
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">#{p.id}</td>
                 <td className="px-4 py-3 font-medium text-gray-900">{p.title}</td>
                 <td className="px-4 py-3 text-gray-600">{p.department}</td>
-                <td className="px-4 py-3 font-mono text-gray-600">⨎ {formatBudget(p.budget)}</td>
+                <td className="px-4 py-3 font-mono text-gray-600">₱ {formatBudget(p.budget)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1">
                     {["Proposed", "Approved", "InProgress", "Completed"].map((stage) => (
@@ -164,7 +164,7 @@ function CreatePVOForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (stroops)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="10000000" required />
-            {budget && <p className="text-xs text-gray-400 mt-1">≈ ⨎ {formatBudget(budget)}</p>}
+            {budget && <p className="text-xs text-gray-400 mt-1">≈ ₱ {formatBudget(budget)}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fund Source</label>
@@ -227,7 +227,7 @@ function CreateMilestoneForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
           <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="3000000" required />
-          {budget && <p className="text-xs text-gray-400 mt-1">≈ ⨎ {formatBudget(budget)}</p>}
+          {budget && <p className="text-xs text-gray-400 mt-1">≈ ₱ {formatBudget(budget)}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -272,7 +272,7 @@ function FundEscrowForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Amount (stroops)</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Must match escrow amount" required />
-          {amount && <p className="text-xs text-gray-400 mt-1">≈ ⨎ {formatBudget(amount)}</p>}
+          {amount && <p className="text-xs text-gray-400 mt-1">≈ ₱ {formatBudget(amount)}</p>}
         </div>
         <p className="text-xs text-gray-400">
           ⚠️ Amount must exactly match the escrow amount. Funds are locked until all 5 gates pass.

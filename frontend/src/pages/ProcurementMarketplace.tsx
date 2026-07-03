@@ -62,7 +62,7 @@ export function ProcurementMarketplace() {
               }`}>{t.status.tag}</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-600">
-              <span>Budget: ⨎ {Number(t.budget).toLocaleString()}</span>
+              <span>Budget: ₱ {Number(t.budget).toLocaleString()}</span>
               {t.winner && <span>Winner: {t.winner.slice(0, 12)}...</span>}
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">

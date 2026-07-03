@@ -28,7 +28,7 @@ export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
             <Popup>
               <strong>{pvo.title}</strong><br />
               {pvo.department} · {pvo.municipality}<br />
-              Budget: ⨎ {formatBudget(pvo.total_budget)}<br />
+              Budget: ₱ {formatBudget(pvo.total_budget)}<br />
               Score: {pvo.public_value_score}/100
             </Popup>
           </Marker>

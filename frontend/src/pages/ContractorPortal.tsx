@@ -66,7 +66,7 @@ function ProjectsTab() {
             <span className="px-2 py-1 text-xs font-medium rounded bg-green-50 text-green-700">{p.status}</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-600">
-            <span>Budget: ⨎ {p.budget}</span>
+            <span>Budget: ₱ {p.budget}</span>
             <span className="text-purple-600 cursor-pointer hover:underline">View Details →</span>
           </div>
         </div>
@@ -137,7 +137,7 @@ function HistoryTab() {
           {payments.map((p) => (
             <tr key={p.id} className="border-t border-gray-100">
               <td className="px-4 py-3 font-medium text-gray-900">{p.milestone}</td>
-              <td className="px-4 py-3 text-gray-600">⨎ {p.amount}</td>
+              <td className="px-4 py-3 text-gray-600">₱ {p.amount}</td>
               <td className="px-4 py-3"><span className="px-2 py-0.5 text-xs rounded bg-green-50 text-green-700">{p.status}</span></td>
               <td className="px-4 py-3 text-gray-500">{p.date}</td>
             </tr>

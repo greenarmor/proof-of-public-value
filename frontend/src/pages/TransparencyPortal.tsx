@@ -62,7 +62,7 @@ export function TransparencyPortal() {
             <h3 className="font-semibold text-slate-900 mb-1 truncate group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
             <p className="text-sm text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
             <div className="flex items-center justify-between text-sm mb-3">
-              <span className="font-mono text-slate-700 font-medium">⨎ {formatBudget(pvo.total_budget)}</span>
+              <span className="font-mono text-slate-700 font-medium">₱ {formatBudget(pvo.total_budget)}</span>
               <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length !== 1 ? "s" : ""}</span>
             </div>
             <div className="pt-3 border-t border-slate-100">
@@ -115,7 +115,7 @@ function PVODetail({ pvo, onBack }: { pvo: PVOData; onBack: () => void }) {
           {[
             ["Department", pvo.department],
             ["Location", pvo.municipality],
-            ["Budget", `⨎ ${formatBudget(pvo.total_budget)}`],
+            ["Budget", `₱ ${formatBudget(pvo.total_budget)}`],
             ["Contractor", formatAddress(pvo.contractor)],
             ["Created", formatTimestamp(pvo.created_at)],
             ["Value Score", `${pvo.public_value_score}/100`],

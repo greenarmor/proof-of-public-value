@@ -234,7 +234,7 @@ function DigitalTwinTab() {
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <dt className="text-gray-400">Expected Cost</dt>
-                <dd className="font-semibold text-gray-900 mt-1">⨎ {t.expectedCost}</dd>
+                <dd className="font-semibold text-gray-900 mt-1">₱ {t.expectedCost}</dd>
               </div>
               <div>
                 <dt className="text-gray-400">Material Index</dt>
