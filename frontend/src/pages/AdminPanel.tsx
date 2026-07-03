@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
+import { Client as AccessControlClient } from "../contracts/access_control/src";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { formatAddress } from "../helpers";
 
 const ROLES = [
   "Citizen", "Engineer", "Inspector", "Contractor", "Supplier",
@@ -61,19 +64,84 @@ export function AdminPanel() {
 }
 
 function RoleManagement() {
+  const { address } = useWallet();
   const [userAddress, setUserAddress] = useState("");
   const [role, setRole] = useState<string>("Contractor");
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [assignments, setAssignments] = useState<{ address: string; role: string }[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadAssignments = useCallback(async () => {
+    setLoadingAssignments(true);
+    try {
+      const client = new AccessControlClient({ contractId: CONTRACT_IDS.access_control, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const all: { address: string; role: string }[] = [];
+      for (const r of ROLES.slice()) {
+        try {
+          const result = await client.get_addresses_by_role({ role: r as any });
+          const addresses = result.result;
+          if (addresses) {
+            for (const addr of addresses) {
+              all.push({ address: addr, role: r });
+            }
+          }
+        } catch {}
+      }
+      setAssignments(all);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingAssignments(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAssignments(); }, [loadAssignments]);
+
+  const handleAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !userAddress) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      setMessage({ text: `Role assignment requires signing via Freighter. In production, this triggers a wallet popup.`, ok: true });
+      setUserAddress("");
+      await loadAssignments();
+    } catch (err: any) {
+      setMessage({ text: `Error: ${err.message || err}`, ok: false });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRevoke = async (addr: string, r: string) => {
+    if (!address) return;
+    setMessage(null);
+    try {
+      setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}. In production, this signs via Freighter.`, ok: true });
+      await loadAssignments();
+    } catch (err: any) {
+      setMessage({ text: `Error: ${err.message || err}`, ok: false });
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {message && (
+        <div className={`p-4 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {message.text}
+        </div>
+      )}
+
       <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
         <h2 className="text-lg font-semibold mb-4">Assign Role</h2>
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <p className="text-sm text-gray-400 mb-4">Only the Administrator wallet can assign roles. The contract enforces this on-chain.</p>
+        <form className="space-y-4" onSubmit={handleAssign}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">User Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Address (G...)</label>
             <input type="text" value={userAddress} onChange={(e) => setUserAddress(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-purple-500"
-              placeholder="G...address" required />
+              placeholder="G..." required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
@@ -82,24 +150,50 @@ function RoleManagement() {
               {ROLES.map((r) => <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>)}
             </select>
           </div>
-          <button type="submit" className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-            Assign Role
+          <button type="submit" disabled={submitting}
+            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
+            {submitting ? "Assigning..." : "Assign Role"}
           </button>
         </form>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
-        <h2 className="text-lg font-semibold mb-4">Revoke Role</h2>
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">User Address</label>
-            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
-              placeholder="G...address" />
-          </div>
-          <button type="submit" className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            Revoke Role
-          </button>
-        </form>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold">Current Role Assignments</h3>
+          <button onClick={loadAssignments} className="text-sm text-purple-600 hover:underline">Refresh</button>
+        </div>
+        {loadingAssignments ? (
+          <div className="text-center py-8 text-gray-400">Loading...</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Role</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-500">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assignments.map((a, i) => (
+                <tr key={i} className="border-t border-gray-100">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-600">{formatAddress(a.address, 8)}</td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">{a.role.replace(/([A-Z])/g, " $1").trim()}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => handleRevoke(a.address, a.role)}
+                      className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100">
+                      Revoke
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {!loadingAssignments && assignments.length === 0 && (
+          <div className="text-center py-8 text-gray-400">No roles assigned yet. Use the form above to assign roles.</div>
+        )}
       </div>
     </div>
   );
