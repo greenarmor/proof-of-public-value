@@ -58,13 +58,20 @@ export default function CitizenReportForm() {
       const tag = REPORT_TYPES.indexOf(reportType as any) >= 0 ? reportType : "GpsPhoto";
       const reportTypeScVal = { tag, values: undefined as any } as ReportType;
 
-      const gpsLat = lat ? BigInt(lat) : 0n;
-      const gpsLon = lon ? BigInt(lon) : 0n;
+      const pvoNum = Number(pvoId);
+      const milNum = Number(milestoneId);
+      if (!pvoNum || pvoNum <= 0 || !milNum || milNum <= 0) {
+        setMessage({ text: "❌ PVO ID and Milestone ID must be positive numbers.", ok: false });
+        setSubmitting(false); return;
+      }
+
+      const gpsLat = lat ? BigInt(Math.round(Number(lat))) : 0n;
+      const gpsLon = lon ? BigInt(Math.round(Number(lon))) : 0n;
 
       const tx = await client.submit_report({
         citizen: address,
-        pvo_id: Number(pvoId),
-        milestone_id: Number(milestoneId),
+        pvo_id: pvoNum,
+        milestone_id: milNum,
         report_type: reportTypeScVal,
         data_hash: hash,
         gps_lat: gpsLat,
