@@ -56,13 +56,15 @@ export function CitizenInterface() {
 function CitizenDashboard() {
   const { address } = useWallet();
   const [rptBalance, setRptBalance] = useState<number | null>(null);
-  const [hasTrustline, setHasTrustline] = useState<boolean | null>(null);
+  const [trustlineChecked, setTrustlineChecked] = useState(false);
   const [reputation, setReputation] = useState<any>(null);
   const [trustlineLoading, setTrustlineLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
     if (!address) return;
+    setRptBalance(null);
+    setTrustlineChecked(false);
     (async () => {
       try {
         const client = new CommunityOracleClient({
@@ -71,26 +73,21 @@ function CitizenDashboard() {
         });
         try { const rep = await client.get_citizen_reputation({ citizen: address }); setReputation(rep.result); } catch {}
       } catch {}
-      // Check RPT balance - if trustline missing, show setup button
+      // Check RPT balance via SAC token contract
       try {
-        const { rpc: srpc } = await import("@stellar/stellar-sdk");
+        const { rpc: srpc, TransactionBuilder, Contract, Address } = await import("@stellar/stellar-sdk");
         const server = new srpc.Server(RPC_URL);
         const account = await server.getAccount(address);
-        const { TransactionBuilder, Contract, Address } = await import("@stellar/stellar-sdk");
         const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
           .addOperation(new Contract(RPT_ASSET).call("balance", new Address(address).toScVal()))
           .setTimeout(30).build();
         const sim = await server.simulateTransaction(tx);
-        // If we got here without error, trustline exists
-        setHasTrustline(true);
-        // Try to parse the balance from return value
-        try { setRptBalance(Number((sim as any).result.retval ?? (sim as any).retval ?? 0)); } catch {}
+        try { setRptBalance(Number((sim as any).result?.retval ?? (sim as any).retval ?? 0)); } catch { setRptBalance(0); }
       } catch (e: any) {
-        const msg = String(e?.message || e);
-        if (msg.includes("trustline") || msg.includes("missing") || msg.includes("#13")) {
-          setHasTrustline(false);
-        }
+        // Simulation error = no trustline or no balance
+        setRptBalance(0);
       }
+      setTrustlineChecked(true);
     })();
   }, [address]);
 
@@ -106,16 +103,17 @@ function CitizenDashboard() {
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({ asset })).setTimeout(30).build();
       await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      setHasTrustline(true);
-      setMessage({ text: "RPT trustline created!", ok: true });
+      setMessage({ text: "RPT trustline created! Ask admin to mint RPT tokens.", ok: true });
+      setRptBalance(0);
     } catch (err: any) {
       if (err.message?.includes("already") || err.message?.includes("exist")) {
-        setHasTrustline(true); setMessage({ text: "Trustline already exists!", ok: true });
+        setMessage({ text: "Trustline already exists!", ok: true });
       } else { setMessage({ text: `Failed: ${err.message}`, ok: false }); }
     } finally { setTrustlineLoading(false); }
   };
 
-  const canReport = hasTrustline && rptBalance !== null && rptBalance >= RPT_MIN_BALANCE;
+  const canReport = rptBalance !== null && rptBalance >= RPT_MIN_BALANCE;
+  const needsSetup = trustlineChecked && !canReport;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -126,20 +124,25 @@ function CitizenDashboard() {
             {canReport ? "✅ Ready" : "⚠️ Setup Needed"}
           </span>
         </div>
-        {hasTrustline === false && (
-          <div>
-            <p className="text-xs text-amber-700 mb-2">Trustline required to hold RPT</p>
-            <button onClick={setupTrustline} disabled={trustlineLoading}
-              className="w-full px-3 py-2 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 disabled:opacity-50">
-              {trustlineLoading ? "Opening Freighter..." : "🔓 Create RPT Trustline"}
-            </button>
-          </div>
-        )}
-        {hasTrustline && rptBalance !== null && (
+        {canReport ? (
           <div>
             <span className="text-2xl font-bold text-purple-600">{rptBalance}</span>
             <span className="text-xs text-gray-500 ml-1">RPT</span>
-            {!canReport && <p className="text-xs text-amber-600 mt-1">Need {RPT_MIN_BALANCE}+ RPT</p>}
+          </div>
+        ) : (
+          <div>
+            {needsSetup && (
+              <>
+                <p className="text-xs text-amber-700 mb-2">
+                  {rptBalance === 0 ? "Trustline missing or 0 RPT balance" : "Checking..."}
+                </p>
+                <button onClick={setupTrustline} disabled={trustlineLoading}
+                  className="w-full px-3 py-2 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                  {trustlineLoading ? "Opening Freighter..." : "🔓 Create RPT Trustline"}
+                </button>
+              </>
+            )}
+            {!trustlineChecked && <p className="text-xs text-gray-400">Checking RPT status...</p>}
           </div>
         )}
         {message && <p className={`text-xs mt-2 ${message.ok ? "text-green-600" : "text-red-600"}`}>{message.text}</p>}
