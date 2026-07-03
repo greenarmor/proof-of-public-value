@@ -76,42 +76,17 @@ function CitizenDashboard() {
         setReputation(rep.result);
       } catch {}
 
-      // Check RPT balance — use direct RPC simulate, no account needed
+      // Check RPT balance via Horizon API (reliable for SAC tokens)
       try {
-        const { rpc: srpc, TransactionBuilder, Contract, Address } = await import("@stellar/stellar-sdk");
-        const server = new srpc.Server(RPC_URL);
-        const contract = new Contract(RPT_ASSET);
-        const scVal = new Address(address).toScVal();
-
-        // Use fake account — simulation doesn't need real sequence
-        const tx = new TransactionBuilder(
-          { source: address, sequence: "0" } as any,
-          { fee: "0", networkPassphrase: NETWORK_PASSPHRASE }
-        )
-          .addOperation(contract.call("balance", scVal))
-          .setTimeout(30)
-          .build();
-
-        const sim: any = await server.simulateTransaction(tx);
-
-        if (sim?.error) {
-          // Trustline missing = balance 0
-          setRptBalance(0);
+        const resp = await fetch(`https://horizon-testnet.stellar.org/accounts/${address}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const rptBalance = data.balances?.find(
+            (b: any) => b.asset_code === "RPT" && b.asset_issuer === "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV"
+          );
+          setRptBalance(rptBalance ? Math.floor(Number(rptBalance.balance)) : 0);
         } else {
-          // Try to extract return value
-          const raw = sim?.result?.retval;
-          if (raw === undefined || raw === null) {
-            setRptBalance(0);
-          } else if (typeof raw === "number") {
-            setRptBalance(raw);
-          } else if (typeof raw === "string") {
-            setRptBalance(Number(raw) || 0);
-          } else if (raw?.value !== undefined) {
-            setRptBalance(Number(raw.value) || 0);
-          } else {
-            // Try parsing as i128 map
-            try { setRptBalance(Number(raw.toString()) || 0); } catch { setRptBalance(0); }
-          }
+          setRptBalance(0);
         }
       } catch {
         setRptBalance(0);
