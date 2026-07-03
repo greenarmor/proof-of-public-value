@@ -19,7 +19,7 @@ interface SystemHealth {
 
 export function AdminPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"roles" | "mint" | "disputes" | "health" | "upgrade">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "mint" | "disputes" | "health" | "upgrade" | "settings">("roles");
 
   if (!connected) {
     return (
@@ -39,7 +39,7 @@ export function AdminPanel() {
       <p className="text-gray-500 mb-6">Manage roles, handle disputes, and monitor system health.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["roles", "mint", "disputes", "health", "upgrade"] as const).map((tab) => (
+        {(["roles", "mint", "disputes", "health", "upgrade", "settings"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -52,6 +52,7 @@ export function AdminPanel() {
             {tab === "disputes" && "⚖️ Dispute Resolution"}
             {tab === "health" && "📊 Health"}
             {tab === "upgrade" && "🔄 Upgrade"}
+            {tab === "settings" && "⚡ Settings"}
           </button>
         ))}
       </div>
@@ -61,6 +62,7 @@ export function AdminPanel() {
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
+      {activeTab === "settings" && <SettingsTab />}
     </div>
   );
 }
@@ -513,6 +515,37 @@ function ContractUpgrade() {
         </table>
       </div>
       <p className="text-xs text-gray-400">Run `stellar contract build` then `stellar contract deploy` to upgrade contracts.</p>
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const [currency, setCur] = useState(() => {
+    try { return localStorage.getItem("popv_currency") || "₱"; } catch { return "₱"; }
+  });
+
+  const changeCurrency = (sym: string) => {
+    setCur(sym);
+    try { localStorage.setItem("popv_currency", sym); } catch {}
+  };
+
+  return (
+    <div className="card p-6 max-w-lg space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-2">🌐 Currency Symbol</h2>
+        <p className="text-sm text-slate-500 mb-4">Customize the currency symbol shown across all dashboards.</p>
+        <div className="flex gap-2 flex-wrap">
+          {["₱", "$", "€", "£", "¥", "₿"].map(sym => (
+            <button key={sym} onClick={() => changeCurrency(sym)}
+              className={`px-5 py-3 rounded-xl text-xl font-medium transition-all duration-200 ${
+                currency === sym ? "bg-brand-600 text-white shadow-lg scale-110" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}>
+              {sym}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-slate-400 mt-3">Current: <strong className="text-brand-600">{currency}</strong> · Saved in browser</p>
+      </div>
     </div>
   );
 }

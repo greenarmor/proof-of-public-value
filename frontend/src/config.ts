@@ -17,4 +17,14 @@ export const RPC_URL = "https://soroban-testnet.stellar.org:443";
 export const NETWORK = "testnet";
 
 export const RPT_ASSET = "CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ";
-export const RPT_MIN_BALANCE = 1; // stroops
+export const RPT_MIN_BALANCE = 1;
+
+export const CURRENCIES = ["₱", "$", "€", "£", "¥", "₿"] as const;
+
+export function getCurrency(): string {
+  try { return localStorage.getItem("popv_currency") || "₱"; } catch { return "₱"; }
+}
+
+export function setCurrency(sym: string): void {
+  try { localStorage.setItem("popv_currency", sym); } catch {}
+}
