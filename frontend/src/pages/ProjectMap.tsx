@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { formatBudget } from "../helpers";
+import "leaflet/dist/leaflet.css";
 
 interface PVOData {
   id: number; title: string; description: string; department: string;

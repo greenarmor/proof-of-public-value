@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
-import "leaflet/dist/leaflet.css";
 
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
@@ -90,10 +89,8 @@ export function TransparencyPortal() {
       {/* Split: Map + Grid */}
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
-          <Suspense fallback={<div className="skeleton-shimmer h-[60vh] rounded-xl"/>}>
-            <div className="rounded-xl overflow-hidden border-2 border-brand-100 shadow-lg">
-              <ProjectMap pvos={filtered} />
-            </div>
+          <Suspense fallback={<div className="skeleton-shimmer h-[70vh] rounded-xl"/>}>
+            <ProjectMap pvos={filtered} />
           </Suspense>
         </div>
         <div className="flex-1">
