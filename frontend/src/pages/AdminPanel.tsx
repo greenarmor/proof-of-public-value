@@ -104,11 +104,29 @@ function RoleManagement() {
     setSubmitting(true);
     setMessage(null);
     try {
-      setMessage({ text: `Role assignment requires signing via Freighter. In production, this triggers a wallet popup.`, ok: true });
+      const client = new AccessControlClient({
+        contractId: CONTRACT_IDS.access_control,
+        networkPassphrase: NETWORK_PASSPHRASE,
+        rpcUrl: RPC_URL,
+        publicKey: address,
+      });
+
+      const roleMap: Record<string, any> = {};
+      ROLES.forEach((r: string) => { roleMap[r] = { tag: r, values: void 0 }; });
+
+      const tx = await client.assign_role({
+        address: userAddress,
+        role: roleMap[role],
+        assigner: address,
+      });
+
+      setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
+      const result = await tx.signAndSend();
+      setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!`, ok: true });
       setUserAddress("");
       await loadAssignments();
     } catch (err: any) {
-      setMessage({ text: `Error: ${err.message || err}`, ok: false });
+      setMessage({ text: `Error: ${err.message || err}. Did you sign in Freighter?`, ok: false });
     } finally {
       setSubmitting(false);
     }
@@ -117,11 +135,32 @@ function RoleManagement() {
   const handleRevoke = async (addr: string, r: string) => {
     if (!address) return;
     setMessage(null);
+    setSubmitting(true);
     try {
-      setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}. In production, this signs via Freighter.`, ok: true });
+      const client = new AccessControlClient({
+        contractId: CONTRACT_IDS.access_control,
+        networkPassphrase: NETWORK_PASSPHRASE,
+        rpcUrl: RPC_URL,
+        publicKey: address,
+      });
+
+      const roleMap: Record<string, any> = {};
+      ROLES.forEach((role: string) => { roleMap[role] = { tag: role, values: void 0 }; });
+
+      const tx = await client.revoke_role({
+        revoker: address,
+        address: addr,
+        role: roleMap[r],
+      });
+
+      setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
+      await tx.signAndSend();
+      setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}.`, ok: true });
       await loadAssignments();
     } catch (err: any) {
-      setMessage({ text: `Error: ${err.message || err}`, ok: false });
+      setMessage({ text: `Error: ${err.message || err}. Did you sign in Freighter?`, ok: false });
+    } finally {
+      setSubmitting(false);
     }
   };
 
