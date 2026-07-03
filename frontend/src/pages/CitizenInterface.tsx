@@ -102,13 +102,26 @@ function CitizenDashboard() {
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({ asset })).setTimeout(30).build();
-      await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      setMessage({ text: "RPT trustline created! Ask admin to mint RPT tokens.", ok: true });
-      setRptBalance(0);
+
+      setMessage({ text: "Check Freighter popup to sign...", ok: true });
+      const signedResp = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE } as any);
+      const result = await server.sendTransaction(signedResp as any);
+
+      if (result.status === "PENDING" || result.status === "DUPLICATE") {
+        setMessage({ text: "✅ RPT trustline created! Admin can now mint tokens to your wallet.", ok: true });
+        setRptBalance(0);
+        setTrustlineChecked(true);
+      } else {
+        throw new Error(`Transaction status: ${result.status}`);
+      }
     } catch (err: any) {
       if (err.message?.includes("already") || err.message?.includes("exist")) {
         setMessage({ text: "Trustline already exists!", ok: true });
-      } else { setMessage({ text: `Failed: ${err.message}`, ok: false }); }
+      } else if (err.message?.includes("User declined") || err.message?.includes("rejected")) {
+        setMessage({ text: "Transaction cancelled in Freighter.", ok: false });
+      } else {
+        setMessage({ text: `Failed: ${err.message}`, ok: false });
+      }
     } finally { setTrustlineLoading(false); }
   };
 
