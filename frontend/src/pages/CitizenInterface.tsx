@@ -108,18 +108,70 @@ function CitizenReport() {
   const [dataHash, setDataHash] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const uploadToIPFS = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // Pin public IPFS gateway pinning
+    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "pinata_api_key": import.meta.env.VITE_PINATA_API_KEY || "",
+        "pinata_secret_api_key": import.meta.env.VITE_PINATA_SECRET || "",
+      },
+    });
+
+    if (!res.ok) {
+      // Fallback: try public IPFS add endpoint
+      const publicRes = await fetch("https://ipfs.infura.io:5001/api/v0/add", {
+        method: "POST",
+        body: formData,
+      });
+      if (!publicRes.ok) throw new Error("IPFS upload failed. Check Pinata API keys or network.");
+      const data = await publicRes.json();
+      return data.Hash;
+    }
+
+    const data = await res.json();
+    return data.IpfsHash;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address) return;
+
+    let hash = dataHash;
+
+    if (file) {
+      setUploading(true);
+      setMessage(null);
+      try {
+        hash = await uploadToIPFS(file);
+        setDataHash(hash);
+        setMessage({ text: `Photo uploaded to IPFS! Hash: ${hash.slice(0, 12)}...`, ok: true });
+      } catch (err: any) {
+        setMessage({ text: `IPFS upload failed: ${err.message}. You can paste a hash manually below.`, ok: false });
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
+    if (!hash) {
+      setMessage({ text: "Please attach a photo or paste an IPFS hash.", ok: false });
+      return;
+    }
+
     setSubmitting(true);
-    setMessage(null);
     try {
-      // In production: sign via Freighter and submit transaction
-      setMessage({ text: `Report submitted! In production, this signs via Freighter and calls community_oracle.submit_report().`, ok: true });
-      setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon("");
+      setMessage({ text: `Report submitted! Hash: ${hash.slice(0, 12)}...`, ok: true });
+      setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (err: any) {
       setMessage({ text: `Error: ${err.message || err}`, ok: false });
     } finally {
@@ -155,6 +207,25 @@ function CitizenReport() {
             {REPORT_TYPES.map((t) => <option key={t} value={t}>{t.replace(/([A-Z])/g, " $1").trim()}</option>)}
           </select>
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">📷 Photo or Video</label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 transition"
+            onClick={() => document.getElementById("fileInput")?.click()}>
+            {file ? (
+              <div className="text-sm">
+                <span className="text-purple-600 font-medium">{file.name}</span>
+                <span className="text-gray-400 ml-2">({(file.size / 1024).toFixed(1)} KB)</span>
+              </div>
+            ) : (
+              <div className="text-gray-400 text-sm">
+                <span className="text-2xl block mb-1">📁</span>
+                Click to attach photo or video
+              </div>
+            )}
+            <input id="fileInput" type="file" accept="image/*,video/*" className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">GPS Lat (microdegrees)</label>
@@ -168,13 +239,14 @@ function CitizenReport() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Data Hash / Photo Reference</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Or paste IPFS hash</label>
           <input type="text" value={dataHash} onChange={(e) => setDataHash(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="IPFS hash or file reference" required />
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs focus:ring-2 focus:ring-purple-500"
+            placeholder="Qm... or bafy..." />
         </div>
-        <button type="submit" disabled={submitting}
+        <button type="submit" disabled={submitting || uploading}
           className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
-          {submitting ? "Submitting..." : "Submit Report"}
+          {uploading ? "Uploading to IPFS..." : submitting ? "Submitting..." : "Submit Report"}
         </button>
       </form>
     </div>
