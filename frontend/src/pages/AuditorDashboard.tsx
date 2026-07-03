@@ -78,6 +78,9 @@ export function AuditorDashboard() {
           <option value="medium">Medium Risk (20-49)</option>
           <option value="low">Low Risk (&lt;20)</option>
         </select>
+        <button onClick={() => alert("Export CSV coming soon")} className="ml-auto px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">
+          📥 Export CSV
+        </button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">

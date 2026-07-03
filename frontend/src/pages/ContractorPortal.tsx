@@ -3,7 +3,7 @@ import { useWallet } from "../wallet";
 
 export function ContractorPortal() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"projects" | "evidence" | "history">("projects");
+  const [activeTab, setActiveTab] = useState<"projects" | "evidence" | "history" | "docs">("projects");
 
   if (!connected) {
     return (
@@ -23,7 +23,7 @@ export function ContractorPortal() {
       <p className="text-gray-500 mb-6">Manage your assigned projects, submit evidence, and track payments.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["projects", "evidence", "history"] as const).map((tab) => (
+        {(["projects", "evidence", "docs", "history"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -34,14 +34,16 @@ export function ContractorPortal() {
             }`}
           >
             {tab === "projects" && "📋 My Projects"}
-            {tab === "evidence" && "📎 Submit Evidence"}
-            {tab === "history" && "💳 Payment History"}
+            {tab === "evidence" && "📎 Upload Evidence"}
+            {tab === "docs" && "📄 Documents"}
+            {tab === "history" && "💳 Payments"}
           </button>
         ))}
       </div>
 
       {activeTab === "projects" && <ProjectsTab />}
       {activeTab === "evidence" && <EvidenceTab />}
+      {activeTab === "docs" && <DocumentsTab />}
       {activeTab === "history" && <HistoryTab />}
     </div>
   );
@@ -142,6 +144,71 @@ function HistoryTab() {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function DocumentsTab() {
+  const [docName, setDocName] = useState("");
+  const [docHash, setDocHash] = useState("");
+  const [milestoneId, setMilestoneId] = useState("");
+
+  const submitted = [
+    { name: "Engineering Report Q2", hash: "Qm...abc", date: "Jul 2, 2026", status: "Verified" },
+    { name: "Material Certificate", hash: "Qm...def", date: "Jul 1, 2026", status: "Pending" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-5">
+        <h3 className="font-semibold mb-4">Submit Document</h3>
+        <form className="space-y-4 max-w-lg" onSubmit={(e) => e.preventDefault()}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Milestone ID</label>
+              <input type="number" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Document Name</label>
+              <input type="text" value={docName} onChange={(e) => setDocName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">IPFS Hash / Reference</label>
+            <input type="text" value={docHash} onChange={(e) => setDocHash(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Qm..." required />
+          </div>
+          <button type="submit" className="w-full py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+            Submit Document
+          </button>
+        </form>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <h3 className="p-4 font-semibold border-b border-gray-100">Submitted Documents</h3>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Name</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Hash</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Date</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {submitted.map((d, i) => (
+              <tr key={i} className="border-t border-gray-100">
+                <td className="px-4 py-3 text-gray-900">{d.name}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.hash}</td>
+                <td className="px-4 py-3 text-gray-500">{d.date}</td>
+                <td className="px-4 py-3"><span className={`px-2 py-0.5 text-xs rounded ${d.status === "Verified" ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"}`}>{d.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

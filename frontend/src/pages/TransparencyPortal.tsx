@@ -181,6 +181,36 @@ function PVODetail({ pvo, onBack }: { pvo: PVOData; onBack: () => void }) {
           </div>
         </div>
       </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+        <h2 className="text-lg font-semibold mb-4">📸 Citizen Reports</h2>
+        <CitizenReportFeed pvoId={pvo.id} />
+      </div>
+    </div>
+  );
+}
+
+function CitizenReportFeed({ pvoId }: { pvoId: number }) {
+  const reports = [
+    { id: 1, type: "GpsPhoto", milestone: "Site Preparation", citizen: "G...ACMSV", confidence: 70, ts: "Jul 3, 2026" },
+  ];
+
+  return (
+    <div>
+      {reports.map((r) => (
+        <div key={r.id} className="flex items-start gap-4 py-3 border-b border-gray-100 last:border-0">
+          <span className="text-2xl">📸</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 text-xs rounded bg-green-50 text-green-700">{r.type}</span>
+              <span className="text-sm text-gray-500">{r.ts}</span>
+            </div>
+            <p className="text-sm text-gray-700 mt-1">Milestone: {r.milestone}</p>
+            <p className="text-xs text-gray-400 mt-0.5">By {r.citizen} · Confidence {r.confidence}%</p>
+          </div>
+        </div>
+      ))}
+      {reports.length === 0 && <p className="text-sm text-gray-400 py-4">No citizen reports for this project yet.</p>}
     </div>
   );
 }

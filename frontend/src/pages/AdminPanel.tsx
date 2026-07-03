@@ -16,7 +16,7 @@ interface SystemHealth {
 
 export function AdminPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health" | "upgrade">("roles");
 
   if (!connected) {
     return (
@@ -36,7 +36,7 @@ export function AdminPanel() {
       <p className="text-gray-500 mb-6">Manage roles, handle disputes, and monitor system health.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["roles", "disputes", "health"] as const).map((tab) => (
+        {(["roles", "disputes", "health", "upgrade"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -46,7 +46,8 @@ export function AdminPanel() {
           >
             {tab === "roles" && "👥 Role Management"}
             {tab === "disputes" && "⚖️ Dispute Resolution"}
-            {tab === "health" && "📊 System Health"}
+            {tab === "health" && "📊 Health"}
+            {tab === "upgrade" && "🔄 Upgrade"}
           </button>
         ))}
       </div>
@@ -54,6 +55,7 @@ export function AdminPanel() {
       {activeTab === "roles" && <RoleManagement />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
+      {activeTab === "upgrade" && <ContractUpgrade />}
     </div>
   );
 }
@@ -193,6 +195,52 @@ function SystemHealthMonitor() {
       <div className="p-4 border-t border-gray-100 text-xs text-gray-400">
         Last checked: {new Date().toLocaleString()}
       </div>
+    </div>
+  );
+}
+
+function ContractUpgrade() {
+  const contracts = [
+    { name: "access_control", wasm: "access_control.wasm", version: "v0.1.0" },
+    { name: "audit_trail", wasm: "audit_trail.wasm", version: "v0.1.0" },
+    { name: "community_oracle", wasm: "community_oracle.wasm", version: "v0.1.0" },
+    { name: "escrow", wasm: "escrow.wasm", version: "v0.1.0" },
+    { name: "pvo_core", wasm: "pvo_core.wasm", version: "v0.1.0" },
+    { name: "reputation", wasm: "reputation.wasm", version: "v0.1.0" },
+    { name: "value_score", wasm: "value_score.wasm", version: "v0.1.0" },
+  ];
+
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+        ⚠️ Contract upgrades on Stellar require deploying a new WASM to a new contract ID.
+        Existing storage is NOT automatically migrated.
+      </div>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Contract</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">WASM</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Version</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contracts.map((c) => (
+              <tr key={c.name} className="border-t border-gray-100">
+                <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-500">{c.wasm}</td>
+                <td className="px-4 py-3"><span className="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded">{c.version}</span></td>
+                <td className="px-4 py-3">
+                  <button className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200">Upgrade</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400">Run `stellar contract build` then `stellar contract deploy` to upgrade contracts.</p>
     </div>
   );
 }
