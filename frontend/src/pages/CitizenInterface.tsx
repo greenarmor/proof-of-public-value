@@ -4,6 +4,7 @@ import { Client as CommunityOracleClient } from "../contracts/community_oracle/s
 import { Client as ReputationClient } from "../contracts/reputation/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
+import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
 
 const REPORT_TYPES = [
   "GpsPhoto", "GpsVideo", "FloodReport", "CompletionVerification",
@@ -216,6 +217,12 @@ function CitizenReport() {
         </div>
       )}
       <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+          <strong>🪙 RPT Tokens Required</strong><br/>
+          Must hold {RPT_MIN_BALANCE}+ RPT ({RPT_ASSET.slice(0,8)}...) to submit reports.
+          <br/>
+          <span className="text-purple-500">Request RPT from admin via CLI: <code className="text-xs">stellar contract invoke --id {RPT_ASSET.slice(0,8)}... -- mint --to YOUR_WALLET --amount 10</code></span>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label>
