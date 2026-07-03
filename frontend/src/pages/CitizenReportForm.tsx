@@ -80,7 +80,8 @@ export default function CitizenReportForm() {
 
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
-      const result = await tx.signAndSend({
+      // Sign and send in separate steps for better error handling
+      const signed = await tx.sign({
         signTransaction: async (xdr: string) => {
           const resp = await signTransaction(xdr, { networkPassphrase: NETWORK_PASSPHRASE });
           if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
@@ -88,7 +89,10 @@ export default function CitizenReportForm() {
         },
       } as any);
 
-      setMessage({ text: `Report #${result.result} submitted! ✅`, ok: true });
+      const sent = await (tx as any).send();
+      const result = sent.result ?? (sent as any).returnValue;
+
+      setMessage({ text: `Report #${result} submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (er: any) {
       const msg = String(er?.message || er);
