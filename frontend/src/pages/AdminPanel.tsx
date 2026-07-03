@@ -108,80 +108,68 @@ function RoleManagement() {
     setSubmitting(true);
     setMessage(null);
     try {
-      const client = new AccessControlClient({
-        contractId: CONTRACT_IDS.access_control,
-        networkPassphrase: NETWORK_PASSPHRASE,
-        rpcUrl: RPC_URL,
-        publicKey: address,
-      });
-
-      const roleMap: Record<string, any> = {};
-      ROLES.forEach((r: string) => { roleMap[r] = { tag: r, values: void 0 }; });
-
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const tx = await client.assign_role({
-        address: userAddress,
-        role: roleMap[role],
-        assigner: address,
-      });
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.access_control);
+      const op = contract.call("assign_role",
+        new Address(address).toScVal(),
+        new Address(userAddress).toScVal(),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]),
+        new Address(address).toScVal(),
+      );
 
-      setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
-      await tx.signAndSend({
-        signTransaction: async (xdr: string, opts: any) => {
-          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
-          if (resp?.error) throw new Error(resp.error.message);
-          return resp.signedTxXdr;
-        },
-      } as any);
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      setMessage({ text: "Check Freighter to sign...", ok: true });
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
       setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!`, ok: true });
       setUserAddress("");
       await loadAssignments();
     } catch (err: any) {
-      setMessage({ text: `Error: ${err.message || err}. Did you sign in Freighter?`, ok: false });
-    } finally {
-      setSubmitting(false);
-    }
+      setMessage({ text: `Error: ${err.message}`, ok: false });
+    } finally { setSubmitting(false); }
   };
 
   const handleRevoke = async (addr: string, r: string) => {
     if (!address) return;
-    setMessage(null);
-    setSubmitting(true);
+    setMessage(null); setSubmitting(true);
     try {
-      const client = new AccessControlClient({
-        contractId: CONTRACT_IDS.access_control,
-        networkPassphrase: NETWORK_PASSPHRASE,
-        rpcUrl: RPC_URL,
-        publicKey: address,
-      });
-
-      const roleMap: Record<string, any> = {};
-      ROLES.forEach((role: string) => { roleMap[role] = { tag: role, values: void 0 }; });
-
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const tx = await client.revoke_role({
-        revoker: address,
-        address: addr,
-        role: roleMap[r],
-      });
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.access_control);
+      const op = contract.call("revoke_role",
+        new Address(address).toScVal(),
+        new Address(addr).toScVal(),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(r)]),
+      );
 
-      setMessage({ text: "Check Freighter to sign the transaction...", ok: true });
-      await tx.signAndSend({
-        signTransaction: async (xdr: string, opts: any) => {
-          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
-          if (resp?.error) throw new Error(resp.error.message);
-          return resp.signedTxXdr;
-        },
-      } as any);
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      setMessage({ text: "Check Freighter to sign...", ok: true });
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
       setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}.`, ok: true });
       await loadAssignments();
     } catch (err: any) {
-      setMessage({ text: `Error: ${err.message || err}. Did you sign in Freighter?`, ok: false });
-    } finally {
-      setSubmitting(false);
-    }
+      setMessage({ text: `Error: ${err.message}`, ok: false });
+    } finally { setSubmitting(false); }
   };
 
   return (
