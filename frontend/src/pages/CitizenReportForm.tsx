@@ -80,8 +80,8 @@ export default function CitizenReportForm() {
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
       await tx.signAndSend({
-        signTransaction: async (xdr: string) => {
-          const resp = await signTransaction(xdr, { networkPassphrase: NETWORK_PASSPHRASE });
+        signTransaction: async (xdr: string, opts: any) => {
+          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
           if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
           return resp.signedTxXdr;
         },
