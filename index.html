@@ -1,0 +1,1594 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Programmable public spending on Stellar Soroban. No Proof. No Payment.">
+      
+      
+        <meta name="author" content="greenarmor">
+      
+      
+        <link rel="canonical" href="https://greenarmor.github.io/proof-of-public-value/">
+      
+      
+      
+        <link rel="next" href="getting-started/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Proof of Public Value (PoPV)</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#proof-of-public-value-hackathon-user-manual" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Proof of Public Value (PoPV)" class="md-header__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Proof of Public Value (PoPV)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="creating-projects/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Creating Projects
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="submitting-evidence/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Submitting Evidence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="approving-milestones/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Approving Milestones
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="community-verification/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Community Verification
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="audit-trail/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Audit Trail
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="escrow-deep-dive/" class="md-tabs__link">
+          
+  
+  
+  Appendices
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Proof of Public Value (PoPV)" class="md-nav__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Proof of Public Value (PoPV)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-popv-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What PoPV Solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stellar-integration-defi-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stellar Integration (DeFi Escrow)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stellar Integration (DeFi Escrow)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-defi-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic DeFi Escrow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-chain-audit-trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On-Chain Audit Trail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#soroban-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Soroban Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployed-contracts-testnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployed Contracts (Testnet)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It Live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Try It Live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#demo-wallets-testnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demo Wallets (Testnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exercises">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exercise-1-explore-without-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 1: Explore Without Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-2-citizen-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 2: Citizen Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-3-full-payment-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 3: Full Payment Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-4-admin-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 4: Admin Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tech-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tech Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="creating-projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="submitting-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submitting Evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="approving-milestones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving Milestones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="community-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="audit-trail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Trail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="escrow-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Escrow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-popv-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What PoPV Solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stellar-integration-defi-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stellar Integration (DeFi Escrow)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stellar Integration (DeFi Escrow)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-defi-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic DeFi Escrow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-chain-audit-trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On-Chain Audit Trail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#soroban-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Soroban Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployed-contracts-testnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployed Contracts (Testnet)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It Live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Try It Live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#demo-wallets-testnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demo Wallets (Testnet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exercises">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exercise-1-explore-without-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 1: Explore Without Login
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-2-citizen-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 2: Citizen Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-3-full-payment-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 3: Full Payment Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-4-admin-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 4: Admin Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tech-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tech Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="proof-of-public-value-hackathon-user-manual">Proof of Public Value — Hackathon User Manual<a class="headerlink" href="#proof-of-public-value-hackathon-user-manual" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Track:</strong> Local Finance &amp; Real World Access — Stellar Build Better Hackathon</p>
+</blockquote>
+<hr />
+<h2 id="the-problem">The Problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
+<p>Every year, governments lose <strong>$2.6 trillion to corruption</strong> — ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.</p>
+<p>The root cause: <strong>public money is released based on signatures and paperwork, not on proof that value was actually created.</strong> Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.</p>
+<h2 id="what-popv-solves">What PoPV Solves<a class="headerlink" href="#what-popv-solves" title="Permanent link">&para;</a></h2>
+<p>Proof of Public Value enforces one rule: <strong>No Proof. No Payment.</strong></p>
+<p>Every public project becomes a <strong>Public Value Object (PVO)</strong> — a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released <strong>only after passing 5 independent verification gates:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Who Verifies</th>
+<th>What They Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Evidence</td>
+<td>Contractor</td>
+<td>Drone imagery, GPS, photos, engineering reports</td>
+</tr>
+<tr>
+<td>2. Engineer</td>
+<td>Licensed Professional</td>
+<td>Physical work meets specifications</td>
+</tr>
+<tr>
+<td>3. AI Risk</td>
+<td>Artificial Intelligence</td>
+<td>Fraud detection, anomaly scanning</td>
+</tr>
+<tr>
+<td>4. Compliance</td>
+<td>Auditor / COA</td>
+<td>Procurement law, budget rules, safety</td>
+</tr>
+<tr>
+<td>5. Community</td>
+<td>Citizens</td>
+<td>GPS-tagged photos, flood reports, quality checks</td>
+</tr>
+</tbody>
+</table>
+<p>If <strong>any gate fails</strong>, funds remain locked. No single person can release money — it requires cryptographic consensus.</p>
+<hr />
+<h2 id="stellar-integration-defi-escrow">Stellar Integration (DeFi Escrow)<a class="headerlink" href="#stellar-integration-defi-escrow" title="Permanent link">&para;</a></h2>
+<p>PoPV is <strong>serverless</strong> — there is no backend, no database, no centralized server. <strong>The Stellar blockchain is the infrastructure.</strong></p>
+<h3 id="dynamic-defi-escrow">Dynamic DeFi Escrow<a class="headerlink" href="#dynamic-defi-escrow" title="Permanent link">&para;</a></h3>
+<p>Every milestone has an independent escrow contract on Stellar. Funds are deposited and locked with multi-condition unlock rules:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// Funds release only when all 5 conditions are met</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">engineer_approved</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">ai_validated</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">compliance_passed</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">if</span><span class="w"> </span><span class="n">community_confirmations</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">if</span><span class="w"> </span><span class="o">!</span><span class="n">evidence_submitted</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">// Release payment via Stellar rails</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">escrow</span><span class="p">.</span><span class="n">release</span><span class="p">(</span><span class="n">funds</span><span class="p">,</span><span class="w"> </span><span class="n">recipient</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="on-chain-audit-trail">On-Chain Audit Trail<a class="headerlink" href="#on-chain-audit-trail" title="Permanent link">&para;</a></h3>
+<p>Every decision is immutably recorded on Stellar:
+- <strong>Who</strong> approved (cryptographic address)
+- <strong>What</strong> they approved (milestone ID, evidence hash)
+- <strong>When</strong> (blockchain timestamp)
+- <strong>Why</strong> (rationale, supporting IPFS documents)
+- <strong>Risk score</strong> and compliance result</p>
+<h3 id="soroban-events">Soroban Events<a class="headerlink" href="#soroban-events" title="Permanent link">&para;</a></h3>
+<p>All 11 contracts emit typed Stellar events for real-time indexing. Every state change — from PVO creation to payment release — is publicly auditable.</p>
+<hr />
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│                     PoPV Contract System                      │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─────────────────────────────────────────────────────────────┤
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│                                                              │
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  ┌─────────────────┐     ┌─────────────────────────────┐   │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│  │  access_control  │────▶│        pvo_core              │   │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│  │  14 roles        │     │  PVO + Milestones + Evidence │   │
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│  └─────────────────┘     └──────────┬──────────────────┘   │
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                                      │                       │
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│                    ┌─────────────────┼─────────────────┐   │
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│                    │                 │                   │   │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│                    ▼                 ▼                   ▼   │
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│  │   escrow     │  │ community_   │  │  reputation      │  │
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│  │  DeFi locks  │  │ oracle       │  │  Integrity Graph │  │
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│                                                              │
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│  │ audit_trail  │  │ value_score  │  │   ai_oracle      │  │
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│  │ Black Box    │  │ Public Value │  │  Fraud Detection │  │
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│                                                              │
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│  │public_index  │  │ compliance_  │  │ procurement_     │  │
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│  │Nat&#39;l Rankings│  │ engine       │  │ market           │  │
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>└─────────────────────────────────────────────────────────────┘
+</code></pre></div>
+<hr />
+<h2 id="deployed-contracts-testnet">Deployed Contracts (Testnet)<a class="headerlink" href="#deployed-contracts-testnet" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Contract</th>
+<th>ID</th>
+<th>Functions</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access_control</code></td>
+<td><code>CCJK...BCMVP</code></td>
+<td>9</td>
+<td>11</td>
+</tr>
+<tr>
+<td><code>pvo_core</code></td>
+<td><code>CAJH...MVNOD</code></td>
+<td>17</td>
+<td>18</td>
+</tr>
+<tr>
+<td><code>escrow</code></td>
+<td><code>CDTH...EDZT3</code></td>
+<td>14</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>community_oracle</code></td>
+<td><code>CDTZ...K7RS</code></td>
+<td>8</td>
+<td>12</td>
+</tr>
+<tr>
+<td><code>reputation</code></td>
+<td><code>CACW...4ADN</code></td>
+<td>12</td>
+<td>19</td>
+</tr>
+<tr>
+<td><code>audit_trail</code></td>
+<td><code>CA2O...BROZ</code></td>
+<td>10</td>
+<td>12</td>
+</tr>
+<tr>
+<td><code>value_score</code></td>
+<td><code>CCTC...3YN</code></td>
+<td>11</td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>ai_oracle</code></td>
+<td><code>CDR5...ID43</code></td>
+<td>13</td>
+<td>17</td>
+</tr>
+<tr>
+<td><code>public_index</code></td>
+<td><code>CCN7...JG7J</code></td>
+<td>7</td>
+<td>7</td>
+</tr>
+<tr>
+<td><code>compliance_engine</code></td>
+<td><code>CCRS...GRTD</code></td>
+<td>8</td>
+<td>8</td>
+</tr>
+<tr>
+<td><code>procurement_market</code></td>
+<td><code>CCPQ...JBW3</code></td>
+<td>5</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p><strong>154 tests, all passing. 0 npm vulnerabilities.</strong></p>
+<hr />
+<h2 id="try-it-live">Try It Live<a class="headerlink" href="#try-it-live" title="Permanent link">&para;</a></h2>
+<p><strong>Frontend:</strong> <code>http://localhost:5174</code> (run <code>npm run dev</code> in <code>frontend/</code>)</p>
+<ol>
+<li><strong>Public pages</strong> — Browse projects, national index, search — no wallet needed</li>
+<li><strong>Connect Freighter</strong> — Click "Connect Wallet" (install <a href="https://freighter.app">Freighter</a> first)</li>
+<li><strong>Citizen</strong> — Connect citizen wallet → click "Create RPT Trustline" → submit GPS report</li>
+<li><strong>Admin</strong> — Connect alice wallet → assign roles → mint RPT → manage system</li>
+</ol>
+<h3 id="demo-wallets-testnet">Demo Wallets (Testnet)<a class="headerlink" href="#demo-wallets-testnet" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Address</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Administrator</td>
+<td><code>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV</code></td>
+</tr>
+<tr>
+<td>GovernmentAgency</td>
+<td><code>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN</code></td>
+</tr>
+<tr>
+<td>Contractor</td>
+<td><code>GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW</code></td>
+</tr>
+<tr>
+<td>Engineer</td>
+<td><code>GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN</code></td>
+</tr>
+<tr>
+<td>Auditor</td>
+<td><code>GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7</code></td>
+</tr>
+<tr>
+<td>Citizen</td>
+<td><code>GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Secret keys in <code>.dev-logs/role-credentials.md</code> (gitignored)</p>
+</blockquote>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Run frontend</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>dev
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Build contracts</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>stellar<span class="w"> </span>contract<span class="w"> </span>build
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Run all tests</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>cargo<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Deploy all contracts</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>./scripts/deploy.sh
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Run e2e</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>e2e-test.ts
+</code></pre></div>
+<hr />
+<h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
+<h3 id="exercise-1-explore-without-login">Exercise 1: Explore Without Login<a class="headerlink" href="#exercise-1-explore-without-login" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open the Public Transparency Portal</li>
+<li>Browse available projects — see budgets, status, value scores</li>
+<li>View the National Index with department rankings</li>
+<li>Use the Economic Memory search</li>
+</ol>
+<h3 id="exercise-2-citizen-verification">Exercise 2: Citizen Verification<a class="headerlink" href="#exercise-2-citizen-verification" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Connect the citizen wallet in Freighter</li>
+<li>Go to Citizen Interface → check RPT status</li>
+<li>Click "Create RPT Trustline" → sign in Freighter</li>
+<li>Admin mints RPT tokens to you via Admin Panel</li>
+<li>Submit a GPS-tagged photo report</li>
+<li>Check your reputation score</li>
+</ol>
+<h3 id="exercise-3-full-payment-flow">Exercise 3: Full Payment Flow<a class="headerlink" href="#exercise-3-full-payment-flow" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Create a PVO (Agency Dashboard)</li>
+<li>Define a milestone with evidence requirements</li>
+<li>Fund the escrow</li>
+<li>Contractor submits evidence (drone imagery, GPS)</li>
+<li>Engineer approves → AI validates → Compliance checks → Citizens verify</li>
+<li>Release milestone payment</li>
+<li>Verify audit trail entry is recorded</li>
+</ol>
+<h3 id="exercise-4-admin-operations">Exercise 4: Admin Operations<a class="headerlink" href="#exercise-4-admin-operations" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Assign roles to wallet addresses</li>
+<li>Mint RPT tokens to citizen wallets</li>
+<li>Check system health monitor</li>
+<li>Change currency symbol setting</li>
+</ol>
+<hr />
+<h2 id="tech-stack">Tech Stack<a class="headerlink" href="#tech-stack" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blockchain</td>
+<td>Stellar Testnet</td>
+</tr>
+<tr>
+<td>Smart Contracts</td>
+<td>Soroban SDK v26, Rust (#![no_std])</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>React 19, TypeScript, Vite 8, Tailwind CSS v4</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter 3.x (Android/iOS)</td>
+</tr>
+<tr>
+<td>DeFi</td>
+<td>Dynamic escrow, conditional payments, auto-pause</td>
+</tr>
+<tr>
+<td>Identity</td>
+<td>Stellar key pairs + Freighter wallet</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>Soroban persistent storage + IPFS for evidence</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>Soroban contract events with event indexer</td>
+</tr>
+<tr>
+<td>RPC</td>
+<td><code>soroban-testnet.stellar.org:443</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
