@@ -170,7 +170,35 @@ function CitizenReport() {
 
     setSubmitting(true);
     try {
-      setMessage({ text: `Report submitted! Hash: ${hash.slice(0, 12)}...`, ok: true });
+      const client = new CommunityOracleClient({
+        contractId: CONTRACT_IDS.community_oracle,
+        networkPassphrase: NETWORK_PASSPHRASE,
+        rpcUrl: RPC_URL,
+        publicKey: address,
+      });
+
+      const reportTypeMap: Record<string, any> = {
+        GpsPhoto: { tag: "GpsPhoto", values: void 0 },
+        GpsVideo: { tag: "GpsVideo", values: void 0 },
+        FloodReport: { tag: "FloodReport", values: void 0 },
+        CompletionVerification: { tag: "CompletionVerification", values: void 0 },
+        QualityReport: { tag: "QualityReport", values: void 0 },
+        DamageReport: { tag: "DamageReport", values: void 0 },
+        UsageReport: { tag: "UsageReport", values: void 0 },
+      };
+
+      const tx = await client.submit_report({
+        citizen: address,
+        pvo_id: Number(pvoId),
+        milestone_id: Number(milestoneId),
+        report_type: reportTypeMap[reportType],
+        data_hash: hash,
+        gps_lat: BigInt(lat || "0"),
+        gps_lon: BigInt(lon || "0"),
+      });
+
+      const result = await tx.signAndSend();
+      setMessage({ text: `Report #${result.result} submitted on-chain! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (err: any) {
       setMessage({ text: `Error: ${err.message || err}`, ok: false });
