@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { rpc } from "@stellar/stellar-sdk";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
+import "leaflet/dist/leaflet.css";
+
+const ProjectMap = lazy(() => import("./ProjectMap"));
 
 interface PVOData {
   id: number;
@@ -130,6 +132,15 @@ export function TransparencyPortal() {
       {pvos.length === 0 && (
         <div className="text-center py-20 text-gray-400">
           No projects found on-chain yet.
+        </div>
+      )}
+
+      {pvos.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">🗺️ Project Map</h2>
+          <Suspense fallback={<div className="h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center text-gray-400">Loading map...</div>}>
+            <ProjectMap pvos={pvos} />
+          </Suspense>
         </div>
       )}
     </div>
