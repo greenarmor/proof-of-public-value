@@ -6,6 +6,7 @@ import { ContractorPortal } from "./pages/ContractorPortal";
 import { EngineerPanel } from "./pages/EngineerPanel";
 import { CitizenInterface } from "./pages/CitizenInterface";
 import { AuditorDashboard } from "./pages/AuditorDashboard";
+import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
 import { formatAddress } from "./helpers";
 
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { to: "/engineer", label: "🔧 Engineer" },
   { to: "/auditor", label: "📊 Auditor" },
   { to: "/citizen", label: "📸 Citizen" },
+  { to: "/ai", label: "🤖 AI Monitor" },
   { to: "/admin", label: "⚙️ Admin" },
 ];
 
@@ -84,6 +86,7 @@ function App() {
               <Route path="/engineer" element={<EngineerPanel />} />
               <Route path="/citizen" element={<CitizenInterface />} />
               <Route path="/auditor" element={<AuditorDashboard />} />
+              <Route path="/ai" element={<AIDashboard />} />
               <Route path="/admin" element={<AdminPanel />} />
             </Routes>
           </main>

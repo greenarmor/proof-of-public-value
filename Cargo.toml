@@ -13,6 +13,7 @@ community_oracle = { path = "contracts/community_oracle" }
 reputation = { path = "contracts/reputation" }
 audit_trail = { path = "contracts/audit_trail" }
 value_score = { path = "contracts/value_score" }
+ai_oracle = { path = "contracts/ai_oracle" }
 
 [profile.release]
 opt-level = "z"

@@ -19,6 +19,7 @@ CONTRACTS=(
   "pvo_core"
   "reputation"
   "value_score"
+  "ai_oracle"
 )
 
 echo "============================================"

@@ -22,6 +22,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ai_oracle"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1054,6 +1061,7 @@ name = "popv_router"
 version = "0.1.0"
 dependencies = [
  "access_control",
+ "ai_oracle",
  "audit_trail",
  "community_oracle",
  "escrow",

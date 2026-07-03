@@ -20,6 +20,7 @@ community_oracle = { workspace = true }
 reputation = { workspace = true }
 audit_trail = { workspace = true }
 value_score = { workspace = true }
+ai_oracle = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
@@ -30,3 +31,4 @@ community_oracle = { workspace = true, features = ["testutils"] }
 reputation = { workspace = true, features = ["testutils"] }
 audit_trail = { workspace = true, features = ["testutils"] }
 value_score = { workspace = true, features = ["testutils"] }
+ai_oracle = { workspace = true, features = ["testutils"] }
