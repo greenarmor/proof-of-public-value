@@ -1,6 +1,8 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, String, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, String, Symbol, Vec};
+
+const NATIVE_XLM: &str = "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA";
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -68,6 +70,7 @@ const REPORTS: Symbol = symbol_short!("REPORTS");
 const CITIZEN_REP: Symbol = symbol_short!("CITIZEN_R");
 const PVO_INDEX: Symbol = symbol_short!("PVO_IDX");
 const INITIALIZED: Symbol = symbol_short!("INIT");
+const MIN_BALANCE: Symbol = symbol_short!("MINBAL");
 
 #[contract]
 pub struct CommunityOracle;
@@ -83,6 +86,12 @@ impl CommunityOracle {
         storage.set(&INITIALIZED, &true);
     }
 
+    pub fn set_citizen_credential(env: Env, admin: Address, min_balance: i128) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        storage.set(&MIN_BALANCE, &min_balance);
+    }
+
     pub fn submit_report(
         env: Env,
         citizen: Address,
@@ -94,6 +103,15 @@ impl CommunityOracle {
         gps_lon: i128,
     ) -> u32 {
         citizen.require_auth();
+
+        let storage = env.storage().persistent();
+        let min_balance: i128 = storage.get(&MIN_BALANCE).unwrap_or(0);
+
+        if min_balance > 0 {
+            let native = token::Client::new(&env, &Address::from_string(&String::from_str(&env, NATIVE_XLM)));
+            let balance = native.balance(&citizen);
+            assert!(balance >= min_balance, "insufficient XLM balance to report");
+        }
 
         let id = Self::next_id(&env);
         let now = env.ledger().timestamp();

@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCTM2WTQ7V7KSTXWJRBAJAROC25STQPW2UGAJQBECKAL5UGM23QEEIOV",
+    contractId: "CBC7HO5PAYRWX7VQDZ6NFDKDKR7GGJO6J4LFRE5INZWYXQRCCXWGIVGN",
   }
 } as const
 
@@ -107,6 +107,11 @@ export interface Client {
    */
   get_citizen_reputation: ({citizen}: {citizen: string}, options?: MethodOptions) => Promise<AssembledTransaction<Option<CitizenReputation>>>
 
+  /**
+   * Construct and simulate a set_citizen_credential transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  set_citizen_credential: ({admin, min_balance}: {admin: string, min_balance: i128}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
@@ -138,7 +143,8 @@ export class Client extends ContractClient {
         "AAAABQAAAAAAAAAAAAAAGUNvbmZpZGVuY2VDYWxjdWxhdGVkRXZlbnQAAAAAAAABAAAAG2NvbmZpZGVuY2VfY2FsY3VsYXRlZF9ldmVudAAAAAADAAAAAAAAAAZwdm9faWQAAAAAAAQAAAAAAAAAAAAAAAxtaWxlc3RvbmVfaWQAAAAEAAAAAAAAAAAAAAAKY29uZmlkZW5jZQAAAAAABAAAAAAAAAAC",
         "AAAAAAAAAAAAAAASZ2V0X3JlcG9ydHNfYnlfcHZvAAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAD6gAAB9AAAAAPQ29tbXVuaXR5UmVwb3J0AA==",
         "AAAAAAAAAAAAAAAUY2FsY3VsYXRlX2NvbmZpZGVuY2UAAAADAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAEAAAAE",
-        "AAAAAAAAAAAAAAAWZ2V0X2NpdGl6ZW5fcmVwdXRhdGlvbgAAAAAAAQAAAAAAAAAHY2l0aXplbgAAAAATAAAAAQAAA+gAAAfQAAAAEUNpdGl6ZW5SZXB1dGF0aW9uAAAA" ]),
+        "AAAAAAAAAAAAAAAWZ2V0X2NpdGl6ZW5fcmVwdXRhdGlvbgAAAAAAAQAAAAAAAAAHY2l0aXplbgAAAAATAAAAAQAAA+gAAAfQAAAAEUNpdGl6ZW5SZXB1dGF0aW9uAAAA",
+        "AAAAAAAAAAAAAAAWc2V0X2NpdGl6ZW5fY3JlZGVudGlhbAAAAAAAAgAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAAAAAAttaW5fYmFsYW5jZQAAAAALAAAAAA==" ]),
       options
     )
   }
@@ -150,6 +156,7 @@ export class Client extends ContractClient {
         get_report_count: this.txFromJSON<u32>,
         get_reports_by_pvo: this.txFromJSON<Array<CommunityReport>>,
         calculate_confidence: this.txFromJSON<u32>,
-        get_citizen_reputation: this.txFromJSON<Option<CitizenReputation>>
+        get_citizen_reputation: this.txFromJSON<Option<CitizenReputation>>,
+        set_citizen_credential: this.txFromJSON<null>
   }
 }
