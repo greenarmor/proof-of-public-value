@@ -1,272 +1,293 @@
 # Chapter 5: Community Verification
 
-Learn how citizens participate in verifying public projects through the Community Oracle.
+Citizens are the real-world eyes of PoPV. They verify whether a project actually exists, whether work is progressing, and whether the public is receiving value.
+
+> **Important:** Citizens must hold **RPT (Report Token)** before submitting reports. RPT acts as a lightweight reporting credential and anti-spam mechanism.
 
 ---
 
 ## What You'll Learn
 
-- How to submit community reports
+- What RPT is and why it is required
+- How to create an RPT trustline
+- How to receive RPT from an admin
+- How to submit a community report with photo/video evidence
+- How to verify other citizens' reports
 - How citizen reputation works
-- How confidence scores are calculated
-- How to verify reports
 
 ---
 
-## Why Citizens Matter
+## Why RPT Exists
 
-Community verification never replaces engineers — it strengthens accountability. When multiple independent citizens confirm the same thing, confidence increases. When reports conflict, it flags problems for investigation.
+PoPV does not want random spam reports. It also does not want a closed system where only government-approved citizens can participate.
+
+RPT solves this by creating a simple rule:
+
+> **Any wallet can report if it holds enough RPT.**
+
+This means participation is open, but still controlled enough to reduce spam and Sybil attacks.
+
+| Item | Value |
+|------|-------|
+| Token | `RPT` (Report Token) |
+| Issuer | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
+| Asset Contract | `CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ` |
+| Current Minimum | `1` RPT stroop |
+| Who mints it | Administrator |
+| Who uses it | Citizens submitting reports |
 
 ---
 
-## Scenario
+## How Citizen Reporting Works
 
-You are a **Citizen** living near the road paving project. You've noticed the site has been cleared and want to verify this with photographic evidence.
-
----
-
-## Exercises
-
-### Exercise 5.1: Deploy the Community Oracle Contract
-
-```bash
-WASM=$(pwd)/target/wasm32v1-none/release/community_oracle.wasm
-
-stellar contract deploy \
-  --wasm $WASM \
-  --source alice \
-  --network testnet \
-  --alias popv_oracle
+```mermaid
+flowchart TD
+    A[Citizen opens Citizen page] --> B[Create RPT trustline]
+    B --> C[Admin mints RPT]
+    C --> D[Citizen submits GPS/photo/video report]
+    D --> E[Report stored in community_oracle]
+    E --> F[Other citizens/verifiers verify report]
+    F --> G[Citizen reputation improves]
+    G --> H[Community confidence contributes to milestone release]
 ```
 
 ---
 
-### Exercise 5.2: Initialize
+## Report Types
+
+| Report Type | Use Case |
+|------------|----------|
+| `GpsPhoto` | GPS-tagged construction photo |
+| `GpsVideo` | GPS-tagged construction video |
+| `FloodReport` | Flooding/drainage condition report |
+| `CompletionVerification` | Confirms milestone appears completed |
+| `QualityReport` | Notes work quality or defects |
+| `DamageReport` | Reports damage or unsafe conditions |
+| `UsageReport` | Confirms citizens are using completed infrastructure |
+
+---
+
+## PVO ID and Milestone ID
+
+When submitting a report, citizens must choose:
+
+- **PVO ID** — the project number
+- **Milestone ID** — the specific work phase inside that project
+
+You can find these in the **Public Transparency Portal**:
+
+1. Open the homepage
+2. Find the project card
+3. The card shows `#1`, `#2`, etc. — this is the **PVO ID**
+4. Click the project card to see details and milestones
+5. Use the milestone number as the **Milestone ID**
+
+For the current demo:
+
+| Field | Value |
+|-------|-------|
+| PVO ID | `1` |
+| Project | Road Paving Project |
+| Milestone ID | `2` |
+| Milestone | Site Preparation |
+
+---
+
+# Exercises
+
+## Exercise 5.1: Check the RPT Token
+
+Check the RPT token contract:
 
 ```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- initialize
+stellar contract invoke --source alice --network testnet --send=yes \
+  --id CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ \
+  -- symbol
+```
+
+Expected output:
+
+```text
+"RPT"
 ```
 
 ---
 
-### Exercise 5.3: Submit a GPS Photo Report
+## Exercise 5.2: Create an RPT Trustline from the Website
+
+1. Open the web app
+2. Connect your citizen wallet with Freighter
+3. Go to **Citizen** dashboard
+4. In the RPT Token card, click **Create RPT Trustline**
+5. Approve the Freighter transaction
+
+After this, the wallet can receive RPT.
+
+!!! note
+    A trustline must be signed by the receiving wallet. Admin cannot create a trustline for another wallet unless a sponsorship transaction is built.
+
+---
+
+## Exercise 5.3: Create an RPT Trustline from CLI
+
+If you control the citizen wallet in Stellar CLI:
 
 ```bash
-# Report type IDs:
-#   0 = GpsPhoto
-#   1 = GpsVideo
-#   2 = FloodReport
-#   3 = CompletionVerification
-#   4 = QualityReport
-#   5 = DamageReport
-#   6 = UsageReport
+stellar contract invoke --source citizen --network testnet --send=yes \
+  --id CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ \
+  -- trust --addr GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES
+```
 
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
+Expected output:
+
+```text
+Transaction submitted successfully
+```
+
+---
+
+## Exercise 5.4: Admin Mints RPT to a Citizen
+
+After the trustline exists, admin mints RPT:
+
+```bash
+stellar contract invoke --source alice --network testnet --send=yes \
+  --id CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ \
+  -- mint \
+  --to GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES \
+  --amount 100
+```
+
+Expected result: citizen receives `100` RPT.
+
+---
+
+## Exercise 5.5: Check Citizen RPT Balance
+
+```bash
+stellar contract invoke --source alice --network testnet --send=yes \
+  --id CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ \
+  -- balance --id GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES
+```
+
+Expected output:
+
+```text
+"100"
+```
+
+If you see:
+
+```text
+trustline entry is missing for account
+```
+
+then the citizen has not created the trustline yet.
+
+---
+
+## Exercise 5.6: Submit a Community Report from the Website
+
+1. Connect the citizen wallet
+2. Go to **Citizen → Report**
+3. Use:
+
+| Field | Value |
+|-------|-------|
+| PVO ID | `1` |
+| Milestone ID | `2` |
+| Report Type | `GpsPhoto` |
+| Photo/Video | Attach a file or paste IPFS hash |
+| GPS | Click **Use my current location** or enter manually |
+
+4. Click **Submit Report**
+5. Approve in Freighter
+
+Expected result: report is submitted on-chain.
+
+---
+
+## Exercise 5.7: Submit a Community Report from CLI
+
+```bash
+stellar contract invoke --source citizen --network testnet --send=yes \
+  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
   -- submit_report \
-    --citizen alice \
-    --pvo_id 2 \
-    --milestone_id 3 \
-    --report_type 0 \
-    --data_hash "ipfs://QmPhotoHash001" \
-    --gps_lat 143000000 \
-    --gps_lon 1210000000
+  --citizen citizen \
+  --pvo-id 1 \
+  --milestone-id 2 \
+  --report-type GpsPhoto \
+  --data-hash '"ipfs://QmExamplePhotoHash"' \
+  --gps-lat 14599512 \
+  --gps-lon 120984220
 ```
 
-!!! info "GPS Coordinates"
-    Coordinates are in integer format (degrees × 10^7). For example:
-    - 14.3° N → `143000000`
-    - 121.0° E → `1210000000`
-
-??? success "Expected Output"
-    Returns a report ID.
+Expected output: a report ID.
 
 ---
 
-### Exercise 5.4: Submit a Quality Report
+## Exercise 5.8: Verify Another Citizen's Report
 
-Another citizen submits a quality assessment:
+A citizen should not verify their own report. The UI hides verification buttons for your own reports and shows them only on reports submitted by other citizens.
+
+To verify a report from CLI:
 
 ```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source bob \
-  --network testnet \
-  -- submit_report \
-    --citizen bob \
-    --pvo_id 2 \
-    --milestone_id 3 \
-    --report_type 4 \
-    --data_hash "ipfs://QmQualityHash002" \
-    --gps_lat 143000000 \
-    --gps_lon 1210000000
+stellar contract invoke --source alice --network testnet --send=yes \
+  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
+  -- verify_report \
+  --verifier alice \
+  --report-id 1 \
+  --verifier-weight 30
 ```
+
+Verification weights:
+
+| Weight | Meaning |
+|--------|---------|
+| `10` | Low confidence / weak evidence |
+| `30` | Normal verification |
+| `60` | Strong verification |
+
+Expected result: report is marked verified and the submitter's reputation improves.
 
 ---
 
-### Exercise 5.5: Submit a Completion Verification
-
-A third citizen confirms the milestone is complete:
+## Exercise 5.9: Check Citizen Reputation
 
 ```bash
-# Use a third identity if available, or alice again
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- submit_report \
-    --citizen alice \
-    --pvo_id 2 \
-    --milestone_id 3 \
-    --report_type 3 \
-    --data_hash "ipfs://QmCompletionHash003" \
-    --gps_lat 143000000 \
-    --gps_lon 1210000000
+stellar contract invoke --source alice --network testnet \
+  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
+  -- get_citizen_reputation \
+  --citizen GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES
+```
+
+Expected fields:
+
+```text
+total_reports
+verified_reports
+confidence_rating
 ```
 
 ---
 
-### Exercise 5.6: Check Your Citizen Reputation
+## Exercise 5.10: What Happens if a Citizen Has No RPT?
 
-```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- get_citizen_reputation --citizen alice
-```
+Try submitting with a wallet that has no RPT trustline or no balance.
 
-??? success "Expected Output"
-    ```
-    total_reports: 2
-    verified_reports: 0
-    confidence_rating: 50    ← starts at 50
-    ```
+Expected behavior:
+
+- The contract rejects the report
+- The website shows an error
+- The Citizen dashboard shows RPT setup needed
+
+This protects the system from spam reports.
 
 ---
 
-### Exercise 5.7: Calculate Confidence Score
+## Summary
 
-Aggregate all citizen reports for this milestone:
+Community verification is not just a comment box. It is a token-gated, GPS-enabled, on-chain reporting mechanism where citizens contribute evidence to public infrastructure accountability.
 
-```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- calculate_confidence --pvo_id 2 --milestone_id 3
-```
-
-??? success "Expected Output"
-    Returns a score (0-100). With 3 reports from citizens with rating 50, and none verified yet, the score reflects the average rating and verification ratio.
-
----
-
-### Exercise 5.8: Verify a Report
-
-An authorized verifier marks a report as verified, boosting the citizen's reputation:
-
-```bash
-# Get your report ID from Exercise 5.3
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- verify_report --report_id 1 --verifier_weight 20
-```
-
-??? success "Expected Output"
-    The report is marked verified. Citizen's confidence_rating increases by 20 (from 50 to 70).
-
----
-
-### Exercise 5.9: Check Updated Reputation
-
-```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- get_citizen_reputation --citizen alice
-```
-
-??? success "Expected Output"
-    ```
-    total_reports: 2
-    verified_reports: 1
-    confidence_rating: 70    ← increased after verification
-    ```
-
----
-
-### Exercise 5.10: Recalculate Confidence
-
-After verification, confidence should be higher:
-
-```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- calculate_confidence --pvo_id 2 --milestone_id 3
-```
-
-??? question "Why is it higher?"
-    The confidence formula is: `(average_citizen_rating + verification_ratio) / 2`. After verification, both the citizen rating and verification ratio increased.
-
----
-
-### Exercise 5.11: List All Reports for a PVO
-
-```bash
-stellar contract invoke \
-  --id popv_oracle \
-  --source alice \
-  --network testnet \
-  -- get_reports_by_pvo --pvo_id 2
-```
-
-??? success "Expected Output"
-    Returns all 3 reports with their types, timestamps, and verification status.
-
----
-
-## Confidence Score Formula
-
-```
-confidence = (avg_citizen_rating + verification_ratio) / 2
-
-Where:
-  avg_citizen_rating = average confidence_rating of all reporting citizens
-  verification_ratio = (verified_reports / total_reports) × 100
-```
-
-| Factor | Range | Impact |
-|--------|-------|--------|
-| Citizen rating | 0-100 | Verified reporters carry more weight |
-| Verification ratio | 0-100% | More verified reports = higher confidence |
-| Final score | 0-100 | Higher = more trustworthy |
-
----
-
-## Checklist
-
-- [ ] Community Oracle deployed and initialized
-- [ ] GPS photo report submitted
-- [ ] Quality report submitted
-- [ ] Completion verification submitted
-- [ ] Confidence score calculated
-- [ ] Report verified, citizen reputation increased
-- [ ] All reports listed for PVO
-
----
-
-## Next Steps
-
-➡️ **[Chapter 6: Audit Trail](audit-trail.md)**
+RPT does **not** represent money. It is a lightweight reporting credential used to prove that the reporter is allowed to participate in community verification.

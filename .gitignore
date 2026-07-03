@@ -24,3 +24,6 @@ test_snapshots/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# Docs build
+site/

@@ -174,8 +174,9 @@ cd frontend && npx tsx e2e-test.ts
 2. Go to Citizen Interface → check RPT status
 3. Click "Create RPT Trustline" → sign in Freighter
 4. Admin mints RPT tokens to you via Admin Panel
-5. Submit a GPS-tagged photo report
-6. Check your reputation score
+5. Submit a GPS-tagged photo or video report
+6. Another citizen/verifier verifies your report
+7. Check your reputation score
 
 ### Exercise 3: Full Payment Flow
 1. Create a PVO (Agency Dashboard)
