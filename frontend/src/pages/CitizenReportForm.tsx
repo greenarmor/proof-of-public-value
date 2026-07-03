@@ -68,6 +68,8 @@ export default function CitizenReportForm() {
       const gpsLat = lat ? Number(lat) : 0;
       const gpsLon = lon ? Number(lon) : 0;
 
+      console.log("submit_report args:", JSON.stringify({ citizen: address, pvo_id: pvoNum, milestone_id: milNum, report_type: reportTypeScVal, data_hash: hash, gps_lat: gpsLat, gps_lon: gpsLon }));
+
       const tx = await client.submit_report({
         citizen: address,
         pvo_id: pvoNum,
@@ -78,21 +80,20 @@ export default function CitizenReportForm() {
         gps_lon: gpsLon as any,
       });
 
+      console.log("Simulation OK, signing...");
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
-      // Sign and send in separate steps for better error handling
-      const signed = await tx.sign({
+      await tx.signAndSend({
         signTransaction: async (xdr: string) => {
+          console.log("Freighter sign called");
           const resp = await signTransaction(xdr, { networkPassphrase: NETWORK_PASSPHRASE });
           if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
+          console.log("Freighter signed OK");
           return resp.signedTxXdr;
         },
       } as any);
 
-      const sent = await (tx as any).send();
-      const result = sent.result ?? (sent as any).returnValue;
-
-      setMessage({ text: `Report #${result} submitted! ✅`, ok: true });
+      setMessage({ text: `Report submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (er: any) {
       const msg = String(er?.message || er);
