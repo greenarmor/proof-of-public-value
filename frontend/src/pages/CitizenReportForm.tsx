@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, RPT_MIN_BALANCE } from "../config";
-import { ReportType } from "../contracts/community_oracle/src";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
@@ -46,50 +44,43 @@ export default function CitizenReportForm() {
     setMessage({ text: "Simulating transaction...", ok: true });
 
     try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
-
-      const client = new CommunityOracleClient({
-        contractId: CONTRACT_IDS.community_oracle,
-        networkPassphrase: NETWORK_PASSPHRASE,
-        rpcUrl: RPC_URL,
-        publicKey: address,
-      });
 
       const pvoNum = Number(pvoId);
       const milNum = Number(milestoneId);
       if (!pvoNum || pvoNum <= 0 || !milNum || milNum <= 0) {
-        setMessage({ text: "❌ PVO ID and Milestone ID must be positive.", ok: false });
-        setSubmitting(false); return;
+        setMessage({ text: "❌ IDs must be positive.", ok: false }); setSubmitting(false); return;
       }
 
       const tag = REPORT_TYPES.indexOf(reportType as any) >= 0 ? reportType : "GpsPhoto";
-      const gpsLat = lat ? Number(lat) : 0;
-      const gpsLon = lon ? Number(lon) : 0;
 
-      // Pass tag directly as string — generated client handles enum serialization
-      const tx = await client.submit_report({
-        citizen: address,
-        pvo_id: pvoNum,
-        milestone_id: milNum,
-        report_type: { tag } as any,
-        data_hash: hash,
-        gps_lat: gpsLat as any,
-        gps_lon: gpsLon as any,
-      });
+      // Build raw transaction (same pattern as working admin mint)
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.community_oracle);
+      const op = contract.call("submit_report",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(pvoNum),
+        xdr.ScVal.scvU32(milNum),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(tag)]),
+        xdr.ScVal.scvString(hash),
+        nativeToScVal(Number(lat || 0), { type: "i128" } as any),
+        nativeToScVal(Number(lon || 0), { type: "i128" } as any),
+      );
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
 
       setMessage({ text: "Check Freighter to sign...", ok: true });
 
-      // Sign
-      const signed = await tx.sign({
-        signTransaction: async (xdr: string, opts: any) => {
-          const resp = await signTransaction(xdr, { ...opts, networkPassphrase: NETWORK_PASSPHRASE });
-          if (resp?.error) throw new Error(resp.error.message || "Freighter rejected");
-          return resp.signedTxXdr;
-        },
-      } as any);
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
 
-      // Send and poll
-      const sent = await (tx as any).send();
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+
       setMessage({ text: `Report submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
     } catch (er: any) {
