@@ -9,7 +9,7 @@ interface PVOData {
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
 }
 
-export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
+export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; selectedPvoId?: number }) {
   // Real Philippine coordinates keyed by municipality name
   const geo: Record<string, [number, number]> = {
     "Quezon City": [14.6760, 121.0437],
@@ -62,7 +62,8 @@ export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {pvos.map((pvo) => (
-          <Marker key={pvo.id} position={getCoords(pvo.municipality, pvo.id)}>
+          <Marker key={pvo.id} position={getCoords(pvo.municipality, pvo.id)}
+            zIndexOffset={selectedPvoId === pvo.id ? 1000 : 0}>
             <Popup>
               <strong>{pvo.title}</strong><br />
               {pvo.department} · {pvo.municipality}<br />

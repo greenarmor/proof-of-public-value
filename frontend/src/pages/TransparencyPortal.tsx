@@ -87,32 +87,8 @@ export function TransparencyPortal() {
     </div>
   );
 
-  if (selected) return (
-    <div>
-      <button onClick={() => setSelected(null)} className="btn-ghost mb-4">← Back to all projects</button>
-      <div className="card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2"><span className="font-mono text-sm text-slate-400">PVO #{selected.id}</span><span className={`badge ${STATUS_COLORS[selected.status] || "badge-blue"}`}>{selected.status}</span></div>
-            <h1 className="text-2xl font-bold text-slate-900">{selected.title}</h1><p className="text-slate-500 mt-1">{selected.description}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-          <div><dt className="stat-label">Department</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.department}</dd></div>
-          <div><dt className="stat-label">Location</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.municipality}</dd></div>
-          <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatBudget(selected.total_budget)}</dd></div>
-          <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1"><WalletAddress addr={selected.contractor}/></dd></div>
-          <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
-          <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
-          <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestones.length}</dd></div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div>
-      {/* Header */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Public Transparency Portal</h1>
@@ -124,39 +100,70 @@ export function TransparencyPortal() {
         </div>
       </div>
 
-      {/* Split: Map + Grid */}
       <div className="flex flex-col lg:flex-row gap-4">
+        {/* Map — always visible on left */}
         <div className="lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
           <Suspense fallback={<div className="skeleton-shimmer h-[70vh] rounded-xl"/>}>
-            <ProjectMap pvos={filtered} />
+            <ProjectMap pvos={filtered} selectedPvoId={selected?.id} />
           </Suspense>
         </div>
-        <div className="flex-1">
-          {filtered.length===0?(
-            <div className="flex flex-col items-center justify-center py-20 text-center"><div className="text-5xl mb-4">📭</div><p className="text-lg text-slate-400">{filter?"No projects match":"No projects on-chain yet"}</p></div>
-          ):(
-            <div className="grid gap-3 sm:grid-cols-1 xl:grid-cols-2">
-              {filtered.map(pvo=>(
-                <button key={pvo.id} onClick={()=>setSelected(pvo)} className="card-interactive text-left p-4 group">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="font-mono text-[11px] text-slate-400">#{pvo.id}</span>
-                    <span className={`badge text-[10px] ${STATUS_COLORS[pvo.status]||"badge-blue"}`}>{pvo.status}</span>
-                  </div>
-                  <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
-                  <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
-                  <div className="flex items-center justify-between text-xs mb-3">
-                    <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
-                    <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                      <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/100</span>
+
+        {/* Right panel: grid or detail */}
+        <div className="flex-1 min-w-0">
+          {selected ? (
+            /* PVO Detail — expanded in right panel */
+            <div>
+              <button onClick={() => setSelected(null)} className="btn-ghost mb-4 text-sm">← Back to all projects</button>
+              <div className="card p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-mono text-sm text-slate-400">PVO #{selected.id}</span>
+                      <span className={`badge ${STATUS_COLORS[selected.status] || "badge-blue"}`}>{selected.status}</span>
                     </div>
-                    <div className="progress-bar"><div className={`progress-fill ${pvo.public_value_score>=75?"progress-green":pvo.public_value_score>=50?"progress-amber":"progress-red"}`} style={{width:`${pvo.public_value_score}%`}}/></div>
+                    <h1 className="text-2xl font-bold text-slate-900">{selected.title}</h1>
+                    <p className="text-slate-500 mt-1">{selected.description}</p>
                   </div>
-                </button>
-              ))}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+                  <div><dt className="stat-label">Department</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.department}</dd></div>
+                  <div><dt className="stat-label">Location</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.municipality}</dd></div>
+                  <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatBudget(selected.total_budget)}</dd></div>
+                  <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1"><WalletAddress addr={selected.contractor}/></dd></div>
+                  <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
+                  <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
+                  <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestones.length}</dd></div>
+                </div>
+              </div>
             </div>
+          ) : (
+            /* Card grid */
+            filtered.length===0?(
+              <div className="flex flex-col items-center justify-center py-20 text-center"><div className="text-5xl mb-4">📭</div><p className="text-lg text-slate-400">{filter?"No projects match":"No projects on-chain yet"}</p></div>
+            ):(
+              <div className="grid gap-3 sm:grid-cols-1 xl:grid-cols-2">
+                {filtered.map(pvo=>(
+                  <button key={pvo.id} onClick={()=>setSelected(pvo)} className="card-interactive text-left p-4 group">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="font-mono text-[11px] text-slate-400">#{pvo.id}</span>
+                      <span className={`badge text-[10px] ${STATUS_COLORS[pvo.status]||"badge-blue"}`}>{pvo.status}</span>
+                    </div>
+                    <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
+                    <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
+                    <div className="flex items-center justify-between text-xs mb-3">
+                      <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
+                      <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/100</span>
+                      </div>
+                      <div className="progress-bar"><div className={`progress-fill ${pvo.public_value_score>=75?"progress-green":pvo.public_value_score>=50?"progress-amber":"progress-red"}`} style={{width:`${pvo.public_value_score}%`}}/></div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
