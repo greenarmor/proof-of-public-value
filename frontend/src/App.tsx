@@ -129,9 +129,9 @@ function Header() {
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
-            {/* Landing page nav — only when not connected */}
+            {/* Landing page nav — hidden when wallet connected */}
             {!connected && landingItems.map(item => (
-              <NavLink key={item.to} to={item.to} end={item.to === "/"}
+              <NavLink key={item.to} to={item.to}
                 className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`}>
                 <span className="mr-1">{item.icon}</span>{item.label}
               </NavLink>
