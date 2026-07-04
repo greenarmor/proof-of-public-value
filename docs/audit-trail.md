@@ -161,7 +161,7 @@ stellar contract invoke \
 ```
 
 ??? success "Expected Output"
-    Returns all 3 entries: approval, AI assessment, and payment release — in chronological order.
+    Returns all 3 entries: approval, AI assessment, and payment release - in chronological order.
 
 ---
 
@@ -249,7 +249,7 @@ stellar contract invoke \
   --network testnet \
   -- get_entry --entry_id 1
 
-# Read it again — should be identical
+# Read it again - should be identical
 stellar contract invoke \
   --id popv_audit \
   --source alice \
@@ -258,7 +258,7 @@ stellar contract invoke \
 ```
 
 ??? success "Expected Output"
-    Both reads return identical data. The audit trail is append-only — no update or delete functions exist.
+    Both reads return identical data. The audit trail is append-only - no update or delete functions exist.
 
 ---
 

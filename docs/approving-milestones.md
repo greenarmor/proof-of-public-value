@@ -1,6 +1,6 @@
 # Chapter 4: Approving Milestones
 
-Learn the full milestone approval flow — from engineer sign-off to fund release.
+Learn the full milestone approval flow - from engineer sign-off to fund release.
 
 ---
 
@@ -36,7 +36,7 @@ MILESTONE READY → RELEASE FUNDS
 
 ## Exercises
 
-### Exercise 4.1: Gate 2 — Engineer Approval
+### Exercise 4.1: Gate 2 - Engineer Approval
 
 An engineer reviews the submitted evidence and approves the milestone:
 
@@ -55,7 +55,7 @@ stellar contract invoke \
 
 ---
 
-### Exercise 4.2: Gate 3 — AI Validation
+### Exercise 4.2: Gate 3 - AI Validation
 
 The AI audit system runs its checks. In production this is an off-chain oracle. For this exercise we call it directly:
 
@@ -74,7 +74,7 @@ stellar contract invoke \
 
 ---
 
-### Exercise 4.3: Gate 4 — Compliance Check
+### Exercise 4.3: Gate 4 - Compliance Check
 
 The compliance officer validates procurement law, budget rules, and safety standards:
 
@@ -90,7 +90,7 @@ stellar contract invoke \
 
 ---
 
-### Exercise 4.4: Gate 5 — Community Verification
+### Exercise 4.4: Gate 5 - Community Verification
 
 At least 3 citizens must verify this milestone (as defined in Exercise 2.5):
 

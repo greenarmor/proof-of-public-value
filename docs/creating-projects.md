@@ -105,7 +105,7 @@ stellar contract invoke \
 
 ---
 
-### Exercise 2.5: Define Milestone 1 — Site Preparation
+### Exercise 2.5: Define Milestone 1 - Site Preparation
 
 Each milestone needs a budget, required evidence types, and a community verification threshold.
 
@@ -141,7 +141,7 @@ stellar contract invoke \
 
 ---
 
-### Exercise 2.6: Define Milestone 2 — Paving
+### Exercise 2.6: Define Milestone 2 - Paving
 
 ```bash
 stellar contract invoke \

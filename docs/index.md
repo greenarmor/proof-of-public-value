@@ -1,24 +1,24 @@
-# Proof of Public Value — Hackathon User Manual
+# Proof of Public Value - Hackathon User Manual
 
-> **Track:** Local Finance & Real World Access — Stellar Build Better Hackathon
+> **Track:** Local Finance & Real World Access - Stellar Build Better Hackathon
 
 ---
 
 ## The Problem
 
-Every year, governments lose **$2.6 trillion to corruption** — ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.
+Every year, governments lose **$2.6 trillion to corruption** - ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.
 
 The root cause: **public money is released based on signatures and paperwork, not on proof that value was actually created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
 
 **The Philippines is a primary case study.** From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.
 
-➡️ **Read: [Why PoPV Exists — The Philippine Corruption Crisis](philippines-corruption.md)**
+➡️ **Read: [Why PoPV Exists - The Philippine Corruption Crisis](philippines-corruption.md)**
 
 ## What PoPV Solves
 
 Proof of Public Value enforces one rule: **No Proof. No Payment.**
 
-Every public project becomes a **Public Value Object (PVO)** — a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released **only after passing 5 independent verification gates:**
+Every public project becomes a **Public Value Object (PVO)** - a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released **only after passing 5 independent verification gates:**
 
 | Gate | Who Verifies | What They Check |
 |------|-------------|-----------------|
@@ -28,13 +28,13 @@ Every public project becomes a **Public Value Object (PVO)** — a programmable 
 | 4. Compliance | Auditor / COA | Procurement law, budget rules, safety |
 | 5. Community | Citizens | GPS-tagged photos, flood reports, quality checks |
 
-If **any gate fails**, funds remain locked. No single person can release money — it requires cryptographic consensus.
+If **any gate fails**, funds remain locked. No single person can release money - it requires cryptographic consensus.
 
 ---
 
 ## Stellar Integration (DeFi Escrow)
 
-PoPV is **serverless** — there is no backend, no database, no centralized server. **The Stellar blockchain is the infrastructure.**
+PoPV is **serverless** - there is no backend, no database, no centralized server. **The Stellar blockchain is the infrastructure.**
 
 ### Dynamic DeFi Escrow
 
@@ -62,7 +62,7 @@ Every decision is immutably recorded on Stellar:
 
 ### Soroban Events
 
-All 11 contracts emit typed Stellar events for real-time indexing. Every state change — from PVO creation to payment release — is publicly auditable.
+All 11 contracts emit typed Stellar events for real-time indexing. Every state change - from PVO creation to payment release - is publicly auditable.
 
 ---
 
@@ -106,7 +106,7 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 |----------|----|-----------|-------|
 | `access_control` | `CCJK...BCMVP` | 9 | 11 |
 | `pvo_core` | `CAJH...MVNOD` | 17 | 18 |
-| `escrow` | `CDTH...EDZT3` | 14 | 15 |
+| `escrow` | `CAD7...XQM6` | 14 | 15 |
 | `community_oracle` | `CDTZ...K7RS` | 8 | 12 |
 | `reputation` | `CACW...4ADN` | 12 | 19 |
 | `audit_trail` | `CA2O...BROZ` | 10 | 12 |
@@ -115,8 +115,9 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | `public_index` | `CCN7...JG7J` | 7 | 7 |
 | `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
 | `procurement_market` | `CCPQ...JBW3` | 5 | 5 |
+| `pPHP token` | `CA6U...FLE6` | 8 | 8 |
 
-**154 tests, all passing. 0 npm vulnerabilities.**
+**170 tests, all passing. 0 npm vulnerabilities.**
 
 ---
 
@@ -124,10 +125,10 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 
 **Frontend:** `http://localhost:5174` (run `npm run dev` in `frontend/`)
 
-1. **Public pages** — Browse projects, national index, search — no wallet needed
-2. **Connect Freighter** — Click "Connect Wallet" (install [Freighter](https://freighter.app) first)
-3. **Citizen** — Connect citizen wallet → click "Create RPT Trustline" → submit GPS report
-4. **Admin** — Connect alice wallet → assign roles → mint RPT → manage system
+1. **Public pages** - Browse projects, national index, search - no wallet needed
+2. **Connect Freighter** - Click "Connect Wallet" (install [Freighter](https://freighter.app) first)
+3. **Citizen** - Connect citizen wallet → click "Create RPT Trustline" → submit GPS report
+4. **Admin** - Connect alice wallet → assign roles → mint RPT → manage system
 
 ### Demo Wallets (Testnet)
 
@@ -180,7 +181,7 @@ cd frontend && npx tsx e2e-test.ts
 
 ### Exercise 1: Explore Without Login
 1. Open the Public Transparency Portal
-2. Browse available projects — see budgets, status, value scores
+2. Browse available projects - see budgets, status, value scores
 3. View the National Index with department rankings
 4. Use the Economic Memory search
 

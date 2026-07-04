@@ -71,14 +71,14 @@ flowchart TD
 
 When submitting a report, citizens must choose:
 
-- **PVO ID** — the project number
-- **Milestone ID** — the specific work phase inside that project
+- **PVO ID** - the project number
+- **Milestone ID** - the specific work phase inside that project
 
 You can find these in the **Public Transparency Portal**:
 
 1. Open the homepage
 2. Find the project card
-3. The card shows `#1`, `#2`, etc. — this is the **PVO ID**
+3. The card shows `#1`, `#2`, etc. - this is the **PVO ID**
 4. Click the project card to see details and milestones
 5. Use the milestone number as the **Milestone ID**
 

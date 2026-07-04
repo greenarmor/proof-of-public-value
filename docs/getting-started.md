@@ -81,7 +81,7 @@ You should see all 14 role identities (pre-configured for this manual):
 
 ### Exercise 1.2: Testnet Demo Wallets
 
-All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only — secret keys are in `.dev-logs/role-credentials.md` (gitignored).
+All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in `.dev-logs/role-credentials.md` (gitignored).
 
 | # | Alias | Role | Public Key |
 |---|-------|------|-----------|

@@ -60,3 +60,4 @@ nav:
   - Audit Trail: audit-trail.md
   - Appendices:
       - Escrow Deep Dive: escrow-deep-dive.md
+      - pPHP Token: pphp-token.md
