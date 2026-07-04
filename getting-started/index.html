@@ -588,10 +588,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-12-view-your-address" class="md-nav__link">
+  <a href="#exercise-12-testnet-demo-wallets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.2: View Your Address
+        Exercise 1.2: Testnet Demo Wallets
       
     </span>
   </a>
@@ -599,10 +599,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-13-check-your-testnet-balance" class="md-nav__link">
+  <a href="#exercise-13-view-your-address" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.3: Check Your Testnet Balance
+        Exercise 1.3: View Your Address
       
     </span>
   </a>
@@ -610,10 +610,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-14-verify-testnet-connection" class="md-nav__link">
+  <a href="#exercise-14-check-your-testnet-balance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.4: Verify Testnet Connection
+        Exercise 1.4: Check Your Testnet Balance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-15-verify-testnet-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 1.5: Verify Testnet Connection
       
     </span>
   </a>
@@ -968,10 +979,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-12-view-your-address" class="md-nav__link">
+  <a href="#exercise-12-testnet-demo-wallets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.2: View Your Address
+        Exercise 1.2: Testnet Demo Wallets
       
     </span>
   </a>
@@ -979,10 +990,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-13-check-your-testnet-balance" class="md-nav__link">
+  <a href="#exercise-13-view-your-address" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.3: Check Your Testnet Balance
+        Exercise 1.3: View Your Address
       
     </span>
   </a>
@@ -990,10 +1001,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-14-verify-testnet-connection" class="md-nav__link">
+  <a href="#exercise-14-check-your-testnet-balance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 1.4: Verify Testnet Connection
+        Exercise 1.4: Check Your Testnet Balance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-15-verify-testnet-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 1.5: Verify Testnet Connection
       
     </span>
   </a>
@@ -1068,8 +1090,16 @@
 </thead>
 <tbody>
 <tr>
-<td>Citizen</td>
-<td>Verify projects on the ground</td>
+<td>Administrator</td>
+<td>Manage role assignments, system config</td>
+</tr>
+<tr>
+<td>GovernmentAgency</td>
+<td>Create PVOs, allocate budget, manage procurement</td>
+</tr>
+<tr>
+<td>Contractor</td>
+<td>Execute projects, submit evidence</td>
 </tr>
 <tr>
 <td>Engineer</td>
@@ -1080,36 +1110,40 @@
 <td>Conduct field inspections</td>
 </tr>
 <tr>
-<td>Contractor</td>
-<td>Execute projects, submit evidence</td>
-</tr>
-<tr>
-<td>Project Manager</td>
-<td>Oversee project execution</td>
-</tr>
-<tr>
-<td>Government Agency</td>
-<td>Create PVOs, allocate budget</td>
+<td>ProjectManager</td>
+<td>Oversee project execution and timelines</td>
 </tr>
 <tr>
 <td>Auditor</td>
 <td>Audit financial records</td>
 </tr>
 <tr>
-<td>Commission on Audit</td>
-<td>Regulatory compliance</td>
+<td>CommissionOnAudit</td>
+<td>Regulatory compliance oversight</td>
 </tr>
 <tr>
-<td>Anti-Corruption Agency</td>
-<td>Investigate fraud</td>
+<td>AntiCorruptionAgency</td>
+<td>Investigate fraud, detect corruption patterns</td>
 </tr>
 <tr>
-<td>Funding Agency</td>
-<td>Fund escrows</td>
+<td>FundingAgency</td>
+<td>Fund escrows, manage disbursements</td>
 </tr>
 <tr>
-<td>Administrator</td>
-<td>Manage role assignments</td>
+<td>InternationalDonor</td>
+<td>Transparent cross-border funding</td>
+</tr>
+<tr>
+<td>AIAuditor</td>
+<td>Monitor AI risk scoring and validation</td>
+</tr>
+<tr>
+<td>Supplier</td>
+<td>Manage deliveries and catalog</td>
+</tr>
+<tr>
+<td>Citizen</td>
+<td>Verify projects on the ground, submit reports</td>
 </tr>
 </tbody>
 </table>
@@ -1119,15 +1153,126 @@
 <p>List your configured identities:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>stellar<span class="w"> </span>keys<span class="w"> </span>ls
 </code></pre></div>
-<p>You should see <code>alice</code> and <code>bob</code> (pre-configured for this manual).</p>
+<p>You should see all 14 role identities (pre-configured for this manual):</p>
 <details class="success">
 <summary>Expected Output</summary>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>alice
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>bob
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>agency
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>contractor
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>engineer
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>inspector
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>auditor
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>coa
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>supplier
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>project_manager
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>anti_corruption
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>funding_agency
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>international_donor
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>ai_auditor
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>citizen
 </code></pre></div>
 </details>
+<h3 id="exercise-12-testnet-demo-wallets">Exercise 1.2: Testnet Demo Wallets<a class="headerlink" href="#exercise-12-testnet-demo-wallets" title="Permanent link">&para;</a></h3>
+<p>All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only — secret keys are in <code>.dev-logs/role-credentials.md</code> (gitignored).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Alias</th>
+<th>Role</th>
+<th>Public Key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>alice</td>
+<td>Administrator</td>
+<td><code>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>agency</td>
+<td>GovernmentAgency</td>
+<td><code>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>contractor</td>
+<td>Contractor</td>
+<td><code>GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>engineer</td>
+<td>Engineer</td>
+<td><code>GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>inspector</td>
+<td>Inspector</td>
+<td><code>GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>auditor</td>
+<td>Auditor</td>
+<td><code>GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>coa</td>
+<td>CommissionOnAudit</td>
+<td><code>GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>supplier</td>
+<td>Supplier</td>
+<td><code>GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>project_manager</td>
+<td>ProjectManager</td>
+<td><code>GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>anti_corruption</td>
+<td>AntiCorruptionAgency</td>
+<td><code>GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>funding_agency</td>
+<td>FundingAgency</td>
+<td><code>GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>international_donor</td>
+<td>InternationalDonor</td>
+<td><code>GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>ai_auditor</td>
+<td>AIAuditor</td>
+<td><code>GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>citizen</td>
+<td>Citizen</td>
+<td><code>GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES</code></td>
+</tr>
+</tbody>
+</table>
+<p>To import any wallet in Freighter: Add Account → Import Secret Key (from <code>.dev-logs/role-credentials.md</code>).</p>
 <hr />
-<h3 id="exercise-12-view-your-address">Exercise 1.2: View Your Address<a class="headerlink" href="#exercise-12-view-your-address" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-13-view-your-address">Exercise 1.3: View Your Address<a class="headerlink" href="#exercise-13-view-your-address" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>alice
 </code></pre></div>
 <details class="success">
@@ -1136,7 +1281,7 @@
 </code></pre></div>
 </details>
 <hr />
-<h3 id="exercise-13-check-your-testnet-balance">Exercise 1.3: Check Your Testnet Balance<a class="headerlink" href="#exercise-13-check-your-testnet-balance" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-14-check-your-testnet-balance">Exercise 1.4: Check Your Testnet Balance<a class="headerlink" href="#exercise-14-check-your-testnet-balance" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>stellar<span class="w"> </span>account<span class="w"> </span>balance<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet
 </code></pre></div>
 <details class="success">
@@ -1144,7 +1289,7 @@
 <p>Shows your XLM balance. Should be non-zero (funded by Friendbot).</p>
 </details>
 <hr />
-<h3 id="exercise-14-verify-testnet-connection">Exercise 1.4: Verify Testnet Connection<a class="headerlink" href="#exercise-14-verify-testnet-connection" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-15-verify-testnet-connection">Exercise 1.5: Verify Testnet Connection<a class="headerlink" href="#exercise-15-verify-testnet-connection" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>stellar<span class="w"> </span>network<span class="w"> </span>info<span class="w"> </span>--network<span class="w"> </span>testnet
 </code></pre></div>
 <details class="success">

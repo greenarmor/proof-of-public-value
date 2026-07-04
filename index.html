@@ -1392,43 +1392,107 @@
 <li><strong>Admin</strong> — Connect alice wallet → assign roles → mint RPT → manage system</li>
 </ol>
 <h3 id="demo-wallets-testnet">Demo Wallets (Testnet)<a class="headerlink" href="#demo-wallets-testnet" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>⚠️ <strong>Testnet only.</strong> Secret keys are in <code>.dev-logs/role-credentials.md</code> (gitignored).
+To import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
+<th>#</th>
 <th>Role</th>
-<th>Address</th>
+<th>Alias</th>
+<th>Public Key</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td>1</td>
 <td>Administrator</td>
+<td>alice</td>
 <td><code>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV</code></td>
 </tr>
 <tr>
+<td>2</td>
 <td>GovernmentAgency</td>
+<td>agency</td>
 <td><code>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN</code></td>
 </tr>
 <tr>
+<td>3</td>
 <td>Contractor</td>
+<td>contractor</td>
 <td><code>GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW</code></td>
 </tr>
 <tr>
+<td>4</td>
 <td>Engineer</td>
+<td>engineer</td>
 <td><code>GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN</code></td>
 </tr>
 <tr>
+<td>5</td>
+<td>Inspector</td>
+<td>inspector</td>
+<td><code>GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI</code></td>
+</tr>
+<tr>
+<td>6</td>
 <td>Auditor</td>
+<td>auditor</td>
 <td><code>GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7</code></td>
 </tr>
 <tr>
+<td>7</td>
+<td>CommissionOnAudit</td>
+<td>coa</td>
+<td><code>GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Supplier</td>
+<td>supplier</td>
+<td><code>GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>ProjectManager</td>
+<td>project_manager</td>
+<td><code>GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>AntiCorruptionAgency</td>
+<td>anti_corruption</td>
+<td><code>GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>FundingAgency</td>
+<td>funding_agency</td>
+<td><code>GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>InternationalDonor</td>
+<td>international_donor</td>
+<td><code>GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>AIAuditor</td>
+<td>ai_auditor</td>
+<td><code>GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J</code></td>
+</tr>
+<tr>
+<td>14</td>
 <td>Citizen</td>
+<td>citizen</td>
 <td><code>GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES</code></td>
 </tr>
 </tbody>
 </table>
-<blockquote>
-<p>Secret keys in <code>.dev-logs/role-credentials.md</code> (gitignored)</p>
-</blockquote>
+<p>All wallets are funded via Friendbot and assigned their roles on-chain.</p>
 <hr />
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Run frontend</span>
