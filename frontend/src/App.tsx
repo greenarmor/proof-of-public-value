@@ -124,10 +124,18 @@ function Header() {
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-6">
-          <NavLink to="/" className="flex items-center gap-2 font-bold text-lg text-slate-900 tracking-tight">
+          <button
+            onClick={() => {
+              if (!connected) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                navigate("/");
+              }
+            }}
+            className="flex items-center gap-2 font-bold text-lg text-slate-900 tracking-tight cursor-pointer hover:opacity-80 transition-opacity">
             <span className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center text-white text-sm">P</span>
             <span className="hidden sm:inline">PoPV</span>
-          </NavLink>
+          </button>
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
