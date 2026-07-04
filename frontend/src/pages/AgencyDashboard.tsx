@@ -241,6 +241,14 @@ function CreatePVOForm({ address }: { address: string }) {
               <p className="text-[10px] text-slate-400 mt-0.5">Longitude</p>
             </div>
           </div>
+          <button type="button" onClick={() => {
+            navigator.geolocation.getCurrentPosition(
+              p => { setLatitude(p.coords.latitude.toFixed(6)); setLongitude(p.coords.longitude.toFixed(6)); },
+              () => {}
+            );
+          }} className="text-xs text-brand-600 hover:underline -mt-1 mb-2">
+            📍 Use my current location
+          </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
