@@ -10,6 +10,10 @@ Every year, governments lose **$2.6 trillion to corruption** — ghost projects 
 
 The root cause: **public money is released based on signatures and paperwork, not on proof that value was actually created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
 
+**The Philippines is a primary case study.** From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.
+
+➡️ **Read: [Why PoPV Exists — The Philippine Corruption Crisis](philippines-corruption.md)**
+
 ## What PoPV Solves
 
 Proof of Public Value enforces one rule: **No Proof. No Payment.**
