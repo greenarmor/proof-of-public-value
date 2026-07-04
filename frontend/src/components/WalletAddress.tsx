@@ -10,21 +10,24 @@ export function WalletAddress({ addr, chars = 6, className = "" }: {
 
   const isContract = addr.startsWith("C");
   const userHasRole = connectedAddress ? isRoleWallet(connectedAddress) : false;
-  const canLink = isContract || (userHasRole && isRoleWallet(addr));
   const display = formatAddress(addr, chars);
 
-  if (!canLink) return <span className={className}>{display}</span>;
+  // Contracts always link. Wallets link only if connected user has a role.
+  if (isContract || (userHasRole && isRoleWallet(addr))) {
+    const type = isContract ? "contract" : "account";
+    return (
+      <a
+        href={`https://stellar.expert/explorer/testnet/${type}/${addr}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${className} text-brand-600 hover:text-brand-800 hover:underline transition-colors`}
+        title={`View on Stellar.Expert`}
+      >
+        {display}
+      </a>
+    );
+  }
 
-  const type = isContract ? "contract" : "account";
-  return (
-    <a
-      href={`https://stellar.expert/explorer/testnet/${type}/${addr}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`${className} text-brand-600 hover:text-brand-800 hover:underline transition-colors`}
-      title={`View on Stellar.Expert`}
-    >
-      {display}
-    </a>
-  );
+  // Same styling as link but no href — visually indistinguishable from inspection
+  return <span className={className}>{display}</span>;
 }
