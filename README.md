@@ -48,21 +48,31 @@ National Budget → PVO → Milestones → Evidence Collection
 
 ---
 
-## Testnet Addresses (Public Keys Only)
+## Testnet Demo Wallets (Public Keys Only)
 
-| Role | Alias | Address |
-|------|-------|---------|
-| Administrator | alice | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
-| GovernmentAgency | agency | `GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN` |
-| Contractor | contractor | `GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW` |
-| Engineer | engineer | `GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN` |
-| Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
-| CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
-| AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
-| Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
-| Test | bob | `GBMDONMPUNDQNGCPUOEPDEIQ2DONEG3AELWZEDSS67ZIDWLPSLJFBV5E` |
+> ⚠️ **Testnet only — never use these on mainnet.**
+> Secret keys are stored in `.dev-logs/role-credentials.md` (gitignored — never committed).
+> To import in Freighter: Add Account → Import Secret Key or Seed Phrase.
 
-> ⚠️ **Secret keys are stored in `.dev-logs/` which is gitignored — never committed.**
+| # | Role | Alias | Public Key |
+|---|------|-------|-----------|
+| 1 | Administrator | alice | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
+| 2 | GovernmentAgency | agency | `GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN` |
+| 3 | Contractor | contractor | `GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW` |
+| 4 | Engineer | engineer | `GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN` |
+| 5 | Inspector | inspector | `GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI` |
+| 6 | Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
+| 7 | CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
+| 8 | Supplier | supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
+| 9 | ProjectManager | project_manager | `GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV` |
+| 10 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
+| 11 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
+| 12 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
+| 13 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
+| 14 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+
+All wallets are funded via Friendbot and assigned their roles on-chain via `access_control.assign_role`.
+CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stellar CLI for `--source` invocation.
 
 ---
 
