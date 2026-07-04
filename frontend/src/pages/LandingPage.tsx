@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { useWallet } from "../wallet";
 
-export function LandingPage({ onConnect }: { onConnect: () => void }) {
+export function LandingPage() {
+  const { connect } = useWallet();
   const heroRef = useRef<HTMLDivElement>(null);
   const [offsets, setOffsets] = useState({ hero: 0, stats: 0, features: 0, grid: 0, cta: 0 });
 
@@ -57,7 +59,7 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={onConnect}
+            <button onClick={connect}
               className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
               Connect Freighter
             </button>
@@ -198,7 +200,7 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
             Connect your wallet to access all 13 role dashboards. Browse projects,
             commit grants, approve milestones, and verify public value.
           </p>
-          <button onClick={onConnect}
+          <button onClick={connect}
             className="px-10 py-5 rounded-2xl gradient-brand text-white font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-200">
             <span className="flex items-center gap-3">
               Connect Wallet

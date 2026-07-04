@@ -25,9 +25,10 @@ interface NavItem { to: string; label: string; icon: string; roles?: string[]; g
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/#hero", label: "Home", icon: "🏠", group: "public" },
-  { to: "/#features", label: "How It Works", icon: "🔄", group: "public" },
-  { to: "/#capabilities", label: "Capabilities", icon: "✨", group: "public" },
-  { to: "/#connect", label: "Connect", icon: "🔗", group: "public" },
+  { to: "/landing", label: "About PoPV", icon: "🏠", group: "landing" },
+  { to: "/landing#features", label: "How It Works", icon: "🔄", group: "landing" },
+  { to: "/landing#capabilities", label: "Capabilities", icon: "✨", group: "landing" },
+  { to: "/landing#connect", label: "Connect", icon: "🔗", group: "landing" },
 
   { to: "/citizen", label: "Citizen", icon: "📸", roles: ["Citizen", "Administrator"], group: "engagement" },
 
@@ -60,12 +61,6 @@ const GROUP_LABELS: Record<string, string> = {
 };
 
 const GROUP_ORDER = ["engagement", "government", "delivery", "oversight", "finance", "system"];
-
-function Home() {
-  const { connected, connect } = useWallet();
-  if (!connected) return <LandingPage onConnect={connect} />;
-  return <TransparencyPortal />;
-}
 
 function AccessDenied() {
   const { connect, connected } = useWallet();
@@ -293,7 +288,8 @@ function App() {
           <Header />
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<TransparencyPortal />} />
+              <Route path="/landing" element={<LandingPage />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
               <Route path="/citizen" element={<ProtectedRoute element={<CitizenInterface />} roles={["Citizen", "Administrator"]} />} />
