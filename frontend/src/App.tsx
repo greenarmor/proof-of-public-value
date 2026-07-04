@@ -24,9 +24,10 @@ import { formatAddress } from "./helpers";
 interface NavItem { to: string; label: string; icon: string; roles?: string[]; group: string; }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Projects", icon: "🏛️", group: "public" },
-  { to: "/index", label: "Index", icon: "🏆", group: "public" },
-  { to: "/memory", label: "Search", icon: "🔍", group: "public" },
+  { to: "/#hero", label: "Home", icon: "🏠", group: "public" },
+  { to: "/#features", label: "How It Works", icon: "🔄", group: "public" },
+  { to: "/#capabilities", label: "Capabilities", icon: "✨", group: "public" },
+  { to: "/#connect", label: "Connect", icon: "🔗", group: "public" },
 
   { to: "/citizen", label: "Citizen", icon: "📸", roles: ["Citizen", "Administrator"], group: "engagement" },
 
@@ -95,6 +96,7 @@ function Header() {
   const navigate = useNavigate();
 
   const publicItems = NAV_ITEMS.filter(i => i.group === "public");
+  const landingItems = NAV_ITEMS.filter(i => i.group === "landing");
   const roleItems = NAV_ITEMS.filter(i => i.group !== "public" && i.group !== "system");
   const systemItems = NAV_ITEMS.filter(i => i.group === "system");
 
@@ -127,6 +129,14 @@ function Header() {
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
+            {/* Landing page nav — only when not connected */}
+            {!connected && landingItems.map(item => (
+              <NavLink key={item.to} to={item.to} end={item.to === "/"}
+                className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`}>
+                <span className="mr-1">{item.icon}</span>{item.label}
+              </NavLink>
+            ))}
+            {/* Public nav — always visible */}
             {publicItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.to === "/"}
                 className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`}>
@@ -225,6 +235,12 @@ function Header() {
           <nav className="px-4 py-3 space-y-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Public</p>
+              {!connected && landingItems.map(item => (
+                <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+                  <span>{item.icon}</span><span>{item.label}</span>
+                </NavLink>
+              ))}
               {publicItems.map(item => (
                 <NavLink key={item.to} to={item.to} end={item.to === "/"} onClick={() => setMobileOpen(false)}
                   className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>

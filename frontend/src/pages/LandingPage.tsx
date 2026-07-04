@@ -1,23 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function LandingPage({ onConnect }: { onConnect: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [offsets, setOffsets] = useState({ hero: 0, stats: 0, features: 0, grid: 0, cta: 0 });
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setOffsets({
+        hero: y * 0.4,
+        stats: Math.max(0, (y - 300) * 0.15),
+        features: Math.max(0, (y - 900) * 0.1),
+        grid: Math.max(0, (y - 1500) * 0.08),
+        cta: Math.max(0, (y - 2100) * 0.05),
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 overflow-x-hidden">
       {/* ──── Hero ──── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6">
-        <div className="absolute inset-0 opacity-20"
+      <section id="hero" ref={heroRef}
+        className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        {/* Parallax background blobs */}
+        <div className="absolute inset-0"
           style={{
-            backgroundImage: "radial-gradient(circle at 30% 50%, rgba(99,102,241,0.15) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(14,165,233,0.1) 0%, transparent 60%)",
+            backgroundImage: "radial-gradient(circle at 30% 50%, rgba(99,102,241,0.12) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(14,165,233,0.08) 0%, transparent 60%)",
+            transform: `translateY(${offsets.hero * 0.5}px)`,
           }}
         />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-brand-100/30 blur-3xl"
+          style={{ transform: `translateY(${offsets.hero * 0.2}px) translateX(${offsets.hero * 0.1}px)` }} />
+        <div className="absolute bottom-1/3 right-1/4 w-72 h-72 rounded-full bg-sky-100/20 blur-3xl"
+          style={{ transform: `translateY(${-offsets.hero * 0.3}px)` }} />
 
         <div className="relative z-10 max-w-4xl">
           <div className="mb-8 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50">
@@ -63,8 +80,10 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
       </section>
 
       {/* ──── Problem / Stats ──── */}
-      <section className="relative py-32 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section id="problem" className="relative py-32 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-white to-slate-50"
+          style={{ transform: `translateY(${offsets.stats}px)` }} />
+        <div className="relative z-10 max-w-6xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-brand-600 font-semibold text-sm tracking-widest uppercase mb-4">The Problem</p>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
@@ -83,7 +102,8 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
               { value: "5 Gates", label: "Independent verification layers", icon: "🔒" },
               { value: "13 Roles", label: "No single point of failure", icon: "👥" },
             ].map((stat, i) => (
-              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md transition-all duration-500">
+              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+                style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="text-4xl mb-4">{stat.icon}</div>
                 <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{stat.value}</div>
                 <p className="text-slate-500">{stat.label}</p>
@@ -94,8 +114,10 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
       </section>
 
       {/* ──── How It Works ──── */}
-      <section id="features" className="relative py-32 px-6 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
+      <section id="features" className="relative py-32 px-6 bg-slate-50 overflow-hidden">
+        <div className="absolute inset-0"
+          style={{ transform: `translateY(${offsets.features}px)` }} />
+        <div className="relative z-10 max-w-6xl mx-auto">
           <div className="text-center mb-20">
             <p className="text-brand-600 font-semibold text-sm tracking-widest uppercase mb-4">How It Works</p>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
@@ -108,13 +130,14 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-20">
             {[
-              { step: "01", title: "Evidence", icon: "📎", desc: "Contractor submits GPS, drone, engineering reports with IPFS" },
+              { step: "01", title: "Evidence", icon: "📎", desc: "Contractor submits GPS, drone, engineering reports" },
               { step: "02", title: "Engineer", icon: "🔧", desc: "Licensed professional verifies structural integrity" },
-              { step: "03", title: "AI Oracle", icon: "🤖", desc: "Automated fraud detection, risk scoring, GPS validation" },
+              { step: "03", title: "AI Oracle", icon: "🤖", desc: "Automated fraud detection, risk scoring, validation" },
               { step: "04", title: "Compliance", icon: "⚖️", desc: "Auditor checks procurement law and budget rules" },
               { step: "05", title: "Community", icon: "📸", desc: "Citizens submit GPS-tagged field reports" },
             ].map((gate, i) => (
-              <div key={i} className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-500">
+              <div key={i} className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+                style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="text-brand-500 font-mono text-xs mb-3 font-semibold">{gate.step}</div>
                 <div className="text-3xl mb-3">{gate.icon}</div>
                 <h3 className="font-semibold text-slate-900 mb-2">{gate.title}</h3>
@@ -126,10 +149,12 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
       </section>
 
       {/* ──── Features Grid ──── */}
-      <section className="relative py-32 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section id="capabilities" className="relative py-32 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white"
+          style={{ transform: `translateY(${offsets.grid}px)` }} />
+        <div className="relative z-10 max-w-6xl mx-auto">
           <div className="text-center mb-20">
-            <p className="text-brand-600 font-semibold text-sm tracking-widest uppercase mb-4">Features</p>
+            <p className="text-brand-600 font-semibold text-sm tracking-widest uppercase mb-4">Capabilities</p>
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
               Built for{" "}
               <span className="gradient-brand bg-clip-text text-transparent">transparency</span>
@@ -148,7 +173,8 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
               { icon: "🌍", title: "Cross-Border", desc: "International donors commit on-chain with full traceability." },
               { icon: "📋", title: "Immutable Audit", desc: "Every decision recorded permanently on Stellar." },
             ].map((feature, i) => (
-              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md transition-all duration-500">
+              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+                style={{ transitionDelay: `${i * 60}ms` }}>
                 <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
                 <h3 className="font-semibold text-lg text-slate-900 mb-2">{feature.title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">{feature.desc}</p>
@@ -159,8 +185,10 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
       </section>
 
       {/* ──── CTA ──── */}
-      <section className="relative py-32 px-6 bg-gradient-to-br from-brand-50 via-white to-sky-50">
-        <div className="max-w-4xl mx-auto text-center">
+      <section id="connect" className="relative py-32 px-6 bg-gradient-to-br from-brand-50 via-white to-sky-50 overflow-hidden">
+        <div className="absolute inset-0"
+          style={{ transform: `translateY(${offsets.cta}px)` }} />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl md:text-6xl font-bold mb-6 text-slate-900">
             Ready to make public spending
             <br />
@@ -174,13 +202,13 @@ export function LandingPage({ onConnect }: { onConnect: () => void }) {
             className="px-10 py-5 rounded-2xl gradient-brand text-white font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-200">
             <span className="flex items-center gap-3">
               Connect Wallet
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </span>
           </button>
           <p className="mt-6 text-sm text-slate-400">
-            Available on Stellar Testnet · Open source · Serverless · 183 tests passing
+            Available on Stellar Testnet · Open source · Serverless · 24 E2E tests passing
           </p>
         </div>
       </section>
