@@ -1,10 +1,16 @@
 import { formatAddress, isRoleWallet } from "../helpers";
+import { useWallet } from "../wallet";
 
-export function WalletAddress({ addr, chars = 6, className = "" }: { addr: string; chars?: number; className?: string }) {
+export function WalletAddress({ addr, chars = 6, className = "" }: {
+  addr: string; chars?: number; className?: string;
+}) {
+  const { address: connectedAddress } = useWallet();
+
   if (!addr) return <span className={className}>—</span>;
 
   const isContract = addr.startsWith("C");
-  const canLink = isContract || isRoleWallet(addr);
+  const userHasRole = connectedAddress ? isRoleWallet(connectedAddress) : false;
+  const canLink = isContract || (userHasRole && isRoleWallet(addr));
   const display = formatAddress(addr, chars);
 
   if (!canLink) return <span className={className}>{display}</span>;
