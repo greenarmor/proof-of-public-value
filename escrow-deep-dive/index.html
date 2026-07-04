@@ -18,6 +18,8 @@
         <link rel="prev" href="../audit-trail/">
       
       
+        <link rel="next" href="../pphp-token/">
+      
       
         
       
@@ -902,6 +904,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pphp-token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1083,6 +1113,8 @@
 <hr />
 <h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
 <h3 id="exercise-a1-deploy-and-initialize">Exercise A.1: Deploy and Initialize<a class="headerlink" href="#exercise-a1-deploy-and-initialize" title="Permanent link">&para;</a></h3>
+<p>The escrow contract is already deployed to testnet at <code>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6</code>. You can use it directly.</p>
+<p>To deploy your own instance:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">WASM</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/target/wasm32v1-none/release/escrow.wasm
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>stellar<span class="w"> </span>contract<span class="w"> </span>deploy<span class="w"> </span><span class="se">\</span>
@@ -1097,79 +1129,90 @@
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--<span class="w"> </span>initialize
 </code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">pPHP Token Required</p>
+<p>The escrow contract now transfers real tokens. You need the pPHP token contract address to create escrows. See <a href="../pphp-token/">Appendix B: pPHP Token</a> for details.</p>
+</div>
 <hr />
 <h3 id="exercise-a2-create-an-escrow">Exercise A.2: Create an Escrow<a class="headerlink" href="#exercise-a2-create-an-escrow" title="Permanent link">&para;</a></h3>
-<p>Create an escrow for Milestone 1 (₱3M), requiring 2 community confirmations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">ALICE</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>alice<span class="k">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">BOB</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>bob<span class="k">)</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BOB</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">3000000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">2</span>
+<p>Create an escrow for Milestone 1 (3M pesos = 300,000,000 centavos), requiring 2 community confirmations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nv">ALICE</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>alice<span class="k">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nv">BOB</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>bob<span class="k">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BOB</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">300000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span>--token_address<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PPHP</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
 <p>Returns escrow ID. Status is <code>Created</code>.</p>
 </details>
+<div class="admonition tip">
+<p class="admonition-title">Amount in Centavos</p>
+<p>Amounts are in pPHP centavos (2 decimals). 300,000,000 centavos = 3,000,000 pesos. See <a href="../pphp-token/">Appendix B</a> for the full encoding table.</p>
+</div>
 <hr />
 <h3 id="exercise-a3-fund-the-escrow">Exercise A.3: Fund the Escrow<a class="headerlink" href="#exercise-a3-fund-the-escrow" title="Permanent link">&para;</a></h3>
-<p>The funder deposits the exact amount:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">3000000</span>
+<p>The funder deposits the exact amount. <strong>Real pPHP tokens transfer from the funder wallet to the escrow contract address:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">300000000</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
-<p>Status changes to <code>Funded</code>.</p>
+<p>Status changes to <code>Funded</code>. Funder's pPHP balance decreases by 3M pesos. Tokens are locked in the escrow contract.</p>
 </details>
 <hr />
 <h3 id="exercise-a4-complete-all-unlock-conditions">Exercise A.4: Complete All Unlock Conditions<a class="headerlink" href="#exercise-a4-complete-all-unlock-conditions" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Gate 1: Engineer approval</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Gate 2: AI validation</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span>--<span class="w"> </span>ai_validate<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="c1"># Gate 3: Compliance</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span>--<span class="w"> </span>compliance_validate<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="c1"># Gate 4: Community (need 2)</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">  </span>--<span class="w"> </span>add_community_confirmation<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">  </span>--<span class="w"> </span>add_community_confirmation<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Gate 1: Engineer approval</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--source<span class="w"> </span>engineer<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span>--engineer<span class="w"> </span>engineer<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Gate 2: AI validation</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span>--source<span class="w"> </span>ai_auditor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--<span class="w"> </span>ai_validate<span class="w"> </span>--auditor<span class="w"> </span>ai_auditor<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Gate 3: Compliance</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span>--source<span class="w"> </span>auditor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">  </span>--<span class="w"> </span>compliance_validate<span class="w"> </span>--compliance_officer<span class="w"> </span>auditor<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="c1"># Gate 4: Community (need 2)</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="k">for</span><span class="w"> </span>ALIAS<span class="w"> </span><span class="k">in</span><span class="w"> </span>citizen<span class="w"> </span>alice<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">  </span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">    </span>--source<span class="w"> </span><span class="nv">$ALIAS</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">    </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">    </span>--<span class="w"> </span>add_community_confirmation<span class="w"> </span>--citizen<span class="w"> </span><span class="nv">$ALIAS</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="k">done</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
@@ -1177,11 +1220,13 @@
 </details>
 <hr />
 <h3 id="exercise-a5-check-conditions">Exercise A.5: Check Conditions<a class="headerlink" href="#exercise-a5-check-conditions" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--<span class="w"> </span>check_conditions<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--<span class="w"> </span>check_conditions<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
@@ -1189,65 +1234,73 @@
 </details>
 <hr />
 <h3 id="exercise-a6-release-funds">Exercise A.6: Release Funds<a class="headerlink" href="#exercise-a6-release-funds" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--<span class="w"> </span>release<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span>--caller<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<p><strong>Real pPHP tokens transfer from the escrow contract to the recipient (contractor):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--<span class="w"> </span>release<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span>--caller<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
-<p>Returns <code>true</code>. Status changes to <code>Released</code>.</p>
+<p>Returns <code>true</code>. Status changes to <code>Released</code>. Contractor's pPHP balance increases by 3M pesos.</p>
 </details>
 <hr />
 <h3 id="exercise-a7-test-dispute-and-refund">Exercise A.7: Test Dispute and Refund<a class="headerlink" href="#exercise-a7-test-dispute-and-refund" title="Permanent link">&para;</a></h3>
-<p>Create a second escrow and dispute it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create new escrow</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BOB</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">5000000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">3</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1"># Fund it</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">5000000</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="c1"># Dispute it</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">  </span>--<span class="w"> </span>dispute<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">    </span>--disputer<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span>
-<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>
-<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="c1"># Refund the disputed escrow</span>
-<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">  </span>--id<span class="w"> </span>popv_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="w">  </span>--<span class="w"> </span>refund<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span>
+<p>Create a second escrow (5M pesos) and dispute it. <strong>Refund returns real pPHP tokens to the funder:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">BOB</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>bob<span class="k">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Create new escrow</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BOB</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">500000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span>--token_address<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PPHP</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="c1"># Fund it</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">500000000</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="c1"># Dispute it</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">  </span>--source<span class="w"> </span>anti_corruption<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">  </span>--<span class="w"> </span>dispute<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">    </span>--disputer<span class="w"> </span>anti_corruption<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="c1"># Refund the disputed escrow (tokens return to funder)</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="w">  </span>--source<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="w">  </span>--<span class="w"> </span>refund<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="w">    </span>--funder<span class="w"> </span>alice<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="w">    </span>--escrow_id<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
 <details class="success">
 <summary>Expected Output</summary>
-<p>Status: <code>Disputed</code> → <code>Refunded</code>. Funds return to funder.</p>
+<p>Status: <code>Disputed</code> then <code>Refunded</code>. Funder's pPHP balance is restored.</p>
 </details>
 <hr />
 <h2 id="escrow-safety-rules">Escrow Safety Rules<a class="headerlink" href="#escrow-safety-rules" title="Permanent link">&para;</a></h2>
@@ -1282,6 +1335,10 @@
 <tr>
 <td>No refund if unlocked</td>
 <td><code>panic("cannot refund escrow with met conditions")</code></td>
+</tr>
+<tr>
+<td>Real token transfers</td>
+<td>Uses <code>token::Client</code> for fund/release/refund</td>
 </tr>
 <tr>
 <td>Dispute blocks release</td>

@@ -988,6 +988,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pphp-token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1246,19 +1274,19 @@
   
 
 
-<h1 id="proof-of-public-value-hackathon-user-manual">Proof of Public Value — Hackathon User Manual<a class="headerlink" href="#proof-of-public-value-hackathon-user-manual" title="Permanent link">&para;</a></h1>
+<h1 id="proof-of-public-value-hackathon-user-manual">Proof of Public Value - Hackathon User Manual<a class="headerlink" href="#proof-of-public-value-hackathon-user-manual" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Track:</strong> Local Finance &amp; Real World Access — Stellar Build Better Hackathon</p>
+<p><strong>Track:</strong> Local Finance &amp; Real World Access - Stellar Build Better Hackathon</p>
 </blockquote>
 <hr />
 <h2 id="the-problem">The Problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
-<p>Every year, governments lose <strong>$2.6 trillion to corruption</strong> — ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.</p>
+<p>Every year, governments lose <strong>$2.6 trillion to corruption</strong> - ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.</p>
 <p>The root cause: <strong>public money is released based on signatures and paperwork, not on proof that value was actually created.</strong> Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.</p>
 <p><strong>The Philippines is a primary case study.</strong> From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.</p>
-<p>➡️ <strong>Read: <a href="philippines-corruption/">Why PoPV Exists — The Philippine Corruption Crisis</a></strong></p>
+<p>➡️ <strong>Read: <a href="philippines-corruption/">Why PoPV Exists - The Philippine Corruption Crisis</a></strong></p>
 <h2 id="what-popv-solves">What PoPV Solves<a class="headerlink" href="#what-popv-solves" title="Permanent link">&para;</a></h2>
 <p>Proof of Public Value enforces one rule: <strong>No Proof. No Payment.</strong></p>
-<p>Every public project becomes a <strong>Public Value Object (PVO)</strong> — a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released <strong>only after passing 5 independent verification gates:</strong></p>
+<p>Every public project becomes a <strong>Public Value Object (PVO)</strong> - a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released <strong>only after passing 5 independent verification gates:</strong></p>
 <table>
 <thead>
 <tr>
@@ -1295,10 +1323,10 @@
 </tr>
 </tbody>
 </table>
-<p>If <strong>any gate fails</strong>, funds remain locked. No single person can release money — it requires cryptographic consensus.</p>
+<p>If <strong>any gate fails</strong>, funds remain locked. No single person can release money - it requires cryptographic consensus.</p>
 <hr />
 <h2 id="stellar-integration-defi-escrow">Stellar Integration (DeFi Escrow)<a class="headerlink" href="#stellar-integration-defi-escrow" title="Permanent link">&para;</a></h2>
-<p>PoPV is <strong>serverless</strong> — there is no backend, no database, no centralized server. <strong>The Stellar blockchain is the infrastructure.</strong></p>
+<p>PoPV is <strong>serverless</strong> - there is no backend, no database, no centralized server. <strong>The Stellar blockchain is the infrastructure.</strong></p>
 <h3 id="dynamic-defi-escrow">Dynamic DeFi Escrow<a class="headerlink" href="#dynamic-defi-escrow" title="Permanent link">&para;</a></h3>
 <p>Every milestone has an independent escrow contract on Stellar. Funds are deposited and locked with multi-condition unlock rules:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// Funds release only when all 5 conditions are met</span>
@@ -1318,7 +1346,7 @@
 - <strong>Why</strong> (rationale, supporting IPFS documents)
 - <strong>Risk score</strong> and compliance result</p>
 <h3 id="soroban-events">Soroban Events<a class="headerlink" href="#soroban-events" title="Permanent link">&para;</a></h3>
-<p>All 11 contracts emit typed Stellar events for real-time indexing. Every state change — from PVO creation to payment release — is publicly auditable.</p>
+<p>All 11 contracts emit typed Stellar events for real-time indexing. Every state change - from PVO creation to payment release - is publicly auditable.</p>
 <hr />
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────┐
@@ -1375,7 +1403,7 @@
 </tr>
 <tr>
 <td><code>escrow</code></td>
-<td><code>CDTH...EDZT3</code></td>
+<td><code>CAD7...XQM6</code></td>
 <td>14</td>
 <td>15</td>
 </tr>
@@ -1427,17 +1455,23 @@
 <td>5</td>
 <td>5</td>
 </tr>
+<tr>
+<td><code>pPHP token</code></td>
+<td><code>CA6U...FLE6</code></td>
+<td>8</td>
+<td>8</td>
+</tr>
 </tbody>
 </table>
-<p><strong>154 tests, all passing. 0 npm vulnerabilities.</strong></p>
+<p><strong>170 tests, all passing. 0 npm vulnerabilities.</strong></p>
 <hr />
 <h2 id="try-it-live">Try It Live<a class="headerlink" href="#try-it-live" title="Permanent link">&para;</a></h2>
 <p><strong>Frontend:</strong> <code>http://localhost:5174</code> (run <code>npm run dev</code> in <code>frontend/</code>)</p>
 <ol>
-<li><strong>Public pages</strong> — Browse projects, national index, search — no wallet needed</li>
-<li><strong>Connect Freighter</strong> — Click "Connect Wallet" (install <a href="https://freighter.app">Freighter</a> first)</li>
-<li><strong>Citizen</strong> — Connect citizen wallet → click "Create RPT Trustline" → submit GPS report</li>
-<li><strong>Admin</strong> — Connect alice wallet → assign roles → mint RPT → manage system</li>
+<li><strong>Public pages</strong> - Browse projects, national index, search - no wallet needed</li>
+<li><strong>Connect Freighter</strong> - Click "Connect Wallet" (install <a href="https://freighter.app">Freighter</a> first)</li>
+<li><strong>Citizen</strong> - Connect citizen wallet → click "Create RPT Trustline" → submit GPS report</li>
+<li><strong>Admin</strong> - Connect alice wallet → assign roles → mint RPT → manage system</li>
 </ol>
 <h3 id="demo-wallets-testnet">Demo Wallets (Testnet)<a class="headerlink" href="#demo-wallets-testnet" title="Permanent link">&para;</a></h3>
 <blockquote>
@@ -1563,7 +1597,7 @@ To import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <h3 id="exercise-1-explore-without-login">Exercise 1: Explore Without Login<a class="headerlink" href="#exercise-1-explore-without-login" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Open the Public Transparency Portal</li>
-<li>Browse available projects — see budgets, status, value scores</li>
+<li>Browse available projects - see budgets, status, value scores</li>
 <li>View the National Index with department rankings</li>
 <li>Use the Economic Memory search</li>
 </ol>

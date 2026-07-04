@@ -679,7 +679,7 @@
   <a href="#exercise-41-gate-2-engineer-approval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.1: Gate 2 — Engineer Approval
+        Exercise 4.1: Gate 2 - Engineer Approval
       
     </span>
   </a>
@@ -690,7 +690,7 @@
   <a href="#exercise-42-gate-3-ai-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.2: Gate 3 — AI Validation
+        Exercise 4.2: Gate 3 - AI Validation
       
     </span>
   </a>
@@ -701,7 +701,7 @@
   <a href="#exercise-43-gate-4-compliance-check" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.3: Gate 4 — Compliance Check
+        Exercise 4.3: Gate 4 - Compliance Check
       
     </span>
   </a>
@@ -712,7 +712,7 @@
   <a href="#exercise-44-gate-5-community-verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.4: Gate 5 — Community Verification
+        Exercise 4.4: Gate 5 - Community Verification
       
     </span>
   </a>
@@ -945,6 +945,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pphp-token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1016,7 +1044,7 @@
   <a href="#exercise-41-gate-2-engineer-approval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.1: Gate 2 — Engineer Approval
+        Exercise 4.1: Gate 2 - Engineer Approval
       
     </span>
   </a>
@@ -1027,7 +1055,7 @@
   <a href="#exercise-42-gate-3-ai-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.2: Gate 3 — AI Validation
+        Exercise 4.2: Gate 3 - AI Validation
       
     </span>
   </a>
@@ -1038,7 +1066,7 @@
   <a href="#exercise-43-gate-4-compliance-check" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.3: Gate 4 — Compliance Check
+        Exercise 4.3: Gate 4 - Compliance Check
       
     </span>
   </a>
@@ -1049,7 +1077,7 @@
   <a href="#exercise-44-gate-5-community-verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise 4.4: Gate 5 — Community Verification
+        Exercise 4.4: Gate 5 - Community Verification
       
     </span>
   </a>
@@ -1159,7 +1187,7 @@
 
 
 <h1 id="chapter-4-approving-milestones">Chapter 4: Approving Milestones<a class="headerlink" href="#chapter-4-approving-milestones" title="Permanent link">&para;</a></h1>
-<p>Learn the full milestone approval flow — from engineer sign-off to fund release.</p>
+<p>Learn the full milestone approval flow - from engineer sign-off to fund release.</p>
 <hr />
 <h2 id="what-youll-learn">What You'll Learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1186,7 +1214,7 @@
 </code></pre></div>
 <hr />
 <h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
-<h3 id="exercise-41-gate-2-engineer-approval">Exercise 4.1: Gate 2 — Engineer Approval<a class="headerlink" href="#exercise-41-gate-2-engineer-approval" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-41-gate-2-engineer-approval">Exercise 4.1: Gate 2 - Engineer Approval<a class="headerlink" href="#exercise-41-gate-2-engineer-approval" title="Permanent link">&para;</a></h3>
 <p>An engineer reviews the submitted evidence and approves the milestone:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_pvo_core<span class="w"> </span><span class="se">\</span>
@@ -1201,7 +1229,7 @@
 <p>Milestone status changes to <code>EngineerApproved</code>.</p>
 </details>
 <hr />
-<h3 id="exercise-42-gate-3-ai-validation">Exercise 4.2: Gate 3 — AI Validation<a class="headerlink" href="#exercise-42-gate-3-ai-validation" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-42-gate-3-ai-validation">Exercise 4.2: Gate 3 - AI Validation<a class="headerlink" href="#exercise-42-gate-3-ai-validation" title="Permanent link">&para;</a></h3>
 <p>The AI audit system runs its checks. In production this is an off-chain oracle. For this exercise we call it directly:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_pvo_core<span class="w"> </span><span class="se">\</span>
@@ -1216,7 +1244,7 @@
 <p>If AI detects fraud patterns (duplicate invoices, ghost projects, etc.), it sets <code>passed = false</code>. The milestone stays locked until the risk is resolved.</p>
 </details>
 <hr />
-<h3 id="exercise-43-gate-4-compliance-check">Exercise 4.3: Gate 4 — Compliance Check<a class="headerlink" href="#exercise-43-gate-4-compliance-check" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-43-gate-4-compliance-check">Exercise 4.3: Gate 4 - Compliance Check<a class="headerlink" href="#exercise-43-gate-4-compliance-check" title="Permanent link">&para;</a></h3>
 <p>The compliance officer validates procurement law, budget rules, and safety standards:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--id<span class="w"> </span>popv_pvo_core<span class="w"> </span><span class="se">\</span>
@@ -1227,7 +1255,7 @@
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span>--passed<span class="w"> </span><span class="nb">true</span>
 </code></pre></div>
 <hr />
-<h3 id="exercise-44-gate-5-community-verification">Exercise 4.4: Gate 5 — Community Verification<a class="headerlink" href="#exercise-44-gate-5-community-verification" title="Permanent link">&para;</a></h3>
+<h3 id="exercise-44-gate-5-community-verification">Exercise 4.4: Gate 5 - Community Verification<a class="headerlink" href="#exercise-44-gate-5-community-verification" title="Permanent link">&para;</a></h3>
 <p>At least 3 citizens must verify this milestone (as defined in Exercise 2.5):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Each call represents one citizen verification</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>

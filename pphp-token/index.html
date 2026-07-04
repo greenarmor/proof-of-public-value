@@ -1,0 +1,1621 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Programmable public spending on Stellar Soroban. No Proof. No Payment.">
+      
+      
+        <meta name="author" content="greenarmor">
+      
+      
+        <link rel="canonical" href="https://greenarmor.github.io/proof-of-public-value/pphp-token/">
+      
+      
+        <link rel="prev" href="../escrow-deep-dive/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>pPHP Token - Proof of Public Value (PoPV)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#appendix-b-pphp-token-escrow-settlement" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Proof of Public Value (PoPV)" class="md-header__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Proof of Public Value (PoPV)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              pPHP Token
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../philippines-corruption/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Why PoPV
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../creating-projects/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Creating Projects
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../submitting-evidence/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Submitting Evidence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../approving-milestones/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Approving Milestones
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../community-verification/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Community Verification
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../audit-trail/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Audit Trail
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../escrow-deep-dive/" class="md-tabs__link">
+          
+  
+  
+  Appendices
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Proof of Public Value (PoPV)" class="md-nav__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Proof of Public Value (PoPV)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../philippines-corruption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why PoPV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating-projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../submitting-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submitting Evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approving-milestones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving Milestones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../community-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit-trail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Trail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../escrow-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Escrow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You'll Learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem-pphp-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem pPHP Solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Details
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amount-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amount Encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-escrow-uses-pphp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Escrow Uses pPHP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exercises">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b1-check-your-pphp-balance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.1: Check Your pPHP Balance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b2-admin-mints-pphp-to-a-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.2: Admin Mints pPHP to a Wallet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b3-check-token-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.3: Check Token Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b4-create-and-fund-a-5m-peso-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.4: Create and Fund a 5M Peso Escrow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b5-verify-token-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.5: Verify Token Movement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b6-complete-all-5-gates-and-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.6: Complete All 5 Gates and Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b7-dispute-and-refund" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.7: Dispute and Refund
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-flow-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Flow Diagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-path-mainnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Path (Mainnet)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You'll Learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem-pphp-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Problem pPHP Solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Details
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amount-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amount Encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-escrow-uses-pphp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Escrow Uses pPHP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exercises">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b1-check-your-pphp-balance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.1: Check Your pPHP Balance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b2-admin-mints-pphp-to-a-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.2: Admin Mints pPHP to a Wallet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b3-check-token-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.3: Check Token Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b4-create-and-fund-a-5m-peso-escrow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.4: Create and Fund a 5M Peso Escrow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b5-verify-token-movement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.5: Verify Token Movement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b6-complete-all-5-gates-and-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.6: Complete All 5 Gates and Release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-b7-dispute-and-refund" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise B.7: Dispute and Refund
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-flow-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Flow Diagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-path-mainnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Path (Mainnet)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="appendix-b-pphp-token-escrow-settlement">Appendix B: pPHP Token &amp; Escrow Settlement<a class="headerlink" href="#appendix-b-pphp-token-escrow-settlement" title="Permanent link">&para;</a></h1>
+<p>How PoPV uses a custom on-chain token to settle real escrow payments, solving the testnet XLM limit and enabling realistic multi-million peso testing.</p>
+<hr />
+<h2 id="what-youll-learn">What You'll Learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Why pPHP exists instead of using native XLM</li>
+<li>How amounts are encoded (centavos, not pesos)</li>
+<li>How to mint pPHP and check balances</li>
+<li>How escrow transfers real tokens on fund, release, and refund</li>
+<li>How this maps to production (mainnet)</li>
+</ul>
+<hr />
+<h2 id="the-problem-pphp-solves">The Problem pPHP Solves<a class="headerlink" href="#the-problem-pphp-solves" title="Permanent link">&para;</a></h2>
+<p>Stellar testnet's Friendbot funds wallets with a maximum of <strong>10,000 XLM</strong>. Real infrastructure projects cost <strong>5 to 50 million pesos</strong>. Using native XLM directly would exhaust test wallets instantly.</p>
+<p>pPHP is a custom Soroban fungible token with <strong>unlimited mintable supply</strong> controlled by the Administrator, so we can simulate realistic government budgets without XLM constraints.</p>
+<hr />
+<h2 id="token-details">Token Details<a class="headerlink" href="#token-details" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name</td>
+<td>Philippine Peso Testnet</td>
+</tr>
+<tr>
+<td>Symbol</td>
+<td><code>pPHP</code></td>
+</tr>
+<tr>
+<td>Decimals</td>
+<td><code>2</code> (1 peso = 100 centavos)</td>
+</tr>
+<tr>
+<td>Admin</td>
+<td><code>alice</code> (Administrator)</td>
+</tr>
+<tr>
+<td>Contract</td>
+<td><code>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6</code></td>
+</tr>
+<tr>
+<td>Interface</td>
+<td>Soroban <code>TokenInterface</code> (SAC-compatible)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="amount-encoding">Amount Encoding<a class="headerlink" href="#amount-encoding" title="Permanent link">&para;</a></h2>
+<p>All on-chain amounts are in <strong>centavos</strong> (the smallest unit). Divide by 100 to get pesos.</p>
+<table>
+<thead>
+<tr>
+<th>Real Value</th>
+<th>Centavos (on-chain)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.00 peso</td>
+<td><code>100</code></td>
+<td>Minimum unit</td>
+</tr>
+<tr>
+<td>1,000 pesos</td>
+<td><code>100,000</code></td>
+<td>Small milestone</td>
+</tr>
+<tr>
+<td>1,000,000 pesos</td>
+<td><code>100,000,000</code></td>
+<td>Medium project</td>
+</tr>
+<tr>
+<td>50,000,000 pesos</td>
+<td><code>5,000,000,000</code></td>
+<td>Large infrastructure</td>
+</tr>
+<tr>
+<td>1,000,000,000 pesos</td>
+<td><code>100,000,000,000</code></td>
+<td>National budget line item</td>
+</tr>
+</tbody>
+</table>
+<p><code>i128</code> max is ~170 quintillion. No overflow risk even for national budgets.</p>
+<hr />
+<h2 id="how-escrow-uses-pphp">How Escrow Uses pPHP<a class="headerlink" href="#how-escrow-uses-pphp" title="Permanent link">&para;</a></h2>
+<p>The escrow contract (<code>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6</code>) stores a <code>token_address</code> field. When you create an escrow, you specify which token to use:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create_escrow(funder, recipient, pvo_id, milestone_id, amount, token_address, community_required)
+</code></pre></div>
+<p>The contract then uses <code>soroban_sdk::token::Client</code> to transfer real tokens:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Token Flow</th>
+<th>Who Signs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fund_escrow</code></td>
+<td>Funder to Escrow Contract</td>
+<td>Funder</td>
+</tr>
+<tr>
+<td><code>release</code></td>
+<td>Escrow Contract to Recipient</td>
+<td>Any caller (gates must pass)</td>
+</tr>
+<tr>
+<td><code>refund</code></td>
+<td>Escrow Contract to Funder</td>
+<td>Funder</td>
+</tr>
+</tbody>
+</table>
+<p>Before release, tokens are <strong>locked inside the escrow contract address</strong>. No one can access them until all 5 gates pass or a refund is triggered.</p>
+<hr />
+<h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
+<h3 id="exercise-b1-check-your-pphp-balance">Exercise B.1: Check Your pPHP Balance<a class="headerlink" href="#exercise-b1-check-your-pphp-balance" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--id<span class="w"> </span>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
+</code></pre></div>
+<details class="success">
+<summary>Expected Output</summary>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&quot;600000000&quot;
+</code></pre></div>
+That is 6,000,000 pesos (600M centavos).</p>
+</details>
+<hr />
+<h3 id="exercise-b2-admin-mints-pphp-to-a-wallet">Exercise B.2: Admin Mints pPHP to a Wallet<a class="headerlink" href="#exercise-b2-admin-mints-pphp-to-a-wallet" title="Permanent link">&para;</a></h3>
+<p>Only the Administrator (<code>alice</code>) can mint:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--id<span class="w"> </span>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--<span class="w"> </span>mint<span class="w"> </span>--to<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--amount<span class="w"> </span><span class="m">1000000000</span>
+</code></pre></div>
+<p>This mints 10,000,000 pesos (1 billion centavos) to the funding agency wallet.</p>
+<details class="success">
+<summary>Expected Output</summary>
+<p>Transaction submitted successfully.</p>
+</details>
+<hr />
+<h3 id="exercise-b3-check-token-metadata">Exercise B.3: Check Token Metadata<a class="headerlink" href="#exercise-b3-check-token-metadata" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Symbol</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--id<span class="w"> </span>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--<span class="w"> </span>symbol
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Decimals</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--id<span class="w"> </span>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--<span class="w"> </span>decimals
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># Total supply</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--id<span class="w"> </span>CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--<span class="w"> </span>total_supply
+</code></pre></div>
+<details class="success">
+<summary>Expected Output</summary>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&quot;pPHP&quot;
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>2
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>&lt;total minted so far&gt;
+</code></pre></div>
+</details>
+<hr />
+<h3 id="exercise-b4-create-and-fund-a-5m-peso-escrow">Exercise B.4: Create and Fund a 5M Peso Escrow<a class="headerlink" href="#exercise-b4-create-and-fund-a-5m-peso-escrow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">FUNDER</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">CONTRACTOR</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>contractor<span class="k">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Create escrow: 5M pesos = 500,000,000 centavos</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nv">ESCROW_ID</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span>--funder<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FUNDER</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONTRACTOR</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">500000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">    </span>--token_address<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PPHP</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">3</span><span class="k">)</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Escrow ID: </span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="c1"># Fund it: real pPHP tokens move from funder to escrow contract</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span>--funder<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FUNDER</span><span class="s2">&quot;</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--amount<span class="w"> </span><span class="m">500000000</span>
+</code></pre></div>
+<details class="success">
+<summary>Expected Output</summary>
+<p>Escrow created and funded. Funder's pPHP balance drops by 5M pesos. Tokens are now locked in the escrow contract address.</p>
+</details>
+<hr />
+<h3 id="exercise-b5-verify-token-movement">Exercise B.5: Verify Token Movement<a class="headerlink" href="#exercise-b5-verify-token-movement" title="Permanent link">&para;</a></h3>
+<p>After funding, verify that tokens actually moved:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Funder balance should have decreased</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$PPHP</span><span class="w"> </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Contractor balance should still be unchanged (funds locked in escrow)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$PPHP</span><span class="w"> </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>contractor<span class="k">)</span>
+</code></pre></div>
+<hr />
+<h3 id="exercise-b6-complete-all-5-gates-and-release">Exercise B.6: Complete All 5 Gates and Release<a class="headerlink" href="#exercise-b6-complete-all-5-gates-and-release" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">ESCROW_ID</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Gate 1: Engineer</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>engineer<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>engineer_approve<span class="w"> </span>--engineer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>engineer<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Gate 2: AI</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>ai_auditor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>ai_validate<span class="w"> </span>--auditor<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>ai_auditor<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># Gate 3: Compliance</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>auditor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>compliance_validate<span class="w"> </span>--compliance_officer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>auditor<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Gate 4: Community (3 confirmations needed)</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="k">for</span><span class="w"> </span>ALIAS<span class="w"> </span><span class="k">in</span><span class="w"> </span>citizen<span class="w"> </span>alice<span class="w"> </span>agency<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">  </span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span><span class="nv">$ALIAS</span><span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>add_community_confirmation<span class="w"> </span>--citizen<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span><span class="nv">$ALIAS</span><span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="k">done</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># Release: real pPHP tokens move from escrow contract to contractor</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>release<span class="w"> </span>--caller<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
+</code></pre></div>
+<details class="success">
+<summary>Expected Output</summary>
+<p>All gates pass. Status advances to <code>Ready</code> then <code>Released</code>. Contractor's pPHP balance increases by 5M pesos.</p>
+</details>
+<hr />
+<h3 id="exercise-b7-dispute-and-refund">Exercise B.7: Dispute and Refund<a class="headerlink" href="#exercise-b7-dispute-and-refund" title="Permanent link">&para;</a></h3>
+<p>If fraud is detected, the Anti-Corruption Agency can dispute an escrow, and the funder can reclaim funds:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Dispute</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>anti_corruption<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>dispute<span class="w"> </span>--disputer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>anti_corruption<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Refund: tokens return from escrow contract to funder</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>refund<span class="w"> </span>--funder<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<details class="success">
+<summary>Expected Output</summary>
+<p>Status: <code>Disputed</code> then <code>Refunded</code>. Funder's pPHP balance is restored. Contractor never received the funds.</p>
+</details>
+<hr />
+<h2 id="token-flow-diagram">Token Flow Diagram<a class="headerlink" href="#token-flow-diagram" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>                         pPHP Token Transfers
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  +----------+         fund_escrow         +--------------+
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  |  Funder  | ---------- 5M -----------&gt; |    Escrow     |
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  |  Wallet  |                            |   Contract    |
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  +----------+                            |   (locked)    |
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>                                           +-------+-------+
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>                                               |         |
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>                                      release   |         |  refund
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>                                              v         v
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>  +--------------+                  +--------------+
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>  |  Contractor  | &lt;---- 5M ------- |    Escrow     |
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>  |    Wallet    |                  |   Contract    |
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>  +--------------+                  +--------------+
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>  All 5 gates must pass before release.
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>  Dispute blocks release and enables refund.
+</code></pre></div>
+<hr />
+<h2 id="production-path-mainnet">Production Path (Mainnet)<a class="headerlink" href="#production-path-mainnet" title="Permanent link">&para;</a></h2>
+<p>On mainnet, pPHP would be replaced by a real PHP-pegged asset:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GovPHP SAC token</strong></td>
+<td>Government-issued Stellar Asset Credit token (requires BSP approval)</td>
+</tr>
+<tr>
+<td><strong>USDC</strong></td>
+<td>Circle's stablecoin with FX conversion (available now)</td>
+</tr>
+<tr>
+<td><strong>EURC</strong></td>
+<td>European stablecoin for international donor projects</td>
+</tr>
+<tr>
+<td><strong>XLM</strong></td>
+<td>Native Stellar Lumens (volatile, but simplest for small projects)</td>
+</tr>
+</tbody>
+</table>
+<p>The escrow's <code>token_address</code> field is asset-agnostic. Different PVOs can use different tokens without code changes.</p>
+<hr />
+<h2 id="checklist">Checklist<a class="headerlink" href="#checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Checked pPHP balance</li>
+<li>[ ] Admin minted pPHP to a wallet</li>
+<li>[ ] Created escrow with <code>token_address</code> parameter</li>
+<li>[ ] Funded escrow (verified tokens left funder wallet)</li>
+<li>[ ] Completed 5 gates and released (verified tokens reached contractor)</li>
+<li>[ ] Tested dispute and refund (verified tokens returned to funder)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
