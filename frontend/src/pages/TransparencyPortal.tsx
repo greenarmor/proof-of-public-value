@@ -9,6 +9,7 @@ interface PVOData {
   id: number; title: string; description: string; department: string;
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
+  gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -36,7 +37,39 @@ export function TransparencyPortal() {
       for (let i = 1; i <= Number(cnt.result); i++) {
         try {
           const r = await client.get_pvo({ pvo_id: i });
-          if (r.result) list.push({ id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at) });
+          if (r.result) {
+            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [] };
+
+            // Fetch milestone evidence to extract GPS coordinates
+            try {
+              const mResult = await client.get_pvo_milestones({ pvo_id: i });
+              const milestones = (mResult.result || []) as any[];
+              const coords: PVOData["gpsCoordinates"] = [];
+              for (const m of milestones) {
+                const items = m.submitted_evidence || [];
+                for (const ev of items) {
+                  const type = statusToString(ev.evidence_type);
+                  if (type === "Gps Coordinates" && ev.metadata) {
+                    // Parse "lat:14.599512,lng:120.984220" or "14.599512,120.984220"
+                    const meta: string = ev.metadata;
+                    const latMatch = meta.match(/lat:?\s*(-?\d+\.?\d*)/i);
+                    const lngMatch = meta.match(/lng:?\s*(-?\d+\.?\d*)/i);
+                    if (latMatch && lngMatch) {
+                      coords.push({ lat: parseFloat(latMatch[1]), lng: parseFloat(lngMatch[1]), milestoneId: Number(m.id), evidenceId: Number(ev.id) });
+                    } else {
+                      const parts = meta.split(",");
+                      if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
+                        coords.push({ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), milestoneId: Number(m.id), evidenceId: Number(ev.id) });
+                      }
+                    }
+                  }
+                }
+              }
+              pvo.gpsCoordinates = coords;
+            } catch {}
+
+            list.push(pvo);
+          }
         } catch {}
       }
       setPvos(list);

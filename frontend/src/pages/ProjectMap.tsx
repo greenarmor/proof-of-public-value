@@ -6,6 +6,7 @@ interface PVOData {
   id: number; title: string; description: string; department: string;
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
+  gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
 }
 
 export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
@@ -70,6 +71,20 @@ export default function ProjectMap({ pvos }: { pvos: PVOData[] }) {
             </Popup>
           </Marker>
         ))}
+        {/* GPS evidence from on-chain submissions — blue pins */}
+        {pvos.flatMap((pvo) =>
+          (pvo.gpsCoordinates || []).map((gps, i) => (
+            <Marker key={`gps-${pvo.id}-${i}`} position={[gps.lat, gps.lng]}
+              zIndexOffset={2000}>
+              <Popup>
+                <strong>{pvo.title}</strong><br />
+                📍 GPS Evidence #{gps.evidenceId}<br />
+                Milestone #{gps.milestoneId}<br />
+                {gps.lat.toFixed(6)}, {gps.lng.toFixed(6)}
+              </Popup>
+            </Marker>
+          ))
+        )}
       </MapContainer>
     </div>
   );
