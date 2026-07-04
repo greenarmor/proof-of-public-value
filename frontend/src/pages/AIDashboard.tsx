@@ -17,7 +17,8 @@ interface FraudResult {
 }
 
 export function AIDashboard() {
-  const { address, connected, connect } = useWallet();
+  const { address, connected, connect, hasRole } = useWallet();
+  const canPassGate = hasRole("AIAuditor", "Administrator");
   const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps" | "gate">("fraud");
   const [fraudResults, setFraudResults] = useState<FraudResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,7 @@ export function AIDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["fraud", "risk", "image", "twin", "geo", "gps", "gate"] as const).map((tab) => (
+        {(["fraud", "risk", "image", "twin", "geo", "gps"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
@@ -96,9 +97,16 @@ export function AIDashboard() {
             {tab === "twin" && "🏗️ Digital Twin"}
             {tab === "geo" && "🌍 Geo Risk"}
             {tab === "gps" && "📍 GPS Valid"}
-            {tab === "gate" && "🔓 Escrow Gate"}
           </button>
         ))}
+        {canPassGate && (
+          <button onClick={() => setActiveTab("gate")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              activeTab === "gate" ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}>
+            🔓 Escrow Gate
+          </button>
+        )}
       </div>
 
       {activeTab === "fraud" && (
