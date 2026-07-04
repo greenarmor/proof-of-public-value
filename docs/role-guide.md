@@ -306,6 +306,8 @@ The system's security comes from **distribution of trust**, not from perfect ind
 
 The engineer's **reputation score** is visible on their dashboard. It tracks their professional integrity on-chain:
 
+The engineer's **reputation score** is visible on their dashboard. It tracks their professional integrity on-chain:
+
 ```
 Engineer approves Gate 2 → escrow proceeds
     │
@@ -331,6 +333,42 @@ stellar contract invoke --source auditor --network testnet --send=yes \
 ```
 
 This creates a permanent record of the finding and reduces the engineer's score by 25 points (severity 5 × 5). The penalty is visible in the engineer's reputation badge on their dashboard and in all reputation queries.
+
+---
+
+### Inspector vs Auditor: Physical vs Financial Oversight
+
+These are two independent government roles checking different things at different levels:
+
+| | Inspector (DPWH / LGU) | Auditor (COA) |
+|---|---|----------------------|
+| **Employer** | Government agency (DPWH, LGU) | Constitutional office (Commission on Audit) |
+| **Level** | Physical — site conditions | Financial / regulatory — procurement law, budget rules |
+| **What they check** | Concrete thickness, asphalt quality, drainage | Receipts, bidding process, budget allocation, safety regs |
+| **Evidence type** | Photos, GPS coordinates, inspection notes | Audit entries, compliance reports, violation records |
+| **Contract function** | `pvo_core.submit_evidence(InspectionReport)` | `escrow.compliance_validate()` + `audit_trail` |
+| **Escrow gate** | ❌ No gate — supporting evidence | ✅ Gate 4 — **required for payment** |
+| **Effect on money** | Documents conditions, no financial impact | Blocks or releases funds |
+| **Dashboard** | `/inspector` | `/auditor`, `/compliance` |
+| **How they override engineer** | Submit photos proving poor quality → audit trail | Reject compliance → Gate 4 fails → funds stay locked |
+
+**Why both?** The inspector catches what's **wrong on the ground** (cracked concrete, uneven asphalt). The auditor catches what's **wrong on paper** (inflated prices, skipped bidding, regulatory violations). An inspector's photo of bad concrete is evidence. An auditor's rejection of compliance stops payment.
+
+**In the escrow flow:**
+
+```
+Engineer approves Gate 2
+    │
+Inspector visits → submits InspectionReport → "Foundation has cracks"
+    │                                            (doesn't block funds)
+Auditor reviews → sees inspector's photos + engineer's approval
+    │
+Auditor rejects Gate 4 → FUNDS STAY LOCKED
+    │            (COA has constitutional override authority)
+AntiCorruption sees pattern → disputes escrow → funds frozen
+```
+
+The inspector documents. The auditor acts.
 
 ---
 
