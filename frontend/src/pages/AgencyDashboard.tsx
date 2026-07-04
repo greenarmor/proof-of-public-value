@@ -291,6 +291,29 @@ function CreateMilestoneForm({ address }: { address: string }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
+  // Auto-search PVOs
+  const [pvos, setPvos] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_pvo_count();
+        const list: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try { const r = await client.get_pvo({ pvo_id: i }); if (r.result) list.push(r.result); } catch {}
+        }
+        setPvos(list);
+      } catch {}
+    })();
+  }, []);
+
+  const filtered = searchQuery
+    ? pvos.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : pvos.slice(0, 5);
+
   const allTypes = ["DroneImagery", "SatelliteImagery", "GpsCoordinates", "TimestampedPhoto", "TimestampedVideo", "IoTSensor", "EngineeringReport", "LabResult", "InspectionReport", "CommunityVerification"];
 
   const toggleType = (t: string) => {
@@ -365,9 +388,28 @@ function CreateMilestoneForm({ address }: { address: string }) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label>
-            <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)} className="input" required />
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search PVO</label>
+            <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              className="input" placeholder="Type project title..." />
+            {pvoId && <p className="text-xs text-brand-600 mt-1">PVO #{pvoId} selected</p>}
+            {showDropdown && (searchQuery || filtered.length > 0) && (
+              <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                {filtered.map((pvo: any) => (
+                  <button type="button" key={Number(pvo.id)}
+                    onMouseDown={() => { setPvoId(String(pvo.id)); setSearchQuery(pvo.title); setShowDropdown(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                    <span className="font-medium">#{String(pvo.id)} {pvo.title}</span>
+                    <span className="text-xs text-slate-400 ml-2">{pvo.department} · {pvo.municipality}</span>
+                  </button>
+                ))}
+                {filtered.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-slate-400">No PVOs match</div>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
