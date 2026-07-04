@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect } from "react";
 import { formatBudget } from "../helpers";
 import "leaflet/dist/leaflet.css";
 
@@ -54,6 +55,19 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
     // Fallback: center on Philippines
     return [12.8797 + id * 0.12, 121.7740 + id * 0.1];
   };
+
+  function MapFlyTo() {
+    const map = useMap();
+    useEffect(() => {
+      if (!selectedPvoId) return;
+      const pvo = pvos.find(p => p.id === selectedPvoId);
+      if (pvo) {
+        map.flyTo(getCoords(pvo.municipality, pvo.id), 14, { duration: 0.8 });
+      }
+    }, [selectedPvoId, pvos, map]);
+    return null;
+  }
+
   return (
     <div style={{ height: "70vh", width: "100%" }} className="rounded-xl overflow-hidden border-2 border-brand-100">
       <MapContainer center={[14.5995, 120.9842]} zoom={6} style={{ height: "100%", width: "100%" }}>
@@ -61,6 +75,7 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <MapFlyTo />
         {pvos.map((pvo) => (
           <Marker key={pvo.id} position={getCoords(pvo.municipality, pvo.id)}
             zIndexOffset={selectedPvoId === pvo.id ? 1000 : 0}>
