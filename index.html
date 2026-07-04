@@ -378,6 +378,25 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="role-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Role Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
     
     
       <li class="md-tabs__item">
@@ -554,6 +573,17 @@
     <span class="md-ellipsis">
       
         Settlement Token: Testnet vs Mainnet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#international-donor-commitments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        International Donor Commitments
       
     </span>
   </a>
@@ -923,6 +953,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="role-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Role Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -939,10 +996,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   
@@ -960,8 +1017,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1110,6 +1167,17 @@
     <span class="md-ellipsis">
       
         Settlement Token: Testnet vs Mainnet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#international-donor-commitments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        International Donor Commitments
       
     </span>
   </a>
@@ -1405,6 +1473,20 @@
 <summary>Want the full details?</summary>
 <p>See <strong><a href="pphp-token/">Appendix B: pPHP Token &amp; Escrow Settlement</a></strong> for mint/balance CLI exercises, the full escrow lifecycle with real token transfers, and the complete testnet-vs-mainnet value model explanation.</p>
 </details>
+<h3 id="international-donor-commitments">International Donor Commitments<a class="headerlink" href="#international-donor-commitments" title="Permanent link">&para;</a></h3>
+<p>International donors (World Bank, JICA, USAID, etc.) follow a <strong>commit then disburse</strong> model, just like in real development finance:</p>
+<ol>
+<li>
+<p><strong>Commit</strong> - The donor records a pledge on-chain via the <code>grant_commitment</code> contract. This records the organization name, PVO ID, amount, and donor address. <strong>No tokens move.</strong> It is a public, immutable promise.</p>
+</li>
+<li>
+<p><strong>Disburse</strong> - When the funding agency is ready, they create an escrow for the PVO and fund it with real tokens. The donor marks the commitment as "Disbursed."</p>
+</li>
+<li>
+<p><strong>Complete</strong> - After the escrow releases funds through all 5 gates, the donor marks the commitment as "Completed."</p>
+</li>
+</ol>
+<p>The funding agency dashboard has a <strong>Donor Commitments</strong> tab that shows all pledges. This lets the agency see which donors have committed to which projects before creating escrows.</p>
 <h3 id="on-chain-audit-trail">On-Chain Audit Trail<a class="headerlink" href="#on-chain-audit-trail" title="Permanent link">&para;</a></h3>
 <p>Every decision is immutably recorded on Stellar:</p>
 <ul>
@@ -1424,7 +1506,7 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│                                                              │
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│  ┌─────────────────┐     ┌─────────────────────────────┐   │
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│  │  access_control  │────▶│        pvo_core              │   │
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│  │  14 roles        │     │  PVO + Milestones + Evidence │   │
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│  │  13 roles        │     │  PVO + Milestones + Evidence │   │
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│  └─────────────────┘     └──────────┬──────────────────┘   │
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│                                      │                       │
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│                    ┌─────────────────┼─────────────────┐   │
@@ -1444,7 +1526,12 @@
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│  │public_index  │  │ compliance_  │  │ procurement_     │  │
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│  │Nat&#39;l Rankings│  │ engine       │  │ market           │  │
 <a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│  └──────────────┘  └──────────────┘  └──────────────────┘  │
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>└─────────────────────────────────────────────────────────────┘
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│                                                              │
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│  ┌──────────────────────────────────────────────────────┐   │
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>│  │  grant_commitment                                     │   │
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>│  │  International donor pledges (Committed -&gt; Disbursed) │   │
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>│  └──────────────────────────────────────────────────────┘   │
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>└─────────────────────────────────────────────────────────────┘
 </code></pre></div>
 <hr />
 <h2 id="deployed-contracts-testnet">Deployed Contracts (Testnet)<a class="headerlink" href="#deployed-contracts-testnet" title="Permanent link">&para;</a></h2>
@@ -1530,9 +1617,15 @@
 <td>8</td>
 <td>8</td>
 </tr>
+<tr>
+<td><code>grant_commitment</code></td>
+<td><code>CCBX...FOZM</code></td>
+<td>7</td>
+<td>13</td>
+</tr>
 </tbody>
 </table>
-<p><strong>170 tests, all passing. 0 npm vulnerabilities.</strong></p>
+<p><strong>183 tests, all passing. 0 npm vulnerabilities.</strong></p>
 <hr />
 <h2 id="try-it-live">Try It Live<a class="headerlink" href="#try-it-live" title="Permanent link">&para;</a></h2>
 <p><strong>Frontend:</strong> <code>http://localhost:5174</code> (run <code>npm run dev</code> in <code>frontend/</code>)</p>
@@ -1607,36 +1700,30 @@ To import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 <tr>
 <td>9</td>
-<td>ProjectManager</td>
-<td>project_manager</td>
-<td><code>GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV</code></td>
-</tr>
-<tr>
-<td>10</td>
 <td>AntiCorruptionAgency</td>
 <td>anti_corruption</td>
 <td><code>GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC</code></td>
 </tr>
 <tr>
-<td>11</td>
+<td>10</td>
 <td>FundingAgency</td>
 <td>funding_agency</td>
 <td><code>GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF</code></td>
 </tr>
 <tr>
-<td>12</td>
+<td>11</td>
 <td>InternationalDonor</td>
 <td>international_donor</td>
 <td><code>GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D</code></td>
 </tr>
 <tr>
-<td>13</td>
+<td>12</td>
 <td>AIAuditor</td>
 <td>ai_auditor</td>
 <td><code>GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J</code></td>
 </tr>
 <tr>
-<td>14</td>
+<td>13</td>
 <td>Citizen</td>
 <td>citizen</td>
 <td><code>GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES</code></td>
