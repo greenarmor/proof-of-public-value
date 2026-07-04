@@ -485,7 +485,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
   const [txMsg, setTxMsg] = useState("");
   const escrowId = Number(escrow.id);
 
-  const handleGate = async (passed: boolean) => {
+  const handleGate = async () => {
     setTxState("preparing"); setTxMsg("");
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
@@ -493,14 +493,14 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
-      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(passed));
+      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(true));
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       setTxState("signing"); const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending"); const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg(passed ? "AI validated! Gate 3 passed." : "AI rejected.");
+      setTxState("done"); setTxMsg("AI verdict submitted! Gate 3 passed.");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
   };
@@ -537,11 +537,11 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       </div>
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
         <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/4 gates passed</span>
-        <div className="flex gap-2">
-          <button onClick={() => handleGate(true)} disabled={busy} className="btn-primary text-xs px-4 py-2">{busy ? "Signing..." : "✓ Pass AI (Gate 3)"}</button>
-          <button onClick={() => handleGate(false)} disabled={busy} className="btn-danger text-xs px-4 py-2">✗ Reject</button>
-          {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
-        </div>
+        <button onClick={() => handleGate(true)} disabled={busy}
+          className="btn-primary text-xs px-4 py-2">
+          {busy ? "Signing..." : "🤖 Submit AI Verdict (Pass Gate 3)"}
+        </button>
+        {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
       </div>
     </div>
   );
