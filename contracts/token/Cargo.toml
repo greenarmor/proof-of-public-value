@@ -1,5 +1,5 @@
 [package]
-name = "escrow"
+name = "pphp-token"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -16,4 +16,3 @@ soroban-sdk = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-pphp-token = { path = "../token" }

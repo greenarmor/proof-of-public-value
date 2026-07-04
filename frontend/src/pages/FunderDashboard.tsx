@@ -22,6 +22,7 @@ function escrowFromChain(e: ChainEscrow): EscrowData {
     funder: e.funder,
     recipient: e.recipient,
     amount: Number(e.amount),
+    tokenAddress: (e as any).token_address || "",
     status: statusFromChain(e.status),
     engineerApproval: e.conditions.engineer_approval,
     aiRiskCheck: e.conditions.ai_risk_check,
@@ -40,6 +41,7 @@ interface EscrowData {
   funder: string;
   recipient: string;
   amount: number;
+  tokenAddress: string;
   status: EscrowStatus;
   engineerApproval: boolean;
   aiRiskCheck: boolean;
@@ -167,9 +169,9 @@ function EscrowList({ escrows, loading, address, onAction }: {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total Escrows", value: String(escrows.length), color: "text-slate-900" },
-          { label: "Total Value", value: `${currency}${(totalAmount / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
-          { label: "Funded", value: `${currency}${(fundedAmount / 1_000_000).toFixed(1)}M`, color: "text-brand-600" },
-          { label: "Released", value: `${currency}${(releasedAmount / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
+          { label: "Total Value", value: `${currency}${(totalAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
+          { label: "Funded", value: `${currency}${(fundedAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-brand-600" },
+          { label: "Released", value: `${currency}${(releasedAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
             <p className="stat-label">{stat.label}</p>
@@ -283,7 +285,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
             <span className={`badge ${STATUS_COLORS[escrow.status]}`}>{escrow.status.replace(/([A-Z])/g, " $1").trim()}</span>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            PVO #{escrow.pvoId} · Milestone #{escrow.milestoneId} · {currency}{escrow.amount.toLocaleString()}
+            PVO #{escrow.pvoId} · Milestone #{escrow.milestoneId} · {currency}{(escrow.amount / 100).toLocaleString()}
           </p>
         </div>
         <div className="text-right text-xs text-slate-400">
@@ -314,7 +316,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
       <div className="flex gap-2 pt-3 border-t border-slate-100">
         {escrow.status === "Created" && isFunder && (
           <button onClick={handleFund} disabled={busy} className="btn-primary text-xs px-4 py-2">
-            {busy ? "Signing..." : `Fund Escrow (${currency}${escrow.amount.toLocaleString()})`}
+            {busy ? "Signing..." : `Fund Escrow (${currency}${(escrow.amount / 100).toLocaleString()})`}
           </button>
         )}
         {escrow.status === "Ready" && (
@@ -374,6 +376,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
         xdr.ScVal.scvU32(Number(pvoId)),
         xdr.ScVal.scvU32(Number(milestoneId)),
         nativeToScVal(amt, { type: "i128" }),
+        new Address(CONTRACT_IDS.pphp).toScVal(),
         xdr.ScVal.scvU32(Number(communityRequired)),
       );
 
@@ -428,10 +431,10 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({currency})</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP centavos)</label>
               <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input"
-                placeholder="e.g. 1000000" required />
-              <p className="text-xs text-slate-400 mt-1">In smallest units (stroops)</p>
+                placeholder="e.g. 500000000 = ₱5,000,000" required />
+              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / 100).toLocaleString()}` : "In centavos (100 = ₱1.00)"}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Community Confirmations Required</label>
@@ -441,6 +444,9 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <p className="text-sm text-blue-700">
+              <strong>pPHP Token Escrow:</strong> Escrows are funded in pPHP (Philippine Peso testnet token, 2 decimals). Amounts are in centavos — 100 centavos = ₱1.00.
+            </p>
+            <p className="text-sm text-blue-700 mt-2">
               <strong>Multi-Gate Escrow:</strong> Funds are locked until all 4 gates pass:
               Engineer approval, AI risk check, Compliance validation, and Community confirmation.
             </p>

@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CDTH4UPAZW6CZXONDGRFBSIYRLFWJX4XSQ5YKOCYP7BL24CACQTEDZT3",
+    contractId: "CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6",
   }
 } as const
 
@@ -50,6 +50,7 @@ export interface Escrow {
   recipient: string;
   released_at: u64;
   status: EscrowStatus;
+  token_address: string;
 }
 
 export type EscrowStatus = {tag: "Created", values: void} | {tag: "Funded", values: void} | {tag: "EngineerApproved", values: void} | {tag: "AIValidated", values: void} | {tag: "CompliancePassed", values: void} | {tag: "CommunityVerified", values: void} | {tag: "Ready", values: void} | {tag: "Released", values: void} | {tag: "Refunded", values: void} | {tag: "Disputed", values: void};
@@ -108,7 +109,7 @@ export interface Client {
   /**
    * Construct and simulate a create_escrow transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  create_escrow: ({funder, recipient, pvo_id, milestone_id, amount, community_required}: {funder: string, recipient: string, pvo_id: u32, milestone_id: u32, amount: i128, community_required: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+  create_escrow: ({funder, recipient, pvo_id, milestone_id, amount, token_address, community_required}: {funder: string, recipient: string, pvo_id: u32, milestone_id: u32, amount: i128, token_address: string, community_required: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
    * Construct and simulate a check_conditions transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -158,7 +159,7 @@ export class Client extends ContractClient {
   }
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABkVzY3JvdwAAAAAACgAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAApjb25kaXRpb25zAAAAAAfQAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAALcmVsZWFzZWRfYXQAAAAABgAAAAAAAAAGc3RhdHVzAAAAAAfQAAAADEVzY3Jvd1N0YXR1cw==",
+      new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABkVzY3JvdwAAAAAACwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAApjb25kaXRpb25zAAAAAAfQAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAALcmVsZWFzZWRfYXQAAAAABgAAAAAAAAAGc3RhdHVzAAAAAAfQAAAADEVzY3Jvd1N0YXR1cwAAAAAAAAANdG9rZW5fYWRkcmVzcwAAAAAAABM=",
         "AAAAAgAAAAAAAAAAAAAADEVzY3Jvd1N0YXR1cwAAAAoAAAAAAAAAAAAAAAdDcmVhdGVkAAAAAAAAAAAAAAAABkZ1bmRlZAAAAAAAAAAAAAAAAAAQRW5naW5lZXJBcHByb3ZlZAAAAAAAAAAAAAAAC0FJVmFsaWRhdGVkAAAAAAAAAAAAAAAAEENvbXBsaWFuY2VQYXNzZWQAAAAAAAAAAAAAABFDb21tdW5pdHlWZXJpZmllZAAAAAAAAAAAAAAAAAAABVJlYWR5AAAAAAAAAAAAAAAAAAAIUmVsZWFzZWQAAAAAAAAAAAAAAAhSZWZ1bmRlZAAAAAAAAAAAAAAACERpc3B1dGVk",
         "AAAAAAAAAAAAAAAGcmVmdW5kAAAAAAACAAAAAAAAAAZmdW5kZXIAAAAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAABAAAAAQ==",
         "AAAAAAAAAAAAAAAHZGlzcHV0ZQAAAAACAAAAAAAAAAhkaXNwdXRlcgAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAAA",
@@ -170,7 +171,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAALZnVuZF9lc2Nyb3cAAAAAAwAAAAAAAAAGZnVuZGVyAAAAAAATAAAAAAAAAAllc2Nyb3dfaWQAAAAAAAAEAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAA",
         "AAAABQAAAAAAAAAAAAAAEUVzY3Jvd0Z1bmRlZEV2ZW50AAAAAAAAAQAAABNlc2Nyb3dfZnVuZGVkX2V2ZW50AAAAAAIAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAAI=",
         "AAAABQAAAAAAAAAAAAAAEkVzY3Jvd0NyZWF0ZWRFdmVudAAAAAAAAQAAABRlc2Nyb3dfY3JlYXRlZF9ldmVudAAAAAUAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAAAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAAAAAACXJlY2lwaWVudAAAAAAAABMAAAAAAAAAAg==",
-        "AAAAAAAAAAAAAAANY3JlYXRlX2VzY3JvdwAAAAAAAAYAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAxtaWxlc3RvbmVfaWQAAAAEAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAAAAAAEmNvbW11bml0eV9yZXF1aXJlZAAAAAAABAAAAAEAAAAE",
+        "AAAAAAAAAAAAAAANY3JlYXRlX2VzY3JvdwAAAAAAAAcAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAxtaWxlc3RvbmVfaWQAAAAEAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAAAAAADXRva2VuX2FkZHJlc3MAAAAAAAATAAAAAAAAABJjb21tdW5pdHlfcmVxdWlyZWQAAAAAAAQAAAABAAAABA==",
         "AAAABQAAAAAAAAAAAAAAE0VzY3Jvd0Rpc3B1dGVkRXZlbnQAAAAAAQAAABVlc2Nyb3dfZGlzcHV0ZWRfZXZlbnQAAAAAAAACAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAAAAAACGRpc3B1dGVyAAAAEwAAAAAAAAAC",
         "AAAABQAAAAAAAAAAAAAAE0VzY3Jvd1JlZnVuZGVkRXZlbnQAAAAAAQAAABVlc2Nyb3dfcmVmdW5kZWRfZXZlbnQAAAAAAAADAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAAC",
         "AAAABQAAAAAAAAAAAAAAE0VzY3Jvd1JlbGVhc2VkRXZlbnQAAAAAAQAAABVlc2Nyb3dfcmVsZWFzZWRfZXZlbnQAAAAAAAADAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAAAAAACXJlY2lwaWVudAAAAAAAABMAAAAAAAAAAg==",

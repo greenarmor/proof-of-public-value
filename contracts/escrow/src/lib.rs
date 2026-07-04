@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, Symbol, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -36,6 +36,7 @@ pub struct Escrow {
     pub funder: Address,
     pub recipient: Address,
     pub amount: i128,
+    pub token_address: Address,
     pub status: EscrowStatus,
     pub conditions: UnlockCondition,
     pub created_at: u64,
@@ -91,7 +92,6 @@ pub struct EscrowDisputedEvent {
 
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const ESCROWS: Symbol = symbol_short!("ESCROWS");
-const BALANCES: Symbol = symbol_short!("BALANCES");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 
 #[contract]
@@ -115,6 +115,7 @@ impl DynamicEscrow {
         pvo_id: u32,
         milestone_id: u32,
         amount: i128,
+        token_address: Address,
         community_required: u32,
     ) -> u32 {
         funder.require_auth();
@@ -141,6 +142,7 @@ impl DynamicEscrow {
             funder: funder.clone(),
             recipient: recipient.clone(),
             amount,
+            token_address: token_address.clone(),
             status: EscrowStatus::Created,
             conditions,
             created_at: now,
@@ -176,15 +178,14 @@ impl DynamicEscrow {
             panic!("funding amount must match escrow amount");
         }
 
-        let mut balances: Map<Address, i128> = storage.get(&BALANCES).unwrap_or_else(|| Map::new(&env));
-        let current = balances.get(funder.clone()).unwrap_or(0);
-        balances.set(funder.clone(), current.saturating_add(amount));
+        // Transfer real tokens from funder to this contract
+        let token_client = token::Client::new(&env, &escrow.token_address);
+        token_client.transfer(&funder, &env.current_contract_address(), &amount);
 
         escrow.status = EscrowStatus::Funded;
         escrows.set(escrow_id, escrow);
 
         storage.set(&ESCROWS, &escrows);
-        storage.set(&BALANCES, &balances);
 
         EscrowFundedEvent { id: escrow_id, amount }.publish(&env);
     }
@@ -304,8 +305,13 @@ impl DynamicEscrow {
         escrow.released_at = env.ledger().timestamp();
         let amount = escrow.amount;
         let recipient = escrow.recipient.clone();
+        let token_address = escrow.token_address.clone();
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
+
+        // Transfer real tokens from contract to recipient
+        let token_client = token::Client::new(&env, &token_address);
+        token_client.transfer(&env.current_contract_address(), &recipient, &amount);
 
         EscrowReleasedEvent {
             id: escrow_id,
@@ -335,9 +341,15 @@ impl DynamicEscrow {
             panic!("cannot refund escrow with met conditions");
         }
 
+        let amount = escrow.amount;
+        let token_address = escrow.token_address.clone();
         escrow.status = EscrowStatus::Refunded;
         escrows.set(escrow_id, escrow.clone());
         storage.set(&ESCROWS, &escrows);
+
+        // Return tokens to funder
+        let token_client = token::Client::new(&env, &token_address);
+        token_client.transfer(&env.current_contract_address(), &funder, &amount);
 
         EscrowRefundedEvent {
             id: escrow_id,

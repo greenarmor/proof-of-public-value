@@ -9,6 +9,7 @@ soroban-sdk = "26"
 access_control = { path = "contracts/access_control" }
 pvo_core = { path = "contracts/pvo_core" }
 escrow = { path = "contracts/escrow" }
+pphp-token = { path = "contracts/token" }
 community_oracle = { path = "contracts/community_oracle" }
 reputation = { path = "contracts/reputation" }
 audit_trail = { path = "contracts/audit_trail" }
