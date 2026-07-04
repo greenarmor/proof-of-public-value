@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
 
@@ -177,7 +178,7 @@ function PortfolioTab({ grants, loading, address }: {
               <div className="text-right">
                 <span className={`badge ${STATUS_COLORS[g.status]}`}>{g.status}</span>
                 <p className="text-xs text-slate-400 mt-1">
-                  By {formatAddress(g.donor, 4)}{g.donor === address && " (You)"}
+                  By <WalletAddress addr={g.donor} chars={4}/>{g.donor === address && " (You)"}
                 </p>
               </div>
             </div>
@@ -370,7 +371,7 @@ function TransparencyTab({ grants, loading, address, onAction }: {
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-slate-900">{currency}{(g.amount / 100).toLocaleString()}</p>
-                  <p className="text-xs text-slate-400">By {formatAddress(g.donor, 4)}</p>
+                  <p className="text-xs text-slate-400">By <WalletAddress addr={g.donor} chars={4}/></p>
                 </div>
                 {g.donor === address && g.status === "Committed" && (
                   <button onClick={() => handleUpdateStatus(g.id, "Disbursed")}

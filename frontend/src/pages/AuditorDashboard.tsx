@@ -4,6 +4,7 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as AuditClient } from "../contracts/audit_trail/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { formatAddress, statusToString } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -116,7 +117,7 @@ function AuditTrailTab() {
                   {statusToString(e.category)}
                 </span>
               </td>
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">{formatAddress(e.actor, 4)}</td>
+              <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={e.actor} chars={4}/></td>
               <td className="px-4 py-3 text-xs text-slate-600 max-w-[300px] truncate">{e.rationale || "—"}</td>
             </tr>
           ))}
@@ -250,7 +251,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
           </div>
           <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount) / 100).toLocaleString()}</p>
           <p className="text-xs text-slate-400 mt-0.5">
-            Recipient: {formatAddress(escrow.recipient, 4)} · Funder: {formatAddress(escrow.funder, 4)}
+            Recipient: <WalletAddress addr={escrow.recipient} chars={4}/> · Funder: <WalletAddress addr={escrow.funder} chars={4}/>
           </p>
         </div>
         <span className="badge badge-amber">{statusToString(escrow.status)}</span>

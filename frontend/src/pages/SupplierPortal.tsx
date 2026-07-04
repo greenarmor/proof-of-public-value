@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as ProcurementClient } from "../contracts/procurement_market/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -100,7 +101,7 @@ function TendersTab() {
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-500">
             <span>Budget: {currency}{(Number(t.budget) / 100).toLocaleString()}</span>
-            <span>Agency: {formatAddress(t.agency, 4)}</span>
+            <span>Agency: <WalletAddress addr={t.agency} chars={4}/></span>
           </div>
         </div>
       ))}

@@ -5,6 +5,7 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 // --- chain data types ---
 
@@ -556,7 +557,7 @@ function PaymentsTab({ address }: { address: string }) {
                     <span className="text-xs text-slate-400">Milestone #{e.milestoneId}</span>
                   </div>
                   <p className="font-semibold text-gray-900">{currency}{(e.amount / 100).toLocaleString()}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Funded by {formatAddress(e.funder, 4)}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Funded by <WalletAddress addr={e.funder} chars={4}/></p>
                 </div>
                 <span className={`badge ${sColors[e.status] || "badge-blue"}`}>{e.status}</span>
               </div>

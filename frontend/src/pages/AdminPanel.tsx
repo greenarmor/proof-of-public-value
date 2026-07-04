@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { formatAddress } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 const ROLES = [
   "Citizen", "Engineer", "Inspector", "Contractor", "Supplier",
@@ -263,7 +264,7 @@ function RoleManagement() {
             <tbody>
               {assignments.map((a, i) => (
                 <tr key={i} className="border-t border-gray-100">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600">{formatAddress(a.address, 8)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-600"><WalletAddress addr={a.address} chars={8}/></td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">{a.role.replace(/([A-Z])/g, " $1").trim()}</span>
                   </td>
@@ -460,7 +461,7 @@ function DisputeResolution() {
                   <td className="px-4 py-3 font-mono text-xs">#{Number(e.id)}</td>
                   <td className="px-4 py-3">#{Number(e.pvo_id)}</td>
                   <td className="px-4 py-3 font-medium">{getCurrency()}{(Number(e.amount) / 100).toLocaleString()}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{formatAddress(e.funder, 4)}</td>
+                  <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={e.funder} chars={4}/></td>
                   <td className="px-4 py-3"><span className="badge badge-red">Disputed</span></td>
                 </tr>
               ))}

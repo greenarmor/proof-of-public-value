@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress, formatTimestamp } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { uploadToIPFS } from "../ipfs";
 import { Client as AiOracleClient, type FraudDetectionResult } from "../contracts/ai_oracle/src";
@@ -257,7 +258,7 @@ function FraudTab({ frauds, address, onAction }: {
                 </span>
                 <div>
                   <h3 className="font-semibold text-slate-900">Fraud #{f.id} — PVO #{Number(f.pvo_id)}</h3>
-                  <p className="text-xs text-slate-400">Detected by {formatAddress(f.auditor, 6)}</p>
+                  <p className="text-xs text-slate-400">Detected by <WalletAddress addr={f.auditor} chars={6}/></p>
                 </div>
               </div>
               <div className="text-right">
@@ -374,7 +375,7 @@ function ViolationsTab({ violations, address, onAction }: {
             </div>
             <p className="text-sm text-slate-700 mb-3">{v.description}</p>
             <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <span className="text-xs text-slate-400">PVO #{Number(v.pvo_id)} · Reported by {formatAddress(v.reporter, 6)}</span>
+              <span className="text-xs text-slate-400">PVO #{Number(v.pvo_id)} · Reported by <WalletAddress addr={v.reporter} chars={6}/></span>
               <div className="flex gap-2">
                 {!v.resolved ? (
                   <button onClick={() => handleResolve(Number(v.id))} disabled={busy}
@@ -424,7 +425,7 @@ function AuditTab({ entries }: { entries: AuditEntry[] }) {
             <p className="text-sm font-medium text-slate-900 mb-1">{e.action}</p>
             <p className="text-sm text-slate-600">{e.rationale}</p>
             <div className="grid grid-cols-2 gap-3 text-xs mt-3 pt-3 border-t border-slate-100">
-              <div><span className="text-slate-400">Actor:</span> {e.actor_role || "Unknown"} ({formatAddress(e.actor, 6)})</div>
+              <div><span className="text-slate-400">Actor:</span> {e.actor_role || "Unknown"} (<WalletAddress addr={e.actor} chars={6}/>)</div>
               <div><span className="text-slate-400">PVO:</span> #{Number(e.pvo_id)}</div>
               <div><span className="text-slate-400">Compliance:</span> {e.compliance_result}</div>
               <div><span className="text-slate-400">AI Recommendation:</span> {e.ai_recommendation}</div>

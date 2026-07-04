@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { formatAddress } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 interface Tender {
   id: number;
@@ -96,7 +97,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
             <div>
               <h3 className="font-semibold text-gray-900">{t.title}</h3>
               <p className="text-sm text-gray-500">{t.description}</p>
-              <p className="text-xs text-gray-400 mt-1">Agency: {formatAddress(t.agency, 6)}</p>
+              <p className="text-xs text-gray-400 mt-1">Agency: <WalletAddress addr={t.agency} chars={6}/></p>
             </div>
             <span className={`px-2 py-1 text-xs rounded font-medium ${
               t.status.tag === "Open" ? "bg-green-50 text-green-700" :
@@ -106,7 +107,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-600">
             <span>Budget: {currency}{(Number(t.budget) / 100).toLocaleString()}</span>
-            {t.winner && <span>Winner: {formatAddress(t.winner, 6)}</span>}
+            {t.winner && <span>Winner: <WalletAddress addr={t.winner} chars={6}/></span>}
           </div>
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
             Scoring: Price (max 50) + Quality (max 30) + Timeline (max 20) + Integrity (max 20)

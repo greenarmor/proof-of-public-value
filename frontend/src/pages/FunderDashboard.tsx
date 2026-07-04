@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";
@@ -292,8 +293,8 @@ function EscrowCard({ escrow, currency, address, onAction }: {
           </p>
         </div>
         <div className="text-right text-xs text-slate-400">
-          <p>Funder: {formatAddress(escrow.funder, 4)}{isFunder && " (You)"}</p>
-          <p>Recipient: {formatAddress(escrow.recipient, 4)}</p>
+          <p>Funder: <WalletAddress addr={escrow.funder} chars={4}/>{isFunder && " (You)"}</p>
+          <p>Recipient: <WalletAddress addr={escrow.recipient} chars={4}/></p>
         </div>
       </div>
 
@@ -341,7 +342,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
           <p className="text-xs text-slate-400 py-2">Only the funder can fund this escrow.</p>
         )}
         {escrow.status === "Released" && (
-          <span className="badge-green self-center">✓ Funds released to {formatAddress(escrow.recipient, 4)}</span>
+          <span className="badge-green self-center">✓ Funds released to <WalletAddress addr={escrow.recipient} chars={4}/></span>
         )}
         {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
       </div>
@@ -539,7 +540,7 @@ function DonorCommitmentsTab() {
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
                   <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / 100).toLocaleString()}</p>
-                  <p className="text-xs text-slate-400 mt-1">Donor: {formatAddress(g.donor, 6)}</p>
+                  <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>
               </div>

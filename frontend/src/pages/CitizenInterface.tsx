@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
 import CitizenReportForm from "./CitizenReportForm";
 import { ReportType } from "../contracts/community_oracle/src";
@@ -190,7 +191,7 @@ function CitizenBrowse() {
   return( <div className="space-y-3">
     {vmsg && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">{vmsg}</div>}
     {reports.map((r:any)=>(<div key={r.id}className="card p-4"><div className="flex items-start justify-between mb-2"><div><span className="badge-green">{typeof r.report_type==="string"?r.report_type:r.report_type?.tag}</span><span className="ml-2 text-sm text-slate-500">PVO #{r.pvo_id}·M#{r.milestone_id}</span></div>{r.verified?<span className="badge-green">✅ Verified</span>:<span className="badge-amber">⏳ Pending</span>}</div>
-      <div className="text-xs text-slate-400 mb-2">By {formatAddress(r.citizen)}·{r.confidence_score||0}% confidence {r.citizen===address&&<span className="text-brand-600 font-medium ml-1">(You)</span>}</div>
+      <div className="text-xs text-slate-400 mb-2">By <WalletAddress addr={r.citizen}/>·{r.confidence_score||0}% confidence {r.citizen===address&&<span className="text-brand-600 font-medium ml-1">(You)</span>}</div>
       {!r.verified && r.citizen !== address && (
         <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
           <button onClick={()=>doVerify(r.id,30)} disabled={verifying===r.id} className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">✅ Verify (30%)</button>

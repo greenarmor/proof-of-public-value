@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -243,7 +244,7 @@ function CreatePVOForm({ address }: { address: string }) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Contractor Address (optional)</label>
           <input type="text" value={contractor} onChange={(e) => setContractor(e.target.value)} className="input font-mono text-xs" placeholder="GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW" />
-          {contractor && <p className="text-xs text-gray-400 mt-1">Contractor: {formatAddress(contractor)}</p>}
+          {contractor && <p className="text-xs text-gray-400 mt-1">Contractor: <WalletAddress addr={contractor}/></p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

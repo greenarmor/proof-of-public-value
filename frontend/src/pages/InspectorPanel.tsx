@@ -4,6 +4,7 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { uploadToIPFS } from "../ipfs";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
+import { WalletAddress } from "../components/WalletAddress";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -95,7 +96,7 @@ function AllProjects() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div><p className="stat-label">Location</p><p className="text-sm font-medium">{selected.municipality}</p></div>
             <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
-            <div><p className="stat-label">Contractor</p><p className="text-sm font-medium font-mono">{formatAddress(selected.contractor, 4)}</p></div>
+            <div><p className="stat-label">Contractor</p><p className="text-sm font-medium font-mono"><WalletAddress addr={selected.contractor} chars={4}/></p></div>
             <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{(selected.milestones || []).length}</p></div>
           </div>
         </div>
@@ -152,7 +153,7 @@ function AllProjects() {
           <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
             <span>{currency}{formatBudget(String(pvo.total_budget))}</span>
             <span>{(pvo.milestones || []).length} milestones</span>
-            <span className="text-xs text-slate-400">Contractor: {formatAddress(pvo.contractor, 4)}</span>
+            <span className="text-xs text-slate-400">Contractor: <WalletAddress addr={pvo.contractor} chars={4}/></span>
           </div>
         </div>
       ))}
@@ -500,7 +501,7 @@ function EvidenceHistory({ address }: { address: string }) {
               <td className="px-4 py-3 text-slate-900">{ev.pvoTitle}<br /><span className="text-xs text-slate-400">PVO #{ev.pvoId}</span></td>
               <td className="px-4 py-3 text-slate-900">{ev.milestoneTitle}<br /><span className="text-xs text-slate-400">MS #{ev.milestoneId}</span></td>
               <td className="px-4 py-3"><span className="badge badge-blue">{ev.type}</span></td>
-              <td className="px-4 py-3 font-mono text-xs text-slate-500">{formatAddress(ev.submitter, 4)}</td>
+              <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={ev.submitter} chars={4}/></td>
               <td className="px-4 py-3">
                 <span className={`badge ${ev.verified ? "badge-green" : "badge-amber"}`}>
                   {ev.verified ? "Verified" : "Pending"}
