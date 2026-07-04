@@ -24,8 +24,9 @@ import { formatAddress } from "./helpers";
 interface NavItem { to: string; label: string; icon: string; roles?: string[]; group: string; }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/#hero", label: "Home", icon: "🏠", group: "public" },
-  { to: "/landing", label: "About PoPV", icon: "🏠", group: "landing" },
+  { to: "/", label: "Public Portal", icon: "🏛️", group: "public" },
+  { to: "/index", label: "Index", icon: "🏆", group: "public" },
+  { to: "/memory", label: "Search", icon: "🔍", group: "public" },
   { to: "/landing#features", label: "How It Works", icon: "🔄", group: "landing" },
   { to: "/landing#capabilities", label: "Capabilities", icon: "✨", group: "landing" },
   { to: "/landing#connect", label: "Connect", icon: "🔗", group: "landing" },
