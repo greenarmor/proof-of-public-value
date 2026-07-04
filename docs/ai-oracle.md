@@ -48,62 +48,193 @@ Each detection is submitted with a **risk score (0-100)** and **confidence perce
 
 ### 2. Risk Prediction
 
-Reputation-driven contractor risk model:
+Reputation-driven contractor risk model. Predicts the probability of delays and budget overruns based on the contractor's on-chain track record.
+
+**Contract struct:**
+
+```rust
+pub struct RiskPrediction {
+    pub contractor: Address,
+    pub delay_probability: u32,     // 0-100%
+    pub overrun_probability: u32,   // 0-100%
+    pub risk_category: u32,         // 1=Low, 2=Medium, 3=High
+    pub confidence: u32,            // 0-100%
+}
+```
+
+**How the AI computes it:**
 
 ```
-delay_risk = (100 - reputation_score) + (disputes * 15) + (budget_size_factor)
-overrun_risk = (100 - reputation_score) + (disputes * 10) + (budget_size_factor)
+delay_risk = (100 - reputation_score) + (disputes × 15) + (budget_size_factor)
+overrun_risk = (100 - reputation_score) + (disputes × 10) + (budget_size_factor)
+
+where budget_size_factor = 10 if > ₱10M, 5 if > ₱1M, 0 otherwise
 
 Risk Level 1 (Low):    delay < 30%
-Risk Level 2 (Medium): delay 30-60%
+Risk Level 2 (Medium): delay 30-60%  
 Risk Level 3 (High):   delay > 60%
 ```
 
 The reputation score comes from the `reputation` contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.
 
+**Gate 3 impact:** Risk Category 3 (High) triggers a Gate 3 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.
+
 ### 3. GPS Validation
 
-Uses the **Haversine formula** to compute the distance between the project's municipality coordinates and the GPS coordinates submitted in evidence:
+Compares GPS coordinates submitted by contractors/inspectors against the project's expected location. Uses the **Haversine formula** to compute great-circle distance.
+
+**Contract struct:**
+
+```rust
+pub struct GpsValidation {
+    pub evidence_id: u32,
+    pub expected_lat: i64,    // microdegrees (× 1,000,000)
+    pub expected_lng: i64,
+    pub reported_lat: i64,
+    pub reported_lng: i64,
+}
+```
+
+**How the AI computes it:**
 
 ```
-d = 2r * arcsin(sqrt(sin^2(dlat/2) + cos(lat1)cos(lat2)sin^2(dlng/2)))
+d = 2r × arcsin(√(sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)))
 ```
 
-| Distance | Interpretation |
-|----------|---------------|
-| < 5 km | Within municipality — likely valid |
-| 5-50 km | Nearby — needs review |
-| > 50 km | Suspicious — possible fake coordinates |
+| Distance | Interpretation | Gate 3 effect |
+|----------|---------------|---------------|
+| < 5 km | Within municipality — likely valid | ✅ Pass |
+| 5-50 km | Nearby — needs review | ⚠️ Warning |
+| > 50 km | Suspicious — possible fake coordinates | ❌ Reject |
 
-Coordinates are extracted from the evidence `metadata` field (format: `"lat:14.5995,lng:120.9842"`). The expected coordinates come from a geocoded lookup of the PVO's municipality.
+**Coordinate sources:**
+
+1. **Expected**: PVO coordinates from `[lat,lng]` prefix in description field (created by agency in the New PVO form)
+2. **Fallback**: Municipality geocoding lookup (if no PVO coordinates were entered)
+3. **Reported**: GPS evidence submitted by contractor/inspector via `submit_evidence` with `GpsCoordinates` type
+
+**Gate 3 impact:** Multiple GPS validation failures (>50km from expected) trigger a Gate 3 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.
 
 ### 4. Digital Twin (Cost Simulation)
 
-Compares expected vs actual spending:
+A real-time cost simulation that tracks whether actual spending matches the budgeted amount. Think of it as a **shadow ledger** that runs alongside the real escrow system.
+
+**Contract struct:**
+
+```rust
+pub struct DigitalTwin {
+    pub pvo_id: u32,
+    pub expected_cost: i128,        // PVO total budget
+    pub material_cost_index: u32,   // 100 = on budget, >120 = inflated
+    pub labor_cost_index: u32,      // 100 = on budget, >120 = inflated  
+    pub deviation_alert: bool,      // true if actual > expected × 1.2
+}
+```
+
+**How the AI computes it:**
 
 ```
-Expected cost = PVO total_budget
-Actual cost   = sum of all escrow amounts for that PVO
-
-Material Index = 90 + (actual/expected * 10)  // 100 = on budget
-Labor Index    = 85 + (actual/expected * 15)  // 100 = on budget
-Deviation Alert = actual > expected * 1.2
+Expected cost   = PVO total_budget
+Actual cost     = sum of all escrow amounts for that PVO
+Material Index  = 90 + (actual/expected × 10)
+Labor Index     = 85 + (actual/expected × 15)
+Deviation Alert = actual > expected × 1.2
 ```
 
-Indexes above 120 indicate significant cost inflation. Below 80 suggests under-funding or premature stage.
+| Index | Range | Meaning |
+|-------|-------|---------|
+| < 80 | Under-funded | Milestones not yet created, or premature stage |
+| 80-120 | On track | Spending aligns with budget |
+| > 120 | Cost inflation | Significantly over budget — red flag |
+| > 130 | Severe | Material cost index triggers `MaterialCostInflation` fraud flag |
+
+**Gate 3 impact:** A deviation alert (actual > 120% of expected) triggers a Gate 3 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.
+
+**Example:**
+
+```
+PVO #3 Budget:    ₱8,000,000
+Escrows Created:  ₱6,500,000
+Escrows Released: ₱4,200,000
+
+Expected Cost:    ₱8,000,000
+Actual Cost:      ₱4,200,000
+Material Index:   95% (on track)
+Labor Index:      93% (on track)
+Deviation Alert:  false
+→ ✅ Pass Gate 3
+```
 
 ### 5. Image / Evidence Verification
 
-Pings the IPFS gateway to verify that submitted evidence files actually exist:
+Verifies that evidence files submitted by contractors actually exist on IPFS. Pings the IPFS gateway to confirm the hash is accessible and records content metadata.
+
+**Contract struct:**
+
+```rust
+pub struct ImageVerification {
+    pub evidence_id: u32,
+    pub progress_percent: u32,     // estimated completion %
+    pub authenticity_score: u32,   // 0-100, based on IPFS availability
+    pub summary: String,           // Human-readable findings
+}
+```
+
+**How the AI verifies:**
 
 ```
-Fetch HEAD request -> https://gateway.pinata.cloud/ipfs/{hash}
-  |-- 200 OK    -> Content-type, size -> Verified
-  |-- 4xx/5xx   -> Not accessible -> Flagged
-  |-- Timeout    -> Gateway unreachable -> Recorded but not verified
+Fetch HEAD request → https://gateway.pinata.cloud/ipfs/{hash}
+  ├── 200 OK    → Content-type, size → authenticity: 85-95%
+  ├── 4xx/5xx   → Not accessible → authenticity: 20%
+  └── Timeout    → Gateway unreachable → authenticity: 50% (exists on-chain, can't verify)
 ```
 
-This does NOT analyze image content (no computer vision). It only verifies that the file the contractor claimed to upload actually exists on IPFS.
+**What it does NOT do:** No computer vision. No image recognition. No AI-powered content analysis. It only verifies that the file the contractor claimed to upload actually exists on IPFS and is accessible.
+
+**Gate 3 impact:** Low authenticity scores (< 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 3 rejection.
+
+### 6. Geo Risk Assessment
+
+Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards — flooding, landslides, and seismic activity.
+
+**Contract struct:**
+
+```rust
+pub struct GeoRiskAssessment {
+    pub pvo_id: u32,
+    pub flood_risk: u32,            // 0-5 scale
+    pub landslide_risk: u32,        // 0-5 scale
+    pub earthquake_risk: u32,       // 0-5 scale  
+    pub overall_risk: u32,          // max of above
+}
+```
+
+**How the AI computes it:**
+
+The risk scores are submitted by the AI analysis service after cross-referencing the PVO's municipality against Philippine hazard maps. The overall risk is the maximum of the three categories.
+
+| Risk Level | Meaning | Gate 3 effect |
+|------------|---------|---------------|
+| 0-2 | Low risk | ✅ Pass |
+| 3 | Moderate risk | ⚠️ Warning |
+| 4-5 | High risk | ❌ Reject |
+
+**Gate 3 impact:** Geo risk level 4+ triggers a Gate 3 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.
+
+## Gate 3 Decision Matrix
+
+The AI Auditor's Gate 3 verdict is a **composite** of all five analysis types. A single high-risk finding in ANY category can trigger rejection:
+
+| Analysis | Check | Threshold | Rejects Gate 3? |
+|----------|-------|-----------|-----------------|
+| Fraud | Any high-risk indicator (≥50) | Collusion, ghost project, etc. | ✅ Yes |
+| Risk | Contractor risk category | Level 3 (High) | ✅ Yes |
+| Digital Twin | Cost deviation alert | Actual > 120% of expected | ✅ Yes |
+| Geo Risk | Overall risk level | Level 4+ | ✅ Yes |
+| GPS | Validation failures | Any failed (>50km) | ✅ Yes |
+| Image | Inaccessible evidence | Authenticity < 30% | ⚠️ Contributes |
+
+**Only if ALL categories pass does the AI recommend Gate 3 approval.** This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.
 
 ## Architecture
 
