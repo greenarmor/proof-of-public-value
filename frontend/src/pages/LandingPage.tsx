@@ -175,11 +175,11 @@ export function LandingPage() {
               { icon: "🌍", title: "Cross-Border", desc: "International donors commit on-chain with full traceability." },
               { icon: "📋", title: "Immutable Audit", desc: "Every decision recorded permanently on Stellar." },
             ].map((feature, i) => (
-              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 60}ms` }}>
-                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-500">{feature.icon}</div>
-                <h3 className="font-semibold text-lg text-slate-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{feature.desc}</p>
+                <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-500 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-50">{feature.icon}</div>
+                <h3 className="font-semibold text-lg text-slate-900 mb-2 text-center">{feature.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed text-center">{feature.desc}</p>
               </div>
             ))}
           </div>
