@@ -113,24 +113,56 @@ function RoleManagement() {
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
-      const contract = new Contract(CONTRACT_IDS.access_control);
-      const op = contract.call("assign_role",
-        new Address(address).toScVal(),      // assigner: Address
-        new Address(userAddress).toScVal(), // address: Address
-        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]), // role: Role enum
-      );
+      const adminAddr = new Address(address);
+      const targetAddr = new Address(userAddress);
 
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
-        .addOperation(op).setTimeout(30).build();
+      const ops: any[] = [];
 
-      setMessage({ text: "Check Freighter to sign...", ok: true });
+      // Op 1: Always assign the access_control role
+      const acContract = new Contract(CONTRACT_IDS.access_control);
+      ops.push(acContract.call("assign_role",
+        adminAddr.toScVal(),
+        targetAddr.toScVal(),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]),
+      ));
+
+      const extraPerms: string[] = [];
+
+      // Op 2+: Auto-whitelist in related contracts based on role
+      if (role === "AntiCorruptionAgency") {
+        const aiContract = new Contract(CONTRACT_IDS.ai_oracle);
+        ops.push(aiContract.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("AI Oracle (fraud detection)");
+        const compContract = new Contract(CONTRACT_IDS.compliance_engine);
+        ops.push(compContract.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("Compliance Engine (violations)");
+      }
+      if (role === "AIAuditor") {
+        const aiContract = new Contract(CONTRACT_IDS.ai_oracle);
+        ops.push(aiContract.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("AI Oracle (fraud detection)");
+      }
+      if (role === "Auditor" || role === "CommissionOnAudit") {
+        const compContract = new Contract(CONTRACT_IDS.compliance_engine);
+        ops.push(compContract.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("Compliance Engine (violations)");
+      }
+
+      const txBuilder = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE });
+      ops.forEach(op => txBuilder.addOperation(op));
+      const tx = txBuilder.setTimeout(30).build();
+
+      const permSummary = extraPerms.length > 0
+        ? ` + auto-whitelisted: ${extraPerms.join(", ")}`
+        : "";
+      setMessage({ text: `Check Freighter to sign ${ops.length} operation(s)...`, ok: true });
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
 
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!`, ok: true });
+      setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!${permSummary}`, ok: true });
       setUserAddress("");
       await loadAssignments();
     } catch (err: any) {
@@ -181,7 +213,16 @@ function RoleManagement() {
 
       <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
         <h2 className="text-lg font-semibold mb-4">Assign Role</h2>
-        <p className="text-sm text-gray-400 mb-4">Only the Administrator wallet can assign roles. The contract enforces this on-chain.</p>
+        <div className="mb-4">
+          <p className="text-sm text-gray-400 mb-2">Only the Administrator wallet can assign roles. The contract enforces this on-chain.</p>
+          <p className="text-xs text-gray-400">Roles that auto-grant contract permissions:</p>
+          <ul className="text-xs text-gray-500 mt-1 ml-4 list-disc">
+            <li><strong>AntiCorruptionAgency</strong> → access_control + AI Oracle + Compliance Engine</li>
+            <li><strong>AIAuditor</strong> → access_control + AI Oracle</li>
+            <li><strong>Auditor / CommissionOnAudit</strong> → access_control + Compliance Engine</li>
+          </ul>
+          <p className="text-xs text-gray-400 mt-1">All permissions are bundled into a single transaction (one Freighter signature).</p>
+        </div>
         <form className="space-y-4" onSubmit={handleAssign}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Address (G...)</label>

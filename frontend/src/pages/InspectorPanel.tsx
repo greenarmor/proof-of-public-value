@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
+import { uploadToIPFS } from "../ipfs";
 
 interface Inspection {
   id: number;
@@ -109,11 +110,37 @@ function SubmitReport() {
   const [rating, setRating] = useState("Pass");
   const [notes, setNotes] = useState("");
   const [photoHash, setPhotoHash] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let hash = photoHash;
+    if (file) {
+      setUploading(true);
+      try {
+        hash = await uploadToIPFS(file);
+        setPhotoHash(hash);
+      } catch (err: any) {
+        setStatus({ text: `IPFS upload failed: ${err.message}`, ok: false });
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+    setStatus({ text: `Report ready. Evidence hash: ${hash || "none"}`, ok: true });
+  };
 
   return (
     <div className="card p-6 max-w-xl">
       <h2 className="text-lg font-semibold mb-4 text-slate-900">Inspection Report</h2>
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      {status && (
+        <div className={`mb-4 p-3 rounded-xl text-sm ${status.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {status.text}
+        </div>
+      )}
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label>
@@ -133,15 +160,36 @@ function SubmitReport() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Photo Evidence (IPFS Hash)</label>
-          <input type="text" value={photoHash} onChange={(e) => setPhotoHash(e.target.value)} className="input" placeholder="Qm..." />
+          <label className="block text-sm font-medium text-slate-700 mb-1">Photo Evidence (Optional)</label>
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-brand-400 transition"
+            onClick={() => document.getElementById("insp-evidence")?.click()}>
+            {file ? (
+              <div className="text-sm">
+                <span className="text-brand-600 font-medium">{file.name}</span>
+                <span className="text-slate-400 ml-2">({(file.size / 1024).toFixed(1)} KB)</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                  className="ml-2 text-xs text-red-500 hover:underline">remove</button>
+              </div>
+            ) : (
+              <div className="text-slate-400 text-sm">
+                <span className="text-2xl block mb-1">📷</span>Click to attach photo evidence
+              </div>
+            )}
+            <input id="insp-evidence" type="file" className="hidden"
+              accept="image/*,.pdf"
+              onChange={e => setFile(e.target.files?.[0] || null)} />
+          </div>
+          <input type="text" value={photoHash} onChange={(e) => setPhotoHash(e.target.value)} className="input font-mono text-xs mt-2"
+            placeholder="Or paste IPFS hash (Qm...)" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Inspection Notes</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="input" rows={5}
             placeholder="Detailed findings, measurements, compliance with specifications..." required />
         </div>
-        <button type="submit" className="btn-primary w-full py-3">Submit Inspection Report</button>
+        <button type="submit" disabled={uploading} className="btn-primary w-full py-3">
+          {uploading ? "Uploading to IPFS..." : "Submit Inspection Report"}
+        </button>
       </form>
     </div>
   );

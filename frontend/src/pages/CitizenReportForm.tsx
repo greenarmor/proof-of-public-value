@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, RPT_MIN_BALANCE } from "../config";
+import { uploadToIPFS } from "../ipfs";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
@@ -16,16 +17,6 @@ export default function CitizenReportForm() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
-
-  const uploadToIPFS = async (f: File): Promise<string> => {
-    const fd = new FormData(); fd.append("file", f);
-    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-      method: "POST", body: fd,
-      headers: { "pinata_api_key": (import.meta as any).env?.VITE_PINATA_API_KEY || "", "pinata_secret_api_key": (import.meta as any).env?.VITE_PINATA_SECRET || "" }
-    });
-    if (!res.ok) throw new Error("IPFS upload failed");
-    const d = await res.json(); return d.IpfsHash;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
