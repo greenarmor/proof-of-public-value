@@ -18,6 +18,7 @@ import { SupplierPortal } from "./pages/SupplierPortal";
 import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
 import { FunderDashboard } from "./pages/FunderDashboard";
 import { DonorDashboard } from "./pages/DonorDashboard";
+import { LandingPage } from "./pages/LandingPage";
 import { formatAddress } from "./helpers";
 
 interface NavItem { to: string; label: string; icon: string; roles?: string[]; group: string; }
@@ -58,6 +59,12 @@ const GROUP_LABELS: Record<string, string> = {
 };
 
 const GROUP_ORDER = ["engagement", "government", "delivery", "oversight", "finance", "system"];
+
+function Home() {
+  const { connected, connect } = useWallet();
+  if (!connected) return <LandingPage onConnect={connect} />;
+  return <TransparencyPortal />;
+}
 
 function AccessDenied() {
   const { connect, connected } = useWallet();
@@ -270,7 +277,7 @@ function App() {
           <Header />
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
             <Routes>
-              <Route path="/" element={<TransparencyPortal />} />
+              <Route path="/" element={<Home />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
               <Route path="/citizen" element={<ProtectedRoute element={<CitizenInterface />} roles={["Citizen", "Administrator"]} />} />
