@@ -14,17 +14,7 @@ The Philippines consistently ranks among the most corrupt countries in Southeast
 
 ## Major Scandals That Shaped PoPV
 
-### 1. PDAF Pork Barrel Scam (2013)
-
-**Estimated loss: ₱10 billion ($200 million+)**
-
-Janet Lim-Napoles, working with senators and congressmen, channeled Priority Development Assistance Fund (PDAF) allocations to fake NGOs that existed only on paper. Ghost projects — agricultural programs, livelihood initiatives, water systems — were fully "completed" and "paid for" without a single deliverable.
-
-**How PoPV prevents this:** Every project must pass 5 independent verification gates before funds release. Ghost NGOs cannot produce engineer-approved evidence, AI-validated deliverables, or community-verified GPS photos. The escrow holds funds until proof exists.
-
----
-
-### 2. Marcos Ill-Gotten Wealth (1965–1986)
+### 1. Marcos Ill-Gotten Wealth (1965–1986)
 
 **Estimated loss: $5–10 billion**
 
@@ -34,7 +24,7 @@ Ferdinand Marcos and his associates systematically looted the Philippine treasur
 
 ---
 
-### 3. Fertilizer Fund Scam (2004)
+### 2. Fertilizer Fund Scam (2004)
 
 **Estimated loss: ₱728 million ($13 million)**
 
@@ -44,7 +34,7 @@ During the 2004 election cycle, a fertilizer fund meant for farmers was diverted
 
 ---
 
-### 4. NBN-ZTE Deal (2007)
+### 3. NBN-ZTE Deal (2007)
 
 **Estimated value: $329 million**
 
@@ -54,11 +44,33 @@ A national broadband network contract with ZTE Corporation was allegedly overpri
 
 ---
 
-### 5. DPWH Ghost Projects (Ongoing)
+### 4. PDAF Pork Barrel Scam (2013)
+
+**Estimated loss: ₱10 billion ($200 million+)**
+
+Janet Lim-Napoles, working with senators and congressmen, channeled Priority Development Assistance Fund (PDAF) allocations to fake NGOs that existed only on paper. Ghost projects — agricultural programs, livelihood initiatives, water systems — were fully "completed" and "paid for" without a single deliverable.
+
+**How PoPV prevents this:** Every project must pass 5 independent verification gates before funds release. Ghost NGOs cannot produce engineer-approved evidence, AI-validated deliverables, or community-verified GPS photos. The escrow holds funds until proof exists.
+
+---
+
+### 5. Pharmally Scandal (2021)
+
+**Estimated loss: ₱11+ billion ($200 million+)**
+
+A small company with ₱625,000 in paid-up capital won ₱11 billion in government contracts for COVID-19 pandemic supplies (face shields, test kits, masks). Many items were overpriced, delivered late, or never delivered. The firm had connections to high-ranking officials.
+
+**How PoPV prevents this:** Supplier reputation scores are public and on-chain. A company with negligible capital and no track record cannot win large contracts — the procurement marketplace surfaces this automatically. The Anti-Corruption Agency dashboard flags shell company risks and collusion patterns in real time.
+
+---
+
+### 6. DPWH Ghost Projects & Flood Control Fraud (Ongoing)
 
 **Estimated loss: Billions over decades**
 
 The Department of Public Works and Highways (DPWH) has been repeatedly flagged by the Commission on Audit (COA) for infrastructure projects that exist only in documents. Roads paved on paper but not in reality. Bridges "completed" with no actual construction. Flood control systems that cost billions but fail every typhoon season.
+
+During 2023 Senate hearings on Metro Manila flooding, it was revealed that billions had been allocated for flood control across multiple years — yet flooding worsened every year. COA flagged numerous projects as incomplete, substandard, or entirely fictitious. Many "completed" flood control structures could not be located during field inspections.
 
 **How PoPV prevents this:** Every milestone requires:
 
@@ -70,27 +82,9 @@ The Department of Public Works and Highways (DPWH) has been repeatedly flagged b
 | Compliance | COA-style regulatory checks run automatically |
 | Community | Citizens on the ground submit their own verification |
 
+Every flood control project is a PVO with GPS coordinates. Citizens submit flood reports and completion verifications through the Citizen Interface. The community oracle requires ground-level confirmation. If the structure doesn't exist, the community gate fails and funds stay locked.
+
 No evidence, no engineer approval, no AI pass, no citizen confirmation — **no payment.**
-
----
-
-### 6. Pharmally scandal (2021)
-
-**Estimated loss: ₱11+ billion ($200 million+)**
-
-A small company with ₱625,000 in paid-up capital won ₱11 billion in government contracts for COVID-19 pandemic supplies (face shields, test kits, masks). Many items were overpriced, delivered late, or never delivered. The firm had connections to high-ranking officials.
-
-**How PoPV prevents this:** Supplier reputation scores are public and on-chain. A company with negligible capital and no track record cannot win large contracts — the procurement marketplace surfaces this automatically. The Anti-Corruption Agency dashboard flags shell company risks and collusion patterns in real time.
-
----
-
-### 7. Flood Control Ghost Projects (2023)
-
-**Estimated loss: Hundreds of millions**
-
-During Senate hearings on the 2023 Metro Manila floods, it was revealed that billions had been allocated for flood control projects across multiple years — yet flooding worsened every year. COA flagged numerous projects as either incomplete, substandard, or entirely fictitious. Many "completed" flood control structures could not be located during field inspections.
-
-**How PoPV prevents this:** Every flood control project is a PVO with GPS coordinates. Citizens submit flood reports and completion verifications through the Citizen Interface. The community oracle requires ground-level confirmation. If the structure doesn't exist, the community gate fails and funds stay locked.
 
 ---
 
