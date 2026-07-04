@@ -37,7 +37,43 @@ National Budget → PVO → Milestones → Evidence Collection
 
 ---
 
-## RPT Token (Citizen Reporting Credential)
+## pPHP Token (Settlement Asset)
+
+pPHP (Philippine Peso Testnet) is a custom Soroban token implementing `TokenInterface`. It powers the escrow system's real token transfers on testnet.
+
+| Field | Value |
+|-------|-------|
+| Asset Code | `pPHP` |
+| Contract | `CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6` |
+| Decimals | 2 (100 centavos = ₱1.00) |
+| Supply | Unlimited (admin-gated mint) |
+| Purpose | Escrow settlement token — fund, release, refund |
+| Minting | Admin-only via CLI |
+
+### How It Works
+
+The escrow contract is asset-agnostic — it accepts a `token_address` parameter. On testnet, that address is pPHP. On mainnet, it becomes USDC, GovPHP, EURC, or any backed asset.
+
+```
+Funder mints pPHP → funds escrow → tokens locked in escrow vault
+    ↓
+All 5 gates pass → escrow transfers pPHP to contractor
+    ↓
+Contractor holds real pPHP on-chain
+```
+
+### Testnet vs Mainnet
+
+| Environment | Token | Backing | Value |
+|-------------|-------|---------|-------|
+| Testnet | **pPHP** | Nothing (simulation only) | 0 |
+| Mainnet | USDC | Circle USD reserves | 1 USD |
+| Mainnet | GovPHP | Peso deposits at custodian bank | 1 peso |
+| Mainnet | EURC | Circle EUR reserves | 1 EUR |
+
+The escrow is a **lockbox** — its job is to hold tokens until gates pass, then release them. The token provides the value. On testnet we use a valueless token to prove the lockbox works. On mainnet we plug in a real one. The same Rust binary runs unchanged.
+
+### RPT Token (Citizen Reporting Credential)
 
 | Field | Value |
 |-------|-------|
