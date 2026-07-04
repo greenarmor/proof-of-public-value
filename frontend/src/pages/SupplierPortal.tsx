@@ -111,7 +111,10 @@ function TendersTab() {
 function SubmitBidTab({ address }: { address: string }) {
   const [tenders, setTenders] = useState<any[]>([]);
   const [tenderId, setTenderId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [price, setPrice] = useState("");
+  const [qualityScore, setQualityScore] = useState("25");
+  const [timelineDays, setTimelineDays] = useState("90");
+  const [reputationScore, setReputationScore] = useState("10");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
@@ -140,8 +143,8 @@ function SubmitBidTab({ address }: { address: string }) {
       const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const amt = Number(amount);
-      if (!amt || amt <= 0) throw new Error("Amount must be positive");
+      const priceAmt = Number(price);
+      if (!priceAmt || priceAmt <= 0) throw new Error("Price must be positive");
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -150,7 +153,10 @@ function SubmitBidTab({ address }: { address: string }) {
       const op = contract.call("submit_bid",
         new Address(address).toScVal(),
         xdr.ScVal.scvU32(Number(tenderId)),
-        new ScInt(amt).toI128(),
+        new ScInt(priceAmt).toI128(),
+        xdr.ScVal.scvU32(Number(qualityScore)),
+        xdr.ScVal.scvU32(Number(timelineDays)),
+        xdr.ScVal.scvU32(Number(reputationScore)),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -167,7 +173,7 @@ function SubmitBidTab({ address }: { address: string }) {
 
       setTxState("done");
       setTxMsg("Bid submitted on-chain!");
-      setTenderId(""); setAmount("");
+      setTenderId(""); setPrice("");
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -180,7 +186,7 @@ function SubmitBidTab({ address }: { address: string }) {
   return (
     <div className="card p-6 max-w-xl">
       <h2 className="text-lg font-semibold mb-2 text-slate-900">Submit Bid</h2>
-      <p className="text-sm text-slate-500 mb-4">Bid on an open procurement tender. Your bid is recorded on the procurement_market contract.</p>
+      <p className="text-sm text-slate-500 mb-4">Bid on an open procurement tender. Scored on Price, Quality, Timeline, and Integrity.</p>
 
       {txMsg && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
@@ -200,10 +206,31 @@ function SubmitBidTab({ address }: { address: string }) {
             ))}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Bid Amount (centavos)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder="450000000" required />
-          {amount && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(amount) / 100).toLocaleString()}</p>}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bid Price (centavos)</label>
+            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="input" placeholder="180000000" required />
+            {price && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(price) / 100).toLocaleString()}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Quality Score (0-30)</label>
+            <input type="number" value={qualityScore} onChange={(e) => setQualityScore(e.target.value)} className="input" min="0" max="30" placeholder="25" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Timeline (days)</label>
+            <input type="number" value={timelineDays} onChange={(e) => setTimelineDays(e.target.value)} className="input" placeholder="90" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Reputation Score (0-20)</label>
+            <input type="number" value={reputationScore} onChange={(e) => setReputationScore(e.target.value)} className="input" min="0" max="20" placeholder="10" />
+          </div>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <p className="text-sm text-blue-700">
+            <strong>Scoring:</strong> Price (max 50) + Quality (max 30) + Timeline (max 20) + Integrity (max 20) = {Number(qualityScore) > 30 ? 0 : Number(qualityScore)} + {Number(timelineDays) > 365 ? 0 : Math.min(20, Math.round(Number(timelineDays) * 20 / 365))} + {Number(reputationScore)} ≈ {Math.min(50, price ? 50 : 0) + Math.min(30, Number(qualityScore)) + Math.min(20, Math.round(Math.min(365, Number(timelineDays || 365)) * 20 / 365)) + Math.min(20, Number(reputationScore))} / 120
+          </p>
         </div>
         <button type="submit" disabled={busy} className="btn-primary w-full py-3">
           {busy ? "Signing..." : "Submit Bid On-Chain"}
