@@ -112,9 +112,9 @@ function SubmitBidTab({ address }: { address: string }) {
   const [tenders, setTenders] = useState<any[]>([]);
   const [tenderId, setTenderId] = useState("");
   const [price, setPrice] = useState("");
-  const [qualityScore, setQualityScore] = useState("25");
+  const [qualityScore, setQualityScore] = useState("80");
   const [timelineDays, setTimelineDays] = useState("90");
-  const [reputationScore, setReputationScore] = useState("10");
+  const [reputationScore, setReputationScore] = useState("50");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
@@ -213,8 +213,9 @@ function SubmitBidTab({ address }: { address: string }) {
             {price && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(price) / 100).toLocaleString()}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Quality Score (0-30)</label>
-            <input type="number" value={qualityScore} onChange={(e) => setQualityScore(e.target.value)} className="input" min="0" max="30" placeholder="25" />
+            <label className="block text-sm font-medium text-slate-700 mb-1">Quality Score (0-100)</label>
+            <input type="number" value={qualityScore} onChange={(e) => setQualityScore(e.target.value)} className="input" min="0" max="100" placeholder="80" />
+            <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/100) × 30</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -223,13 +224,16 @@ function SubmitBidTab({ address }: { address: string }) {
             <input type="number" value={timelineDays} onChange={(e) => setTimelineDays(e.target.value)} className="input" placeholder="90" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Reputation Score (0-20)</label>
-            <input type="number" value={reputationScore} onChange={(e) => setReputationScore(e.target.value)} className="input" min="0" max="20" placeholder="10" />
+            <label className="block text-sm font-medium text-slate-700 mb-1">Reputation Score (0-100)</label>
+            <input type="number" value={reputationScore} onChange={(e) => setReputationScore(e.target.value)} className="input" min="0" max="100" placeholder="50" />
+            <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/100) × 20</p>
           </div>
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-700">
-            <strong>Scoring:</strong> Price (max 50) + Quality (max 30) + Timeline (max 20) + Integrity (max 20) = {Number(qualityScore) > 30 ? 0 : Number(qualityScore)} + {Number(timelineDays) > 365 ? 0 : Math.min(20, Math.round(Number(timelineDays) * 20 / 365))} + {Number(reputationScore)} ≈ {Math.min(50, price ? 50 : 0) + Math.min(30, Number(qualityScore)) + Math.min(20, Math.round(Math.min(365, Number(timelineDays || 365)) * 20 / 365)) + Math.min(20, Number(reputationScore))} / 120
+            <strong>Contract scoring formula:</strong> The contract computes:
+            <code>Price (discount% × 50) + Quality (score/100 × 30) + Timeline (100 - days×10, max 20) + Integrity (score/100 × 20)</code>.
+            All inputs are on a 0–100 scale. The best bid wins when the agency calls <code>award_tender</code>.
           </p>
         </div>
         <button type="submit" disabled={busy} className="btn-primary w-full py-3">
