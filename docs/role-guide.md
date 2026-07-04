@@ -274,6 +274,34 @@ Inspector visits site → submits InspectionReport → AUDIT TRAIL EXISTS
 
 The inspector's report is **evidence**, not a gate. It documents what the inspector found so that if the engineer wrongly approves, there's a permanent on-chain record proving otherwise.
 
+### Why the Engineer Gate Is Intentionally the Weakest
+
+In Philippine public works, the engineer is paid by the contractor. This is **not a bug in PoPV — it's a reality** that the system is designed around:
+
+```
+Contractor pays Engineer → Engineer reviews Contractor's work → CONFLICT
+```
+
+PoPV does not try to prevent this conflict. Instead, it **assumes it exists** and layers independent verification on top:
+
+```
+Gate 2: Engineer approves  ← weakest, single source, potential bias
+    ↓
+Gate 3: AI Oracle validates ← cross-references patterns from ALL contracts
+    ↓
+Gate 4: Compliance checks   ← independent constitutional authority (COA)
+    ↓
+Gate 5: Community confirms  ← citizens verify on the ground with GPS
+    ↓
+AntiCorruption can dispute ANY escrow at ANY time
+    ↓
+Reputation ledger tracks EVERY decision permanently
+```
+
+A single compromised gate cannot release money. Even if the engineer colludes with the contractor, four other independent verifiers must also say yes. And if any one of them says no, the funds stay locked.
+
+The system's security comes from **distribution of trust**, not from perfect individuals. Every gate is designed to be checkable by the others.
+
 ### Engineer Reputation & Accountability
 
 The engineer's **reputation score** is visible on their dashboard. It tracks their professional integrity on-chain:
