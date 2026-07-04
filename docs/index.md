@@ -96,7 +96,7 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 │                                                              │
 │  ┌─────────────────┐     ┌─────────────────────────────┐   │
 │  │  access_control  │────▶│        pvo_core              │   │
-│  │  14 roles        │     │  PVO + Milestones + Evidence │   │
+│  │  13 roles        │     │  PVO + Milestones + Evidence │   │
 │  └─────────────────┘     └──────────┬──────────────────┘   │
 │                                      │                       │
 │                    ┌─────────────────┼─────────────────┐   │
@@ -166,12 +166,11 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | 6 | Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
 | 7 | CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
 | 8 | Supplier | supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
-| 9 | ProjectManager | project_manager | `GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV` |
-| 10 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
-| 11 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
-| 12 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
-| 13 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
-| 14 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+| 9 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
+| 10 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
+| 11 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
+| 12 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
+| 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
 
 All wallets are funded via Friendbot and assigned their roles on-chain.
 

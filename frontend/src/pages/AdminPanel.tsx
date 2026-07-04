@@ -6,7 +6,7 @@ import { formatAddress } from "../helpers";
 
 const ROLES = [
   "Citizen", "Engineer", "Inspector", "Contractor", "Supplier",
-  "ProjectManager", "GovernmentAgency", "Auditor", "CommissionOnAudit",
+  "GovernmentAgency", "Auditor", "CommissionOnAudit",
   "AntiCorruptionAgency", "FundingAgency", "InternationalDonor",
   "Administrator", "AIAuditor",
 ] as const;

@@ -15,7 +15,6 @@ import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
 import { InspectorPanel } from "./pages/InspectorPanel";
 import { SupplierPortal } from "./pages/SupplierPortal";
-import { ProjectManagerDashboard } from "./pages/ProjectManagerDashboard";
 import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
 import { FunderDashboard } from "./pages/FunderDashboard";
 import { DonorDashboard } from "./pages/DonorDashboard";
@@ -36,7 +35,6 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/contractor", label: "Contractor", icon: "🚧", roles: ["Contractor", "Administrator"], group: "delivery" },
   { to: "/engineer", label: "Engineer", icon: "🔧", roles: ["Engineer", "Administrator"], group: "delivery" },
   { to: "/inspector", label: "Inspector", icon: "🔎", roles: ["Inspector", "Administrator"], group: "delivery" },
-  { to: "/pm", label: "Project Manager", icon: "📋", roles: ["ProjectManager", "Administrator"], group: "delivery" },
   { to: "/supplier", label: "Supplier", icon: "📦", roles: ["Supplier", "Administrator"], group: "delivery" },
 
   { to: "/auditor", label: "Auditor", icon: "📊", roles: ["Auditor", "CommissionOnAudit", "Administrator"], group: "oversight" },
@@ -285,7 +283,6 @@ function App() {
               <Route path="/compliance" element={<ProtectedRoute element={<ComplianceDashboard />} roles={["Auditor", "CommissionOnAudit", "Administrator"]} />} />
               <Route path="/inspector" element={<ProtectedRoute element={<InspectorPanel />} roles={["Inspector", "Administrator"]} />} />
               <Route path="/supplier" element={<ProtectedRoute element={<SupplierPortal />} roles={["Supplier", "Administrator"]} />} />
-              <Route path="/pm" element={<ProtectedRoute element={<ProjectManagerDashboard />} roles={["ProjectManager", "Administrator"]} />} />
               <Route path="/funder" element={<ProtectedRoute element={<FunderDashboard />} roles={["FundingAgency", "Administrator"]} />} />
               <Route path="/donor" element={<ProtectedRoute element={<DonorDashboard />} roles={["InternationalDonor", "Administrator"]} />} />
               <Route path="/anticorruption" element={<ProtectedRoute element={<AntiCorruptionDashboard />} roles={["AntiCorruptionAgency", "Administrator"]} />} />

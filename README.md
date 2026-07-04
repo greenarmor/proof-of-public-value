@@ -64,12 +64,11 @@ National Budget → PVO → Milestones → Evidence Collection
 | 6 | Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
 | 7 | CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
 | 8 | Supplier | supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
-| 9 | ProjectManager | project_manager | `GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV` |
-| 10 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
-| 11 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
-| 12 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
-| 13 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
-| 14 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+| 9 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
+| 10 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
+| 11 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
+| 12 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
+| 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
 
 All wallets are funded via Friendbot and assigned their roles on-chain via `access_control.assign_role`.
 CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stellar CLI for `--source` invocation.
@@ -88,12 +87,11 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 | 6 | Auditor | `/auditor`, `/compliance` | Auditor Dashboard, Compliance Dashboard |
 | 7 | CommissionOnAudit | `/auditor`, `/compliance` | Auditor Dashboard, Compliance Dashboard |
 | 8 | Supplier | `/supplier` | Supplier Portal |
-| 9 | ProjectManager | `/pm` | Project Manager Dashboard |
-| 10 | AntiCorruptionAgency | `/anticorruption` | Anti-Corruption Dashboard |
-| 11 | FundingAgency | `/funder` | Funding Agency Dashboard (Escrow) |
-| 12 | InternationalDonor | `/donor` | International Donor Dashboard |
-| 13 | AIAuditor | `/ai` | AI Monitor |
-| 14 | Citizen | `/citizen` | Citizen Interface |
+| 9 | AntiCorruptionAgency | `/anticorruption` | Anti-Corruption Dashboard |
+| 10 | FundingAgency | `/funder` | Funding Agency Dashboard (Escrow) |
+| 11 | InternationalDonor | `/donor` | International Donor Dashboard |
+| 12 | AIAuditor | `/ai` | AI Monitor |
+| 13 | Citizen | `/citizen` | Citizen Interface |
 | — | No role | `/`, `/index`, `/memory` | Public pages only |
 
 ---
@@ -156,7 +154,7 @@ cargo test
 ```
 stellar/
 ├── contracts/
-│   ├── access_control/    # 14-role authorization
+│   ├── access_control/    # 13-role authorization
 │   ├── pvo_core/          # PVO lifecycle + milestones + evidence
 │   ├── escrow/            # Dynamic conditional escrow
 │   ├── community_oracle/  # Citizen verification network
@@ -167,7 +165,7 @@ stellar/
 │   ├── public_index/      # National department rankings
 │   ├── compliance_engine/ # Auto-pause on violations
 │   └── procurement_market/# Integrity-weighted bidding
-├── frontend/              # React + TypeScript (19 dashboards, 14 role-based + 3 public)
+├── frontend/              # React + TypeScript (18 dashboards, 13 role-based + 3 public + admin + 2 finance)
 ├── mobile/                # Flutter (11 screens)
 ├── services/event-indexer/# Stellar event monitoring
 ├── scripts/deploy.sh      # Deployment automation

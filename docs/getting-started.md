@@ -28,7 +28,7 @@ Every infrastructure project has exactly one PVO.
 
 ### Roles
 
-PoPV uses 14 roles. Different roles can do different things:
+PoPV uses 13 roles. Different roles can do different things:
 
 | Role | What They Do |
 |------|-------------|
@@ -37,7 +37,6 @@ PoPV uses 14 roles. Different roles can do different things:
 | Contractor | Execute projects, submit evidence |
 | Engineer | Approve milestone completion |
 | Inspector | Conduct field inspections |
-| ProjectManager | Oversee project execution and timelines |
 | Auditor | Audit financial records |
 | CommissionOnAudit | Regulatory compliance oversight |
 | AntiCorruptionAgency | Investigate fraud, detect corruption patterns |
@@ -59,7 +58,7 @@ List your configured identities:
 stellar keys ls
 ```
 
-You should see all 14 role identities (pre-configured for this manual):
+You should see all 13 role identities (pre-configured for this manual):
 
 ??? success "Expected Output"
     ```
@@ -71,7 +70,6 @@ You should see all 14 role identities (pre-configured for this manual):
     auditor
     coa
     supplier
-    project_manager
     anti_corruption
     funding_agency
     international_donor
@@ -81,7 +79,7 @@ You should see all 14 role identities (pre-configured for this manual):
 
 ### Exercise 1.2: Testnet Demo Wallets
 
-All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in `.dev-logs/role-credentials.md` (gitignored).
+All 13 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in `.dev-logs/role-credentials.md` (gitignored).
 
 | # | Alias | Role | Public Key |
 |---|-------|------|-----------|
@@ -93,12 +91,11 @@ All 14 wallets are funded on testnet and assigned roles on-chain. Public keys on
 | 6 | auditor | Auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
 | 7 | coa | CommissionOnAudit | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
 | 8 | supplier | Supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
-| 9 | project_manager | ProjectManager | `GB4WQNIJ64WZ72VBJRSPJ7WNS2HOH4NXCASUIO7ZZFPNSXRURNN55THV` |
-| 10 | anti_corruption | AntiCorruptionAgency | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
-| 11 | funding_agency | FundingAgency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
-| 12 | international_donor | InternationalDonor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
-| 13 | ai_auditor | AIAuditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
-| 14 | citizen | Citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+| 9 | anti_corruption | AntiCorruptionAgency | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
+| 10 | funding_agency | FundingAgency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
+| 11 | international_donor | InternationalDonor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
+| 12 | ai_auditor | AIAuditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
+| 13 | citizen | Citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
 
 To import any wallet in Freighter: Add Account → Import Secret Key (from `.dev-logs/role-credentials.md`).
 
