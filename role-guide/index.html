@@ -1522,13 +1522,63 @@
 </tbody>
 </table>
 <p>Creates PVOs (Public Value Objects), allocates budgets, defines milestones, and manages procurement tenders. This is the role that starts the project lifecycle.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project Overview</td>
+<td>All PVOs from chain</td>
+<td><code>pvo_core.get_pvo_count</code> + loop</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>New PVO</td>
+<td>Form with all PVO fields</td>
+<td>—</td>
+<td><code>pvo_core.create_pvo</code> via raw TransactionBuilder + Freighter</td>
+</tr>
+<tr>
+<td>Define Milestone</td>
+<td>Form with evidence type picker</td>
+<td>—</td>
+<td><code>pvo_core.create_milestone</code> with <code>Vec&lt;EvidenceType&gt;</code> encoding via TransactionBuilder</td>
+</tr>
+</tbody>
+</table>
 <p><strong>What they do:</strong></p>
 <ol>
-<li>Create a PVO with title, description, budget, and department</li>
-<li>Define milestones with evidence requirements</li>
-<li>Open procurement tenders for contractor bidding</li>
-<li>Monitor project progress through the Agency Dashboard</li>
+<li>Create a PVO with title, description, budget, department, municipality, contractor, and fund source</li>
+<li>Define milestones with required evidence types and community confirmation thresholds</li>
+<li>Open procurement tenders for contractor bidding (via Procurement Marketplace at <code>/procurement</code>)</li>
+<li>Monitor project progress through the Agency Dashboard overview table</li>
 </ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Create a PVO on-chain</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--id<span class="w"> </span>CAJHYJL5E6IPHMYMCODTI5PBLK4TNN2YCT34KAUBIFIL4SJSQW5MVNOD<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--<span class="w"> </span>create_pvo<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--creator<span class="w"> </span>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--title<span class="w"> </span><span class="s1">&#39;&quot;Road Paving Project&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--description<span class="w"> </span><span class="s1">&#39;&quot;Paving 10km of national road&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--funding_agency<span class="w"> </span>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--contractor<span class="w"> </span>GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--project_manager<span class="w"> </span>GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>--department<span class="w"> </span><span class="s1">&#39;&quot;DPWH&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>--municipality<span class="w"> </span><span class="s1">&#39;&quot;Quezon City&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--total_budget<span class="w"> </span><span class="m">10000000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--fund_source<span class="w"> </span><span class="s1">&#39;&quot;National Budget 2026&quot;&#39;</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">project_manager parameter</p>
+<p>The <code>project_manager</code> field exists in the pvo_core contract as vestigial data. It is no longer used for authorization (the ProjectManager role was removed). Pass the agency's own address.</p>
+</div>
 <hr />
 <h3 id="contractor">Contractor<a class="headerlink" href="#contractor" title="Permanent link">&para;</a></h3>
 <table>
@@ -1558,12 +1608,49 @@
 </tbody>
 </table>
 <p>Executes projects and submits evidence for each milestone. The contractor is the <strong>recipient</strong> in escrow contracts - when all gates pass, tokens are released to the contractor's wallet.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>My Projects</td>
+<td>Contractor's assigned PVOs</td>
+<td><code>pvo_core.get_pv_os_by_contractor</code> + <code>get_pvo_milestones</code></td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Submit Evidence</td>
+<td>IPFS upload + form</td>
+<td>—</td>
+<td><code>pvo_core.submit_evidence</code> via TransactionBuilder + Freighter (Gate 1)</td>
+</tr>
+<tr>
+<td>Payments</td>
+<td>Escrows where recipient = contractor</td>
+<td><code>escrow.get_escrow</code> filtered by address</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>History</td>
+<td>All submitted evidence across PVOs</td>
+<td><code>pvo_core</code> milestone evidence arrays</td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>What they do:</strong></p>
 <ol>
-<li>View assigned milestones and their evidence requirements</li>
-<li>Submit evidence (drone imagery, GPS, photos, engineering reports) via IPFS</li>
-<li>Track escrow status - see which gates have passed</li>
-<li>Receive token payment when escrow is released</li>
+<li>View assigned PVOs and drill into milestone details with 4-gate progress bars</li>
+<li>Submit evidence (drone imagery, GPS, photos, engineering reports) via IPFS, then recorded on-chain as Gate 1</li>
+<li>Track escrow status - see which gates have passed and whether payment was released</li>
+<li>View full evidence submission history with verification status</li>
 </ol>
 <hr />
 <h3 id="engineer">Engineer<a class="headerlink" href="#engineer" title="Permanent link">&para;</a></h3>
@@ -1589,23 +1676,55 @@
 </tr>
 <tr>
 <td>Contracts</td>
-<td><code>escrow</code> (Gate 2: engineer_approval)</td>
+<td><code>escrow</code> (Gate 2: engineer_approval), <code>pvo_core</code> (read milestones)</td>
 </tr>
 </tbody>
 </table>
 <p>Licensed professional who verifies that physical work meets specifications. This is <strong>Gate 2</strong> in the 5-gate escrow system.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pending Reviews</td>
+<td>Milestones with submitted evidence not yet approved</td>
+<td><code>pvo_core</code> milestones + <code>escrow.get_escrows_by_pvo</code></td>
+<td><code>escrow.engineer_approve</code> via TransactionBuilder + Freighter</td>
+</tr>
+<tr>
+<td>Approved</td>
+<td>Escrows where engineer gate passed</td>
+<td><code>escrow.get_escrow</code> filtered by <code>engineer_approval</code></td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>All PVOs</td>
+<td>Browse all projects, drill into milestones</td>
+<td><code>pvo_core.get_pvo</code> + <code>get_pvo_milestones</code></td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>What they do:</strong></p>
 <ol>
-<li>Review submitted evidence (photos, drone imagery, specs)</li>
-<li>Physically inspect or verify the milestone</li>
-<li>Call <code>engineer_approve</code> on the escrow contract to pass Gate 2</li>
+<li>Review submitted evidence (photos, drone imagery, specs) with full details</li>
+<li>Approve milestones on the escrow contract to pass Gate 2</li>
+<li>View all approved milestones and their payment status</li>
+<li>Browse all PVOs for project context</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Gate 2: Engineer approval</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>engineer<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--id<span class="w"> </span>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--engineer<span class="w"> </span>GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Gate 2: Engineer approval</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>engineer<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--id<span class="w"> </span>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--engineer<span class="w"> </span>GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--escrow_id<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <hr />
 <h3 id="inspector">Inspector<a class="headerlink" href="#inspector" title="Permanent link">&para;</a></h3>
@@ -1631,11 +1750,59 @@
 </tr>
 <tr>
 <td>Contracts</td>
-<td><code>pvo_core</code> (inspections)</td>
+<td><code>pvo_core</code> (submit InspectionReport evidence)</td>
 </tr>
 </tbody>
 </table>
-<p>Conducts field inspections independently from the engineer. While the engineer checks technical specifications, the inspector verifies physical conditions on site.</p>
+<p>Conducts field inspections independently from the engineer. While the engineer checks technical specifications and signs off Gate 2 on the escrow, the inspector provides independent verification by submitting <code>InspectionReport</code> evidence to the pvo_core contract.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All Projects</td>
+<td>Every PVO with milestone drill-down</td>
+<td><code>pvo_core.get_pvo</code> + <code>get_pvo_milestones</code></td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Submit Inspection</td>
+<td>IPFS upload + form</td>
+<td>—</td>
+<td><code>pvo_core.submit_evidence</code> (InspectionReport) via TransactionBuilder + Freighter</td>
+</tr>
+<tr>
+<td>My Reports</td>
+<td>InspectionReport evidence filtered by submitter</td>
+<td><code>pvo_core</code> milestone evidence arrays</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Evidence History</td>
+<td>All evidence across all PVOs</td>
+<td><code>pvo_core</code> milestone evidence arrays</td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What they do:</strong></p>
+<ol>
+<li>Browse all PVOs with contractor, budget, location, and status</li>
+<li>Submit inspection reports on-chain with Pass/Conditional/Fail ratings</li>
+<li>Upload photo evidence to IPFS as supporting documentation</li>
+<li>Track all inspection reports submitted with verification status</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">No escrow gate</p>
+<p>The inspector does not have a dedicated gate in the escrow contract. They submit <code>InspectionReport</code> evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 2 on the escrow.</p>
+</div>
 <hr />
 <h3 id="auditor">Auditor<a class="headerlink" href="#auditor" title="Permanent link">&para;</a></h3>
 <table>
@@ -1660,16 +1827,48 @@
 </tr>
 <tr>
 <td>Contracts</td>
-<td><code>audit_trail</code>, <code>compliance_engine</code></td>
+<td><code>audit_trail</code>, <code>escrow</code> (Gate 4: compliance_validate), <code>compliance_engine</code></td>
 </tr>
 </tbody>
 </table>
-<p>Audits financial records and checks regulatory compliance. This is <strong>Gate 4</strong> in the 5-gate escrow system.</p>
+<p>Audits financial records and checks regulatory compliance. This is <strong>Gate 4</strong> in the 5-gate escrow system. The Auditor and CommissionOnAudit share the same dashboards.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Audit Trail</td>
+<td>Every audit entry with category, actor, rationale</td>
+<td><code>audit_trail.get_entry</code> looped</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Compliance Gate</td>
+<td>Escrows needing compliance validation</td>
+<td><code>escrow.get_escrow</code> filtered for AI-validated, not yet compliance-passed</td>
+<td><code>escrow.compliance_validate</code> (Pass/Reject Gate 4) via TransactionBuilder + Freighter</td>
+</tr>
+<tr>
+<td>Violations</td>
+<td>Active compliance violations</td>
+<td><code>compliance_engine.get_violation</code> looped</td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>What they do:</strong></p>
 <ol>
-<li>Review the complete audit trail for any PVO</li>
-<li>Run compliance checks (procurement law, budget rules, safety regulations)</li>
-<li>Call <code>compliance_pass</code> on the escrow contract to pass Gate 4</li>
+<li>Review all audit entries across all PVOs (approvals, payments, evidence, compliance, disputes)</li>
+<li>Pass or reject compliance validation on escrows at Gate 4</li>
+<li>View active regulatory violations from the compliance engine</li>
+<li>Share dashboard access with CommissionOnAudit (COA)</li>
 </ol>
 <hr />
 <h3 id="commissiononaudit-coa">CommissionOnAudit (COA)<a class="headerlink" href="#commissiononaudit-coa" title="Permanent link">&para;</a></h3>
@@ -1735,12 +1934,12 @@
 <li>Review audit trail entries for suspicious patterns</li>
 <li>File a dispute on any escrow to freeze funds pending investigation</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Dispute an escrow</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>anti_corruption<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--id<span class="w"> </span>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--<span class="w"> </span>dispute<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--disputer<span class="w"> </span>GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--escrow_id<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Dispute an escrow</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>anti_corruption<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--id<span class="w"> </span>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--<span class="w"> </span>dispute<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--disputer<span class="w"> </span>GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>--escrow_id<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <hr />
 <h3 id="fundingagency">FundingAgency<a class="headerlink" href="#fundingagency" title="Permanent link">&para;</a></h3>
@@ -1830,14 +2029,14 @@
 </div>
 <p><strong>Commit Funds tab:</strong></p>
 <p>The Commit Funds form calls <code>commit_grant</code> on-chain via a signed transaction. The donor selects their organization, enters a PVO ID and amount (in centavos), and signs with Freighter. The pledge is recorded permanently.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Commit a grant pledge on-chain</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>international_donor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--id<span class="w"> </span>CCBXEOHTCHQDO57I5UA7XJKLHBGOUEPUNE6I4AEJ4GSHO6QDA2GIFOZM<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--<span class="w"> </span>commit_grant<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--donor<span class="w"> </span>GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>--pvo_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>--amount<span class="w"> </span><span class="m">500000000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--org_name<span class="w"> </span><span class="s1">&#39;&quot;World Bank&quot;&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Commit a grant pledge on-chain</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>international_donor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--id<span class="w"> </span>CCBXEOHTCHQDO57I5UA7XJKLHBGOUEPUNE6I4AEJ4GSHO6QDA2GIFOZM<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--<span class="w"> </span>commit_grant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--donor<span class="w"> </span>GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>--pvo_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>--amount<span class="w"> </span><span class="m">500000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--org_name<span class="w"> </span><span class="s1">&#39;&quot;World Bank&quot;&#39;</span>
 </code></pre></div>
 <p><strong>Portfolio tab:</strong> Reads <code>get_all_grants()</code> to show every pledge with org name, amount, and status.</p>
 <p><strong>Transparency tab:</strong> Shows funds flow and lets the donor update the grant status (Committed -&gt; Disbursed -&gt; Completed).</p>
@@ -1873,7 +2072,44 @@
 </tr>
 </tbody>
 </table>
-<p>Suppliers list materials and manage deliveries through the procurement marketplace. They participate in integrity-weighted bidding alongside contractors.</p>
+<p>Suppliers browse procurement tenders and submit bids on-chain. They participate in integrity-weighted bidding alongside contractors.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tenders</td>
+<td>All open procurement tenders</td>
+<td><code>procurement_market.get_tender</code> looped</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Submit Bid</td>
+<td>Tender selector + amount form</td>
+<td>—</td>
+<td><code>procurement_market.submit_bid</code> via TransactionBuilder + Freighter</td>
+</tr>
+<tr>
+<td>My Bids</td>
+<td>Bids filtered by supplier address</td>
+<td><code>procurement_market.get_bids_by_tender</code> filtered</td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What they do:</strong></p>
+<ol>
+<li>Browse all procurement tenders with budgets and agency info</li>
+<li>Submit bids to open tenders on-chain</li>
+<li>Track all bids submitted by their address</li>
+</ol>
 <hr />
 <h3 id="aiauditor">AIAuditor<a class="headerlink" href="#aiauditor" title="Permanent link">&para;</a></h3>
 <table>
@@ -1903,11 +2139,63 @@
 </tbody>
 </table>
 <p>Monitors the AI risk scoring system. The AI oracle checks for 8 fraud indicators including ghost projects, duplicate invoices, collusion patterns, and budget anomalies. This is <strong>Gate 3</strong> in the 5-gate escrow system.</p>
+<p><strong>Dashboard tabs:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What's wired</th>
+<th>Data source</th>
+<th>Write actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fraud</td>
+<td>Fraud detection results with indicators</td>
+<td><code>ai_oracle.get_fraud_count</code> + <code>get_fraud_detection</code></td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Risk</td>
+<td>Contractor risk predictions per PVO</td>
+<td><code>ai_oracle.get_latest_risk_prediction</code> per contractor</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Image</td>
+<td>Image verification reports</td>
+<td><code>ai_oracle.get_image_verification</code> looped</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Digital Twin</td>
+<td>Cost simulation per PVO</td>
+<td><code>ai_oracle.get_digital_twin</code> per PVO</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Geo Risk</td>
+<td>Geo-risk assessments per PVO</td>
+<td><code>ai_oracle.get_geo_risk</code> per PVO</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>GPS</td>
+<td>GPS coordinate validations</td>
+<td><code>ai_oracle.get_gps_validation</code> looped</td>
+<td>None (read-only)</td>
+</tr>
+</tbody>
+</table>
 <p><strong>What they do:</strong></p>
 <ol>
-<li>View AI risk assessments and flagged indicators</li>
-<li>Submit risk scores to the escrow contract to pass (or fail) Gate 3</li>
-<li>Monitor patterns across multiple PVOs</li>
+<li>View fraud detection results with risk scores and indicator flags</li>
+<li>Check contractor risk predictions (delay risk, budget overrun)</li>
+<li>Verify drone/satellite imagery authenticity</li>
+<li>Monitor digital twin cost simulations</li>
+<li>Validate GPS coordinates against expected project locations</li>
+<li>Submit fraud detections, risk predictions, and validations via <code>ai_oracle</code> contract functions</li>
 </ol>
 <hr />
 <h3 id="citizen">Citizen<a class="headerlink" href="#citizen" title="Permanent link">&para;</a></h3>
@@ -1953,35 +2241,35 @@
 <hr />
 <h2 id="grant-commitment-lifecycle">Grant Commitment Lifecycle<a class="headerlink" href="#grant-commitment-lifecycle" title="Permanent link">&para;</a></h2>
 <p>This diagram shows how international donor pledges connect to the escrow system:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Step 1: COMMIT (no tokens move)
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    InternationalDonor → grant_commitment.commit_grant()
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    Stores: {donor, pvo_id, amount, org_name, status: &quot;Committed&quot;}
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    Result: Public, immutable pledge on-chain
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Step 2: FUNDING AGENCY SEES THE PLEDGE
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    FundingAgency opens dashboard → &quot;Donor Commitments&quot; tab
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    Reads: grant_commitment.get_all_grants()
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    Decision: Create escrow for this PVO
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>Step 3: ESCROW CREATED AND FUNDED (tokens move)
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    FundingAgency → escrow.create_escrow(pvo_id, amount, contractor)
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    FundingAgency → escrow.fund_escrow(escrow_id, amount)
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    pPHP tokens transfer from funder to escrow contract
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>Step 4: 5 GATES PASS
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    Gate 1: Contractor submits evidence
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    Gate 2: Engineer approves
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    Gate 3: AI validates
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    Gate 4: Compliance passes
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    Gate 5: Community confirms
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a>Step 5: RELEASE (tokens move)
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>    escrow.release()
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    pPHP tokens transfer from escrow to contractor
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a>Step 6: DONOR UPDATES STATUS
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>    InternationalDonor → grant_commitment.update_status(Disbursed)
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>    InternationalDonor → grant_commitment.update_status(Completed)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Step 1: COMMIT (no tokens move)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    InternationalDonor → grant_commitment.commit_grant()
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    Stores: {donor, pvo_id, amount, org_name, status: &quot;Committed&quot;}
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    Result: Public, immutable pledge on-chain
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Step 2: FUNDING AGENCY SEES THE PLEDGE
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    FundingAgency opens dashboard → &quot;Donor Commitments&quot; tab
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    Reads: grant_commitment.get_all_grants()
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    Decision: Create escrow for this PVO
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>Step 3: ESCROW CREATED AND FUNDED (tokens move)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    FundingAgency → escrow.create_escrow(pvo_id, amount, contractor)
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    FundingAgency → escrow.fund_escrow(escrow_id, amount)
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    pPHP tokens transfer from funder to escrow contract
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>Step 4: 5 GATES PASS
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    Gate 1: Contractor submits evidence
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    Gate 2: Engineer approves
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    Gate 3: AI validates
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    Gate 4: Compliance passes
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    Gate 5: Community confirms
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>Step 5: RELEASE (tokens move)
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>    escrow.release()
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    pPHP tokens transfer from escrow to contractor
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>Step 6: DONOR UPDATES STATUS
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>    InternationalDonor → grant_commitment.update_status(Disbursed)
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>    InternationalDonor → grant_commitment.update_status(Completed)
 </code></pre></div>
 <hr />
 <h2 id="dashboard-access-control-matrix">Dashboard Access Control Matrix<a class="headerlink" href="#dashboard-access-control-matrix" title="Permanent link">&para;</a></h2>
@@ -2140,7 +2428,7 @@
 </tr>
 <tr>
 <td><code>procurement_market</code></td>
-<td><code>CCPQYSIVVFOH6CAB5J3QMBZF6EOHJEIVQMZAPMFZCSWRMJRRUMWBJBW3</code></td>
+<td><code>CB4QLZTS4ANWFGYYE6USGFGZ6JXXH7U7Y32CLHFYL2HIWC447LC6TUDQ</code></td>
 </tr>
 <tr>
 <td><code>pPHP token</code></td>
