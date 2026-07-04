@@ -19,7 +19,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ProcurementMarketplace() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"browse" | "create">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "create" | "award">("browse");
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,19 +68,21 @@ export function ProcurementMarketplace() {
       <p className="text-gray-500 mb-6">Multi-criteria bidding with integrity-weighted ranking and auto-award.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["browse", "create"] as const).map((tab) => (
+        {(["browse", "create", "award"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}>
             {tab === "browse" && "📋 Browse Tenders"}
             {tab === "create" && "➕ Create Tender"}
+            {tab === "award" && "🏆 Award"}
           </button>
         ))}
       </div>
 
       {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
       {activeTab === "create" && <CreateTenderForm address={address!} />}
+      {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} />}
     </div>
   );
 }
@@ -220,6 +222,124 @@ function CreateTenderForm({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-purple-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
+    </div>
+  );
+}
+
+function AwardTab({ address, tenders, loading }: { address: string; tenders: Tender[]; loading: boolean }) {
+  const currency = getCurrency();
+
+  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>;
+
+  const openTenders = tenders.filter(t => t.status.tag === "Open" && !t.winner);
+
+  if (openTenders.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">🏆</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No open tenders to award</h3>
+        <p className="text-sm text-slate-400">Create a tender first, then suppliers can bid. Come back here to award.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {openTenders.map(t => <TenderAwardCard key={t.id} tender={t} currency={currency} address={address} />)}
+    </div>
+  );
+}
+
+function TenderAwardCard({ tender, currency, address }: { tender: Tender; currency: string; address: string }) {
+  const [bids, setBids] = useState<any[]>([]);
+  const [bidsLoading, setBidsLoading] = useState(true);
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const r = await client.get_bids_by_tender({ tender_id: tender.id });
+        const list = (r.result || []) as any[];
+        list.sort((a: any, b: any) => Number(b.final_score) - Number(a.final_score));
+        setBids(list);
+      } catch {} finally { setBidsLoading(false); }
+    })();
+  }, [tender.id]);
+
+  const handleAward = async () => {
+    setTxState("preparing"); setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+      const op = contract.call("award_tender", new Address(address).toScVal(), xdr.ScVal.scvU32(tender.id));
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      setTxState("done");
+      setTxMsg("Tender awarded! Contract auto-picks highest-scoring bid.");
+    } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+
+  return (
+    <div className="card p-5">
+      {txMsg && (
+        <div className={`mb-3 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
+        </div>
+      )}
+
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-slate-400 font-mono">Tender #{tender.id}</span>
+            <span className="badge-green text-xs">Open</span>
+          </div>
+          <h3 className="font-semibold text-slate-900">{tender.title}</h3>
+          <p className="text-sm text-slate-500 mt-0.5">{tender.description}</p>
+          <p className="text-xs text-slate-400 mt-1">Budget: {currency}{(Number(tender.budget)/100).toLocaleString()}</p>
+        </div>
+        <button onClick={handleAward} disabled={busy || bids.length === 0}
+          className="btn-primary text-sm px-4 py-2">
+          {busy ? "Awarding..." : "🏆 Award Tender"}
+        </button>
+      </div>
+
+      {/* Bids list */}
+      <div className="border-t border-slate-100 pt-3">
+        <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Bids ({bids.length}) — highest final score wins</p>
+        {bidsLoading ? (
+          <div className="skeleton h-16 rounded-lg" />
+        ) : bids.length === 0 ? (
+          <p className="text-sm text-slate-400 py-2">No bids yet. Suppliers submit via the Supplier Portal.</p>
+        ) : (
+          <div className="space-y-2">
+            {bids.map((b: any) => (
+              <div key={Number(b.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">
+                <div>
+                  <span className="font-mono text-xs text-slate-600"><WalletAddress addr={b.contractor} chars={6}/></span>
+                  <span className="text-xs text-slate-400 ml-2">{currency}{(Number(b.price)/100).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-slate-400">Q:{Number(b.quality_score)} T:{Number(b.timeline_days)}d R:{Number(b.reputation_score)}</span>
+                  <span className="font-bold text-brand-600">{Number(b.final_score)}/120</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
