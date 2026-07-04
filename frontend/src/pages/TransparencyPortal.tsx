@@ -11,6 +11,15 @@ interface PVOData {
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
+  latitude?: number; longitude?: number;  // from description [lat,lng] prefix
+}
+
+function parseCoords(desc: string): { lat?: number; lng?: number; clean: string } {
+  const match = desc.match(/^\[(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\]\s*/);
+  if (match) {
+    return { lat: parseFloat(match[1]), lng: parseFloat(match[2]), clean: desc.slice(match[0].length) };
+  }
+  return { clean: desc };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -39,7 +48,8 @@ export function TransparencyPortal() {
         try {
           const r = await client.get_pvo({ pvo_id: i });
           if (r.result) {
-            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: r.result.description, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [] };
+            const { lat, lng, clean } = parseCoords(r.result.description || "");
+            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: clean, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [], latitude: lat, longitude: lng };
 
             // Fetch milestone evidence to extract GPS coordinates
             try {

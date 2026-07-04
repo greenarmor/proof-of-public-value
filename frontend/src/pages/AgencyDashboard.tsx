@@ -146,6 +146,8 @@ function CreatePVOForm({ address }: { address: string }) {
   const [description, setDescription] = useState("");
   const [fundSource, setFundSource] = useState("");
   const [contractor, setContractor] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
@@ -167,10 +169,15 @@ function CreatePVOForm({ address }: { address: string }) {
       // project_manager is vestigial - no longer used for auth, pass agency address
       const pm = new Address(address).toScVal();
 
+      // Encode GPS coordinates into description for on-chain map retrieval
+      const desc = (latitude && longitude)
+        ? `[${latitude},${longitude}] ${description}`
+        : description;
+
       const op = contract.call("create_pvo",
         new Address(address).toScVal(),
         xdr.ScVal.scvString(title),
-        xdr.ScVal.scvString(description),
+        xdr.ScVal.scvString(desc),
         new Address(address).toScVal(),       // funding_agency = self
         new Address(contractor || address).toScVal(), // contractor
         pm,                                     // project_manager (vestigial)
@@ -194,7 +201,7 @@ function CreatePVOForm({ address }: { address: string }) {
 
       setTxState("done");
       setTxMsg("PVO created on-chain! Refresh overview to see it.");
-      setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource(""); setContractor("");
+      setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource(""); setContractor(""); setLatitude(""); setLongitude("");
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -220,15 +227,30 @@ function CreatePVOForm({ address }: { address: string }) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Road Paving Project" required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">📍 Location (coordinates preferred)</label>
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div>
+              <input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)}
+                className="input font-mono text-xs" placeholder="Latitude e.g. 14.6507" step="any" />
+              <p className="text-[10px] text-slate-400 mt-0.5">Latitude</p>
+            </div>
+            <div>
+              <input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)}
+                className="input font-mono text-xs" placeholder="Longitude e.g. 121.1029" step="any" />
+              <p className="text-[10px] text-slate-400 mt-0.5">Longitude</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
             <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} className="input" placeholder="DPWH" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Municipality</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Municipality (fallback)</label>
             <input type="text" value={municipality} onChange={(e) => setMunicipality(e.target.value)} className="input" placeholder="Quezon City" required />
           </div>
+        </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>

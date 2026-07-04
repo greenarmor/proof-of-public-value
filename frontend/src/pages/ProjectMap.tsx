@@ -8,6 +8,7 @@ interface PVOData {
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
+  latitude?: number; longitude?: number;
 }
 
 export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; selectedPvoId?: number }) {
@@ -45,15 +46,18 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
     "Butuan": [8.9500, 125.5333],
   };
 
-  const getCoords = (municipality: string, id: number): [number, number] => {
-    const match = Object.keys(geo).find(k => municipality.toLowerCase().includes(k.toLowerCase()));
+  const getCoords = (pvo: PVOData): [number, number] => {
+    // Use exact coordinates if provided in PVO
+    if (pvo.latitude && pvo.longitude) {
+      return [pvo.latitude + pvo.id * 0.0001, pvo.longitude + pvo.id * 0.0002];
+    }
+    // Fallback to municipality geocoding
+    const match = Object.keys(geo).find(k => pvo.municipality.toLowerCase().includes(k.toLowerCase()));
     if (match) {
       const [lat, lng] = geo[match];
-      // Small offset per unique PVO to avoid overlapping markers
-      return [lat + id * 0.001, lng + id * 0.002];
+      return [lat + pvo.id * 0.001, lng + pvo.id * 0.002];
     }
-    // Fallback: center on Philippines
-    return [12.8797 + id * 0.12, 121.7740 + id * 0.1];
+    return [12.8797 + pvo.id * 0.12, 121.7740 + pvo.id * 0.1];
   };
 
   function MapFlyTo() {
@@ -62,7 +66,7 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
       if (!selectedPvoId) return;
       const pvo = pvos.find(p => p.id === selectedPvoId);
       if (pvo) {
-        map.flyTo(getCoords(pvo.municipality, pvo.id), 14, { duration: 0.8 });
+        map.flyTo(getCoords(pvo), 14, { duration: 0.8 });
       }
     }, [selectedPvoId, pvos, map]);
     return null;
@@ -77,7 +81,7 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
         />
         <MapFlyTo />
         {pvos.map((pvo) => (
-          <Marker key={pvo.id} position={getCoords(pvo.municipality, pvo.id)}
+          <Marker key={pvo.id} position={getCoords(pvo)}
             zIndexOffset={selectedPvoId === pvo.id ? 1000 : 0}>
             <Popup>
               <strong>{pvo.title}</strong><br />
