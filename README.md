@@ -50,6 +50,18 @@ pPHP (Philippine Peso Testnet) is a custom Soroban token implementing `TokenInte
 | Purpose | Escrow settlement token — fund, release, refund |
 | Minting | Admin-only via CLI |
 
+### Why pPHP Exists
+
+Stellar testnet's Friendbot caps at **10,000 XLM per account**. PoPV escrows simulate government projects ranging from millions to billions of pesos:
+
+```
+Road Paving Project:  ₱15,000,000  = 15,000,000 XLM  →  Friendbot × 1,500 requests
+Bridge Construction:  ₱500,000,000 = 500,000,000 XLM →  Friendbot × 50,000 requests
+National Budget:      ₱5,000,000,000 = 5B XLM         →  Impossible
+```
+
+pPHP solves this: unlimited mintable supply with 2 decimal places (100 centavos = ₱1). Zero value, zero backing — pure simulation. It exists to test the escrow lock/unlock logic at realistic peso amounts without burning through XLM faucets.
+
 ### How It Works
 
 The escrow contract is asset-agnostic — it accepts a `token_address` parameter. On testnet, that address is pPHP. On mainnet, it becomes USDC, GovPHP, EURC, or any backed asset.
@@ -64,14 +76,15 @@ Contractor holds real pPHP on-chain
 
 ### Testnet vs Mainnet
 
-| Environment | Token | Backing | Value |
-|-------------|-------|---------|-------|
-| Testnet | **pPHP** | Nothing (simulation only) | 0 |
-| Mainnet | USDC | Circle USD reserves | 1 USD |
-| Mainnet | GovPHP | Peso deposits at custodian bank | 1 peso |
-| Mainnet | EURC | Circle EUR reserves | 1 EUR |
+| Environment | Token | Backing | Why |
+|-------------|-------|---------|-----|
+| Testnet | **pPHP** | Nothing (simulation) | Unlimited mint — bypass Friendbot 10K XLM limit |
+| Mainnet | USDC | Circle USD reserves | Stablecoin, 1:1 USD backing |
+| Mainnet | XLM | Stellar network value | Native asset, liquid |
+| Mainnet | GovPHP | Peso deposits at custodian bank | If government issues a PHP-backed token |
+| Mainnet | EURC | Circle EUR reserves | For EU-funded projects |
 
-The escrow is a **lockbox** — its job is to hold tokens until gates pass, then release them. The token provides the value. On testnet we use a valueless token to prove the lockbox works. On mainnet we plug in a real one. The same Rust binary runs unchanged.
+The same escrow Rust binary runs unchanged on both networks. Only the `token_address` parameter changes.
 
 ### RPT Token (Citizen Reporting Credential)
 
