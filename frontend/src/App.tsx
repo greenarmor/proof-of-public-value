@@ -40,7 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/auditor", label: "Auditor", icon: "📊", roles: ["Auditor", "CommissionOnAudit", "Administrator"], group: "oversight" },
   { to: "/compliance", label: "Compliance", icon: "⚖️", roles: ["Auditor", "CommissionOnAudit", "Administrator"], group: "oversight" },
   { to: "/anticorruption", label: "Anti-Corruption", icon: "🛡️", roles: ["AntiCorruptionAgency", "Administrator"], group: "oversight" },
-  { to: "/ai", label: "AI Oracle", icon: "🤖", roles: ["AIAuditor", "Administrator"], group: "oversight" },
+  { to: "/ai", label: "AI Monitor", icon: "🤖", group: "public" },
 
   { to: "/funder", label: "Funding Agency", icon: "💰", roles: ["FundingAgency", "Administrator"], group: "finance" },
   { to: "/donor", label: "Int'l Donor", icon: "🌍", roles: ["InternationalDonor", "Administrator"], group: "finance" },
@@ -279,7 +279,7 @@ function App() {
               <Route path="/engineer" element={<ProtectedRoute element={<EngineerPanel />} roles={["Engineer", "Administrator"]} />} />
               <Route path="/auditor" element={<ProtectedRoute element={<AuditorDashboard />} roles={["Auditor", "CommissionOnAudit", "Administrator"]} />} />
               <Route path="/procurement" element={<ProtectedRoute element={<ProcurementMarketplace />} roles={["GovernmentAgency", "Administrator"]} />} />
-              <Route path="/ai" element={<ProtectedRoute element={<AIDashboard />} roles={["AIAuditor", "Administrator"]} />} />
+              <Route path="/ai" element={<AIDashboard />} />
               <Route path="/compliance" element={<ProtectedRoute element={<ComplianceDashboard />} roles={["Auditor", "CommissionOnAudit", "Administrator"]} />} />
               <Route path="/inspector" element={<ProtectedRoute element={<InspectorPanel />} roles={["Inspector", "Administrator"]} />} />
               <Route path="/supplier" element={<ProtectedRoute element={<SupplierPortal />} roles={["Supplier", "Administrator"]} />} />
