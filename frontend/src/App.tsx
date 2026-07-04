@@ -132,12 +132,16 @@ function Header() {
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
             {/* Landing page nav — hidden when wallet connected */}
-            {!connected && landingItems.map(item => (
-              <NavLink key={item.to} to={item.to}
-                className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`}>
+            {!connected && landingItems.map(item => {
+              const sectionId = item.to.split("#")[1];
+              return (
+              <button key={item.to}
+                onClick={() => document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="nav-link nav-link-inactive">
                 <span className="mr-1">{item.icon}</span>{item.label}
-              </NavLink>
-            ))}
+              </button>
+              );
+            })}
             {/* Public nav — always visible */}
             {publicItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.to === "/"}
@@ -237,12 +241,16 @@ function Header() {
           <nav className="px-4 py-3 space-y-4">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Public</p>
-              {!connected && landingItems.map(item => (
-                <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
+              {!connected && landingItems.map(item => {
+                const sectionId = item.to.split("#")[1];
+                return (
+                <button key={item.to}
+                  onClick={() => { setMobileOpen(false); document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 w-full text-left">
                   <span>{item.icon}</span><span>{item.label}</span>
-                </NavLink>
-              ))}
+                </button>
+                );
+              })}
               {publicItems.map(item => (
                 <NavLink key={item.to} to={item.to} end={item.to === "/"} onClick={() => setMobileOpen(false)}
                   className={({ isActive }) => `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`}>
