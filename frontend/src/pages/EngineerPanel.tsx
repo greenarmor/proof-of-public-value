@@ -1,9 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
+import { Client as EscrowClient } from "../contracts/escrow/src";
+import { formatAddress, formatBudget, statusToString } from "../helpers";
+
+interface MilestoneData {
+  id: number; pvoId: number; pvoTitle: string;
+  title: string; description: string; budget: string; status: string;
+  submitted_evidence: any[]; engineer_approved: boolean;
+}
+
+interface EscrowData {
+  id: number; pvoId: number; milestoneId: number;
+  amount: number; status: string; engineerApproval: boolean;
+}
+
+type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function EngineerPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"review" | "approve" | "notes">("review");
+  const [activeTab, setActiveTab] = useState<"pending" | "approved" | "all">("pending");
 
   if (!connected) {
     return (
@@ -19,132 +36,400 @@ export function EngineerPanel() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Engineer & Inspector Panel</h1>
-      <p className="text-gray-500 mb-6">Review submitted evidence, approve milestones, and submit inspection reports.</p>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Engineer Panel</h1>
+      <p className="text-gray-500 mb-6">Review submitted evidence and approve milestones on-chain.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["review", "approve", "notes"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+        {(["pending", "approved", "all"] as const).map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab === "review" && "🔍 Pending Evidence"}
-            {tab === "approve" && "✅ Approve Milestones"}
-            {tab === "notes" && "📝 Field Notes"}
+            }`}>
+            {tab === "pending" && "🔍 Pending Reviews"}
+            {tab === "approved" && "✅ Approved"}
+            {tab === "all" && "📋 All PVOs"}
           </button>
         ))}
       </div>
 
-      {activeTab === "review" && <ReviewEvidence />}
-      {activeTab === "approve" && <ApproveMilestones />}
-      {activeTab === "notes" && <FieldNotes />}
+      {activeTab === "pending" && <PendingReviews address={address!} />}
+      {activeTab === "approved" && <ApprovedMilestones address={address!} />}
+      {activeTab === "all" && <AllPVOs />}
     </div>
   );
 }
 
-function ReviewEvidence() {
-  const items = [
-    { id: 3, pvoId: 1, milestoneId: 2, type: "DroneImagery", hash: "hash123", metadata: "drone flyover", submitted: "Jul 3, 2026" },
-    { id: 4, pvoId: 1, milestoneId: 2, type: "GpsCoordinates", hash: "gps456", metadata: "site coords", submitted: "Jul 3, 2026" },
-  ];
+function PendingReviews({ address }: { address: string }) {
+  const [milestones, setMilestones] = useState<MilestoneData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const countResult = await pvoClient.get_pvo_count();
+      const count = Number(countResult.result);
+      const all: MilestoneData[] = [];
+
+      for (let i = 1; i <= count; i++) {
+        try {
+          const pvoResult = await pvoClient.get_pvo({ pvo_id: i });
+          if (!pvoResult.result) continue;
+          const pvo = pvoResult.result as any;
+          const pvoTitle = pvo.title;
+
+          const mResult = await pvoClient.get_pvo_milestones({ pvo_id: i });
+          const chainMilestones = (mResult.result || []) as any[];
+          for (const m of chainMilestones) {
+            // Show milestones that have evidence but aren't engineer-approved yet
+            if (!m.engineer_approved && m.submitted_evidence && m.submitted_evidence.length > 0) {
+              all.push({
+                id: Number(m.id),
+                pvoId: i,
+                pvoTitle,
+                title: m.title,
+                description: m.description,
+                budget: String(m.budget),
+                status: statusToString(m.status),
+                submitted_evidence: m.submitted_evidence,
+                engineer_approved: m.engineer_approved,
+              });
+            }
+          }
+        } catch {}
+      }
+      setMilestones(all);
+    } catch (e) {
+      console.error("Failed to load milestones:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) {
+    return <div className="space-y-4">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-36" />)}</div>;
+  }
+
+  if (milestones.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">🔍</div>
+        <h3 className="font-semibold text-gray-700 mb-1">No pending reviews</h3>
+        <p className="text-sm text-gray-400">Milestones with submitted evidence will appear here for your approval.</p>
+      </div>
+    );
+  }
+
+  const currency = getCurrency();
 
   return (
     <div className="space-y-4">
-      {items.map((item) => (
-        <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-gray-900">Evidence #{item.id}</h3>
-              <p className="text-sm text-gray-500">PVO #{item.pvoId} · Milestone #{item.milestoneId}</p>
-            </div>
-            <span className="px-2 py-1 text-xs font-medium rounded bg-yellow-50 text-yellow-700">Pending Review</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-gray-500">Type:</span> {item.type.replace(/([A-Z])/g, " $1").trim()}</div>
-            <div><span className="text-gray-500">Hash:</span> <code className="text-xs">{item.hash}</code></div>
-            <div><span className="text-gray-500">Metadata:</span> {item.metadata}</div>
-            <div><span className="text-gray-500">Submitted:</span> {item.submitted}</div>
-          </div>
-          <div className="flex gap-3 mt-4 pt-3 border-t border-gray-100">
-            <button className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">Approve</button>
-            <button className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700">Reject</button>
-          </div>
-        </div>
-      ))}
-      {items.length === 0 && <div className="text-center py-10 text-gray-400">No evidence pending review.</div>}
-    </div>
-  );
-}
-
-function ApproveMilestones() {
-  const milestones = [
-    { id: 2, pvoId: 1, title: "Site Preparation", status: "EvidenceSubmitted", evidence: "2/2 required", confirmations: 2 },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {milestones.map((m) => (
-        <div key={m.id} className="bg-white border border-gray-200 rounded-lg p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-gray-900">{m.title}</h3>
-              <p className="text-sm text-gray-500">PVO #{m.pvoId} · Milestone #{m.id}</p>
-            </div>
-            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-50 text-blue-700">{m.status.replace(/([A-Z])/g, " $1").trim()}</span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 mb-4">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">5-Gate Progress</span>
-                <span className="font-medium text-gray-700">5/5 complete</span>
-              </div>
-              <div className="mt-2 flex gap-1">
-                {["Engineer", "AI", "Compliance", "Community", "Ready"].map((gate, i) => (
-                  <div key={gate} className="flex-1">
-                    <div className="h-2 bg-green-500 rounded-full" />
-                    <span className="text-[10px] text-gray-400 mt-0.5 block text-center">{gate}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <button className="w-full py-2.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">
-            Engineer Approve Milestone #{m.id}
-          </button>
-        </div>
+      {milestones.map(m => (
+        <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} />
       ))}
     </div>
   );
 }
 
-function FieldNotes() {
-  const [notes, setNotes] = useState("");
-  const [pvoId, setPvoId] = useState("");
+function MilestoneReviewCard({ milestone, currency, address, onAction }: {
+  milestone: MilestoneData; currency: string; address: string; onAction: () => void;
+}) {
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+
+  const handleApprove = async () => {
+    setTxState("preparing");
+    setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      // Find the escrow for this milestone
+      const escrowsResult = await escrowClient.get_escrows_by_pvo({ pvo_id: milestone.pvoId });
+      const escrows = (escrowsResult.result || []) as any[];
+      const escrow = escrows.find((e: any) => Number(e.milestone_id) === milestone.id);
+
+      if (!escrow) {
+        setTxState("error");
+        setTxMsg("No escrow found for this milestone. Create one first.");
+        return;
+      }
+
+      const escrowId = Number(escrow.id);
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.escrow);
+
+      const op = contract.call("engineer_approve",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(escrowId),
+      );
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+
+      setTxState("done");
+      setTxMsg("Engineer approved on escrow. Gate 2 passed!");
+      setTimeout(() => onAction(), 3000);
+    } catch (err: any) {
+      setTxState("error");
+      setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
+    }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
-      <h2 className="text-lg font-semibold mb-4">Submit Field Notes</h2>
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label>
-          <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required />
+    <div className="card p-5">
+      {txMsg && (
+        <div className={`mb-3 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
         </div>
+      )}
+
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" rows={5}
-            placeholder="Site inspection findings, observations, recommendations..." required />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-slate-400 font-mono">PVO #{milestone.pvoId}</span>
+            <span className="text-xs text-slate-300">·</span>
+            <span className="text-xs text-slate-400">Milestone #{milestone.id}</span>
+          </div>
+          <h3 className="font-semibold text-gray-900">{milestone.title}</h3>
+          <p className="text-sm text-gray-500">{milestone.description}</p>
         </div>
-        <button type="submit" className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-          Submit Field Notes
+        <span className="badge badge-amber">{milestone.status}</span>
+      </div>
+
+      <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+        <span>Budget: {currency}{(Number(milestone.budget) / 100).toLocaleString()}</span>
+        <span>·</span>
+        <span>{milestone.submitted_evidence.length} evidence items</span>
+      </div>
+
+      {/* Evidence previews */}
+      {milestone.submitted_evidence.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted Evidence</p>
+          {milestone.submitted_evidence.slice(0, 3).map((ev: any, i: number) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-700">{statusToString(ev.evidence_type)}</span>
+                <span className={`badge ${ev.verified ? "badge-green" : "badge-amber"} text-[10px]`}>{ev.verified ? "Verified" : "Pending"}</span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono mt-1">{ev.data_hash ? ev.data_hash.slice(0, 30) + "..." : "No IPFS hash"}</p>
+              {ev.metadata && <p className="text-xs text-gray-400 mt-0.5">{ev.metadata}</p>}
+            </div>
+          ))}
+          {milestone.submitted_evidence.length > 3 && (
+            <p className="text-xs text-gray-400">+ {milestone.submitted_evidence.length - 3} more items</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-3 pt-3 border-t border-gray-100">
+        <button onClick={handleApprove} disabled={busy}
+          className="btn-primary text-sm px-4 py-2">
+          {busy ? "Signing..." : "✓ Engineer Approve (Gate 2)"}
         </button>
-      </form>
+        {busy && <span className="text-xs text-purple-600 self-center animate-pulse">Check Freighter...</span>}
+      </div>
+    </div>
+  );
+}
+
+function ApprovedMilestones({ address }: { address: string }) {
+  const [escrows, setEscrows] = useState<EscrowData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const countResult = await client.get_escrow_count();
+        const count = Number(countResult.result);
+        const all: EscrowData[] = [];
+        for (let i = 1; i <= count; i++) {
+          try {
+            const result = await client.get_escrow({ escrow_id: i });
+            if (result.result) {
+              const e = result.result as any;
+              if (e.conditions.engineer_approval === true) {
+                all.push({
+                  id: Number(e.id),
+                  pvoId: Number(e.pvo_id),
+                  milestoneId: Number(e.milestone_id),
+                  amount: Number(e.amount),
+                  status: statusToString(e.status),
+                  engineerApproval: true,
+                });
+              }
+            }
+          } catch {}
+        }
+        all.sort((a: any, b: any) => b.id - a.id);
+        setEscrows(all);
+      } catch (e) {
+        console.error("Failed to load approved escrows:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [address]);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (escrows.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">✅</div>
+        <h3 className="font-semibold text-gray-700 mb-1">No approved milestones yet</h3>
+        <p className="text-sm text-gray-400">Milestones you approve will appear here.</p>
+      </div>
+    );
+  }
+
+  const currency = getCurrency();
+
+  return (
+    <div className="space-y-3">
+      {escrows.map(e => (
+        <div key={e.id} className="card p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-mono">Escrow #{e.id}</span>
+                <span className="text-xs text-slate-300">·</span>
+                <span className="text-xs text-slate-400">PVO #{e.pvoId}</span>
+                <span className="text-xs text-slate-300">·</span>
+                <span className="text-xs text-slate-400">Milestone #{e.milestoneId}</span>
+              </div>
+              <p className="font-medium text-gray-900">{currency}{(e.amount / 100).toLocaleString()}</p>
+            </div>
+            <span className="badge badge-green">Engineer Approved</span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Status: {e.status}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AllPVOs() {
+  const [pvos, setPvos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<any>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_pvo_count();
+        const list: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_pvo({ pvo_id: i });
+            if (r.result) list.push(r.result);
+          } catch {}
+        }
+        setPvos(list);
+      } catch (e) {
+        console.error("Failed to load PVOs:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const loadMilestones = async (pvoId: number) => {
+    try {
+      const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const mResult = await client.get_pvo_milestones({ pvo_id: pvoId });
+      setMilestones((mResult.result || []) as any[]);
+    } catch {}
+  };
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (selected) {
+    return (
+      <div>
+        <button onClick={() => setSelected(null)} className="btn-ghost mb-4 text-sm">← Back to all PVOs</button>
+        <div className="card p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900">{selected.title}</h2>
+          <p className="text-sm text-gray-500 mt-1">{selected.description}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <div><p className="stat-label">Department</p><p className="text-sm font-medium">{selected.department}</p></div>
+            <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
+            <div><p className="stat-label">Status</p><span className="badge badge-blue">{statusToString(selected.status)}</span></div>
+            <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{(selected.milestones || []).length}</p></div>
+          </div>
+        </div>
+
+        <h3 className="font-semibold text-gray-900 mb-4">Milestones</h3>
+        <div className="space-y-3">
+          {milestones.map((m: any) => (
+            <div key={Number(m.id)} className="card p-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-medium text-gray-900">{m.title}</h4>
+                  <p className="text-xs text-gray-500 mt-0.5">{m.description}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Status: {statusToString(m.status)} · Engineer: {m.engineer_approved ? "✓" : "○"} · AI: {m.ai_validated ? "✓" : "○"} · Community: {Number(m.community_confirmations)}/{Number(m.community_required)}
+                  </p>
+                </div>
+                <span className="badge badge-purple">{statusToString(m.status)}</span>
+              </div>
+              {m.submitted_evidence && m.submitted_evidence.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-400">{m.submitted_evidence.length} evidence items</p>
+                </div>
+              )}
+            </div>
+          ))}
+          {milestones.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No milestones for this PVO.</p>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {pvos.map((pvo: any) => (
+        <div key={Number(pvo.id)} className="card p-5 hover:shadow-md cursor-pointer transition" onClick={() => { setSelected(pvo); loadMilestones(Number(pvo.id)); }}>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-mono">PVO #{Number(pvo.id)}</span>
+                <span className="text-xs text-slate-300">·</span>
+                <span className="text-xs text-slate-400">{pvo.department}</span>
+              </div>
+              <h3 className="font-semibold text-gray-900">{pvo.title}</h3>
+              <p className="text-sm text-gray-500">{pvo.municipality}</p>
+            </div>
+            <span className="badge badge-purple">{statusToString(pvo.status)}</span>
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+            <span>{currency}{formatBudget(String(pvo.total_budget))}</span>
+            <span>{(pvo.milestones || []).length} milestones</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
