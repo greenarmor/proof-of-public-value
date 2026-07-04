@@ -265,18 +265,76 @@ stellar contract invoke --source funding_agency --network testnet --send=yes \
 
 ---
 
-## Production Path (Mainnet)
+## Testnet vs Mainnet: Where Does the Value Come From?
 
-On mainnet, pPHP would be replaced by a real PHP-pegged asset:
+This is the most important concept to understand about the pPHP token.
 
-| Option | Description |
-|--------|-------------|
-| **GovPHP SAC token** | Government-issued Stellar Asset Credit token (requires BSP approval) |
-| **USDC** | Circle's stablecoin with FX conversion (available now) |
-| **EURC** | European stablecoin for international donor projects |
-| **XLM** | Native Stellar Lumens (volatile, but simplest for small projects) |
+### On Testnet (Current)
 
-The escrow's `token_address` field is asset-agnostic. Different PVOs can use different tokens without code changes.
+pPHP is a **simulation token**. It has no real-world value, no liquidity, and no peg to any currency. The Administrator mints it freely to fund testing.
+
+```
+Testnet pPHP
+  - Minted from nothing by the admin
+  - No collateral backing
+  - Cannot be converted to any other asset
+  - Exists only to test the escrow lock/unlock logic
+  - Worth: 0.00
+```
+
+This is fine for testing because we are validating **code**, not **settlement**. The escrow contract correctly calls `token::Client.transfer()`, tokens move between wallets, gates lock and unlock funds. The logic is proven.
+
+But if someone mints you 5 million pPHP on testnet, you cannot spend it anywhere. There is no exchange, no liquidity pool, no peg.
+
+### On Mainnet (Production)
+
+The escrow contract does not care which token it holds. The `token_address` parameter is a **plug**. You swap the testnet pPHP address for a mainnet token that already has real value:
+
+```
+Mainnet deployment
+  - token_address = USDC (backed by Circle's USD reserves)
+  - token_address = GovPHP (backed 1:1 by peso deposits at a custodian bank)
+  - token_address = EURC (backed by euro reserves)
+
+Same escrow code. Same 5 gates. Same lock/unlock logic.
+Only the token_address parameter changes.
+```
+
+### Why This Design Works
+
+The escrow is a **lockbox**, not a currency. Its job is to:
+1. Receive tokens from the funder
+2. Hold them until 5 independent gates pass
+3. Release them to the contractor (or refund to funder)
+
+The escrow does not need liquidity itself. The **token contract** provides the value. On testnet we use a worthless token to test the lockbox. On mainnet we plug in a real one.
+
+### Mainnet Token Options
+
+| Token | How It Is Backed | Liquidity | Best For |
+|-------|-----------------|-----------|----------|
+| **GovPHP SAC** | Government deposits real pesos at a custodian bank. Tokens minted 1:1 | Philippine banking network | All government infrastructure projects |
+| **USDC** | Circle holds USD reserves in cash and short-term treasuries | Every major crypto exchange | International donor-funded projects |
+| **EURC** | Circle holds EUR reserves | European exchanges | EU-funded development projects |
+| **XLM** | Native Stellar token (not pegged to anything) | All Stellar DEXs | Emergency fast-settlement projects (volatile) |
+
+None of these have anything to do with XLM as a backing asset. XLM is just the network's gas token. It pays for transaction fees but does not back any pegged asset on Stellar.
+
+### Deployment Switch
+
+Moving from testnet to mainnet requires only two changes in `frontend/src/config.ts`:
+
+```typescript
+// TESTNET (current)
+escrow: "CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6",  // escrow contract
+pphp: "CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6",  // simulation token
+
+// MAINNET (production)
+escrow: "<mainnet_escrow_contract_id>",
+pphp: "<real_asset_contract_id>",  // USDC, GovPHP, or EURC
+```
+
+No contract code changes. No escrow recompilation. The same Rust binary runs on mainnet with a different token address.
 
 ---
 

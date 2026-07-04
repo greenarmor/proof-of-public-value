@@ -12,7 +12,7 @@ The root cause: **public money is released based on signatures and paperwork, no
 
 **The Philippines is a primary case study.** From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.
 
-➡️ **Read: [Why PoPV Exists - The Philippine Corruption Crisis](philippines-corruption.md)**
+➡️ **Read: [Why PoPV idea Exists - The Philippine Corruption Crisis](philippines-corruption.md)**
 
 ## What PoPV Solves
 
@@ -54,6 +54,7 @@ escrow.release(funds, recipient);
 ### On-Chain Audit Trail
 
 Every decision is immutably recorded on Stellar:
+
 - **Who** approved (cryptographic address)
 - **What** they approved (milestone ID, evidence hash)
 - **When** (blockchain timestamp)
@@ -180,12 +181,14 @@ cd frontend && npx tsx e2e-test.ts
 ## Exercises
 
 ### Exercise 1: Explore Without Login
+
 1. Open the Public Transparency Portal
 2. Browse available projects - see budgets, status, value scores
 3. View the National Index with department rankings
 4. Use the Economic Memory search
 
 ### Exercise 2: Citizen Verification
+
 1. Connect the citizen wallet in Freighter
 2. Go to Citizen Interface → check RPT status
 3. Click "Create RPT Trustline" → sign in Freighter
@@ -195,6 +198,7 @@ cd frontend && npx tsx e2e-test.ts
 7. Check your reputation score
 
 ### Exercise 3: Full Payment Flow
+
 1. Create a PVO (Agency Dashboard)
 2. Define a milestone with evidence requirements
 3. Fund the escrow
@@ -204,6 +208,7 @@ cd frontend && npx tsx e2e-test.ts
 7. Verify audit trail entry is recorded
 
 ### Exercise 4: Admin Operations
+
 1. Assign roles to wallet addresses
 2. Mint RPT tokens to citizen wallets
 3. Check system health monitor

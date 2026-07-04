@@ -1,4 +1,4 @@
-# Why PoPV Exists: The Philippine Corruption Crisis
+# Why PoPV idea Exists: The Philippine Corruption Crisis
 
 > **"The Philippines has lost trillions of pesos to corruption - money meant for roads, schools, hospitals, and flood control that never materialized."**
 
