@@ -2,6 +2,15 @@
 
 use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, String, Symbol, Vec};
 
+// Cross-contract: import reputation client from its deployed WASM spec
+mod reputation_client {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/reputation.wasm"
+    );
+}
+
+use reputation_client::Client as ReputationClient;
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TenderStatus {
@@ -69,18 +78,20 @@ const TENDERS: Symbol = symbol_short!("TENDERS");
 const BIDS: Symbol = symbol_short!("BIDS");
 const TENDER_BIDS: Symbol = symbol_short!("TNDRBIDS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
+const REPUTATION: Symbol = symbol_short!("REP");
 
 #[contract]
 pub struct ProcurementMarket;
 
 #[contractimpl]
 impl ProcurementMarket {
-    pub fn initialize(env: Env) {
+    pub fn initialize(env: Env, reputation_address: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&COUNTER, &0u32);
+        storage.set(&REPUTATION, &reputation_address);
         storage.set(&INITIALIZED, &true);
     }
 
@@ -123,7 +134,6 @@ impl ProcurementMarket {
         price: i128,
         quality_score: u32,
         timeline_days: u32,
-        reputation_score: u32,
     ) -> u32 {
         contractor.require_auth();
 
@@ -131,6 +141,14 @@ impl ProcurementMarket {
         let tenders: Map<u32, Tender> = storage.get(&TENDERS).unwrap_or_else(|| Map::new(&env));
         let tender = tenders.get(tender_id).expect("tender not found");
         assert!(tender.status == TenderStatus::Open, "tender is not open");
+
+        // Pull real reputation score from the reputation contract (cross-contract call)
+        let reputation_address: Address = storage.get(&REPUTATION).expect("reputation not configured");
+        let reputation_client = ReputationClient::new(&env, &reputation_address);
+        let reputation_score: u32 = match reputation_client.get_reputation(&contractor) {
+            Some(record) => record.reputation_score,
+            None => 0,
+        };
 
         let price_score = if price > 0 {
             let discount = (tender.budget.saturating_sub(price).saturating_mul(50_i128)) / tender.budget;

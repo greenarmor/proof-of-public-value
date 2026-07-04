@@ -114,7 +114,6 @@ function SubmitBidTab({ address }: { address: string }) {
   const [price, setPrice] = useState("");
   const [qualityScore, setQualityScore] = useState("80");
   const [timelineDays, setTimelineDays] = useState("90");
-  const [reputationScore, setReputationScore] = useState("50");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
@@ -156,7 +155,6 @@ function SubmitBidTab({ address }: { address: string }) {
         new ScInt(priceAmt).toI128(),
         xdr.ScVal.scvU32(Number(qualityScore)),
         xdr.ScVal.scvU32(Number(timelineDays)),
-        xdr.ScVal.scvU32(Number(reputationScore)),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -218,22 +216,16 @@ function SubmitBidTab({ address }: { address: string }) {
             <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/100) × 30</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Timeline (days)</label>
-            <input type="number" value={timelineDays} onChange={(e) => setTimelineDays(e.target.value)} className="input" placeholder="90" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Reputation Score (0-100)</label>
-            <input type="number" value={reputationScore} onChange={(e) => setReputationScore(e.target.value)} className="input" min="0" max="100" placeholder="50" />
-            <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/100) × 20</p>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Timeline (days)</label>
+          <input type="number" value={timelineDays} onChange={(e) => setTimelineDays(e.target.value)} className="input" placeholder="90" />
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-700">
-            <strong>Contract scoring formula:</strong> The contract computes:
-            <code>Price (discount% × 50) + Quality (score/100 × 30) + Timeline (100 - days×10, max 20) + Integrity (score/100 × 20)</code>.
-            All inputs are on a 0–100 scale. The best bid wins when the agency calls <code>award_tender</code>.
+            <strong>Scoring (contract-enforced):</strong><br />
+            Price (discount% × 50) + Quality (self-reported, score/100 × 30) + Timeline (100 − days×10, max 20) + <strong>Integrity (from reputation contract, score/100 × 20)</strong>.<br />
+            Your on-chain reputation score is pulled automatically from the reputation contract.
+            Build your reputation by completing projects on time and within budget.
           </p>
         </div>
         <button type="submit" disabled={busy} className="btn-primary w-full py-3">

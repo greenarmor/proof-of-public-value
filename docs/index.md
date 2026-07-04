@@ -152,7 +152,7 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | `ai_oracle` | `CDR5...ID43` | 13 | 17 |
 | `public_index` | `CCN7...JG7J` | 7 | 7 |
 | `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
-| `procurement_market` | `CCPQ...JBW3` | 5 | 5 |
+| `procurement_market` | `CB4Q...TUDQ` | 5 | 5 |
 | `pPHP token` | `CA6U...FLE6` | 8 | 8 |
 | `grant_commitment` | `CCBX...FOZM` | 7 | 13 |
 

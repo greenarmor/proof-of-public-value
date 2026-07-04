@@ -1143,6 +1143,7 @@ dependencies = [
 name = "procurement_market"
 version = "0.1.0"
 dependencies = [
+ "reputation",
  "soroban-sdk",
 ]
 

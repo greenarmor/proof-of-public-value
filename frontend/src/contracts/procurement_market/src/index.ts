@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCPQYSIVVFOH6CAB5J3QMBZF6EOHJEIVQMZAPMFZCSWRMJRRUMWBJBW3",
+    contractId: "CB4QLZTS4ANWFGYYE6USGFGZ6JXXH7U7Y32CLHFYL2HIWC447LC6TUDQ",
   }
 } as const
 
@@ -78,12 +78,12 @@ export interface Client {
   /**
    * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: (options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  initialize: ({reputation_address}: {reputation_address: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a submit_bid transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  submit_bid: ({contractor, tender_id, price, quality_score, timeline_days, reputation_score}: {contractor: string, tender_id: u32, price: i128, quality_score: u32, timeline_days: u32, reputation_score: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+  submit_bid: ({contractor, tender_id, price, quality_score, timeline_days}: {contractor: string, tender_id: u32, price: i128, quality_score: u32, timeline_days: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
    * Construct and simulate a award_tender transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -130,8 +130,8 @@ export class Client extends ContractClient {
         "AAAABQAAAAAAAAAAAAAAElRlbmRlckF3YXJkZWRFdmVudAAAAAAAAQAAABR0ZW5kZXJfYXdhcmRlZF9ldmVudAAAAAMAAAAAAAAACXRlbmRlcl9pZAAAAAAAAAQAAAAAAAAAAAAAAAZ3aW5uZXIAAAAAABMAAAAAAAAAAAAAAAtmaW5hbF9zY29yZQAAAAAEAAAAAAAAAAI=",
         "AAAABQAAAAAAAAAAAAAAElRlbmRlckNyZWF0ZWRFdmVudAAAAAAAAQAAABR0ZW5kZXJfY3JlYXRlZF9ldmVudAAAAAMAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAAAAAAGYnVkZ2V0AAAAAAALAAAAAAAAAAI=",
         "AAAAAAAAAAAAAAAKZ2V0X3RlbmRlcgAAAAAAAQAAAAAAAAACaWQAAAAAAAQAAAABAAAD6AAAB9AAAAAGVGVuZGVyAAA=",
-        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAAAAAAA=",
-        "AAAAAAAAAAAAAAAKc3VibWl0X2JpZAAAAAAABgAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAAAAAAJdGVuZGVyX2lkAAAAAAAABAAAAAAAAAAFcHJpY2UAAAAAAAALAAAAAAAAAA1xdWFsaXR5X3Njb3JlAAAAAAAABAAAAAAAAAANdGltZWxpbmVfZGF5cwAAAAAAAAQAAAAAAAAAEHJlcHV0YXRpb25fc2NvcmUAAAAEAAAAAQAAAAQ=",
+        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAAScmVwdXRhdGlvbl9hZGRyZXNzAAAAAAATAAAAAA==",
+        "AAAAAAAAAAAAAAAKc3VibWl0X2JpZAAAAAAABQAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAAAAAAJdGVuZGVyX2lkAAAAAAAABAAAAAAAAAAFcHJpY2UAAAAAAAALAAAAAAAAAA1xdWFsaXR5X3Njb3JlAAAAAAAABAAAAAAAAAANdGltZWxpbmVfZGF5cwAAAAAAAAQAAAABAAAABA==",
         "AAAAAAAAAAAAAAAMYXdhcmRfdGVuZGVyAAAAAgAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAl0ZW5kZXJfaWQAAAAAAAAEAAAAAA==",
         "AAAAAAAAAAAAAAANY3JlYXRlX3RlbmRlcgAAAAAAAAUAAAAAAAAABmFnZW5jeQAAAAAAEwAAAAAAAAAFdGl0bGUAAAAAAAAQAAAAAAAAAAtkZXNjcmlwdGlvbgAAAAAQAAAAAAAAAAZidWRnZXQAAAAAAAsAAAAAAAAACGRlYWRsaW5lAAAABgAAAAEAAAAE",
         "AAAAAAAAAAAAAAAQZ2V0X3RlbmRlcl9jb3VudAAAAAAAAAABAAAABA==",
