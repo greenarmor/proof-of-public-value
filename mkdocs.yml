@@ -58,6 +58,7 @@ nav:
   - Approving Milestones: approving-milestones.md
   - Community Verification: community-verification.md
   - Audit Trail: audit-trail.md
+  - Role Guide: role-guide.md
   - Appendices:
       - Escrow Deep Dive: escrow-deep-dive.md
       - pPHP Token: pphp-token.md

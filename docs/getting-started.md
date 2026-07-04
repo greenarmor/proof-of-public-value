@@ -30,6 +30,8 @@ Every infrastructure project has exactly one PVO.
 
 PoPV uses 13 roles. Different roles can do different things:
 
+➡️ **See the [Role Guide](role-guide.md)** for detailed information about each role's dashboard, contracts, and capabilities.
+
 | Role | What They Do |
 |------|-------------|
 | Administrator | Manage role assignments, system config |
