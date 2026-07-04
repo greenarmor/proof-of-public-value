@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
+import { Client as GrantClient } from "../contracts/grant_commitment/src";
 
 type EscrowStatus =
   | "Created" | "Funded" | "EngineerApproved" | "AIValidated"
@@ -56,7 +57,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function FunderDashboard() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"escrows" | "create" | "guide">("escrows");
+  const [activeTab, setActiveTab] = useState<"escrows" | "commitments" | "create" | "guide">("escrows");
   const [escrows, setEscrows] = useState<EscrowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -118,12 +119,13 @@ export function FunderDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
-        {(["escrows", "create", "guide"] as const).map((tab) => (
+        {(["escrows", "commitments", "create", "guide"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
             {tab === "escrows" && `🔒 Escrows (${escrows.length})`}
+            {tab === "commitments" && "🌍 Donor Commitments"}
             {tab === "create" && "➕ Create Escrow"}
             {tab === "guide" && "📖 How It Works"}
           </button>
@@ -131,6 +133,7 @@ export function FunderDashboard() {
       </div>
 
       {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} />}
+      {activeTab === "commitments" && <DonorCommitmentsTab />}
       {activeTab === "create" && <CreateEscrowForm address={address!} onCreated={refresh} />}
       {activeTab === "guide" && <EscrowGuide />}
     </div>
@@ -455,6 +458,108 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
             {busy ? "Creating..." : "Create Escrow"}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function DonorCommitmentsTab() {
+  const currency = getCurrency();
+  const [grants, setGrants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new GrantClient({
+          contractId: CONTRACT_IDS.grant_commitment,
+          networkPassphrase: NETWORK_PASSPHRASE,
+          rpcUrl: RPC_URL,
+        });
+        const result = await client.get_all_grants();
+        const chainGrants = result.result || [];
+        setGrants(chainGrants);
+      } catch (e) {
+        console.error("Failed to load donor commitments:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const statusTag = (s: any): string => {
+    if (s && typeof s === "object" && s.tag) return s.tag;
+    if (typeof s === "string") return s;
+    return "Unknown";
+  };
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (grants.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">📋</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No donor commitments yet</h3>
+        <p className="text-sm text-slate-400">When international donors commit grant funding, their pledges appear here.</p>
+      </div>
+    );
+  }
+
+  const totalPledged = grants.reduce((s: number, g: any) => s + Number(g.amount), 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="card p-4 bg-brand-50 border-brand-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="stat-label">Total Donor Pledges</p>
+            <p className="stat-value text-brand-600">{currency}{(totalPledged / 100 / 1_000_000).toFixed(1)}M</p>
+          </div>
+          <div className="text-right">
+            <p className="stat-label">Active Grants</p>
+            <p className="stat-value text-slate-900">{grants.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {grants.map((g: any) => {
+          const status = statusTag(g.status);
+          const colorClass = status === "Completed" ? "badge-green" :
+            status === "Disbursed" ? "badge-blue" :
+            status === "Cancelled" ? "badge-red" : "badge-purple";
+          return (
+            <div key={Number(g.id)} className="card p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-slate-400">{g.org_name}</span>
+                    <span className="text-xs text-slate-300">·</span>
+                    <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
+                  <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / 100).toLocaleString()}</p>
+                  <p className="text-xs text-slate-400 mt-1">Donor: {formatAddress(g.donor, 6)}</p>
+                </div>
+                <span className={`badge ${colorClass}`}>{status}</span>
+              </div>
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                {status === "Committed" && (
+                  <p className="text-xs text-slate-500">Ready for disbursement. Create an escrow to fund this PVO.</p>
+                )}
+                {status === "Disbursed" && (
+                  <p className="text-xs text-blue-600">Funds disbursed into escrow.</p>
+                )}
+                {status === "Completed" && (
+                  <p className="text-xs text-emerald-600">Grant fully completed.</p>
+                )}
+                {status === "Cancelled" && (
+                  <p className="text-xs text-red-500">Grant cancelled by donor.</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

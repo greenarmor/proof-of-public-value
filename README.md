@@ -31,8 +31,9 @@ National Budget → PVO → Milestones → Evidence Collection
 | `public_index` | `CCN74K6E6NKEXMT2U5Y3JQ5RYCDP2MYBV3OJG4PSUH2WUNFRXHNSJG7J` | 9.1 KB | 7 | 7 |
 | `compliance_engine` | `CCRSE76TWXO6TPEWMBKT2577AVYPKKNF5LSWUGUFXKA5XQGPFFZMGRTD` | 7.6 KB | 8 | 8 |
 | `procurement_market` | `CCPQYSIVVFOH6CAB5J3QMBZF6EOHJEIVQMZAPMFZCSWRMJRRUMWBJBW3` | 10.8 KB | 5 | 5 |
+| `grant_commitment` | `CCBXEOHTCHQDO57I5UA7XJKLHBGOUEPUNE6I4AEJ4GSHO6QDA2GIFOZM` | 8.0 KB | 7 | 13 |
 
-**Total: 154 tests, 114 functions, ~131 KB WASM**
+**Total: 167 tests, 121 functions, ~139 KB WASM**
 
 ---
 
@@ -164,7 +165,8 @@ stellar/
 │   ├── ai_oracle/         # AI fraud/risk/image analysis
 │   ├── public_index/      # National department rankings
 │   ├── compliance_engine/ # Auto-pause on violations
-│   └── procurement_market/# Integrity-weighted bidding
+│   ├── procurement_market/# Integrity-weighted bidding
+│   └── grant_commitment/ # Donor pledge recording
 ├── frontend/              # React + TypeScript (18 dashboards, 13 role-based + 3 public + admin + 2 finance)
 ├── mobile/                # Flutter (11 screens)
 ├── services/event-indexer/# Stellar event monitoring

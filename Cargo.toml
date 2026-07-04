@@ -18,6 +18,7 @@ ai_oracle = { path = "contracts/ai_oracle" }
 public_index = { path = "contracts/public_index" }
 compliance_engine = { path = "contracts/compliance_engine" }
 procurement_market = { path = "contracts/procurement_market" }
+grant_commitment = { path = "contracts/grant_commitment" }
 
 [profile.release]
 opt-level = "z"

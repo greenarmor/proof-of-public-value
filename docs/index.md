@@ -71,6 +71,18 @@ The escrow is a **lockbox**, not a currency. Its job is to hold tokens until 5 g
 ??? info "Want the full details?"
     See **[Appendix B: pPHP Token & Escrow Settlement](pphp-token.md)** for mint/balance CLI exercises, the full escrow lifecycle with real token transfers, and the complete testnet-vs-mainnet value model explanation.
 
+### International Donor Commitments
+
+International donors (World Bank, JICA, USAID, etc.) follow a **commit then disburse** model, just like in real development finance:
+
+1. **Commit** - The donor records a pledge on-chain via the `grant_commitment` contract. This records the organization name, PVO ID, amount, and donor address. **No tokens move.** It is a public, immutable promise.
+
+2. **Disburse** - When the funding agency is ready, they create an escrow for the PVO and fund it with real tokens. The donor marks the commitment as "Disbursed."
+
+3. **Complete** - After the escrow releases funds through all 5 gates, the donor marks the commitment as "Completed."
+
+The funding agency dashboard has a **Donor Commitments** tab that shows all pledges. This lets the agency see which donors have committed to which projects before creating escrows.
+
 ### On-Chain Audit Trail
 
 Every decision is immutably recorded on Stellar:
@@ -116,6 +128,11 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 │  │public_index  │  │ compliance_  │  │ procurement_     │  │
 │  │Nat'l Rankings│  │ engine       │  │ market           │  │
 │  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  grant_commitment                                     │   │
+│  │  International donor pledges (Committed -> Disbursed) │   │
+│  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -137,8 +154,9 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
 | `procurement_market` | `CCPQ...JBW3` | 5 | 5 |
 | `pPHP token` | `CA6U...FLE6` | 8 | 8 |
+| `grant_commitment` | `CCBX...FOZM` | 7 | 13 |
 
-**170 tests, all passing. 0 npm vulnerabilities.**
+**183 tests, all passing. 0 npm vulnerabilities.**
 
 ---
 
