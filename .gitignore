@@ -1,32 +1,28 @@
+
+.aim
 .dev-logs/
-
+.DS_Store
+.env
+.env.local
+.idea/
+.stellar/history/
+.vscode/
+*.swo
+*.swp
 # Dependencies
-node_modules/
-
+# Docs build
+# Env
+# Frontend
+# IDE
+# MkDocs
 # Rust
+# Stellar
+frontend/dist/
+frontend/node_modules/
+node_modules/
+site/
 target/
 test_snapshots/
 
-# Stellar
-.stellar/history/
-
-# MkDocs
-site/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-
-# Env
-.env
-.env.local
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-
-# Docs build
-site/
+# AI service
+.aim
