@@ -212,7 +212,7 @@ function CreatePVOForm({ address }: { address: string }) {
   const currency = getCurrency();
 
   return (
-    <div className="card p-6 max-w-2xl">
+    <div className="card p-4 md:p-6 max-w-2xl mx-auto">
       <h2 className="text-lg font-semibold mb-2 text-gray-900">Create New PVO</h2>
       <p className="text-sm text-gray-500 mb-4">Creates a Public Value Object on the pvo_core contract. This is the first step in the project lifecycle.</p>
 
@@ -241,7 +241,7 @@ function CreatePVOForm({ address }: { address: string }) {
               <p className="text-[10px] text-slate-400 mt-0.5">Longitude</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
             <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} className="input" placeholder="DPWH" required />
@@ -252,7 +252,7 @@ function CreatePVOForm({ address }: { address: string }) {
           </div>
         </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="10000000000" required />
@@ -376,7 +376,7 @@ function CreateMilestoneForm({ address }: { address: string }) {
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="card p-6 max-w-2xl">
+    <div className="card p-4 md:p-6 max-w-2xl mx-auto">
       <h2 className="text-lg font-semibold mb-2 text-gray-900">Define Milestone</h2>
       <p className="text-sm text-gray-500 mb-4">Creates a milestone on the pvo_core contract. Each milestone will later have an escrow for payment.</p>
 
@@ -387,7 +387,7 @@ function CreateMilestoneForm({ address }: { address: string }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">Search PVO</label>
             <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
