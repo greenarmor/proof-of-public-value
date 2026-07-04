@@ -274,6 +274,36 @@ Inspector visits site → submits InspectionReport → AUDIT TRAIL EXISTS
 
 The inspector's report is **evidence**, not a gate. It documents what the inspector found so that if the engineer wrongly approves, there's a permanent on-chain record proving otherwise.
 
+### Engineer Reputation & Accountability
+
+The engineer's **reputation score** is visible on their dashboard. It tracks their professional integrity on-chain:
+
+```
+Engineer approves Gate 2 → escrow proceeds
+    │
+Inspector submits contradicting report → Audit trail created
+    │
+Auditor flags engineer via record_audit_finding(engineer, severity) → −5×severity from reputation
+    │
+Engineer's reputation drops → visible on their dashboard
+    │
+Future contractors see low-reputation engineer → less likely to hire
+```
+
+**How to penalize an engineer (Auditor action):**
+
+```bash
+# Auditor calls reputation contract to dock engineer's score
+stellar contract invoke --source auditor --network testnet --send=yes \
+  --id CACWGE2KH37SNHJOMXRMGAXYGWDT7HX7XDF7O5PE36DTDJO2C4OJ4ADN \
+  -- record_audit_finding \
+  --caller GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7 \
+  --entity GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN \
+  --severity 5
+```
+
+This creates a permanent record of the finding and reduces the engineer's score by 25 points (severity 5 × 5). The penalty is visible in the engineer's reputation badge on their dashboard and in all reputation queries.
+
 ---
 
 ### Auditor

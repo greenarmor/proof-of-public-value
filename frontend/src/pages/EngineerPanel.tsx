@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
+import { Client as ReputationClient } from "../contracts/reputation/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 
 interface MilestoneData {
@@ -21,6 +22,18 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 export function EngineerPanel() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"pending" | "approved" | "all">("pending");
+  const [reputation, setReputation] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!address) return;
+    (async () => {
+      try {
+        const client = new ReputationClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const r = await client.get_reputation({ entity: address });
+        if (r.result) setReputation(Number(r.result.reputation_score));
+      } catch {}
+    })();
+  }, [address]);
 
   if (!connected) {
     return (
@@ -37,9 +50,16 @@ export function EngineerPanel() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Engineer Panel</h1>
-      <p className="text-gray-500 mb-6">Review submitted evidence and approve milestones on-chain.</p>
+      <div className="flex items-center gap-3 mb-2">
+        <p className="text-gray-500">Review submitted evidence and approve milestones on-chain.</p>
+        {reputation !== null && (
+          <span className={`badge text-xs ${reputation >= 80 ? "badge-green" : reputation >= 50 ? "badge-amber" : "badge-red"}`}>
+            🛡️ Reputation: {reputation}/100
+          </span>
+        )}
+      </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-4 border-b border-gray-200">
         {(["pending", "approved", "all"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
