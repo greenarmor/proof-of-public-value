@@ -86,7 +86,7 @@ export default function CitizenReportForm() {
   };
 
   return (
-    <div className="card p-6 max-w-lg">
+    <div className="card p-4 md:p-6 max-w-lg mx-auto">
       <h2 className="text-lg font-semibold mb-4">Submit Community Report</h2>
       {message && (
         <div className={`mb-4 p-3 rounded-xl text-sm ${message.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
