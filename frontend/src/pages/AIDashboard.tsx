@@ -483,7 +483,22 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
 function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; currency: string; address: string; onAction: () => void }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [fraudFindings, setFraudFindings] = useState<any[]>([]);
   const escrowId = Number(escrow.id);
+  const pvoId = Number(escrow.pvo_id);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const r = await client.get_fraud_by_pvo({ pvo_id: pvoId });
+        setFraudFindings((r.result || []) as any[]);
+      } catch {}
+    })();
+  }, [pvoId]);
+
+  const highRiskFraud = fraudFindings.filter((f: any) => Number(f.risk_score) >= 50);
+  const aiVerdict = highRiskFraud.length > 0 ? false : true;  // fraud found → reject
 
   const handleGate = async () => {
     setTxState("preparing"); setTxMsg("");
@@ -493,14 +508,14 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
-      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(true));
+      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(aiVerdict));
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       setTxState("signing"); const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending"); const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg("AI verdict submitted! Gate 3 passed.");
+      setTxState("done"); setTxMsg(aiVerdict ? "AI verdict submitted! Gate 3 passed." : "AI verdict: REJECTED. Fraud detected on this PVO.");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
   };
@@ -528,6 +543,20 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
         </div>
         <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>
       </div>
+      {/* AI Fraud Findings — read from ai_oracle */}
+      {fraudFindings.length > 0 && (
+        <div className={`mb-4 p-3 rounded-lg text-sm ${aiVerdict ? "bg-slate-50 text-slate-600 border border-slate-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          <p className="font-medium mb-1">🤖 AI Analysis for PVO #{pvoId}:</p>
+          {fraudFindings.map((f: any, i: number) => (
+            <div key={i} className="flex items-center gap-2 text-xs mt-1">
+              <span>{Number(f.risk_score) >= 50 ? "🚨" : "⚠️"}</span>
+              <span>{(f.indicators || []).map((ind: any) => typeof ind === "string" ? ind : ind.tag).join(", ")}</span>
+              <span className="text-slate-400">{Number(f.confidence)}% confidence · Risk: {Number(f.risk_score)}/100</span>
+            </div>
+          ))}
+          <p className="text-xs mt-2 font-medium">{aiVerdict ? "✅ Verdict: Pass Gate 3" : "❌ Verdict: REJECT Gate 3 — fraud detected"}</p>
+        </div>
+      )}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {gates.map((gate, i) => (
           <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
@@ -539,7 +568,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
         <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/4 gates passed</span>
         <button onClick={() => handleGate()} disabled={busy}
           className="btn-primary text-xs px-4 py-2">
-          {busy ? "Signing..." : "🤖 Submit AI Verdict (Pass Gate 3)"}
+          {busy ? "Signing..." : aiVerdict ? "🤖 Submit AI Verdict (Pass Gate 3)" : "🚨 Reject Gate 3 — Fraud Detected"}
         </button>
         {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
       </div>
