@@ -244,6 +244,36 @@ Conducts field inspections independently from the engineer. While the engineer c
 !!! note "No escrow gate"
     The inspector does not have a dedicated gate in the escrow contract. They submit `InspectionReport` evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 2 on the escrow.
 
+### Engineer vs Inspector: The Check-and-Balance Pair
+
+In Philippine public works, these are two separate people from two separate organizations:
+
+| | Engineer (Consultant) | Inspector (DPWH / LGU) |
+|---|----------------------|------------------------|
+| **Employer** | Hired by contractor | Government employee |
+| **Sector** | Private | Public |
+| **What they verify** | Structural integrity, spec compliance | Physical conditions on site |
+| **Contract function** | `escrow.engineer_approve()` | `pvo_core.submit_evidence(InspectionReport)` |
+| **Escrow gate** | ✅ Gate 2 — **required for payment** | ❌ No gate — supporting evidence |
+| **Effect on money** | Blocks or releases funds | Documents conditions, no financial impact |
+| **Dashboard** | `/engineer` | `/inspector` |
+| **Conflict check** | Engineer is paid by contractor → potential bias | Inspector is independent → accountability layer |
+
+**Why both?** The engineer is paid by the contractor and signs off on payment release — a potential conflict of interest. The inspector works for the government and provides independent evidence. If an engineer approves shoddy work, the inspector's field report with photos creates an audit trail. The engineer can be penalized via the reputation contract for false approvals.
+
+**In the escrow flow:**
+
+```
+Contractor submits evidence
+    │
+Engineer reviews → approves Gate 2 → FUNDS CAN BE RELEASED
+    │                    │
+Inspector visits site → submits InspectionReport → AUDIT TRAIL EXISTS
+                         (doesn't block or release funds)
+```
+
+The inspector's report is **evidence**, not a gate. It documents what the inspector found so that if the engineer wrongly approves, there's a permanent on-chain record proving otherwise.
+
 ---
 
 ### Auditor
