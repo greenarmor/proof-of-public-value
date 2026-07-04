@@ -62,3 +62,4 @@ nav:
   - Appendices:
       - Escrow Deep Dive: escrow-deep-dive.md
       - pPHP Token: pphp-token.md
+      - AI Oracle: ai-oracle.md

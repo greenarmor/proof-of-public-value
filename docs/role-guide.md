@@ -417,10 +417,12 @@ Suppliers browse procurement tenders and submit bids on-chain. They participate 
 |-------|-------|
 | Alias | `ai_auditor` |
 | Route | `/ai` |
-| Dashboard | AI Monitor |
+| Dashboard | AI Monitor (public) |
 | Contracts | `ai_oracle` |
 
-Monitors the AI risk scoring system. The AI oracle checks for 8 fraud indicators including ghost projects, duplicate invoices, collusion patterns, and budget anomalies. This is **Gate 3** in the 5-gate escrow system.
+The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is **Gate 3** in the 5-gate escrow system.
+
+The dashboard is **public** — anyone can view AI findings at `/ai` without a wallet. See **[Appendix C: How the AI Oracle Works](ai-oracle.md)** for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.
 
 **Dashboard tabs:**
 
