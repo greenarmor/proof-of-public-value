@@ -51,6 +51,26 @@ if !evidence_submitted { return false; }
 escrow.release(funds, recipient);
 ```
 
+### Settlement Token: Testnet vs Mainnet
+
+The escrow uses a `token_address` parameter to specify which token to lock and release. This makes the escrow **asset-agnostic**.
+
+**On testnet**, PoPV uses **pPHP** (Philippine Peso Testnet), a custom Soroban token with unlimited mintable supply. It has no real-world value, no peg, and no liquidity. It exists purely to test the escrow lock/unlock logic with realistic peso amounts (millions) that would be impossible with Friendbot's 10K XLM limit.
+
+**On mainnet**, pPHP is replaced by a real backed asset. The same escrow code runs unchanged. Only the `token_address` parameter switches:
+
+| Environment | Token | Backing | Value |
+|-------------|-------|---------|-------|
+| Testnet | pPHP | Nothing (simulation) | 0 |
+| Mainnet | USDC | Circle USD reserves | 1 USD |
+| Mainnet | GovPHP | Peso deposits at custodian bank | 1 peso |
+| Mainnet | EURC | Circle EUR reserves | 1 EUR |
+
+The escrow is a **lockbox**, not a currency. Its job is to hold tokens until 5 gates pass, then release them. The token contract provides the value. On testnet we use a worthless token to prove the lockbox works. On mainnet we plug in a real one.
+
+??? info "Want the full details?"
+    See **[Appendix B: pPHP Token & Escrow Settlement](pphp-token.md)** for mint/balance CLI exercises, the full escrow lifecycle with real token transfers, and the complete testnet-vs-mainnet value model explanation.
+
 ### On-Chain Audit Trail
 
 Every decision is immutably recorded on Stellar:

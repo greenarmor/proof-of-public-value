@@ -12,6 +12,13 @@ Advanced exercises on the Dynamic Escrow contract.
 
 ---
 
+!!! info "Settlement Token"
+    The escrow contract transfers **real tokens** on fund, release, and refund. On testnet, we use **pPHP** (a simulation token with no real value). On mainnet, the same code uses a real backed asset like USDC or GovPHP. The `token_address` parameter controls which token is used.
+
+    See **[Appendix B: pPHP Token & Escrow Settlement](pphp-token.md)** for the full explanation of how value works on testnet vs mainnet.
+
+---
+
 ## Exercises
 
 ### Exercise A.1: Deploy and Initialize
