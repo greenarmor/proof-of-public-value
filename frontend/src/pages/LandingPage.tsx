@@ -138,10 +138,10 @@ export function LandingPage() {
               { step: "04", title: "Compliance", icon: "⚖️", desc: "Auditor checks procurement law and budget rules" },
               { step: "05", title: "Community", icon: "📸", desc: "Citizens submit GPS-tagged field reports" },
             ].map((gate, i) => (
-              <div key={i} className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+              <div key={i} className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="text-brand-500 font-mono text-xs mb-3 font-semibold">{gate.step}</div>
-                <div className="text-3xl mb-3">{gate.icon}</div>
+                <div className="text-3xl mb-3 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-50">{gate.icon}</div>
                 <h3 className="font-semibold text-slate-900 mb-2">{gate.title}</h3>
                 <p className="text-sm text-slate-500 leading-relaxed">{gate.desc}</p>
               </div>
