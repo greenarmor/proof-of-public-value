@@ -550,6 +550,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#settlement-token-testnet-vs-mainnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settlement Token: Testnet vs Mainnet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#on-chain-audit-trail" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1095,6 +1106,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#settlement-token-testnet-vs-mainnet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settlement Token: Testnet vs Mainnet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#on-chain-audit-trail" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1283,7 +1305,7 @@
 <p>Every year, governments lose <strong>$2.6 trillion to corruption</strong> - ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.</p>
 <p>The root cause: <strong>public money is released based on signatures and paperwork, not on proof that value was actually created.</strong> Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.</p>
 <p><strong>The Philippines is a primary case study.</strong> From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.</p>
-<p>➡️ <strong>Read: <a href="philippines-corruption/">Why PoPV Exists - The Philippine Corruption Crisis</a></strong></p>
+<p>➡️ <strong>Read: <a href="philippines-corruption/">Why PoPV idea Exists - The Philippine Corruption Crisis</a></strong></p>
 <h2 id="what-popv-solves">What PoPV Solves<a class="headerlink" href="#what-popv-solves" title="Permanent link">&para;</a></h2>
 <p>Proof of Public Value enforces one rule: <strong>No Proof. No Payment.</strong></p>
 <p>Every public project becomes a <strong>Public Value Object (PVO)</strong> - a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released <strong>only after passing 5 independent verification gates:</strong></p>
@@ -1338,13 +1360,60 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">// Release payment via Stellar rails</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">escrow</span><span class="p">.</span><span class="n">release</span><span class="p">(</span><span class="n">funds</span><span class="p">,</span><span class="w"> </span><span class="n">recipient</span><span class="p">);</span>
 </code></pre></div>
+<h3 id="settlement-token-testnet-vs-mainnet">Settlement Token: Testnet vs Mainnet<a class="headerlink" href="#settlement-token-testnet-vs-mainnet" title="Permanent link">&para;</a></h3>
+<p>The escrow uses a <code>token_address</code> parameter to specify which token to lock and release. This makes the escrow <strong>asset-agnostic</strong>.</p>
+<p><strong>On testnet</strong>, PoPV uses <strong>pPHP</strong> (Philippine Peso Testnet), a custom Soroban token with unlimited mintable supply. It has no real-world value, no peg, and no liquidity. It exists purely to test the escrow lock/unlock logic with realistic peso amounts (millions) that would be impossible with Friendbot's 10K XLM limit.</p>
+<p><strong>On mainnet</strong>, pPHP is replaced by a real backed asset. The same escrow code runs unchanged. Only the <code>token_address</code> parameter switches:</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Token</th>
+<th>Backing</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Testnet</td>
+<td>pPHP</td>
+<td>Nothing (simulation)</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Mainnet</td>
+<td>USDC</td>
+<td>Circle USD reserves</td>
+<td>1 USD</td>
+</tr>
+<tr>
+<td>Mainnet</td>
+<td>GovPHP</td>
+<td>Peso deposits at custodian bank</td>
+<td>1 peso</td>
+</tr>
+<tr>
+<td>Mainnet</td>
+<td>EURC</td>
+<td>Circle EUR reserves</td>
+<td>1 EUR</td>
+</tr>
+</tbody>
+</table>
+<p>The escrow is a <strong>lockbox</strong>, not a currency. Its job is to hold tokens until 5 gates pass, then release them. The token contract provides the value. On testnet we use a worthless token to prove the lockbox works. On mainnet we plug in a real one.</p>
+<details class="info">
+<summary>Want the full details?</summary>
+<p>See <strong><a href="pphp-token/">Appendix B: pPHP Token &amp; Escrow Settlement</a></strong> for mint/balance CLI exercises, the full escrow lifecycle with real token transfers, and the complete testnet-vs-mainnet value model explanation.</p>
+</details>
 <h3 id="on-chain-audit-trail">On-Chain Audit Trail<a class="headerlink" href="#on-chain-audit-trail" title="Permanent link">&para;</a></h3>
-<p>Every decision is immutably recorded on Stellar:
-- <strong>Who</strong> approved (cryptographic address)
-- <strong>What</strong> they approved (milestone ID, evidence hash)
-- <strong>When</strong> (blockchain timestamp)
-- <strong>Why</strong> (rationale, supporting IPFS documents)
-- <strong>Risk score</strong> and compliance result</p>
+<p>Every decision is immutably recorded on Stellar:</p>
+<ul>
+<li><strong>Who</strong> approved (cryptographic address)</li>
+<li><strong>What</strong> they approved (milestone ID, evidence hash)</li>
+<li><strong>When</strong> (blockchain timestamp)</li>
+<li><strong>Why</strong> (rationale, supporting IPFS documents)</li>
+<li><strong>Risk score</strong> and compliance result</li>
+</ul>
 <h3 id="soroban-events">Soroban Events<a class="headerlink" href="#soroban-events" title="Permanent link">&para;</a></h3>
 <p>All 11 contracts emit typed Stellar events for real-time indexing. Every state change - from PVO creation to payment release - is publicly auditable.</p>
 <hr />

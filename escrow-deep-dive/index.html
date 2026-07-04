@@ -1111,6 +1111,12 @@
 <li>How disputes and refunds work</li>
 </ul>
 <hr />
+<div class="admonition info">
+<p class="admonition-title">Settlement Token</p>
+<p>The escrow contract transfers <strong>real tokens</strong> on fund, release, and refund. On testnet, we use <strong>pPHP</strong> (a simulation token with no real value). On mainnet, the same code uses a real backed asset like USDC or GovPHP. The <code>token_address</code> parameter controls which token is used.</p>
+<p>See <strong><a href="../pphp-token/">Appendix B: pPHP Token &amp; Escrow Settlement</a></strong> for the full explanation of how value works on testnet vs mainnet.</p>
+</div>
+<hr />
 <h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
 <h3 id="exercise-a1-deploy-and-initialize">Exercise A.1: Deploy and Initialize<a class="headerlink" href="#exercise-a1-deploy-and-initialize" title="Permanent link">&para;</a></h3>
 <p>The escrow contract is already deployed to testnet at <code>CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6</code>. You can use it directly.</p>

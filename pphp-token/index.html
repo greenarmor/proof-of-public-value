@@ -966,13 +966,74 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#production-path-mainnet" class="md-nav__link">
+  <a href="#testnet-vs-mainnet-where-does-the-value-come-from" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production Path (Mainnet)
+        Testnet vs Mainnet: Where Does the Value Come From?
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Testnet vs Mainnet: Where Does the Value Come From?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#on-testnet-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Testnet (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-mainnet-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Mainnet (Production)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-design-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Design Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mainnet-token-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mainnet Token Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-switch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Switch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1190,13 +1251,74 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#production-path-mainnet" class="md-nav__link">
+  <a href="#testnet-vs-mainnet-where-does-the-value-come-from" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production Path (Mainnet)
+        Testnet vs Mainnet: Where Does the Value Come From?
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Testnet vs Mainnet: Where Does the Value Come From?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#on-testnet-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Testnet (Current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#on-mainnet-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On Mainnet (Production)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-design-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Design Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mainnet-token-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mainnet Token Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-switch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deployment Switch
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1517,35 +1639,84 @@ That is 6,000,000 pesos (600M centavos).</p>
 <a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>  Dispute blocks release and enables refund.
 </code></pre></div>
 <hr />
-<h2 id="production-path-mainnet">Production Path (Mainnet)<a class="headerlink" href="#production-path-mainnet" title="Permanent link">&para;</a></h2>
-<p>On mainnet, pPHP would be replaced by a real PHP-pegged asset:</p>
+<h2 id="testnet-vs-mainnet-where-does-the-value-come-from">Testnet vs Mainnet: Where Does the Value Come From?<a class="headerlink" href="#testnet-vs-mainnet-where-does-the-value-come-from" title="Permanent link">&para;</a></h2>
+<p>This is the most important concept to understand about the pPHP token.</p>
+<h3 id="on-testnet-current">On Testnet (Current)<a class="headerlink" href="#on-testnet-current" title="Permanent link">&para;</a></h3>
+<p>pPHP is a <strong>simulation token</strong>. It has no real-world value, no liquidity, and no peg to any currency. The Administrator mints it freely to fund testing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Testnet pPHP
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  - Minted from nothing by the admin
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  - No collateral backing
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  - Cannot be converted to any other asset
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  - Exists only to test the escrow lock/unlock logic
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  - Worth: 0.00
+</code></pre></div>
+<p>This is fine for testing because we are validating <strong>code</strong>, not <strong>settlement</strong>. The escrow contract correctly calls <code>token::Client.transfer()</code>, tokens move between wallets, gates lock and unlock funds. The logic is proven.</p>
+<p>But if someone mints you 5 million pPHP on testnet, you cannot spend it anywhere. There is no exchange, no liquidity pool, no peg.</p>
+<h3 id="on-mainnet-production">On Mainnet (Production)<a class="headerlink" href="#on-mainnet-production" title="Permanent link">&para;</a></h3>
+<p>The escrow contract does not care which token it holds. The <code>token_address</code> parameter is a <strong>plug</strong>. You swap the testnet pPHP address for a mainnet token that already has real value:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Mainnet deployment
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  - token_address = USDC (backed by Circle&#39;s USD reserves)
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  - token_address = GovPHP (backed 1:1 by peso deposits at a custodian bank)
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  - token_address = EURC (backed by euro reserves)
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>Same escrow code. Same 5 gates. Same lock/unlock logic.
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>Only the token_address parameter changes.
+</code></pre></div>
+<h3 id="why-this-design-works">Why This Design Works<a class="headerlink" href="#why-this-design-works" title="Permanent link">&para;</a></h3>
+<p>The escrow is a <strong>lockbox</strong>, not a currency. Its job is to:
+1. Receive tokens from the funder
+2. Hold them until 5 independent gates pass
+3. Release them to the contractor (or refund to funder)</p>
+<p>The escrow does not need liquidity itself. The <strong>token contract</strong> provides the value. On testnet we use a worthless token to test the lockbox. On mainnet we plug in a real one.</p>
+<h3 id="mainnet-token-options">Mainnet Token Options<a class="headerlink" href="#mainnet-token-options" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Description</th>
+<th>Token</th>
+<th>How It Is Backed</th>
+<th>Liquidity</th>
+<th>Best For</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>GovPHP SAC token</strong></td>
-<td>Government-issued Stellar Asset Credit token (requires BSP approval)</td>
+<td><strong>GovPHP SAC</strong></td>
+<td>Government deposits real pesos at a custodian bank. Tokens minted 1:1</td>
+<td>Philippine banking network</td>
+<td>All government infrastructure projects</td>
 </tr>
 <tr>
 <td><strong>USDC</strong></td>
-<td>Circle's stablecoin with FX conversion (available now)</td>
+<td>Circle holds USD reserves in cash and short-term treasuries</td>
+<td>Every major crypto exchange</td>
+<td>International donor-funded projects</td>
 </tr>
 <tr>
 <td><strong>EURC</strong></td>
-<td>European stablecoin for international donor projects</td>
+<td>Circle holds EUR reserves</td>
+<td>European exchanges</td>
+<td>EU-funded development projects</td>
 </tr>
 <tr>
 <td><strong>XLM</strong></td>
-<td>Native Stellar Lumens (volatile, but simplest for small projects)</td>
+<td>Native Stellar token (not pegged to anything)</td>
+<td>All Stellar DEXs</td>
+<td>Emergency fast-settlement projects (volatile)</td>
 </tr>
 </tbody>
 </table>
-<p>The escrow's <code>token_address</code> field is asset-agnostic. Different PVOs can use different tokens without code changes.</p>
+<p>None of these have anything to do with XLM as a backing asset. XLM is just the network's gas token. It pays for transaction fees but does not back any pegged asset on Stellar.</p>
+<h3 id="deployment-switch">Deployment Switch<a class="headerlink" href="#deployment-switch" title="Permanent link">&para;</a></h3>
+<p>Moving from testnet to mainnet requires only two changes in <code>frontend/src/config.ts</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// TESTNET (current)</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// escrow contract</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nx">pphp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// simulation token</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1">// MAINNET (production)</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;mainnet_escrow_contract_id&gt;&quot;</span><span class="p">,</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="nx">pphp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;real_asset_contract_id&gt;&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// USDC, GovPHP, or EURC</span>
+</code></pre></div>
+<p>No contract code changes. No escrow recompilation. The same Rust binary runs on mainnet with a different token address.</p>
 <hr />
 <h2 id="checklist">Checklist<a class="headerlink" href="#checklist" title="Permanent link">&para;</a></h2>
 <ul>
