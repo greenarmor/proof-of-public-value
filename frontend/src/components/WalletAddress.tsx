@@ -1,4 +1,4 @@
-import { formatAddress, isRoleWallet } from "../helpers";
+import { formatAddress, isRoleWallet, isBlockedWallet } from "../helpers";
 import { useWallet } from "../wallet";
 
 export function WalletAddress({ addr, chars = 6, className = "" }: {
@@ -12,8 +12,9 @@ export function WalletAddress({ addr, chars = 6, className = "" }: {
   const userHasRole = connectedAddress ? isRoleWallet(connectedAddress) : false;
   const display = formatAddress(addr, chars);
 
-  // Contracts always link. Wallets link only if connected user has a role.
-  if (isContract || (userHasRole && isRoleWallet(addr))) {
+  // Contracts always link. Wallets link only if connected user has a role
+  // AND the address is not a protected funder.
+  if (isContract || (userHasRole && isRoleWallet(addr) && !isBlockedWallet(addr))) {
     const type = isContract ? "contract" : "account";
     return (
       <a
@@ -28,6 +29,5 @@ export function WalletAddress({ addr, chars = 6, className = "" }: {
     );
   }
 
-  // Same styling as link but no href — visually indistinguishable from inspection
   return <span className={className}>{display}</span>;
 }

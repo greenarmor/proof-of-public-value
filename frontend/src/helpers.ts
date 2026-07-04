@@ -31,8 +31,18 @@ const ROLE_WALLETS = new Set([
   "GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES",
 ]);
 
+// Sensitive wallets — never linked to protect funders from OSINT
+const BLOCKED_WALLETS = new Set([
+  "GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF", // funding_agency
+  "GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D", // international_donor
+]);
+
 export function isRoleWallet(addr: string): boolean {
   return ROLE_WALLETS.has(addr);
+}
+
+export function isBlockedWallet(addr: string): boolean {
+  return BLOCKED_WALLETS.has(addr);
 }
 
 export function formatBudget(budget: string | number | bigint): string {
