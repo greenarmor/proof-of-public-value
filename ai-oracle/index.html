@@ -974,8 +974,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-geo-risk-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Geo Risk Assessment
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-3-decision-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate 3 Decision Matrix
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1177,8 +1199,30 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-geo-risk-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Geo Risk Assessment
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-3-decision-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate 3 Decision Matrix
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1338,88 +1382,274 @@
 </table>
 <p>Each detection is submitted with a <strong>risk score (0-100)</strong> and <strong>confidence percentage</strong>. The risk score is NOT random — it's derived from the severity of the anomaly.</p>
 <h3 id="2-risk-prediction">2. Risk Prediction<a class="headerlink" href="#2-risk-prediction" title="Permanent link">&para;</a></h3>
-<p>Reputation-driven contractor risk model:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>delay_risk = (100 - reputation_score) + (disputes * 15) + (budget_size_factor)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>overrun_risk = (100 - reputation_score) + (disputes * 10) + (budget_size_factor)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Risk Level 1 (Low):    delay &lt; 30%
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Risk Level 2 (Medium): delay 30-60%
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Risk Level 3 (High):   delay &gt; 60%
+<p>Reputation-driven contractor risk model. Predicts the probability of delays and budget overruns based on the contractor's on-chain track record.</p>
+<p><strong>Contract struct:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">RiskPrediction</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">contractor</span><span class="p">:</span><span class="w"> </span><span class="nc">Address</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">delay_probability</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">     </span><span class="c1">// 0-100%</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">overrun_probability</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">   </span><span class="c1">// 0-100%</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">risk_category</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">         </span><span class="c1">// 1=Low, 2=Medium, 3=High</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">confidence</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">            </span><span class="c1">// 0-100%</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>How the AI computes it:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>delay_risk = (100 - reputation_score) + (disputes × 15) + (budget_size_factor)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>overrun_risk = (100 - reputation_score) + (disputes × 10) + (budget_size_factor)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>where budget_size_factor = 10 if &gt; ₱10M, 5 if &gt; ₱1M, 0 otherwise
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>Risk Level 1 (Low):    delay &lt; 30%
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>Risk Level 2 (Medium): delay 30-60%  
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Risk Level 3 (High):   delay &gt; 60%
 </code></pre></div>
 <p>The reputation score comes from the <code>reputation</code> contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.</p>
+<p><strong>Gate 3 impact:</strong> Risk Category 3 (High) triggers a Gate 3 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.</p>
 <h3 id="3-gps-validation">3. GPS Validation<a class="headerlink" href="#3-gps-validation" title="Permanent link">&para;</a></h3>
-<p>Uses the <strong>Haversine formula</strong> to compute the distance between the project's municipality coordinates and the GPS coordinates submitted in evidence:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>d = 2r * arcsin(sqrt(sin^2(dlat/2) + cos(lat1)cos(lat2)sin^2(dlng/2)))
+<p>Compares GPS coordinates submitted by contractors/inspectors against the project's expected location. Uses the <strong>Haversine formula</strong> to compute great-circle distance.</p>
+<p><strong>Contract struct:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">GpsValidation</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">evidence_id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">expected_lat</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w">    </span><span class="c1">// microdegrees (× 1,000,000)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">expected_lng</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">reported_lat</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">reported_lng</span><span class="p">:</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>How the AI computes it:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>d = 2r × arcsin(√(sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)))
 </code></pre></div>
 <table>
 <thead>
 <tr>
 <th>Distance</th>
 <th>Interpretation</th>
+<th>Gate 3 effect</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>&lt; 5 km</td>
 <td>Within municipality — likely valid</td>
+<td>✅ Pass</td>
 </tr>
 <tr>
 <td>5-50 km</td>
 <td>Nearby — needs review</td>
+<td>⚠️ Warning</td>
 </tr>
 <tr>
 <td>&gt; 50 km</td>
 <td>Suspicious — possible fake coordinates</td>
+<td>❌ Reject</td>
 </tr>
 </tbody>
 </table>
-<p>Coordinates are extracted from the evidence <code>metadata</code> field (format: <code>"lat:14.5995,lng:120.9842"</code>). The expected coordinates come from a geocoded lookup of the PVO's municipality.</p>
+<p><strong>Coordinate sources:</strong></p>
+<ol>
+<li><strong>Expected</strong>: PVO coordinates from <code>[lat,lng]</code> prefix in description field (created by agency in the New PVO form)</li>
+<li><strong>Fallback</strong>: Municipality geocoding lookup (if no PVO coordinates were entered)</li>
+<li><strong>Reported</strong>: GPS evidence submitted by contractor/inspector via <code>submit_evidence</code> with <code>GpsCoordinates</code> type</li>
+</ol>
+<p><strong>Gate 3 impact:</strong> Multiple GPS validation failures (&gt;50km from expected) trigger a Gate 3 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.</p>
 <h3 id="4-digital-twin-cost-simulation">4. Digital Twin (Cost Simulation)<a class="headerlink" href="#4-digital-twin-cost-simulation" title="Permanent link">&para;</a></h3>
-<p>Compares expected vs actual spending:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Expected cost = PVO total_budget
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Actual cost   = sum of all escrow amounts for that PVO
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Material Index = 90 + (actual/expected * 10)  // 100 = on budget
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Labor Index    = 85 + (actual/expected * 15)  // 100 = on budget
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Deviation Alert = actual &gt; expected * 1.2
+<p>A real-time cost simulation that tracks whether actual spending matches the budgeted amount. Think of it as a <strong>shadow ledger</strong> that runs alongside the real escrow system.</p>
+<p><strong>Contract struct:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">DigitalTwin</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">pvo_id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">expected_cost</span><span class="p">:</span><span class="w"> </span><span class="kt">i128</span><span class="p">,</span><span class="w">        </span><span class="c1">// PVO total budget</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">material_cost_index</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">   </span><span class="c1">// 100 = on budget, &gt;120 = inflated</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">labor_cost_index</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">      </span><span class="c1">// 100 = on budget, &gt;120 = inflated  </span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">deviation_alert</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">,</span><span class="w">      </span><span class="c1">// true if actual &gt; expected × 1.2</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">}</span>
 </code></pre></div>
-<p>Indexes above 120 indicate significant cost inflation. Below 80 suggests under-funding or premature stage.</p>
+<p><strong>How the AI computes it:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Expected cost   = PVO total_budget
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Actual cost     = sum of all escrow amounts for that PVO
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Material Index  = 90 + (actual/expected × 10)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>Labor Index     = 85 + (actual/expected × 15)
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Deviation Alert = actual &gt; expected × 1.2
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Range</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 80</td>
+<td>Under-funded</td>
+<td>Milestones not yet created, or premature stage</td>
+</tr>
+<tr>
+<td>80-120</td>
+<td>On track</td>
+<td>Spending aligns with budget</td>
+</tr>
+<tr>
+<td>&gt; 120</td>
+<td>Cost inflation</td>
+<td>Significantly over budget — red flag</td>
+</tr>
+<tr>
+<td>&gt; 130</td>
+<td>Severe</td>
+<td>Material cost index triggers <code>MaterialCostInflation</code> fraud flag</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate 3 impact:</strong> A deviation alert (actual &gt; 120% of expected) triggers a Gate 3 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO #3 Budget:    ₱8,000,000
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Escrows Created:  ₱6,500,000
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>Escrows Released: ₱4,200,000
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Expected Cost:    ₱8,000,000
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Actual Cost:      ₱4,200,000
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Material Index:   95% (on track)
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Labor Index:      93% (on track)
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>Deviation Alert:  false
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>→ ✅ Pass Gate 3
+</code></pre></div>
 <h3 id="5-image-evidence-verification">5. Image / Evidence Verification<a class="headerlink" href="#5-image-evidence-verification" title="Permanent link">&para;</a></h3>
-<p>Pings the IPFS gateway to verify that submitted evidence files actually exist:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Fetch HEAD request -&gt; https://gateway.pinata.cloud/ipfs/{hash}
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  |-- 200 OK    -&gt; Content-type, size -&gt; Verified
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  |-- 4xx/5xx   -&gt; Not accessible -&gt; Flagged
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  |-- Timeout    -&gt; Gateway unreachable -&gt; Recorded but not verified
+<p>Verifies that evidence files submitted by contractors actually exist on IPFS. Pings the IPFS gateway to confirm the hash is accessible and records content metadata.</p>
+<p><strong>Contract struct:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ImageVerification</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">evidence_id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">progress_percent</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">     </span><span class="c1">// estimated completion %</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">authenticity_score</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">   </span><span class="c1">// 0-100, based on IPFS availability</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">summary</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w">           </span><span class="c1">// Human-readable findings</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
 </code></pre></div>
-<p>This does NOT analyze image content (no computer vision). It only verifies that the file the contractor claimed to upload actually exists on IPFS.</p>
+<p><strong>How the AI verifies:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Fetch HEAD request → https://gateway.pinata.cloud/ipfs/{hash}
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>  ├── 200 OK    → Content-type, size → authenticity: 85-95%
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  ├── 4xx/5xx   → Not accessible → authenticity: 20%
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  └── Timeout    → Gateway unreachable → authenticity: 50% (exists on-chain, can&#39;t verify)
+</code></pre></div>
+<p><strong>What it does NOT do:</strong> No computer vision. No image recognition. No AI-powered content analysis. It only verifies that the file the contractor claimed to upload actually exists on IPFS and is accessible.</p>
+<p><strong>Gate 3 impact:</strong> Low authenticity scores (&lt; 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 3 rejection.</p>
+<h3 id="6-geo-risk-assessment">6. Geo Risk Assessment<a class="headerlink" href="#6-geo-risk-assessment" title="Permanent link">&para;</a></h3>
+<p>Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards — flooding, landslides, and seismic activity.</p>
+<p><strong>Contract struct:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">GeoRiskAssessment</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">pvo_id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">flood_risk</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">            </span><span class="c1">// 0-5 scale</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">landslide_risk</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">        </span><span class="c1">// 0-5 scale</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">earthquake_risk</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">       </span><span class="c1">// 0-5 scale  </span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">overall_risk</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span><span class="w">          </span><span class="c1">// max of above</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>How the AI computes it:</strong></p>
+<p>The risk scores are submitted by the AI analysis service after cross-referencing the PVO's municipality against Philippine hazard maps. The overall risk is the maximum of the three categories.</p>
+<table>
+<thead>
+<tr>
+<th>Risk Level</th>
+<th>Meaning</th>
+<th>Gate 3 effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-2</td>
+<td>Low risk</td>
+<td>✅ Pass</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Moderate risk</td>
+<td>⚠️ Warning</td>
+</tr>
+<tr>
+<td>4-5</td>
+<td>High risk</td>
+<td>❌ Reject</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gate 3 impact:</strong> Geo risk level 4+ triggers a Gate 3 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.</p>
+<h2 id="gate-3-decision-matrix">Gate 3 Decision Matrix<a class="headerlink" href="#gate-3-decision-matrix" title="Permanent link">&para;</a></h2>
+<p>The AI Auditor's Gate 3 verdict is a <strong>composite</strong> of all five analysis types. A single high-risk finding in ANY category can trigger rejection:</p>
+<table>
+<thead>
+<tr>
+<th>Analysis</th>
+<th>Check</th>
+<th>Threshold</th>
+<th>Rejects Gate 3?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fraud</td>
+<td>Any high-risk indicator (≥50)</td>
+<td>Collusion, ghost project, etc.</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>Risk</td>
+<td>Contractor risk category</td>
+<td>Level 3 (High)</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>Digital Twin</td>
+<td>Cost deviation alert</td>
+<td>Actual &gt; 120% of expected</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>Geo Risk</td>
+<td>Overall risk level</td>
+<td>Level 4+</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>GPS</td>
+<td>Validation failures</td>
+<td>Any failed (&gt;50km)</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>Image</td>
+<td>Inaccessible evidence</td>
+<td>Authenticity &lt; 30%</td>
+<td>⚠️ Contributes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Only if ALL categories pass does the AI recommend Gate 3 approval.</strong> This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>.aim/ai-service.ts (off-chain, runs on demand)
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    │
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    |-- reads pvo_core         -&gt; PVO metadata, milestones, evidence
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    |-- reads escrow           -&gt; escrow amounts, statuses, gate progress
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    |-- reads reputation       -&gt; contractor integrity scores
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    |-- reads audit_trail      -&gt; decision history, actor patterns
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    |-- reads community_oracle -&gt; citizen reports, flags
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    |-- reads compliance_engine -&gt; active violations
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    │
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    |-- runs heuristics (math only, no API calls)
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    │
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    |-- writes ai_oracle       -&gt; fraud_detection, risk_prediction,
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>                                    gps_validation, digital_twin,
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>                                    image_verification
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>                                    (signed by ai_auditor secret key)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>.aim/ai-service.ts (off-chain, runs on demand)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    │
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    |-- reads pvo_core         -&gt; PVO metadata, milestones, evidence
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    |-- reads escrow           -&gt; escrow amounts, statuses, gate progress
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    |-- reads reputation       -&gt; contractor integrity scores
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    |-- reads audit_trail      -&gt; decision history, actor patterns
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    |-- reads community_oracle -&gt; citizen reports, flags
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    |-- reads compliance_engine -&gt; active violations
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    │
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    |-- runs heuristics (math only, no API calls)
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    │
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    |-- writes ai_oracle       -&gt; fraud_detection, risk_prediction,
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>                                    gps_validation, digital_twin,
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>                                    image_verification
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>                                    (signed by ai_auditor secret key)
 </code></pre></div>
 <h2 id="running-the-analysis">Running the Analysis<a class="headerlink" href="#running-the-analysis" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>ai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>ai
 </code></pre></div>
 <p>This is a one-liner. It loads all chain data, runs all five heuristics, and submits findings. Results appear immediately on the public <code>/ai</code> dashboard.</p>
 <h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h3>
 <p>The <code>ai_auditor</code> wallet must be authorized on the <code>ai_oracle</code> contract (one-time setup):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--id<span class="w"> </span>CDR5OICDQYT33V7XPPD63YAUDMKRTWSKN7MD5VPS5K773PVU5AAMID43<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--<span class="w"> </span>add_ai_auditor<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--admin<span class="w"> </span>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--auditor<span class="w"> </span>GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--id<span class="w"> </span>CDR5OICDQYT33V7XPPD63YAUDMKRTWSKN7MD5VPS5K773PVU5AAMID43<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--<span class="w"> </span>add_ai_auditor<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--admin<span class="w"> </span>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>--auditor<span class="w"> </span>GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J
 </code></pre></div>
 <h2 id="production-deployment">Production Deployment<a class="headerlink" href="#production-deployment" title="Permanent link">&para;</a></h2>
 <p>The analysis script can be scheduled as:</p>
