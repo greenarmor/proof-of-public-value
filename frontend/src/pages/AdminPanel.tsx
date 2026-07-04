@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { formatAddress } from "../helpers";
 
 const ROLES = [
@@ -408,48 +408,66 @@ function MintRPT() {
 }
 
 function DisputeResolution() {
-  const disputes = [
-    { id: 1, escrowId: 1, disputer: "G...ACMSV", reason: "Quality concerns", status: "Open" },
-  ];
+  const [escrows, setEscrows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const { Client: EscClient } = await import("../contracts/escrow/src");
+        const client = new EscClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_escrow_count();
+        const list: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_escrow({ escrow_id: i });
+            if (r.result && (r.result as any).status.tag === "Disputed") {
+              list.push(r.result);
+            }
+          } catch {}
+        }
+        setEscrows(list);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
 
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Open Disputes</dt><dd className="text-2xl font-bold text-yellow-600">1</dd></div>
-        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Resolved</dt><dd className="text-2xl font-bold text-green-600">0</dd></div>
-        <div className="bg-white border rounded-lg p-4"><dt className="text-sm text-gray-500">Avg Resolution</dt><dd className="text-2xl font-bold text-gray-900">—</dd></div>
+        <div className="card p-4"><p className="stat-label">Disputed Escrows</p><p className="stat-value text-yellow-600">{escrows.length}</p></div>
+        <div className="card p-4"><p className="stat-label">Total in Dispute</p><p className="stat-value text-slate-900">{getCurrency()}{(escrows.reduce((s: number, e: any) => s + Number(e.amount), 0) / 100 / 1_000_000).toFixed(1)}M</p></div>
+        <div className="card p-4"><p className="stat-label">Resolution</p><p className="stat-value text-gray-400">Refund only</p></div>
       </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
+      {escrows.length === 0 ? (
+        <div className="card p-8 text-center text-slate-400">No disputed escrows. Anti-corruption agency can file disputes.</div>
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50"><tr>
               <th className="text-left px-4 py-3 font-medium text-gray-500">ID</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Escrow</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Disputer</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Reason</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">PVO</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Amount</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Funder</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {disputes.map((d) => (
-              <tr key={d.id} className="border-t border-gray-100">
-                <td className="px-4 py-3 font-mono text-xs">#{d.id}</td>
-                <td className="px-4 py-3">#{d.escrowId}</td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.disputer}</td>
-                <td className="px-4 py-3">{d.reason}</td>
-                <td className="px-4 py-3"><span className="px-2 py-0.5 text-xs rounded bg-yellow-50 text-yellow-700">{d.status}</span></td>
-                <td className="px-4 py-3 flex gap-2">
-                  <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">Resolve</button>
-                  <button className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">Dismiss</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {disputes.length === 0 && <div className="text-center py-8 text-gray-400">No open disputes.</div>}
-      </div>
+            </tr></thead>
+            <tbody>
+              {escrows.map((e: any) => (
+                <tr key={Number(e.id)} className="border-t border-gray-100">
+                  <td className="px-4 py-3 font-mono text-xs">#{Number(e.id)}</td>
+                  <td className="px-4 py-3">#{Number(e.pvo_id)}</td>
+                  <td className="px-4 py-3 font-medium">{getCurrency()}{(Number(e.amount) / 100).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{formatAddress(e.funder, 4)}</td>
+                  <td className="px-4 py-3"><span className="badge badge-red">Disputed</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

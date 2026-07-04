@@ -1,51 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { formatAddress, formatBudget } from "../helpers";
-import { getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { Client as ProcurementClient } from "../contracts/procurement_market/src";
+import { formatAddress, formatBudget, statusToString } from "../helpers";
 
-interface Delivery {
-  id: number;
-  pvoId: number;
-  material: string;
-  quantity: string;
-  supplier: string;
-  deliveryDate: string;
-  status: "Pending" | "In Transit" | "Delivered" | "Verified";
-  poNumber: string;
-}
-
-interface Material {
-  id: number;
-  name: string;
-  specification: string;
-  unit: string;
-  unitPrice: number;
-  stock: number;
-}
-
-const mockDeliveries: Delivery[] = [
-  { id: 1, pvoId: 1, material: "Portland Cement Type I", quantity: "500 bags", supplier: "G...LPRW", deliveryDate: "Jul 4, 2026", status: "In Transit", poNumber: "PO-2026-0042" },
-  { id: 2, pvoId: 1, material: "Deformed Steel Bars (12mm)", quantity: "2000 pcs", supplier: "G...LPRW", deliveryDate: "Jul 3, 2026", status: "Delivered", poNumber: "PO-2026-0041" },
-  { id: 3, pvoId: 2, material: "Asphalt Binder Course", quantity: "850 tons", supplier: "G...LPRW", deliveryDate: "Jul 2, 2026", status: "Verified", poNumber: "PO-2026-0039" },
-];
-
-const mockMaterials: Material[] = [
-  { id: 1, name: "Portland Cement Type I", specification: "ASTM C150", unit: "bag (40kg)", unitPrice: 280, stock: 1500 },
-  { id: 2, name: "Deformed Steel Bars", specification: "12mm Grade 60", unit: "piece (12m)", unitPrice: 580, stock: 3200 },
-  { id: 3, name: "Ready-Mix Concrete", specification: "28 MPa @ 28 days", unit: "cubic meter", unitPrice: 5500, stock: 0 },
-  { id: 4, name: "Asphalt Binder", specification: "AC-20", unit: "ton", unitPrice: 4200, stock: 120 },
-];
+type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function SupplierPortal() {
-  const { connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"deliveries" | "catalog" | "purchase" | "tracking">("deliveries");
+  const { address, connected, connect } = useWallet();
+  const [activeTab, setActiveTab] = useState<"tenders" | "bid" | "my_bids">("tenders");
 
   if (!connected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-6xl mb-4">📦</div>
         <h2 className="text-xl font-semibold text-slate-700 mb-2">Wallet Connection Required</h2>
-        <p className="text-slate-500 mb-4">Connect your wallet to manage supply chain deliveries.</p>
+        <p className="text-slate-500 mb-4">Connect your wallet to view procurement tenders and submit bids.</p>
         <button onClick={connect} className="btn-primary px-6 py-3">Connect Wallet</button>
       </div>
     );
@@ -54,97 +23,84 @@ export function SupplierPortal() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Supplier Portal</h1>
-      <p className="text-slate-500 mb-6">Material catalog, purchase orders, delivery tracking, and inventory management.</p>
+      <p className="text-slate-500 mb-6">Browse procurement tenders and submit bids on-chain.</p>
 
       <div className="flex gap-1 mb-6 border-b border-slate-200">
-        {(["deliveries", "catalog", "purchase", "tracking"] as const).map((tab) => (
+        {(["tenders", "bid", "my_bids"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
-            {tab === "deliveries" && "🚚 Deliveries"}
-            {tab === "catalog" && "📋 Material Catalog"}
-            {tab === "purchase" && "🛒 Create PO"}
-            {tab === "tracking" && "📍 Tracking"}
+            {tab === "tenders" && "📋 Tenders"}
+            {tab === "bid" && "📝 Submit Bid"}
+            {tab === "my_bids" && "📊 My Bids"}
           </button>
         ))}
       </div>
 
-      {activeTab === "deliveries" && <DeliveriesTab deliveries={mockDeliveries} />}
-      {activeTab === "catalog" && <CatalogTab materials={mockMaterials} />}
-      {activeTab === "purchase" && <PurchaseOrderForm />}
-      {activeTab === "tracking" && <TrackingTab deliveries={mockDeliveries} />}
+      {activeTab === "tenders" && <TendersTab />}
+      {activeTab === "bid" && <SubmitBidTab address={address!} />}
+      {activeTab === "my_bids" && <MyBidsTab address={address!} />}
     </div>
   );
 }
 
-function DeliveriesTab({ deliveries }: { deliveries: Delivery[] }) {
-  return (
-    <div className="table-card">
-      <table className="w-full">
-        <thead>
-          <tr>
-            <th>PO #</th>
-            <th>PVO</th>
-            <th>Material</th>
-            <th>Qty</th>
-            <th>Supplier</th>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deliveries.map((d) => (
-            <tr key={d.id}>
-              <td className="font-mono text-xs text-slate-500">{d.poNumber}</td>
-              <td>#{d.pvoId}</td>
-              <td className="font-medium text-slate-900">{d.material}</td>
-              <td className="text-slate-600">{d.quantity}</td>
-              <td className="font-mono text-xs text-slate-500">{formatAddress(d.supplier, 4)}</td>
-              <td className="text-slate-500">{d.deliveryDate}</td>
-              <td>
-                <span className={`badge ${
-                  d.status === "Verified" ? "badge-green" :
-                  d.status === "Delivered" ? "badge-blue" :
-                  d.status === "In Transit" ? "badge-amber" : "badge-purple"
-                }`}>{d.status}</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function CatalogTab({ materials }: { materials: Material[] }) {
+function TendersTab() {
+  const [tenders, setTenders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new ProcurementClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_tender_count();
+        const list: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_tender({ id: i });
+            if (r.result) list.push(r.result);
+          } catch {}
+        }
+        list.reverse();
+        setTenders(list);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (tenders.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">📋</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No tenders available</h3>
+        <p className="text-sm text-slate-400">Procurement tenders will appear here once agencies create them.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {materials.map((m) => (
-        <div key={m.id} className="card p-5">
-          <div className="flex items-start justify-between mb-2">
+    <div className="space-y-4">
+      {tenders.map((t: any) => (
+        <div key={Number(t.id)} className="card p-5">
+          <div className="flex items-start justify-between mb-3">
             <div>
-              <h3 className="font-semibold text-slate-900">{m.name}</h3>
-              <p className="text-xs text-slate-400">{m.specification}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-mono">Tender #{Number(t.id)}</span>
+                <span className="text-xs text-slate-300">·</span>
+                <span className="text-xs text-slate-400">PVO #{Number(t.pvo_id)}</span>
+              </div>
+              <h3 className="font-semibold text-slate-900">{t.title}</h3>
+              <p className="text-sm text-slate-500">{t.description}</p>
             </div>
-            <span className={`badge ${m.stock > 0 ? "badge-green" : "badge-red"}`}>
-              {m.stock > 0 ? "In Stock" : "Out of Stock"}
-            </span>
+            <span className="badge badge-blue">{statusToString(t.status)}</span>
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-100 text-sm">
-            <div>
-              <p className="text-xs text-slate-400">Unit Price</p>
-              <p className="font-semibold text-slate-900">{currency} {formatBudget(m.unitPrice)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Stock</p>
-              <p className="font-semibold text-slate-900">{m.stock.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Unit</p>
-              <p className="text-slate-600">{m.unit}</p>
-            </div>
+          <div className="flex items-center gap-4 text-sm text-slate-500">
+            <span>Budget: {currency}{(Number(t.budget) / 100).toLocaleString()}</span>
+            <span>Agency: {formatAddress(t.agency, 4)}</span>
           </div>
         </div>
       ))}
@@ -152,74 +108,169 @@ function CatalogTab({ materials }: { materials: Material[] }) {
   );
 }
 
-function PurchaseOrderForm() {
-  const [pvoId, setPvoId] = useState("");
-  const [material, setMaterial] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [supplier, setSupplier] = useState("");
+function SubmitBidTab({ address }: { address: string }) {
+  const [tenders, setTenders] = useState<any[]>([]);
+  const [tenderId, setTenderId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new ProcurementClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_tender_count();
+        const list: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_tender({ id: i });
+            if (r.result) list.push(r.result);
+          } catch {}
+        }
+        setTenders(list);
+      } catch {}
+    })();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTxState("preparing");
+    setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const amt = Number(amount);
+      if (!amt || amt <= 0) throw new Error("Amount must be positive");
+
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+
+      const op = contract.call("submit_bid",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(Number(tenderId)),
+        new ScInt(amt).toI128(),
+      );
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+
+      setTxState("done");
+      setTxMsg("Bid submitted on-chain!");
+      setTenderId(""); setAmount("");
+    } catch (err: any) {
+      setTxState("error");
+      setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
+    }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+  const currency = getCurrency();
 
   return (
     <div className="card p-6 max-w-xl">
-      <h2 className="text-lg font-semibold mb-4 text-slate-900">Create Purchase Order</h2>
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label>
-          <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)} className="input" required />
+      <h2 className="text-lg font-semibold mb-2 text-slate-900">Submit Bid</h2>
+      <p className="text-sm text-slate-500 mb-4">Bid on an open procurement tender. Your bid is recorded on the procurement_market contract.</p>
+
+      {txMsg && (
+        <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
         </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Material</label>
-          <select value={material} onChange={(e) => setMaterial(e.target.value)} className="select">
-            <option value="">Select material...</option>
-            <option value="Portland Cement Type I">Portland Cement Type I</option>
-            <option value="Deformed Steel Bars (12mm)">Deformed Steel Bars (12mm)</option>
-            <option value="Ready-Mix Concrete (28 MPa)">Ready-Mix Concrete (28 MPa)</option>
-            <option value="Asphalt Binder (AC-20)">Asphalt Binder (AC-20)</option>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Tender</label>
+          <select value={tenderId} onChange={(e) => setTenderId(e.target.value)} className="select" required>
+            <option value="">Select a tender...</option>
+            {tenders.map((t: any) => (
+              <option key={Number(t.id)} value={Number(t.id)}>
+                Tender #{Number(t.id)} - {t.title} ({currency}{(Number(t.budget) / 100).toLocaleString()})
+              </option>
+            ))}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
-            <input type="text" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="input" placeholder="e.g. 500 bags" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Supplier Address</label>
-            <input type="text" value={supplier} onChange={(e) => setSupplier(e.target.value)} className="input" placeholder="G..." required />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Bid Amount (centavos)</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder="450000000" required />
+          {amount && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(amount) / 100).toLocaleString()}</p>}
         </div>
-        <button type="submit" className="btn-primary w-full py-3">Submit Purchase Order</button>
+        <button type="submit" disabled={busy} className="btn-primary w-full py-3">
+          {busy ? "Signing..." : "Submit Bid On-Chain"}
+        </button>
+        {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
     </div>
   );
 }
 
-function TrackingTab({ deliveries }: { deliveries: Delivery[] }) {
-  const active = deliveries.filter((d) => d.status === "In Transit" || d.status === "Pending");
+function MyBidsTab({ address }: { address: string }) {
+  const [bids, setBids] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new ProcurementClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_tender_count();
+        const myBids: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_bids_by_tender({ tender_id: i });
+            const tenderBids = r.result || [];
+            for (const bid of tenderBids) {
+              if ((bid as any).bidder === address) {
+                myBids.push({ ...bid, tenderId: i });
+              }
+            }
+          } catch {}
+        }
+        myBids.reverse();
+        setBids(myBids);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, [address]);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (bids.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">📊</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No bids submitted yet</h3>
+        <p className="text-sm text-slate-400">Your bids will appear here after you submit to open tenders.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {active.map((d) => (
-        <div key={d.id} className="card p-5">
-          <div className="flex items-center justify-between mb-3">
+    <div className="space-y-3">
+      {bids.map((b: any, i: number) => (
+        <div key={i} className="card p-4">
+          <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-semibold text-slate-900">{d.material}</h3>
-              <p className="text-sm text-slate-500">{d.poNumber} · {d.quantity}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-mono">Tender #{b.tenderId}</span>
+              </div>
+              <p className="font-semibold text-slate-900">{currency}{(Number(b.amount) / 100).toLocaleString()}</p>
             </div>
-            <span className="badge badge-amber">{d.status}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {["Ordered", "Dispatched", "In Transit", "On Site", "Verified"].map((step, i) => {
-              const currentIdx = d.status === "Pending" ? 0 : d.status === "In Transit" ? 2 : 4;
-              const done = i <= currentIdx;
-              return (
-                <div key={step} className="flex-1 text-center">
-                  <div className={`h-2 rounded-full ${done ? "bg-brand-500" : "bg-slate-200"}`} />
-                  <span className={`text-[10px] mt-1 block ${done ? "text-brand-600 font-medium" : "text-slate-400"}`}>{step}</span>
-                </div>
-              );
-            })}
+            <span className="badge badge-purple">Submitted</span>
           </div>
         </div>
       ))}
-      {active.length === 0 && <div className="text-center py-10 text-slate-400">No active deliveries to track.</div>}
     </div>
   );
 }

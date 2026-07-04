@@ -159,29 +159,50 @@ function FraudTab({ results, loading }: { results: FraudResult[]; loading: boole
 }
 
 function RiskTab() {
+  const [risks, setRisks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        // Read PVOs to get contractor addresses
+        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
+        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await pvoClient.get_pvo_count();
+        const results: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await pvoClient.get_pvo({ pvo_id: i });
+            if (r.result) {
+              const risk = await client.get_latest_risk_prediction({ contractor: (r.result as any).contractor });
+              if (risk.result) results.push({ ...risk.result, pvoId: Number((r.result as any).id), contractor: (r.result as any).contractor });
+            }
+          } catch {}
+        }
+        setRisks(results);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No risk predictions yet. AI auditors can submit via ai_oracle.</div>;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="card p-6">
       <h3 className="font-semibold mb-4">Contractor Risk Predictions</h3>
-      <p className="text-sm text-gray-400">AI risk predictions submitted by authorized AI auditors via the AI Oracle.</p>
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[
-          { contractor: "G...ACMSV", delay: 15, overrun: 8, category: "Low", catIdx: 0 },
-        ].map((r, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {risks.map((r, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="font-mono text-sm text-gray-600">{r.contractor}</span>
-              <span className={`px-2 py-0.5 text-xs rounded ${["bg-green-100 text-green-700", "bg-yellow-100 text-yellow-700", "bg-orange-100 text-orange-700", "bg-red-100 text-red-700"][r.catIdx]}`}>{r.category}</span>
+              <span className="text-sm text-gray-600">PVO #{r.pvoId}</span>
+              <span className={`badge ${Number(r.risk_level) <= 2 ? "badge-green" : Number(r.risk_level) <= 3 ? "badge-amber" : "badge-red"}`}>
+                Risk Level {Number(r.risk_level || 0)}/5
+              </span>
             </div>
-            <div className="space-y-2">
-              <div>
-                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Delay Risk</span><span>{r.delay}%</span></div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${r.delay}%` }} /></div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Budget Overrun</span><span>{r.overrun}%</span></div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${r.overrun}%` }} /></div>
-              </div>
-            </div>
+            <p className="text-sm text-gray-500">{r.reason || 'No details'}</p>
           </div>
         ))}
       </div>
@@ -190,61 +211,89 @@ function RiskTab() {
 }
 
 function ImageTab() {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const items: any[] = [];
+        for (let i = 1; i <= 20; i++) {
+          try {
+            const r = await client.get_image_verification({ id: i });
+            if (r.result) items.push(r.result);
+          } catch { break; }
+        }
+        setResults(items);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (results.length === 0) return <div className="card p-6 text-center text-slate-400">No image verifications yet.</div>;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="font-semibold mb-4">Image & Satellite Verification</h3>
-      <p className="text-sm text-gray-400">AI analysis of drone imagery, satellite photos, and construction progress verification.</p>
-      <div className="mt-6 space-y-4">
-        {[
-          { evidenceId: 3, progress: 65, authenticity: 95, summary: "65% complete. Drone confirms ongoing site preparation. Terrain matches plans." },
-        ].map((v, i) => (
+    <div className="card p-6">
+      <h3 className="font-semibold mb-4">Image Verification Results</h3>
+      <div className="space-y-4">
+        {results.map((v, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-medium text-gray-900">Evidence #{v.evidenceId}</span>
-              <span className="text-sm text-green-600">{v.progress}% Complete</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-gray-900">Verification #{Number(v.id)}</span>
+              <span className={`badge ${v.verified === true ? "badge-green" : "badge-red"}`}>
+                {v.verified === true ? "Authentic" : "Tampered"}
+              </span>
             </div>
-            <p className="text-sm text-gray-600 mb-3">{v.summary}</p>
-            <div className="flex gap-4 text-sm">
-              <span className="text-gray-500">Authenticity: <strong className="text-green-600">{v.authenticity}%</strong></span>
-            </div>
+            <p className="text-sm text-gray-500">Confidence: {Number(v.confidence || 0)}%</p>
           </div>
         ))}
-        {[].length === 0 && <p className="text-sm text-gray-400">No image verifications yet.</p>}
       </div>
     </div>
   );
 }
 
 function DigitalTwinTab() {
+  const [twins, setTwins] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
+        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await pvoClient.get_pvo_count();
+        const items: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_digital_twin({ pvo_id: i });
+            if (r.result) items.push(r.result);
+          } catch {}
+        }
+        setTwins(items);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (twins.length === 0) return <div className="card p-6 text-center text-slate-400">No digital twins generated yet.</div>;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="font-semibold mb-4">Procurement Digital Twin</h3>
-      <p className="text-sm text-gray-400 mb-6">AI simulation of expected costs vs actual spending using historical data and market indices.</p>
+    <div className="card p-6">
+      <h3 className="font-semibold mb-4">Digital Twins</h3>
       <div className="space-y-4">
-        {[
-          { pvoId: 1, expectedCost: "9,500,000", materialIndex: 110, laborIndex: 105, deviation: false },
-        ].map((t, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-5">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-semibold text-gray-900">PVO #{t.pvoId}</span>
-              <span className={`px-2 py-0.5 text-xs rounded ${t.deviation ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                {t.deviation ? "⚠️ Deviation Alert" : "✅ On Track"}
-              </span>
+        {twins.map((t, i) => (
+          <div key={i} className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-gray-900">PVO #{Number(t.pvo_id)}</span>
+              <span className="badge badge-purple">Twin #{Number(t.id)}</span>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <dt className="text-gray-400">Expected Cost</dt>
-                <dd className="font-semibold text-gray-900 mt-1">₱ {t.expectedCost}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-400">Material Index</dt>
-                <dd className={`font-semibold mt-1 ${t.materialIndex > 100 ? "text-red-600" : "text-green-600"}`}>{t.materialIndex}%</dd>
-              </div>
-              <div>
-                <dt className="text-gray-400">Labor Index</dt>
-                <dd className={`font-semibold mt-1 ${t.laborIndex > 100 ? "text-red-600" : "text-green-600"}`}>{t.laborIndex}%</dd>
-              </div>
-            </div>
+            <p className="text-sm text-gray-500">Expected Cost: {Number(t.expected_cost || 0)} · Actual: {Number(t.actual_cost || 0)}</p>
           </div>
         ))}
       </div>
@@ -304,24 +353,51 @@ function GeoRiskTab({ pvoId }: { pvoId: number }) {
 }
 
 function GpsValidationTab() {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const items: any[] = [];
+        for (let i = 1; i <= 20; i++) {
+          try {
+            const r = await client.get_gps_validation({ id: i });
+            if (r.result) items.push(r.result);
+          } catch { break; }
+        }
+        setResults(items);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (results.length === 0) {
+    return (
+      <div className="card p-6 text-center text-slate-400">
+        <h3 className="font-semibold mb-4 text-slate-700">GPS Validation</h3>
+        No GPS validations yet. AI auditors submit via ai_oracle.
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="card p-6">
       <h3 className="font-semibold mb-4">GPS Coordinate Validation</h3>
-      <p className="text-sm text-gray-400 mb-6">AI validation of submitted GPS coordinates vs expected project locations.</p>
       <div className="space-y-4">
-        {[{ evidenceId: 3, expected: "14.599512, 120.984220", reported: "14.599520, 120.984230", ok: true, dist: "~10m" }].map((v, i) => (
-          <div key={i} className={`border rounded-lg p-4 ${v.ok ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+        {results.map((v, i) => (
+          <div key={i} className={`border rounded-lg p-4 ${v.valid === true ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-medium">Evidence #{v.evidenceId}</span>
-              <span className={`px-2 py-0.5 text-xs rounded ${v.ok ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
-                {v.ok ? "✅ Within Range" : "❌ Out of Range"}
+              <span className="font-medium">Validation #{Number(v.id)}</span>
+              <span className={`badge ${v.valid === true ? "badge-green" : "badge-red"}`}>
+                {v.valid === true ? "In Range" : "Out of Range"}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><dt className="text-gray-400">Expected</dt><dd className="font-mono text-gray-700 mt-0.5">{v.expected}</dd></div>
-              <div><dt className="text-gray-400">Reported</dt><dd className="font-mono text-gray-700 mt-0.5">{v.reported}</dd></div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">Distance: {v.dist}</p>
+            <p className="text-sm text-gray-500">PVO #{Number(v.pvo_id || 0)}</p>
           </div>
         ))}
       </div>
