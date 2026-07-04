@@ -483,7 +483,7 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
 function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; currency: string; address: string; onAction: () => void }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [fraudFindings, setFraudFindings] = useState<any[]>([]);
+  const [analysis, setAnalysis] = useState<{ fraud: any[]; risk: any; twin: any; geo: any; gps: any[] } | null>(null);
   const escrowId = Number(escrow.id);
   const pvoId = Number(escrow.pvo_id);
 
@@ -491,14 +491,43 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
     (async () => {
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const r = await client.get_fraud_by_pvo({ pvo_id: pvoId });
-        setFraudFindings((r.result || []) as any[]);
+        const [fraud, twin, geo, gpsList] = await Promise.all([
+          client.get_fraud_by_pvo({ pvo_id: pvoId }).then(r => (r.result || []) as any[]),
+          client.get_digital_twin({ pvo_id: pvoId }).then(r => r.result),
+          client.get_geo_risk({ pvo_id: pvoId }).then(r => r.result),
+          (async () => {
+            const items: any[] = [];
+            for (let i = 1; i <= 10; i++) {
+              try { const r = await client.get_gps_validation({ id: i }); if (r.result) items.push(r.result); } catch { break; }
+            }
+            return items;
+          })(),
+        ]);
+        // Risk prediction by contractor
+        let risk = null;
+        try { const rr = await client.get_latest_risk_prediction({ contractor: escrow.recipient }); risk = rr.result; } catch {}
+        setAnalysis({ fraud, risk, twin, geo, gps: gpsList });
       } catch {}
     })();
   }, [pvoId]);
 
-  const highRiskFraud = fraudFindings.filter((f: any) => Number(f.risk_score) >= 50);
-  const aiVerdict = highRiskFraud.length > 0 ? false : true;  // fraud found → reject
+  if (!analysis) return <div className="card p-5 skeleton h-48" />;
+
+  // Evaluate all analysis types
+  const fraudHigh = analysis.fraud.filter((f: any) => Number(f.risk_score) >= 50);
+  const riskHigh = analysis.risk && Number(analysis.risk.risk_category) >= 3;
+  const twinDeviation = analysis.twin && (analysis.twin as any).deviation_alert === true;
+  const geoHigh = analysis.geo && Number(analysis.geo.overall_risk) >= 3;
+  const gpsFail = analysis.gps.filter((g: any) => g.valid === false);
+
+  const issues: string[] = [];
+  if (fraudHigh.length > 0) issues.push(`${fraudHigh.length} fraud detections`);
+  if (riskHigh) issues.push("High risk prediction");
+  if (twinDeviation) issues.push("Cost deviation alert");
+  if (geoHigh) issues.push("Geo-risk elevated");
+  if (gpsFail.length > 0) issues.push(`${gpsFail.length} GPS validation failures`);
+
+  const aiVerdict = issues.length === 0;
 
   const handleGate = async () => {
     setTxState("preparing"); setTxMsg("");
@@ -515,7 +544,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending"); const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg(aiVerdict ? "AI verdict submitted! Gate 3 passed." : "AI verdict: REJECTED. Fraud detected on this PVO.");
+      setTxState("done"); setTxMsg(aiVerdict ? "AI verdict: Pass Gate 3" : `AI verdict: REJECT — ${issues.join(", ")}`);
       setTimeout(() => onAction(), 3000);
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
   };
@@ -543,20 +572,35 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
         </div>
         <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>
       </div>
-      {/* AI Fraud Findings — read from ai_oracle */}
-      {fraudFindings.length > 0 && (
-        <div className={`mb-4 p-3 rounded-lg text-sm ${aiVerdict ? "bg-slate-50 text-slate-600 border border-slate-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-          <p className="font-medium mb-1">🤖 AI Analysis for PVO #{pvoId}:</p>
-          {fraudFindings.map((f: any, i: number) => (
-            <div key={i} className="flex items-center gap-2 text-xs mt-1">
-              <span>{Number(f.risk_score) >= 50 ? "🚨" : "⚠️"}</span>
-              <span>{(f.indicators || []).map((ind: any) => typeof ind === "string" ? ind : ind.tag).join(", ")}</span>
-              <span className="text-slate-400">{Number(f.confidence)}% confidence · Risk: {Number(f.risk_score)}/100</span>
-            </div>
-          ))}
-          <p className="text-xs mt-2 font-medium">{aiVerdict ? "✅ Verdict: Pass Gate 3" : "❌ Verdict: REJECT Gate 3 — fraud detected"}</p>
+      {/* AI Full Analysis — reads all oracle categories */}
+      <div className={`mb-4 p-3 rounded-lg text-sm ${aiVerdict ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+        <p className="font-medium mb-2">🤖 AI Verdict for PVO #{pvoId}</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs">
+            <span>{analysis.fraud.length > 0 ? (fraudHigh.length > 0 ? "🚨" : "✅") : "—"}</span>
+            <span>Fraud: {analysis.fraud.length} detections{fraudHigh.length > 0 ? ` (${fraudHigh.length} high-risk)` : ""}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span>{analysis.risk ? (riskHigh ? "🚨" : "✅") : "—"}</span>
+            <span>Risk: {analysis.risk ? `Category ${analysis.risk.risk_category}/3` : "none"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span>{analysis.twin ? (twinDeviation ? "🚨" : "✅") : "—"}</span>
+            <span>Cost: {analysis.twin ? (twinDeviation ? "Deviation alert" : "On track") : "none"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span>{analysis.geo ? (geoHigh ? "🚨" : "✅") : "—"}</span>
+            <span>Geo: {analysis.geo ? `Risk ${analysis.geo.overall_risk}/5` : "none"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span>{analysis.gps.length > 0 ? (gpsFail.length > 0 ? "🚨" : "✅") : "—"}</span>
+            <span>GPS: {analysis.gps.length} checks{gpsFail.length > 0 ? ` (${gpsFail.length} fail)` : ""}</span>
+          </div>
         </div>
-      )}
+        <p className={`text-xs mt-2 font-bold ${aiVerdict ? "text-emerald-700" : "text-red-700"}`}>
+          {aiVerdict ? "✅ Pass Gate 3" : `❌ Reject Gate 3 — ${issues.join(", ")}`}
+        </p>
+      </div>
       <div className="grid grid-cols-4 gap-2 mb-4">
         {gates.map((gate, i) => (
           <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
