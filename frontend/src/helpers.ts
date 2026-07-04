@@ -14,35 +14,6 @@ export function formatAddress(addr: string, chars = 6): string {
   return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
 }
 
-// Known role wallets on testnet — only these get stellar.expert backlinks
-const ROLE_WALLETS = new Set([
-  "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV", // alice (Administrator)
-  "GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN", // agency (GovernmentAgency)
-  "GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW", // contractor
-  "GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN", // engineer
-  "GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI", // inspector
-  "GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7", // auditor
-  "GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK", // coa
-  "GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T", // supplier
-  "GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC", // anti_corruption
-  "GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF", // funding_agency
-  "GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D", // international_donor
-  "GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J", // ai_auditor
-  "GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES", // citizen
-]);
-
-export function isRoleWallet(addr: string): boolean {
-  return ROLE_WALLETS.has(addr);
-}
-
-export function formatAddressLink(addr: string, chars = 6): string {
-  const display = formatAddress(addr, chars);
-  if (isRoleWallet(addr)) {
-    return `https://stellar.expert/explorer/testnet/account/${addr}`;
-  }
-  return display;
-}
-
 export function formatBudget(budget: string | number | bigint): string {
   const str = typeof budget === "string" ? budget.replace(/,/g, "") : String(budget);
   const num = Number(str);
