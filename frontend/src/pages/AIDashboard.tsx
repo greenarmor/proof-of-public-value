@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import { useWallet } from "../wallet";
 import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { Client as EscrowClient } from "../contracts/escrow/src";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { formatAddress } from "../helpers";
 
 interface FraudResult {
   id: number;
@@ -14,7 +17,8 @@ interface FraudResult {
 }
 
 export function AIDashboard() {
-  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps">("fraud");
+  const { address, connected, connect } = useWallet();
+  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps" | "gate">("fraud");
   const [fraudResults, setFraudResults] = useState<FraudResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +85,7 @@ export function AIDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["fraud", "risk", "image", "twin", "geo", "gps"] as const).map((tab) => (
+        {(["fraud", "risk", "image", "twin", "geo", "gps", "gate"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
@@ -92,6 +96,7 @@ export function AIDashboard() {
             {tab === "twin" && "🏗️ Digital Twin"}
             {tab === "geo" && "🌍 Geo Risk"}
             {tab === "gps" && "📍 GPS Valid"}
+            {tab === "gate" && "🔓 Escrow Gate"}
           </button>
         ))}
       </div>
@@ -104,6 +109,7 @@ export function AIDashboard() {
       {activeTab === "twin" && <DigitalTwinTab />}
       {activeTab === "geo" && <GeoRiskTab pvoId={1} />}
       {activeTab === "gps" && <GpsValidationTab />}
+      {activeTab === "gate" && <EscrowGateTab address={address} connected={connected} onConnect={connect} />}
     </div>
   );
 }
@@ -400,6 +406,134 @@ function GpsValidationTab() {
             <p className="text-sm text-gray-500">PVO #{Number(v.pvo_id || 0)}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
+
+function EscrowGateTab({ address, connected, onConnect }: { address: string | null; connected: boolean; onConnect: () => void }) {
+  const [escrows, setEscrows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  if (!connected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="text-5xl mb-4">🔓</div>
+        <h3 className="font-semibold text-slate-700 mb-2">Wallet Connection Required</h3>
+        <p className="text-sm text-slate-400 mb-4">Connect your AI Auditor wallet to pass Gate 3 on escrows.</p>
+        <button onClick={onConnect} className="btn-primary px-6 py-3">Connect Wallet</button>
+      </div>
+    );
+  }
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const cnt = await client.get_escrow_count();
+      const list: any[] = [];
+      for (let i = 1; i <= Number(cnt.result); i++) {
+        try {
+          const r = await client.get_escrow({ escrow_id: i });
+          if (r.result) {
+            const e = r.result as any;
+            if (!e.conditions.ai_risk_check && e.status.tag === "Funded") {
+              list.push(e);
+            }
+          }
+        } catch {}
+      }
+      setEscrows(list);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (loading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-32" />)}</div>;
+
+  if (escrows.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">🤖</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No escrows awaiting AI validation</h3>
+        <p className="text-sm text-slate-400">Funded escrows that need AI risk check will appear here.</p>
+      </div>
+    );
+  }
+
+  const currency = getCurrency();
+
+  return (
+    <div className="space-y-3">
+      {escrows.map((e: any) => <AIGateCard key={Number(e.id)} escrow={e} currency={currency} address={address!} onAction={load} />)}
+    </div>
+  );
+}
+
+function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; currency: string; address: string; onAction: () => void }) {
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+  const escrowId = Number(escrow.id);
+
+  const handleGate = async (passed: boolean) => {
+    setTxState("preparing"); setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.escrow);
+      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(passed));
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      setTxState("signing"); const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      setTxState("sending"); const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      setTxState("done"); setTxMsg(passed ? "AI validated! Gate 3 passed." : "AI rejected.");
+      setTimeout(() => onAction(), 3000);
+    } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+  const gates = [
+    { label: "Engineer", done: escrow.conditions.engineer_approval },
+    { label: "AI", done: escrow.conditions.ai_risk_check },
+    { label: "Compliance", done: escrow.conditions.compliance_validation },
+    { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
+  ];
+
+  return (
+    <div className="card p-5">
+      {txMsg && (
+        <div className={`mb-3 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
+        </div>
+      )}
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{Number(escrow.pvo_id)}</span></div>
+          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/100).toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-0.5">Recipient: {formatAddress(escrow.recipient, 4)} · Funder: {formatAddress(escrow.funder, 4)}</p>
+        </div>
+        <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        {gates.map((gate, i) => (
+          <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+            <div className="text-sm mb-0.5">{gate.done ? "✓" : "○"}</div>{gate.label}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+        <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/4 gates passed</span>
+        <div className="flex gap-2">
+          <button onClick={() => handleGate(true)} disabled={busy} className="btn-primary text-xs px-4 py-2">{busy ? "Signing..." : "✓ Pass AI (Gate 3)"}</button>
+          <button onClick={() => handleGate(false)} disabled={busy} className="btn-danger text-xs px-4 py-2">✗ Reject</button>
+          {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
+        </div>
       </div>
     </div>
   );
