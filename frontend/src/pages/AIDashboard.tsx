@@ -537,7 +537,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       </div>
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
         <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/4 gates passed</span>
-        <button onClick={() => handleGate(true)} disabled={busy}
+        <button onClick={() => handleGate()} disabled={busy}
           className="btn-primary text-xs px-4 py-2">
           {busy ? "Signing..." : "🤖 Submit AI Verdict (Pass Gate 3)"}
         </button>
