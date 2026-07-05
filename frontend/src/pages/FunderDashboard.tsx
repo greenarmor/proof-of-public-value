@@ -479,10 +479,10 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP centavos)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
               <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input"
-                placeholder="e.g. 500000000 = ₱5,000,000" required />
-              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / PPHP_SCALE).toLocaleString()}` : "In centavos (100 = ₱1.00)"}</p>
+                placeholder="e.g. 50000000000000 = ₱5,000,000" required />
+              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / PPHP_SCALE).toLocaleString()}` : "1 peso = 10,000,000 SAC units"}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Community Confirmations Required</label>
@@ -492,7 +492,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <p className="text-sm text-blue-700">
-              <strong>pPHP Token Escrow:</strong> Escrows are funded in pPHP (Philippine Peso testnet token, 2 decimals). Amounts are in centavos — 100 centavos = ₱1.00.
+              <strong>pPHP Token Escrow:</strong> Escrows are funded in pPHP SAC (7 decimals). 1 peso = 10,000,000 SAC units.
             </p>
             <p className="text-sm text-blue-700 mt-2">
               <strong>Multi-Gate Escrow:</strong> Funds are locked until all 5 gates pass:

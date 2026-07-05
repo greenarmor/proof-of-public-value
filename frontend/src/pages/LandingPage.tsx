@@ -104,9 +104,9 @@ export function LandingPage() {
               { value: "5 Gates", label: "Independent verification layers", icon: "🔒" },
               { value: "13 Roles", label: "No single point of failure", icon: "👥" },
             ].map((stat, i) => (
-              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500"
+              <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 100}ms` }}>
-                <div className="text-4xl mb-4">{stat.icon}</div>
+                <div className="text-4xl mb-4 flex justify-center">{stat.icon}</div>
                 <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{stat.value}</div>
                 <p className="text-slate-500">{stat.label}</p>
               </div>

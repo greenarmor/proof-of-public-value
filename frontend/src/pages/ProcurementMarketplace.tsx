@@ -201,7 +201,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (pPHP SAC units)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="200000000" required />
             {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / PPHP_SCALE).toLocaleString()}</p>}
           </div>

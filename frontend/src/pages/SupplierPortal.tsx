@@ -214,7 +214,7 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bid Price (centavos)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Bid Price (pPHP SAC units)</label>
             <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="input" placeholder="180000000" required />
             {price && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(price) / PPHP_SCALE).toLocaleString()}</p>}
           </div>

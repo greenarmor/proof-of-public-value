@@ -243,7 +243,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   }, [address]);
 
   const balanceUnits = pphpBalance !== null ? Number(pphpBalance) : null;
-  const enteredAmount = amount ? Math.round(Number(amount) * 100) : 0;
+  const enteredAmount = amount ? Number(amount) : 0;
   const hasEnough = balanceUnits !== null && balanceUnits >= enteredAmount && enteredAmount > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,7 +254,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
       const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const amt = Math.round(Number(amount) * 100);
+      const amt = Number(amount);
       if (!amt || amt <= 0) throw new Error("Amount must be positive");
 
       const server = new rpc.Server(RPC_URL);
@@ -326,9 +326,9 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({currency}1 = 100 centavos)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder="e.g. 5000000 (in centavos)" required />
-          <p className="text-xs text-slate-400 mt-1">Enter amount in centavos (e.g. 500000000 = {currency}5,000,000)</p>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder="e.g. 500000000000 = ₱50,000" required />
+          <p className="text-xs text-slate-400 mt-1">1 peso = 10,000,000 SAC units. ₱1M = 10,000,000,000,000</p>
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
