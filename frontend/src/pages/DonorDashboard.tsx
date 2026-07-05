@@ -9,6 +9,15 @@ import { Autosuggest } from "../components/Autosuggest";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
 
+// Available donation assets — donors can transfer any Stellar token
+// On testnet: only pPHP SAC is available. On mainnet: USDC, EURC, BRL, etc.
+const DONATION_ASSETS: { code: string; issuer: string; contractId: string; name: string; decimals: number; symbol: string }[] = [
+  { code: "pPHP", issuer: "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV", contractId: "CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X", name: "Philippine Peso (testnet)", decimals: 7, symbol: "₱" },
+  // Mainnet-ready: USDC (6 dec), EURC (6 dec), BRL stablecoin, etc.
+  // { code: "USDC", issuer: "G...", contractId: "C...", name: "USD Coin", decimals: 6, symbol: "$" },
+  // { code: "EURC", issuer: "G...", contractId: "C...", name: "Euro Coin", decimals: 6, symbol: "€" },
+];
+
 interface GrantData {
   id: number;
   pvoId: number;
@@ -52,8 +61,8 @@ export function DonorDashboard() {
   const [grants, setGrants] = useState<GrantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [commitModal, setCommitModal] = useState(false);
   const [balance, setBalance] = useState<bigint | null>(null);
+  const [balances, setBalances] = useState<{code: string; amt: bigint}[]>([]);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -62,13 +71,23 @@ export function DonorDashboard() {
       try {
         const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
-        const contract = new Contract(CONTRACT_IDS.pphp);
         const acct = await server.getAccount(address);
-        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-          .addOperation(contract.call("balance", new Address(address).toScVal()))
-          .setTimeout(30).build();
-        const resp = await server.simulateTransaction(tx);
-        if (!resp.error && resp.result?.retval) setBalance(scValToBigInt(resp.result.retval));
+        const results: {code: string; amt: bigint}[] = [];
+        for (const asset of DONATION_ASSETS) {
+          try {
+            const contract = new Contract(asset.contractId);
+            const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+              .addOperation(contract.call("balance", new Address(address).toScVal()))
+              .setTimeout(30).build();
+            const resp = await server.simulateTransaction(tx);
+            if (!resp.error && resp.result?.retval) {
+              const amt = scValToBigInt(resp.result.retval);
+              results.push({ code: asset.code, amt });
+              if (asset.contractId === CONTRACT_IDS.pphp) setBalance(amt);
+            }
+          } catch {}
+        }
+        setBalances(results);
       } catch {}
     })();
   }, [address]);
@@ -97,19 +116,28 @@ export function DonorDashboard() {
 
   const refresh = () => {
     setRefreshKey(k => k + 1);
-    // Re-trigger balance fetch
     if (address) {
       (async () => {
         try {
           const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
           const server = new rpc.Server(RPC_URL);
-          const contract = new Contract(CONTRACT_IDS.pphp);
           const acct = await server.getAccount(address);
-          const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-            .addOperation(contract.call("balance", new Address(address).toScVal()))
-            .setTimeout(30).build();
-          const resp = await server.simulateTransaction(tx);
-          if (!resp.error && resp.result?.retval) setBalance(scValToBigInt(resp.result.retval));
+          const results: {code: string; amt: bigint}[] = [];
+          for (const asset of DONATION_ASSETS) {
+            try {
+              const contract = new Contract(asset.contractId);
+              const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+                .addOperation(contract.call("balance", new Address(address).toScVal()))
+                .setTimeout(30).build();
+              const resp = await server.simulateTransaction(tx);
+              if (!resp.error && resp.result?.retval) {
+                const amt = scValToBigInt(resp.result.retval);
+                results.push({ code: asset.code, amt });
+                if (asset.contractId === CONTRACT_IDS.pphp) setBalance(amt);
+              }
+            } catch {}
+          }
+          setBalances(results);
         } catch {}
       })();
     }
@@ -134,10 +162,19 @@ export function DonorDashboard() {
           <h1 className="text-3xl font-bold text-slate-900">International Donor Dashboard</h1>
           <div className="flex items-center gap-3 mt-1">
             <p className="text-slate-500">Commit grant funding on-chain and transfer pPHP to the Funding Agency in one transaction.</p>
-            {balance !== null && (
-              <span className="text-xs font-mono bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
-                🪙 {currency}{(Number(balance) / PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 2})} pPHP
-              </span>
+            {balances.length > 0 && (
+              <div className="flex items-center gap-2">
+                {balances.map(b => {
+                  const asset = DONATION_ASSETS.find(a => a.code === b.code);
+                  const scale = asset ? Math.pow(10, asset.decimals) : PPHP_SCALE;
+                  const sym = asset?.symbol || "";
+                  return (
+                    <span key={b.code} className="text-xs font-mono bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
+                      🪙 {b.code}: {sym}{(Number(b.amt) / scale).toLocaleString(undefined, {maximumFractionDigits: 2})}
+                    </span>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -247,10 +284,12 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [pvoId, setPvoId] = useState(0);
   const [amount, setAmount] = useState("");
   const [org, setOrg] = useState("");
+  const [selectedAsset, setSelectedAsset] = useState(DONATION_ASSETS[0]);
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
   const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
+  const [assetBalances, setAssetBalances] = useState<Record<string, bigint>>({});
   const currency = getCurrency();
 
   useEffect(() => {
@@ -269,21 +308,28 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
     })();
   }, []);
 
-  // Check donor's custom pPHP balance
+  // Check donor's balances across all donation assets
   useEffect(() => {
     (async () => {
       try {
         const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
-        const contract = new Contract(CONTRACT_IDS.pphp);
         const acct = await server.getAccount(address);
-        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-          .addOperation(contract.call("balance", new Address(address).toScVal()))
-          .setTimeout(30).build();
-        const resp = await server.simulateTransaction(tx);
-        if (!resp.error && resp.result?.retval) {
-          setPphpBalance(scValToBigInt(resp.result.retval));
+        const bals: Record<string, bigint> = {};
+        for (const asset of DONATION_ASSETS) {
+          try {
+            const contract = new Contract(asset.contractId);
+            const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+              .addOperation(contract.call("balance", new Address(address).toScVal()))
+              .setTimeout(30).build();
+            const resp = await server.simulateTransaction(tx);
+            if (!resp.error && resp.result?.retval) {
+              bals[asset.code] = scValToBigInt(resp.result.retval);
+              if (asset.code === "pPHP") setPphpBalance(bals[asset.code]);
+            }
+          } catch {}
         }
+        setAssetBalances(bals);
       } catch {}
     })();
   }, [address]);
@@ -315,7 +361,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         new ScInt(amt).toI128(),
         orgStr,
         new Address(FUNDING_AGENCY).toScVal(),
-        new Address(CONTRACT_IDS.pphp).toScVal(),
+        new Address(selectedAsset.contractId).toScVal(),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -357,6 +403,16 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Asset</label>
+          <select value={selectedAsset.code} onChange={e => setSelectedAsset(DONATION_ASSETS.find(a => a.code === e.target.value) || DONATION_ASSETS[0])} className="select">
+            {DONATION_ASSETS.map(a => (
+              <option key={a.code} value={a.code}>
+                {a.symbol} {a.code} — {a.name} {assetBalances[a.code] ? `(${(Number(assetBalances[a.code]) / Math.pow(10, a.decimals)).toLocaleString()})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
         <Autosuggest label="PVO" value={pvoId ? String(pvoId) : ""} options={pvoOptions}
           onChange={setPvoId} placeholder="Search by project name..." />
         <div>
@@ -372,9 +428,9 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder="e.g. 500000000000 = ₱50,000" required />
-          <p className="text-xs text-slate-400 mt-1">1 peso = 10,000,000 SAC units. ₱1M = 10,000,000,000,000</p>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({selectedAsset.code} units)</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. ${Math.pow(10, selectedAsset.decimals).toLocaleString().replace(/,/g,"")} = ${selectedAsset.symbol}1.00`} required />
+          <p className="text-xs text-slate-400 mt-1">{selectedAsset.decimals} decimal places. 1 {selectedAsset.code} unit = {selectedAsset.symbol}{(1 / Math.pow(10, selectedAsset.decimals)).toFixed(selectedAsset.decimals)}</p>
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
@@ -382,7 +438,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
             ({formatAddress(FUNDING_AGENCY, 6)}) in one atomic transaction. The FA can immediately use
             these funds for escrow.
           </p>
-          {pphpBalance !== null && (
+          {selectedAsset.code === "pPHP" && pphpBalance !== null && (
             <p className={`text-sm mt-2 ${hasEnough ? "text-emerald-700" : "text-red-600"}`}>
               Your pPHP balance: <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong>
               {!hasEnough && enteredAmount > 0 && ` — need ${getCurrency()}${(enteredAmount / PPHP_SCALE).toLocaleString()}`}
