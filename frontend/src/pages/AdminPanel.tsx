@@ -49,7 +49,7 @@ export function AdminPanel() {
             }`}
           >
             {tab === "roles" && "👥 Roles"}
-            {tab === "mint" && "🪙 Mint"}
+            {tab === "mint" && "🪙 Mint RPT"}
             {tab === "disputes" && "⚖️ Dispute Resolution"}
             {tab === "health" && "📊 Health"}
             {tab === "upgrade" && "🔄 Upgrade"}
@@ -294,7 +294,6 @@ function MintRPT() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [recentMints, setRecentMints] = useState<{ to: string; amount: string }[]>([]);
-  const [mintType, setMintType] = useState<"rpt" | "pphp">("rpt");
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,10 +307,7 @@ function MintRPT() {
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
 
-      const contractId = mintType === "pphp"
-        ? CONTRACT_IDS.pphp
-        : "CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ";
-      const contract = new Contract(contractId);
+      const rptContract = new Contract("CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ");
       const toScVal = new Address(wallet).toScVal();
       const amountScVal = nativeToScVal(Number(amount), { type: "i128" } as any);
 
@@ -319,14 +315,14 @@ function MintRPT() {
         fee: "100000",
         networkPassphrase: NETWORK_PASSPHRASE,
       })
-        .addOperation(contract.call("mint", toScVal, amountScVal))
+        .addOperation(rptContract.call("mint", toScVal, amountScVal))
         .setTimeout(30)
         .build();
 
       const sim = await server.simulateTransaction(tx);
       const simStr = JSON.stringify(sim);
       if (simStr.includes("trustline entry is missing")) {
-        throw new Error(`Wallet has no ${mintType === "pphp" ? "pPHP" : "RPT"} trustline. Ask them to create it first.`);
+        throw new Error(`Wallet ${formatAddress(wallet, 8)} has no RPT trustline. Ask them to create it on the Citizen page first.`);
       }
       if (simStr.includes("Error")) {
         throw new Error(`Simulation failed: ${simStr.slice(0, 200)}`);
@@ -344,7 +340,7 @@ function MintRPT() {
       const result = await server.sendTransaction(signedTx);
 
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
-        setMessage({ text: `Minted ${amount} ${mintType.toUpperCase()} to ${formatAddress(wallet, 8)}!`, ok: true });
+        setMessage({ text: `Minted ${amount} RPT to ${formatAddress(wallet, 8)}! Tx: ${result.hash.slice(0, 10)}...`, ok: true });
         setRecentMints((prev) => [{ to: wallet, amount }, ...prev].slice(0, 5));
         setWallet("");
       } else {
@@ -365,18 +361,8 @@ function MintRPT() {
         </div>
       )}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-2">🪙 Mint Tokens</h2>
-        <div className="flex gap-2 mb-3">
-          {(["rpt", "pphp"] as const).map(t => (
-            <button type="button" key={t} onClick={() => setMintType(t)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                mintType === t ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-600"
-              }`}>
-              {t === "rpt" ? "🪙 RPT (Citizen)" : "💰 pPHP (Escrow)"}
-            </button>
-          ))}
-        </div>
-        <p className="text-sm text-gray-400 mb-4">Mint {mintType.toUpperCase()} to any wallet that has a trustline.</p>
+        <h2 className="text-lg font-semibold mb-2">🪙 Mint RPT Tokens</h2>
+        <p className="text-sm text-gray-400 mb-4">Mint RPT to any wallet that has a trustline. Wallet must create trustline first via the Citizen page.</p>
         <form className="space-y-4" onSubmit={handleMint}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Wallet (G...)</label>
@@ -392,7 +378,7 @@ function MintRPT() {
           </div>
           <button type="submit" disabled={submitting}
             className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
-            {submitting ? "Opening Freighter..." : `Mint ${mintType.toUpperCase()}`}
+            {submitting ? "Opening Freighter..." : "Mint RPT"}
           </button>
         </form>
       </div>
