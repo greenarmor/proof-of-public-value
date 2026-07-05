@@ -175,15 +175,6 @@ export function DonorDashboard() {
         </button>
       </div>
 
-
-          {balance === 0n && (
-            <code className="text-xs bg-white px-2 py-1 rounded border border-red-200 font-mono">
-              stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount 20000000000000
-            </code>
-          )}
-        </div>
-      )}
-
       {balances.length > 0 && (
         <div className="mb-6 card p-5">
           <div className="flex items-center justify-between mb-3">
