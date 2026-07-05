@@ -19,6 +19,7 @@ pub struct Grant {
     pub donor: Address,
     pub amount: i128,
     pub org_name: String,
+    pub currency: String,
     pub status: GrantStatus,
     pub created_at: u64,
     pub updated_at: u64,
@@ -58,8 +59,7 @@ impl GrantCommitment {
         pvo_id: u32,
         amount: i128,
         org_name: String,
-        funding_agency: Address,
-        token_address: Address,
+        currency: String,
     ) -> u32 {
         donor.require_auth();
 
@@ -67,9 +67,8 @@ impl GrantCommitment {
             panic!("amount must be positive");
         }
 
-        // Transfer pPHP from donor to funding agency atomically with the commitment
-        let token_client = token::Client::new(&env, &token_address);
-        token_client.transfer(&donor, &funding_agency, &amount);
+        // Donor commits pledge in real currency (USD, EUR, etc.)
+        // Admin later converts to pPHP and mints to funding agency
 
         let id = Self::next_id(&env);
         let now = env.ledger().timestamp();
@@ -80,6 +79,7 @@ impl GrantCommitment {
             donor: donor.clone(),
             amount,
             org_name: org_name.clone(),
+            currency: currency.clone(),
             status: GrantStatus::Committed,
             created_at: now,
             updated_at: now,

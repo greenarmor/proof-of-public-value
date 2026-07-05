@@ -184,7 +184,7 @@ function PortfolioTab({ grants, loading, address }: {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-medium text-slate-400">{g.orgName}</span>
                   <span className="text-xs text-slate-300">·</span>
-                  <span className="text-xs text-slate-400">PVO #{g.pvoId}</span>
+                  <span className="text-xs text-slate-400">PVO #{g.pvoId} ({g.currency})</span>
                 </div>
                 <h3 className="font-semibold text-slate-900">Grant #{g.id}</h3>
                 <p className="text-sm text-slate-500">{currency}{(g.amount / PPHP_SCALE).toLocaleString()}</p>
@@ -249,9 +249,12 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         new Address(address).toScVal(),
         xdr.ScVal.scvU32(pvoId),
         new ScInt(amt).toI128(),
+        xdr.ScVal.scvString(org),
+        xdr.ScVal.scvString(fiatCurrency),
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(pvoId),
+        new ScInt(amt).toI128(),
         orgStr,
-        new Address(FUNDING_AGENCY).toScVal(),
-        new Address(CONTRACT_IDS.pphp).toScVal(),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -308,8 +311,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
-<label class="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. ${Math.pow(10, 7).toLocaleString().replace(/,/g,"")} = ${currency}1.00`} required />
+<label class="block text-sm font-medium text-slate-700 mb-1">Amount ({fiatCurrency})</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. 5000000`} required />
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
@@ -394,7 +397,7 @@ function TransparencyTab({ grants, loading, address, onAction }: {
                   g.status === "Committed" ? "bg-brand-500" : "bg-red-500"
                 }`} />
                 <div>
-                  <span className="text-sm font-medium text-slate-900">Grant #{g.id} · PVO #{g.pvoId}</span>
+                  <span className="text-sm font-medium text-slate-900">Grant #{g.id} · PVO #{g.pvoId} ({g.currency})</span>
                   <span className="text-xs text-slate-400 ml-2">{g.orgName}</span>
                 </div>
               </div>
