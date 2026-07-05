@@ -55,30 +55,6 @@ export function DonorDashboard() {
   const [commitModal, setCommitModal] = useState(false);
   const currency = getCurrency();
 
-  useEffect(() => {
-    if (!address) return;
-    (async () => {
-      try {
-        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
-        const server = new rpc.Server(RPC_URL);
-        const acct = await server.getAccount(address);
-        const results: {code: string; amt: bigint}[] = [];
-          try {
-            const contract = new Contract(asset.contractId);
-            const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-              .addOperation(contract.call("balance", new Address(address).toScVal()))
-              .setTimeout(30).build();
-            const resp = await server.simulateTransaction(tx);
-            if (!resp.error && resp.result?.retval) {
-              const amt = scValToBigInt(resp.result.retval);
-              results.push({ code: asset.code, amt });
-            }
-          } catch {}
-        }
-      } catch {}
-    })();
-  }, [address]);
-
   const loadGrants = useCallback(async () => {
     setLoading(true);
     try {
@@ -101,31 +77,7 @@ export function DonorDashboard() {
 
   useEffect(() => { loadGrants(); }, [loadGrants, refreshKey]);
 
-  const refresh = () => {
-    setRefreshKey(k => k + 1);
-    if (address) {
-      (async () => {
-        try {
-          const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
-          const server = new rpc.Server(RPC_URL);
-          const acct = await server.getAccount(address);
-          const results: {code: string; amt: bigint}[] = [];
-            try {
-              const contract = new Contract(asset.contractId);
-              const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-                .addOperation(contract.call("balance", new Address(address).toScVal()))
-                .setTimeout(30).build();
-              const resp = await server.simulateTransaction(tx);
-              if (!resp.error && resp.result?.retval) {
-                const amt = scValToBigInt(resp.result.retval);
-                results.push({ code: asset.code, amt });
-              }
-            } catch {}
-          }
-        } catch {}
-      })();
-    }
-  };
+  const refresh = () => setRefreshKey(k => k + 1);
 
   if (!connected) {
     return (
