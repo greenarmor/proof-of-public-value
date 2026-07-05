@@ -549,7 +549,6 @@ function DonorCommitmentsTab() {
     );
   }
 
-  const totalPledged = grants.reduce((s: number, g: any) => s + Number(g.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -582,7 +581,7 @@ function DonorCommitmentsTab() {
                     <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
-                  <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()}</p>
+                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()}</p>
                   <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>
