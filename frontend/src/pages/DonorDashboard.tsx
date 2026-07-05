@@ -9,15 +9,6 @@ import { Autosuggest } from "../components/Autosuggest";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
 
-// Available donation assets — donors can transfer any Stellar token
-// On testnet: only pPHP SAC is available. On mainnet: USDC, EURC, BRL, etc.
-const DONATION_ASSETS: { code: string; issuer: string; contractId: string; name: string; decimals: number; symbol: string }[] = [
-  { code: "pPHP", issuer: "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV", contractId: "CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X", name: "Philippine Peso (testnet)", decimals: 7, symbol: "₱" },
-  // Mainnet-ready: USDC (6 dec), EURC (6 dec), BRL stablecoin, etc.
-  // { code: "USDC", issuer: "G...", contractId: "C...", name: "USD Coin", decimals: 6, symbol: "$" },
-  // { code: "EURC", issuer: "G...", contractId: "C...", name: "Euro Coin", decimals: 6, symbol: "€" },
-];
-
 interface GrantData {
   id: number;
   pvoId: number;
@@ -62,8 +53,6 @@ export function DonorDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [commitModal, setCommitModal] = useState(false);
-  const [balance, setBalance] = useState<bigint | null>(null);
-  const [balances, setBalances] = useState<{code: string; amt: bigint}[]>([]);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -74,7 +63,6 @@ export function DonorDashboard() {
         const server = new rpc.Server(RPC_URL);
         const acct = await server.getAccount(address);
         const results: {code: string; amt: bigint}[] = [];
-        for (const asset of DONATION_ASSETS) {
           try {
             const contract = new Contract(asset.contractId);
             const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
@@ -84,11 +72,9 @@ export function DonorDashboard() {
             if (!resp.error && resp.result?.retval) {
               const amt = scValToBigInt(resp.result.retval);
               results.push({ code: asset.code, amt });
-              if (asset.contractId === CONTRACT_IDS.pphp) setBalance(amt);
             }
           } catch {}
         }
-        setBalances(results);
       } catch {}
     })();
   }, [address]);
@@ -124,7 +110,6 @@ export function DonorDashboard() {
           const server = new rpc.Server(RPC_URL);
           const acct = await server.getAccount(address);
           const results: {code: string; amt: bigint}[] = [];
-          for (const asset of DONATION_ASSETS) {
             try {
               const contract = new Contract(asset.contractId);
               const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
@@ -134,11 +119,9 @@ export function DonorDashboard() {
               if (!resp.error && resp.result?.retval) {
                 const amt = scValToBigInt(resp.result.retval);
                 results.push({ code: asset.code, amt });
-                if (asset.contractId === CONTRACT_IDS.pphp) setBalance(amt);
               }
             } catch {}
           }
-          setBalances(results);
         } catch {}
       })();
     }
@@ -175,7 +158,6 @@ export function DonorDashboard() {
         </button>
       </div>
 
-      {balances.length > 0 && (
         <div className="mb-6 card p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-slate-800 text-sm">💳 Donor Wallet</h3>
@@ -183,7 +165,6 @@ export function DonorDashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {balances.map(b => {
-              const asset = DONATION_ASSETS.find(a => a.code === b.code);
               const scale = Math.pow(10, asset?.decimals || 7);
               const human = Number(b.amt) / scale;
               const warningThreshold = 20000000000000n;
@@ -205,7 +186,6 @@ export function DonorDashboard() {
             })}
           </div>
         </div>
-      )}
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
         {(["portfolio", "transparency"] as const).map((tab) => (
@@ -224,7 +204,6 @@ export function DonorDashboard() {
 
       <Modal open={commitModal} onClose={() => setCommitModal(false)} title="Commit Grant Funding">
         <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }}
-          balances={balances} balanceBigInt={balance} />
       </Modal>
     </div>
   );
@@ -305,12 +284,10 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [pvoId, setPvoId] = useState(0);
   const [amount, setAmount] = useState("");
   const [org, setOrg] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState(DONATION_ASSETS[0]);
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
   const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
-  const [assetBalances, setAssetBalances] = useState<Record<string, bigint>>({});
   const currency = getCurrency();
 
   useEffect(() => {
@@ -337,7 +314,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         const server = new rpc.Server(RPC_URL);
         const acct = await server.getAccount(address);
         const bals: Record<string, bigint> = {};
-        for (const asset of DONATION_ASSETS) {
           try {
             const contract = new Contract(asset.contractId);
             const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
@@ -350,7 +326,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
             }
           } catch {}
         }
-        setAssetBalances(bals);
       } catch {}
     })();
   }, [address]);
@@ -426,10 +401,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Asset</label>
-          <select value={selectedAsset.code} onChange={e => setSelectedAsset(DONATION_ASSETS.find(a => a.code === e.target.value) || DONATION_ASSETS[0])} className="select">
-            {DONATION_ASSETS.map(a => (
               <option key={a.code} value={a.code}>
-                {a.symbol} {a.code} — {a.name} {assetBalances[a.code] ? `(${(Number(assetBalances[a.code]) / Math.pow(10, a.decimals)).toLocaleString()})` : ""}
               </option>
             ))}
           </select>
