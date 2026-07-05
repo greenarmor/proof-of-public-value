@@ -229,7 +229,9 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
     })();
   }, []);
 
-  // Check donor's balances across all donation assets
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTxState("preparing");
     setTxMsg("");
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal, ScInt } = await import("@stellar/stellar-sdk");
@@ -307,8 +309,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
-<label class="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP units)</label>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. ${Math.pow(10, selectedAsset.decimals).toLocaleString().replace(/,/g,"")} = ${selectedAsset.symbol}1.00`} required />
+<label class="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. ${Math.pow(10, 7).toLocaleString().replace(/,/g,"")} = ${currency}1.00`} required />
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
@@ -316,11 +318,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
             ({formatAddress(FUNDING_AGENCY, 6)}) in one atomic transaction. The FA can immediately use
             these funds for escrow.
           </p>
-                  <br/><span className="text-xs">Request admin to mint: <code className="bg-red-100 px-1 rounded">stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount {Number(enteredAmount) - Number(pphpBalance || 0n)}</code></span>
-                </>
-              )}
-            </p>
-          )}
         </div>
   );
 }
