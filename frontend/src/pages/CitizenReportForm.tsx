@@ -1,14 +1,57 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, RPT_MIN_BALANCE } from "../config";
 import { uploadToIPFS } from "../ipfs";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
+interface PVOOption { id: number; title: string; milestones: number[]; }
+interface MilestoneOption { id: number; title: string; }
+
+function Autosuggest({ label, value, options, onChange, placeholder }: {
+  label: string; value: string; options: { id: number; title: string }[];
+  onChange: (id: number) => void; placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = query.trim()
+    ? options.filter(o => o.title.toLowerCase().includes(query.toLowerCase()))
+    : options.slice(0, 10);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <input type="text" value={query} onChange={e => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)} className="input" placeholder={placeholder} />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {filtered.map(o => (
+            <div key={o.id} className="px-3 py-2 text-sm cursor-pointer hover:bg-brand-50 border-b border-slate-100 last:border-0"
+              onClick={() => { onChange(o.id); setQuery(o.title); setOpen(false); }}>
+              <span className="text-slate-400 text-xs mr-2">#{o.id}</span>{o.title}
+            </div>
+          ))}
+        </div>
+      )}
+      {open && filtered.length === 0 && query && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 text-sm text-slate-400">No matches</div>
+      )}
+    </div>
+  );
+}
+
 export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
   const { address } = useWallet();
-  const [pvoId, setPvoId] = useState("");
-  const [milestoneId, setMilestoneId] = useState("");
+  const [pvoId, setPvoId] = useState(0);
+  const [milestoneId, setMilestoneId] = useState(0);
   const [reportType, setReportType] = useState<string>("GpsPhoto");
   const [dataHash, setDataHash] = useState("");
   const [lat, setLat] = useState("");
@@ -17,6 +60,38 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [pvoOptions, setPvoOptions] = useState<PVOOption[]>([]);
+  const [milestoneOptions, setMilestoneOptions] = useState<MilestoneOption[]>([]);
+  const [loadingPVOs, setLoadingPVOs] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client } = await import("../contracts/pvo_core/src");
+        const client = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_pvo_count();
+        const list: PVOOption[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          const r = await client.get_pvo({ pvo_id: i });
+          if (r.result) list.push({ id: r.result.id, title: r.result.title, milestones: r.result.milestones as number[] });
+        }
+        setPvoOptions(list);
+      } catch {} finally { setLoadingPVOs(false); }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!pvoId) { setMilestoneOptions([]); return; }
+    (async () => {
+      try {
+        const { Client } = await import("../contracts/pvo_core/src");
+        const client = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await client.get_pvo_milestones({ pvo_id: pvoId });
+        const milestones = (result.result || []) as any[];
+        setMilestoneOptions(milestones.map((m: any) => ({ id: Number(m.id), title: m.title })));
+      } catch { setMilestoneOptions([]); }
+    })();
+  }, [pvoId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,22 +113,19 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
       const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const pvoNum = Number(pvoId);
-      const milNum = Number(milestoneId);
-      if (!pvoNum || pvoNum <= 0 || !milNum || milNum <= 0) {
-        setMessage({ text: "❌ IDs must be positive.", ok: false }); setSubmitting(false); return;
+      if (!pvoId || pvoId <= 0 || !milestoneId || milestoneId <= 0) {
+        setMessage({ text: "❌ Select a PVO and milestone.", ok: false }); setSubmitting(false); return;
       }
 
       const tag = REPORT_TYPES.indexOf(reportType as any) >= 0 ? reportType : "GpsPhoto";
 
-      // Build raw transaction (same pattern as working admin mint)
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.community_oracle);
       const op = contract.call("submit_report",
         new Address(address).toScVal(),
-        xdr.ScVal.scvU32(pvoNum),
-        xdr.ScVal.scvU32(milNum),
+        xdr.ScVal.scvU32(pvoId),
+        xdr.ScVal.scvU32(milestoneId),
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(tag)]),
         xdr.ScVal.scvString(hash),
         nativeToScVal(Number(lat || 0), { type: "i128" } as any),
@@ -73,7 +145,7 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
       await server.sendTransaction(signedTx);
 
       setMessage({ text: `Report submitted! ✅`, ok: true });
-      setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
+      setPvoId(0); setMilestoneId(0); setDataHash(""); setLat(""); setLon(""); setFile(null);
       if (onDone) setTimeout(onDone, 1500);
     } catch (er: any) {
       const msg = String(er?.message || er);
@@ -99,18 +171,17 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label>
-            <input type="number" value={pvoId} onChange={e => setPvoId(e.target.value)} className="input" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Milestone ID</label>
-            <input type="number" value={milestoneId} onChange={e => setMilestoneId(e.target.value)} className="input" required />
-          </div>
+          {loadingPVOs ? (
+            <div className="col-span-2 text-sm text-slate-400">Loading projects...</div>
+          ) : (
+            <>
+              <Autosuggest label="PVO" value={String(pvoId)} options={pvoOptions}
+                onChange={id => { setPvoId(id); setMilestoneId(0); }} placeholder="Search by project name..." />
+              <Autosuggest label="Milestone" value={String(milestoneId)} options={milestoneOptions}
+                onChange={setMilestoneId} placeholder={pvoId ? "Search milestone..." : "Select a PVO first"} />
+            </>
+          )}
         </div>
-        <p className="text-xs text-slate-400 -mt-3">
-          💡 <strong>PVO ID</strong> = project number. <strong>Milestone ID</strong> = specific milestone. Find them on the Public Portal.
-        </p>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
