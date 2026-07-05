@@ -21,7 +21,7 @@ interface SystemHealth {
 
 export function AdminPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health" | "upgrade" | "settings">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health" | "upgrade" | "settings" | "pledges">("roles");
   const [assignModal, setAssignModal] = useState(false);
   const [mintModal, setMintModal] = useState(false);
 
@@ -44,7 +44,7 @@ export function AdminPanel() {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-1 border-b border-gray-200">
-          {(["roles", "disputes", "health", "upgrade", "settings"] as const).map((tab) => (
+          {(["roles", "pledges", "disputes", "health", "upgrade", "settings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -53,6 +53,7 @@ export function AdminPanel() {
               }`}
             >
               {tab === "roles" && "👥 Roles"}
+              {tab === "pledges" && "💸 Pledges"}
               {tab === "disputes" && "⚖️ Dispute Resolution"}
               {tab === "health" && "📊 Health"}
               {tab === "upgrade" && "🔄 Upgrade"}
@@ -67,6 +68,7 @@ export function AdminPanel() {
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
+      {activeTab === "pledges" && <PledgeManager />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
@@ -571,6 +573,85 @@ function SettingsTab() {
         </div>
         <p className="text-xs text-slate-400 mt-3">Current: <strong className="text-brand-600">{currency}</strong> · Saved in browser</p>
       </div>
+    </div>
+  );
+}
+
+function PledgeManager() {
+  const [pledges, setPledges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rate, setRate] = useState("56"); // ₱56 per $1 USD
+  const [busy, setBusy] = useState<number | null>(null);
+  const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client } = await import("../contracts/grant_commitment/src");
+        const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await gc.get_all_grants();
+        setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
+      } catch (e) { console.error("PledgeManager:", e); } finally { setLoading(false); }
+    })();
+  }, []);
+
+  const handleConvert = async (pledge: any) => {
+    setBusy(pledge.id);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
+      const pphpAmount = Math.round(Number(pledge.amount) * Number(rate) * 10_000_000);
+
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount("GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
+      const sacContract = new Contract("CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X");
+
+      // Mint SAC pPHP to funding agency
+      const mintOp = sacContract.call("mint", new Address(FUNDING).toScVal(), new ScInt(pphpAmount).toI128());
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+
+      setPledges(prev => prev.filter(p => p.id !== pledge.id));
+      alert(`Minted ${(pphpAmount/10_000_000).toLocaleString()} pPHP to Funding Agency`);
+    } catch (e: any) {
+      alert("Error: " + (e.message || e).slice(0, 200));
+    } finally { setBusy(null); }
+  };
+
+  if (loading) return <div className="text-center py-10 text-gray-400">Loading pledges...</div>;
+
+  return (
+    <div>
+      <div className="flex items-center gap-4 mb-4">
+        <div>
+          <label className="text-sm text-slate-600">Exchange Rate ({currency} per $1)</label>
+          <input type="number" value={rate} onChange={e => setRate(e.target.value)} className="input w-24 ml-2" />
+        </div>
+      </div>
+      {pledges.length === 0 ? (
+        <div className="card p-8 text-center text-slate-400">No pending pledges to convert.</div>
+      ) : (
+        <div className="space-y-3">
+          {pledges.map((p: any) => (
+            <div key={p.id} className="card p-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-slate-900">{p.org_name} — PVO #{p.pvo_id}</p>
+                <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} ≈ {((Number(p.amount) * Number(rate))).toLocaleString()} pPHP</p>
+              </div>
+              <button onClick={() => handleConvert(p)} className="btn-primary text-xs px-3 py-1.5">
+                💸 Convert &amp; Mint
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
