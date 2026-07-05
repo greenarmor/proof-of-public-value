@@ -53,6 +53,25 @@ export function DonorDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [commitModal, setCommitModal] = useState(false);
+  const [balance, setBalance] = useState<bigint | null>(null);
+  const currency = getCurrency();
+
+  useEffect(() => {
+    if (!address) return;
+    (async () => {
+      try {
+        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.pphp);
+        const acct = await server.getAccount(address);
+        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("balance", new Address(address).toScVal()))
+          .setTimeout(30).build();
+        const resp = await server.simulateTransaction(tx);
+        if (!resp.error && resp.result?.retval) setBalance(scValToBigInt(resp.result.retval));
+      } catch {}
+    })();
+  }, [address]);
 
   const loadGrants = useCallback(async () => {
     setLoading(true);
@@ -76,7 +95,25 @@ export function DonorDashboard() {
 
   useEffect(() => { loadGrants(); }, [loadGrants, refreshKey]);
 
-  const refresh = () => setRefreshKey(k => k + 1);
+  const refresh = () => {
+    setRefreshKey(k => k + 1);
+    // Re-trigger balance fetch
+    if (address) {
+      (async () => {
+        try {
+          const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
+          const server = new rpc.Server(RPC_URL);
+          const contract = new Contract(CONTRACT_IDS.pphp);
+          const acct = await server.getAccount(address);
+          const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+            .addOperation(contract.call("balance", new Address(address).toScVal()))
+            .setTimeout(30).build();
+          const resp = await server.simulateTransaction(tx);
+          if (!resp.error && resp.result?.retval) setBalance(scValToBigInt(resp.result.retval));
+        } catch {}
+      })();
+    }
+  };
 
   if (!connected) {
     return (
@@ -95,7 +132,14 @@ export function DonorDashboard() {
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">International Donor Dashboard</h1>
-          <p className="text-slate-500">Commit grant funding on-chain and transfer pPHP to the Funding Agency in one transaction.</p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-slate-500">Commit grant funding on-chain and transfer pPHP to the Funding Agency in one transaction.</p>
+            {balance !== null && (
+              <span className="text-xs font-mono bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
+                🪙 {currency}{(Number(balance) / PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 2})} pPHP
+              </span>
+            )}
+          </div>
         </div>
         <button onClick={refresh} disabled={loading}
           className="btn-secondary text-xs px-3 py-2">
