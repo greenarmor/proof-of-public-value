@@ -84,6 +84,7 @@ export function DonorDashboard() {
         <div className="text-6xl mb-4">🌍</div>
         <h2 className="text-xl font-semibold text-slate-700 mb-2">Wallet Connection Required</h2>
         <p className="text-slate-500 mb-4">Connect your wallet to access the international donor dashboard.</p>
+        <p className="text-xs text-slate-400 font-mono mb-4 bg-slate-50 px-3 py-1 rounded">Donor wallet: GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44</p>
         <button onClick={connect} className="btn-primary px-6 py-3">Connect Wallet</button>
       </div>
     );
@@ -146,6 +147,7 @@ function PortfolioTab({ grants, loading, address }: {
         <div className="text-5xl mb-4">📋</div>
         <h3 className="font-semibold text-slate-700 mb-1">No grants committed yet</h3>
         <p className="text-sm text-slate-400">Use the Commit Funds tab to record a grant pledge on-chain.</p>
+        <p className="text-xs text-slate-400 mt-2 font-mono">Donor: GBUI4X... (seed in .dev-logs/newrolecreden.md)</p>
       </div>
     );
   }
