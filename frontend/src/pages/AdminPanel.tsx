@@ -54,7 +54,6 @@ export function AdminPanel() {
             >
               {tab === "roles" && "👥 Roles"}
               {tab === "pledges" && "💸 Pledges"}
-              {tab === "pledges" && "💸 Pledges"}
               {tab === "disputes" && "⚖️ Dispute Resolution"}
               {tab === "health" && "📊 Health"}
               {tab === "upgrade" && "🔄 Upgrade"}
