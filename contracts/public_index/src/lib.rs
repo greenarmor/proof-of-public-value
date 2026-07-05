@@ -64,7 +64,6 @@ impl PublicIndex {
     /// Submit department benchmark data from value_score calculations
     pub fn update_department_benchmark(
         env: Env,
-        caller: Address,
         department: String,
         avg_value_score: u32,
         pvo_count: u32,
@@ -72,7 +71,6 @@ impl PublicIndex {
         completed_projects: u32,
         on_time_rate: u32,
     ) {
-        caller.require_auth();
 
         let storage = env.storage().persistent();
         let mut benchmarks: Map<String, DepartmentBenchmark> = storage.get(&BENCHMARKS).unwrap_or_else(|| Map::new(&env));
@@ -98,8 +96,7 @@ impl PublicIndex {
     }
 
     /// Take a snapshot of the national public value index
-    pub fn record_national_snapshot(env: Env, caller: Address) -> u32 {
-        caller.require_auth();
+    pub fn record_national_snapshot(env: Env) -> u32 {
 
         let storage = env.storage().persistent();
         let benchmarks: Map<String, DepartmentBenchmark> = storage.get(&BENCHMARKS).unwrap_or_else(|| Map::new(&env));

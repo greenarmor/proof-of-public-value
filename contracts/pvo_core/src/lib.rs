@@ -89,6 +89,7 @@ pub struct PublicValueObject {
     pub updated_at: u64,
     pub public_value_score: u32,
     pub fund_source: String,
+    pub deadline: u64,
 }
 
 #[contractevent]
@@ -171,6 +172,7 @@ impl PVOCore {
         municipality: String,
         total_budget: i128,
         fund_source: String,
+        deadline: u64,
     ) -> u32 {
         creator.require_auth();
 
@@ -193,6 +195,7 @@ impl PVOCore {
             updated_at: now,
             public_value_score: 0,
             fund_source,
+            deadline,
         };
 
         let storage = env.storage().persistent();
