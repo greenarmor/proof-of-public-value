@@ -158,43 +158,7 @@ export function DonorDashboard() {
 
   return (
     <div>
-      {/* Zero-balance onboarding */}
-      {balance === 0n && balances.length === 0 && (
-        <div className="mb-6 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
-          <div className="flex items-start gap-4">
-            <div className="text-3xl">💡</div>
-            <div>
-              <h3 className="font-semibold text-amber-800 mb-1">No donation assets yet</h3>
-              <p className="text-sm text-amber-700 mb-3">
-                Your wallet has no pPHP (or other donation tokens). The admin must mint tokens for you before you can commit grants.
-              </p>
-              <div className="bg-white rounded-lg p-3 font-mono text-xs text-amber-800 border border-amber-200">
-                <p className="mb-1"><strong>Admin CLI:</strong></p>
-                <code>stellar contract invoke --source alice --network testnet --id CCJRBA... -- mint --to {address} --amount 2000000000000000</code>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button onClick={refresh} className="btn-secondary text-xs px-3 py-1.5">🔄 Check again</button>
-                <p className="text-xs text-amber-600 mt-1">After admin mints, refresh to see your balance.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {balances.length > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-brand-50 to-emerald-50 border border-brand-200 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🏦</span>
-            <div>
-              <p className="text-sm font-medium text-brand-800">Donation Assets Available</p>
-              <div className="flex items-center gap-3 mt-1">
-                {balances.map(b => {
-                  const asset = DONATION_ASSETS.find(a => a.code === b.code);
-                  const scale = Math.pow(10, asset?.decimals || 7);
-                  return (
-                    <span key={b.code} className="text-xs font-mono bg-white text-brand-700 px-2 py-0.5 rounded-full border border-brand-200">
-                      {asset?.symbol} {Number(b.amt) / scale} {b.code}
-                    </span>
                   );
                 })}
               </div>
@@ -220,10 +184,6 @@ export function DonorDashboard() {
       </div>
 
 
-      {/* Balance status bar */}
-      {balance !== null && (
-        <div className={`mb-4 p-3 rounded-xl text-sm border flex items-center justify-between ${balance > 0n ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-          <span>🪙 <strong>Your pPHP:</strong> {currency}{(Number(balance) / PPHP_SCALE).toLocaleString()}</span>
           {balance === 0n && (
             <code className="text-xs bg-white px-2 py-1 rounded border border-red-200 font-mono">
               stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount 20000000000000
