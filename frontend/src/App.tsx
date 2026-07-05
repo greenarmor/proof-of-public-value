@@ -162,10 +162,9 @@ function Header() {
 
             {/* Dashboards dropdown */}
             {visibleRoleItems.length > 0 && (
-              <div className="relative">
+              <div className="relative" onMouseLeave={() => setDashboardsOpen(false)}>
                 <button
                   onClick={() => setDashboardsOpen(o => !o)}
-                  onBlur={() => setTimeout(() => setDashboardsOpen(false), 150)}
                   className={`nav-link ${dashboardsOpen || activeRoleLabel ? "nav-link-active" : "nav-link-inactive"}`}>
                   <span className="mr-1">📊</span>Dashboards
                   <span className="ml-1 text-[9px]">{visibleRoleItems.length > 0 ? `${visibleRoleItems.length}` : ""}</span>
