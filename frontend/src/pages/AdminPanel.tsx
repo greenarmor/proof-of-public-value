@@ -415,6 +415,11 @@ function DisputeResolution() {
     })();
   }, []);
 
+      <div className="mb-4 grid grid-cols-4 gap-2 text-xs text-slate-500">
+        {Object.entries(rates).map(([cur, r]) => (<span key={cur} className="bg-slate-50 px-2 py-1 rounded">{cur}/PHP: ₱{r}</span>))}
+        <span className="text-slate-400 italic">Live rates</span>
+      </div>
+
   if (loading) return <div className="card p-12 skeleton h-48" />;
 
   return (
@@ -581,7 +586,7 @@ function SettingsTab() {
 function PledgeManager() {
   const [pledges, setPledges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rate, setRate] = useState("56"); // ₱56 per $1 USD
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [busy, setBusy] = useState<number | null>(null);
   const currency = getCurrency();
 
@@ -626,14 +631,17 @@ function PledgeManager() {
     } finally { setBusy(null); }
   };
 
+      <div className="mb-4 grid grid-cols-4 gap-2 text-xs text-slate-500">
+        {Object.entries(rates).map(([cur, r]) => (<span key={cur} className="bg-slate-50 px-2 py-1 rounded">{cur}/PHP: ₱{r}</span>))}
+        <span className="text-slate-400 italic">Live rates</span>
+      </div>
+
   if (loading) return <div className="text-center py-10 text-gray-400">Loading pledges...</div>;
 
   return (
     <div>
       <div className="flex items-center gap-4 mb-4">
         <div>
-          <label className="text-sm text-slate-600">Exchange Rate ({currency} per $1)</label>
-          <input type="number" value={rate} onChange={e => setRate(e.target.value)} className="input w-24 ml-2" />
         </div>
       </div>
       {pledges.length === 0 ? (
