@@ -5,6 +5,7 @@ import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency, PPHP_SCALE } from "../config";
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
 import { Modal } from "../components/Modal";
+import { Autosuggest } from "../components/Autosuggest";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
 
@@ -197,13 +198,30 @@ function PortfolioTab({ grants, loading, address }: {
 }
 
 function CommitForm({ address, onCommitted }: { address: string; onCommitted: () => void }) {
-  const [pvoId, setPvoId] = useState("");
+  const [pvoId, setPvoId] = useState(0);
   const [amount, setAmount] = useState("");
   const [org, setOrg] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
+  const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
   const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client } = await import("../contracts/pvo_core/src");
+        const client = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await client.get_pvo_count();
+        const list: { id: number; title: string }[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          const r = await client.get_pvo({ pvo_id: i });
+          if (r.result) list.push({ id: r.result.id, title: r.result.title });
+        }
+        setPvoOptions(list);
+      } catch {}
+    })();
+  }, []);
 
   // Check donor's custom pPHP balance
   useEffect(() => {
@@ -247,7 +265,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
 
       const op = contract.call("commit_grant",
         new Address(address).toScVal(),
-        xdr.ScVal.scvU32(Number(pvoId)),
+        xdr.ScVal.scvU32(pvoId),
         new ScInt(amt).toI128(),
         orgStr,
         new Address(FUNDING_AGENCY).toScVal(),
@@ -268,7 +286,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
 
       setTxState("done");
       setTxMsg("Grant committed on-chain! Loading...");
-      setPvoId(""); setAmount(""); setOrg("");
+      setPvoId(0); setAmount(""); setOrg("");
       setTimeout(() => onCommitted(), 3000);
     } catch (err: any) {
       setTxState("error");
@@ -293,10 +311,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label>
-          <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)} className="input" placeholder="e.g. 1" required />
-        </div>
+        <Autosuggest label="PVO" value={pvoId ? String(pvoId) : ""} options={pvoOptions}
+          onChange={setPvoId} placeholder="Search by project name..." />
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Donor Organization</label>
           <select value={org} onChange={(e) => setOrg(e.target.value)} className="select" required>
