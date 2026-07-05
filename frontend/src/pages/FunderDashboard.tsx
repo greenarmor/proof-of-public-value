@@ -382,7 +382,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
         xdr.ScVal.scvU32(Number(pvoId)),
         xdr.ScVal.scvU32(Number(milestoneId)),
         nativeToScVal(amt, { type: "i128" }),
-        new Address(CONTRACT_IDS.pphp_sac).toScVal(),
+        new Address(CONTRACT_IDS.pphp).toScVal(),
         xdr.ScVal.scvU32(Number(communityRequired)),
       );
 
