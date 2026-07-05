@@ -591,7 +591,7 @@ function PledgeManager() {
         const { Client } = await import("../contracts/grant_commitment/src");
         const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await gc.get_all_grants();
-        setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
+        const raw = (result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"); const seen = new Set(); const unique = raw.filter((g: any) => !seen.has(g.id) && seen.add(g.id)); setPledges(unique) // was: setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
       } catch (e) { console.error("PledgeManager:", e); } finally { setLoading(false); }
     })();
   }, []);
