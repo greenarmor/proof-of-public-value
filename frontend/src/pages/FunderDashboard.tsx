@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";;
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";

@@ -57,7 +57,7 @@ function PVOMarker({ pvo, selected, onRegister }: { pvo: PVOData; selected: bool
         <strong>{pvo.title}</strong><br />
         {pvo.department} · {pvo.municipality}<br />
         Budget: {formatBudget(pvo.total_budget)}<br />
-        Score: {pvo.public_value_score}/PPHP_SCALE<br />
+        Score: {pvo.public_value_score}/100<br />
         <span className="text-[10px] text-slate-400">{pvo.milestones.length} milestones</span>
       </Popup>
     </Marker>

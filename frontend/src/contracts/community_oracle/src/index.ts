@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CBPOFXY2W6XGT4SHLSTJHPCV7VIQH3Z4ZSUOZA2CVYBUV7XQVUPZVQGS",
+    contractId: "CB3CFVM3SLRXVASI7F2NBYCIJ7SW2CAVZU3SWYMIEZU5XIL2FPT7RECU",
   }
 } as const
 
@@ -112,6 +112,11 @@ export interface Client {
    */
   set_citizen_credential: ({admin, min_balance}: {admin: string, min_balance: i128}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
+  /**
+   * Construct and simulate a get_verified_report_count transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_verified_report_count: ({pvo_id}: {pvo_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
@@ -144,7 +149,8 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAASZ2V0X3JlcG9ydHNfYnlfcHZvAAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAD6gAAB9AAAAAPQ29tbXVuaXR5UmVwb3J0AA==",
         "AAAAAAAAAAAAAAAUY2FsY3VsYXRlX2NvbmZpZGVuY2UAAAADAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAEAAAAE",
         "AAAAAAAAAAAAAAAWZ2V0X2NpdGl6ZW5fcmVwdXRhdGlvbgAAAAAAAQAAAAAAAAAHY2l0aXplbgAAAAATAAAAAQAAA+gAAAfQAAAAEUNpdGl6ZW5SZXB1dGF0aW9uAAAA",
-        "AAAAAAAAAAAAAAAWc2V0X2NpdGl6ZW5fY3JlZGVudGlhbAAAAAAAAgAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAAAAAAttaW5fYmFsYW5jZQAAAAALAAAAAA==" ]),
+        "AAAAAAAAAAAAAAAWc2V0X2NpdGl6ZW5fY3JlZGVudGlhbAAAAAAAAgAAAAAAAAAFYWRtaW4AAAAAAAATAAAAAAAAAAttaW5fYmFsYW5jZQAAAAALAAAAAA==",
+        "AAAAAAAAAAAAAAAZZ2V0X3ZlcmlmaWVkX3JlcG9ydF9jb3VudAAAAAAAAAEAAAAAAAAABnB2b19pZAAAAAAABAAAAAEAAAAE" ]),
       options
     )
   }
@@ -157,6 +163,7 @@ export class Client extends ContractClient {
         get_reports_by_pvo: this.txFromJSON<Array<CommunityReport>>,
         calculate_confidence: this.txFromJSON<u32>,
         get_citizen_reputation: this.txFromJSON<Option<CitizenReputation>>,
-        set_citizen_credential: this.txFromJSON<null>
+        set_citizen_credential: this.txFromJSON<null>,
+        get_verified_report_count: this.txFromJSON<u32>
   }
 }

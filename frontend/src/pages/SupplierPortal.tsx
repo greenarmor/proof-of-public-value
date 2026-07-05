@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";;
 import { Client as ProcurementClient } from "../contracts/procurement_market/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -231,7 +231,7 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-700">
             <strong>Scoring (contract-enforced):</strong><br />
-            Price (discount% × 50) + Quality (self-reported, score/PPHP_SCALE × 30) + Timeline (100 − days×10, max 20) + <strong>Integrity (from reputation contract, score/PPHP_SCALE × 20)</strong>.<br />
+            Price (discount% × 50) + Quality (self-reported, score/100 × 30) + Timeline (100 − days×10, max 20) + <strong>Integrity (from reputation contract, score/100 × 20)</strong>.<br />
             Your on-chain reputation score is pulled automatically from the reputation contract.
             Build your reputation by completing projects on time and within budget.
           </p>

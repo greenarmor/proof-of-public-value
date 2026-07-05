@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, 100 } from "../config";;
 import { formatAddress } from "../helpers";
 
 interface FraudResult {
@@ -360,7 +360,7 @@ function GeoRiskTab({ pvoId }: { pvoId: number }) {
       </div>
       <div className="flex items-center justify-between border-t pt-4">
         <span className="text-sm text-gray-500">Overall Score</span>
-        <span className="font-bold text-lg">{risk.overall_risk_score}/PPHP_SCALE</span>
+        <span className="font-bold text-lg">{risk.overall_risk_score}/100</span>
       </div>
     </div>
   );
@@ -568,7 +568,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{Number(escrow.pvo_id)}</span></div>
-          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()}</p>
+          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/100).toLocaleString()}</p>
           <p className="text-xs text-slate-400 mt-0.5">Recipient: {formatAddress(escrow.recipient, 4)} · Funder: {formatAddress(escrow.funder, 4)}</p>
         </div>
         <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>

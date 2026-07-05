@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
-import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
+import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, 100 } from "../config";;
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 
@@ -173,7 +173,7 @@ export function TransparencyPortal() {
                   <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatBudget(selected.total_budget)}</dd></div>
                   <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1"><WalletAddress addr={selected.contractor}/></dd></div>
                   <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
-                  <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/PPHP_SCALE</dd></div>
+                  <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
                   <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestones.length}</dd></div>
                 </div>
               </div>
@@ -242,7 +242,7 @@ export function TransparencyPortal() {
                     </div>
                     <div className="pt-2 border-t border-slate-100">
                       <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/PPHP_SCALE</span>
+                        <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/100</span>
                       </div>
                       <div className="progress-bar"><div className={`progress-fill ${pvo.public_value_score>=75?"progress-green":pvo.public_value_score>=50?"progress-amber":"progress-red"}`} style={{width:`${pvo.public_value_score}%`}}/></div>
                     </div>

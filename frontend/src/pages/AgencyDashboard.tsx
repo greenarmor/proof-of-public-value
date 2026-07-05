@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, 100 } from "../config";;
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -114,9 +114,9 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total Projects", value: pvos.length, color: "text-gray-900" },
-          { label: "Total Budget", value: `${currency}${(totalBudget / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
+          { label: "Total Budget", value: `${currency}${(totalBudget / 100 / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
           { label: "Active Milestones", value: totalMilestones, color: "text-blue-600" },
-          { label: "Avg Score", value: `${Math.round(pvos.reduce((s: number, p: any) => s + Number(p.public_value_score), 0) / pvos.length)}/PPHP_SCALE`, color: "text-green-600" },
+          { label: "Avg Score", value: `${Math.round(pvos.reduce((s: number, p: any) => s + Number(p.public_value_score), 0) / pvos.length)}/100`, color: "text-green-600" },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
             <p className="stat-label">{stat.label}</p>
@@ -145,7 +145,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
                 <td className="px-4 py-3 text-gray-600">{p.department}</td>
                 <td className="px-4 py-3 font-mono text-gray-600">{currency}{formatBudget(String(p.total_budget))}</td>
                 <td className="px-4 py-3"><span className="badge badge-blue">{statusToString(p.status)}</span></td>
-                <td className="px-4 py-3"><span className="font-semibold text-gray-700">{Number(p.public_value_score)}</span><span className="text-gray-400">/PPHP_SCALE</span></td>
+                <td className="px-4 py-3"><span className="font-semibold text-gray-700">{Number(p.public_value_score)}</span><span className="text-gray-400">/100</span></td>
               </tr>
             ))}
           </tbody>
@@ -279,7 +279,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="10000000000" required />
-            {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / PPHP_SCALE).toLocaleString()}</p>}
+            {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / 100).toLocaleString()}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fund Source</label>
