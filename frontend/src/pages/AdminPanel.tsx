@@ -130,7 +130,6 @@ function RoleManagement() {
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(r)]),
       );
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(mintOp).setTimeout(30).build();
-        .addOperation(op).setTimeout(30).build();
       await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction((await server.prepareTransaction(tx)).toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
