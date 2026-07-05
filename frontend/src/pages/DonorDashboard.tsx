@@ -3,8 +3,6 @@ import { useWallet } from "../wallet";
 import { formatAddress, formatBudget } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency } from "../config";
-import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
-import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Modal } from "../components/Modal";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
@@ -39,25 +37,47 @@ export function DonorDashboard() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const gc = new GrantClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-      const gr = await gc.get_all_grants();
-      setGrants((gr.result || []).map((g: any) => ({
-        id: Number(g.id), pvoId: Number(g.pvo_id), donor: g.donor, amount: Number(g.amount),
-        orgName: g.org_name, currency: g.currency || "USD", status: statusFromChain(g.status), createdAt: Number(g.created_at),
-      })));
+      const { Contract, rpc, Address, TransactionBuilder } = await import("@stellar/stellar-sdk");
 
-      const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-      const cnt = await pc.get_pvo_count();
-      const total = Number(cnt.result);
+      // Load grants via raw contract calls
+      const server = new rpc.Server(RPC_URL);
+      const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
+      const grTx = new TransactionBuilder(await server.getAccount(address!))
+        .addOperation(gcContract.call("get_all_grants")).setTimeout(30).build();
+      const grSim = await server.simulateTransaction(grTx);
+      if (grSim.result?.retval) {
+        const vals = grSim.result.retval as any[];
+        setGrants((vals || []).map((g: any) => ({
+          id: Number(g.id), pvoId: Number(g.pvo_id), donor: g.donor, amount: Number(g.amount),
+          orgName: g.org_name, currency: g.currency || "USD", status: statusFromChain(g.status),
+          createdAt: Number(g.created_at),
+        })));
+      }
+
+      // Load PVOs via raw contract calls
+      const pcContract = new Contract(CONTRACT_IDS.pvo_core);
+      const cntTx = new TransactionBuilder(await server.getAccount(address!))
+        .addOperation(pcContract.call("get_pvo_count")).setTimeout(30).build();
+      const cntSim = await server.simulateTransaction(cntTx);
+      const total = cntSim.result?.retval ? Number(require("@stellar/stellar-sdk").scValToBigInt(cntSim.result.retval)) : 0;
       console.log("PVO count:", total);
+
       const list: PVOCard[] = [];
       for (let i = 1; i <= total; i++) {
-        const r = await pc.get_pvo({ pvo_id: i });
-        if (r.result) list.push({
-          id: r.result.id, title: r.result.title, department: r.result.department,
-          municipality: r.result.municipality, totalBudget: String(r.result.total_budget),
-          status: String((r.result.status as any)?.tag || r.result.status || "Proposed"),
-        });
+        try {
+          const pTx = new TransactionBuilder(await server.getAccount(address!))
+            .addOperation(pcContract.call("get_pvo", require("@stellar/stellar-sdk").xdr.ScVal.scvU32(i)))
+            .setTimeout(30).build();
+          const pSim = await server.simulateTransaction(pTx);
+          if (pSim.result?.retval) {
+            const r = pSim.result.retval as any;
+            list.push({
+              id: Number(r.id), title: r.title, department: r.department,
+              municipality: r.municipality, totalBudget: String(r.total_budget),
+              status: r.status || "Proposed",
+            });
+          }
+        } catch {}
       }
       setPvos(list);
     } catch (e) { console.error("DonorDashboard loadAll:", e); } finally { setLoading(false); }
