@@ -207,6 +207,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [pvoId, setPvoId] = useState(0);
   const [amount, setAmount] = useState("");
   const [org, setOrg] = useState("");
+  const [fiatCurrency, setFiatCurrency] = useState("USD");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
@@ -284,9 +285,9 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   return (
     <>
       <p className="text-sm text-slate-500 -mt-2 mb-4">
-        Commits a grant and transfers pPHP to the Funding Agency in one transaction.
+        Records a pledge in real currency. Admin converts to pPHP to the Funding Agency in one transaction.
         The FA can then use these funds to create and fund escrows for the designated PVO.
-        Ensure you have pPHP tokens first — <strong>admin mints them via CLI</strong>.
+        Admin mints pPHP to Funding Agency after wire confirmation.
       </p>
 
       {txMsg && (
@@ -311,12 +312,21 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+          <select value={fiatCurrency} onChange={(e) => setFiatCurrency(e.target.value)} className="select" required>
+            <option value="USD">🇺🇸 USD — US Dollar</option>
+            <option value="EUR">🇪🇺 EUR — Euro</option>
+            <option value="JPY">🇯🇵 JPY — Yen</option>
+            <option value="GBP">🇬🇧 GBP — Pound</option>
+          </select>
+        </div>
 <label class="block text-sm font-medium text-slate-700 mb-1">Amount ({fiatCurrency})</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. 5000000`} required />
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
-            <strong>How it works:</strong> This commits a grant AND transfers pPHP to the Funding Agency
+            <strong>How it works:</strong> This records a pledge. The Funding Agency
             ({formatAddress(FUNDING_AGENCY, 6)}) in one atomic transaction. The FA can immediately use
             these funds for escrow.
           </p>
