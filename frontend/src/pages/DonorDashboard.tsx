@@ -219,6 +219,19 @@ export function DonorDashboard() {
         </button>
       </div>
 
+
+      {/* Balance status bar */}
+      {balance !== null && (
+        <div className={`mb-4 p-3 rounded-xl text-sm border flex items-center justify-between ${balance > 0n ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>
+          <span>🪙 <strong>Your pPHP:</strong> {currency}{(Number(balance) / PPHP_SCALE).toLocaleString()}</span>
+          {balance === 0n && (
+            <code className="text-xs bg-white px-2 py-1 rounded border border-red-200 font-mono">
+              stellar contract invoke --source alice --network testnet --id {"${CONTRACT_IDS.pphp}"} -- mint --to {"${address}"} --amount 20000000000000
+            </code>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
         {(["portfolio", "transparency"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
@@ -235,7 +248,8 @@ export function DonorDashboard() {
       {activeTab === "transparency" && <TransparencyTab grants={grants} loading={loading} address={address!} onAction={refresh} />}
 
       <Modal open={commitModal} onClose={() => setCommitModal(false)} title="Commit Grant Funding">
-        <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }} />
+        <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }}
+          balances={balances} balanceBigInt={balance} />
       </Modal>
     </div>
   );
