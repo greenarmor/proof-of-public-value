@@ -640,25 +640,25 @@ function PledgeManager() {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-4">
-        <div>
-        </div>
+      <div className="mb-4 grid grid-cols-4 gap-2 text-xs text-slate-500">
+        {Object.entries(rates).map(([cur, r]) => (<span key={cur} className="bg-slate-50 px-2 py-1 rounded">{cur}/PHP: ₱{r}</span>))}
+        <span className="text-slate-400 italic">Live rates</span>
       </div>
       {pledges.length === 0 ? (
         <div className="card p-8 text-center text-slate-400">No pending pledges to convert.</div>
       ) : (
         <div className="space-y-3">
-          {pledges.map((p: any) => (
-            <div key={p.id} className="card p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-slate-900">{p.org_name} — PVO #{p.pvo_id}</p>
-                <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} ≈ {((Number(p.amount) * rates[pledge.currency] || 56)).toLocaleString()} pPHP</p>
+          {pledges.map((p: any) => {
+            const r = rates[p.currency] || 56;
+            const pesos = Math.round(Number(p.amount) * r);
+            return (
+              <div key={p.id} className="card p-4 flex items-center justify-between">
+                <div><p className="font-semibold text-slate-900">{p.org_name} — PVO #{p.pvo_id}</p>
+                  <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} · @₱{r}/{p.currency} ≈ ₱{pesos.toLocaleString()}</p></div>
+                <button onClick={() => handleConvert(p)} disabled={busy === p.id} className="btn-primary text-xs px-3 py-1.5">{busy === p.id ? "Minting..." : "💸 Convert & Mint"}</button>
               </div>
-              <button onClick={() => handleConvert(p)} className="btn-primary text-xs px-3 py-1.5">
-                💸 Convert &amp; Mint
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
