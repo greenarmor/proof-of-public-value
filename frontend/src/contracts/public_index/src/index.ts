@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCRICAAZXOXKD5ZKII32TTWIB3BJEXYWM55FEMUODP4CNRGMOIRNFQ2D",
+    contractId: "CANNKC7GUMXTO3UN5VFZ773BVAFHWWFZXASJ3WLN7OYECDHF4VJ6T5VP",
   }
 } as const
 
@@ -102,13 +102,13 @@ export interface Client {
    * Construct and simulate a record_national_snapshot transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Take a snapshot of the national public value index
    */
-  record_national_snapshot: ({caller}: {caller: string}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+  record_national_snapshot: (options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
    * Construct and simulate a update_department_benchmark transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    * Submit department benchmark data from value_score calculations
    */
-  update_department_benchmark: ({caller, department, avg_value_score, pvo_count, total_budget, completed_projects, on_time_rate}: {caller: string, department: string, avg_value_score: u32, pvo_count: u32, total_budget: i128, completed_projects: u32, on_time_rate: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  update_department_benchmark: ({department, avg_value_score, pvo_count, total_budget, completed_projects, on_time_rate}: {department: string, avg_value_score: u32, pvo_count: u32, total_budget: i128, completed_projects: u32, on_time_rate: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
 }
 export class Client extends ContractClient {
@@ -139,8 +139,8 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAATZ2V0X3RvcF9kZXBhcnRtZW50cwAAAAABAAAAAAAAAAVjb3VudAAAAAAAAAQAAAABAAAD6gAAB9AAAAATRGVwYXJ0bWVudEJlbmNobWFyawA=",
         "AAAAAAAAAAAAAAAUZ2V0X2RlcGFydG1lbnRfY291bnQAAAAAAAAAAQAAAAQ=",
         "AAAAAAAAAAAAAAAUZ2V0X3NuYXBzaG90X2hpc3RvcnkAAAAAAAAAAQAAA+oAAAfQAAAAEE5hdGlvbmFsU25hcHNob3Q=",
-        "AAAAAAAAADJUYWtlIGEgc25hcHNob3Qgb2YgdGhlIG5hdGlvbmFsIHB1YmxpYyB2YWx1ZSBpbmRleAAAAAAAGHJlY29yZF9uYXRpb25hbF9zbmFwc2hvdAAAAAEAAAAAAAAABmNhbGxlcgAAAAAAEwAAAAEAAAAE",
-        "AAAAAAAAAD5TdWJtaXQgZGVwYXJ0bWVudCBiZW5jaG1hcmsgZGF0YSBmcm9tIHZhbHVlX3Njb3JlIGNhbGN1bGF0aW9ucwAAAAAAG3VwZGF0ZV9kZXBhcnRtZW50X2JlbmNobWFyawAAAAAHAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAACmRlcGFydG1lbnQAAAAAABAAAAAAAAAAD2F2Z192YWx1ZV9zY29yZQAAAAAEAAAAAAAAAAlwdm9fY291bnQAAAAAAAAEAAAAAAAAAAx0b3RhbF9idWRnZXQAAAALAAAAAAAAABJjb21wbGV0ZWRfcHJvamVjdHMAAAAAAAQAAAAAAAAADG9uX3RpbWVfcmF0ZQAAAAQAAAAA" ]),
+        "AAAAAAAAADJUYWtlIGEgc25hcHNob3Qgb2YgdGhlIG5hdGlvbmFsIHB1YmxpYyB2YWx1ZSBpbmRleAAAAAAAGHJlY29yZF9uYXRpb25hbF9zbmFwc2hvdAAAAAAAAAABAAAABA==",
+        "AAAAAAAAAD5TdWJtaXQgZGVwYXJ0bWVudCBiZW5jaG1hcmsgZGF0YSBmcm9tIHZhbHVlX3Njb3JlIGNhbGN1bGF0aW9ucwAAAAAAG3VwZGF0ZV9kZXBhcnRtZW50X2JlbmNobWFyawAAAAAGAAAAAAAAAApkZXBhcnRtZW50AAAAAAAQAAAAAAAAAA9hdmdfdmFsdWVfc2NvcmUAAAAABAAAAAAAAAAJcHZvX2NvdW50AAAAAAAABAAAAAAAAAAMdG90YWxfYnVkZ2V0AAAACwAAAAAAAAASY29tcGxldGVkX3Byb2plY3RzAAAAAAAEAAAAAAAAAAxvbl90aW1lX3JhdGUAAAAEAAAAAA==" ]),
       options
     )
   }

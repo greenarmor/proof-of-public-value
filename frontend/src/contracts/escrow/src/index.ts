@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X",
+    contractId: "CDT7OX6HAGGSBXTB6PNXUGOQMUE4JTGF3P664RCSBRE4IYAOXKRCIRFH",
   }
 } as const
 
@@ -95,7 +95,7 @@ export interface Client {
   /**
    * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: ({compliance_engine}: {compliance_engine: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  initialize: ({compliance_engine, community_oracle}: {compliance_engine: string, community_oracle: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a ai_validate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -172,7 +172,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAHcmVsZWFzZQAAAAACAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAABAAAAAQ==",
         "AAAAAQAAAAAAAAAAAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAGAAAAAAAAAA1haV9yaXNrX2NoZWNrAAAAAAAAAQAAAAAAAAAWY29tbXVuaXR5X2NvbmZpcm1hdGlvbgAAAAAABAAAAAAAAAAbY29tbXVuaXR5X29yYWNsZV92YWxpZGF0aW9uAAAAAAEAAAAAAAAAEmNvbW11bml0eV9yZXF1aXJlZAAAAAAABAAAAAAAAAAVY29tcGxpYW5jZV92YWxpZGF0aW9uAAAAAAAAAQAAAAAAAAARZW5naW5lZXJfYXBwcm92YWwAAAAAAAAB",
         "AAAAAAAAAAAAAAAKZ2V0X2VzY3JvdwAAAAAAAQAAAAAAAAAJZXNjcm93X2lkAAAAAAAABAAAAAEAAAPoAAAH0AAAAAZFc2Nyb3cAAA==",
-        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAARY29tcGxpYW5jZV9lbmdpbmUAAAAAAAATAAAAAA==",
+        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAgAAAAAAAAARY29tcGxpYW5jZV9lbmdpbmUAAAAAAAATAAAAAAAAABBjb21tdW5pdHlfb3JhY2xlAAAAEwAAAAA=",
         "AAAAAAAAAAAAAAALYWlfdmFsaWRhdGUAAAAAAwAAAAAAAAAHYXVkaXRvcgAAAAATAAAAAAAAAAllc2Nyb3dfaWQAAAAAAAAEAAAAAAAAAAZwYXNzZWQAAAAAAAEAAAAA",
         "AAAAAAAAAAAAAAALZnVuZF9lc2Nyb3cAAAAAAwAAAAAAAAAGZnVuZGVyAAAAAAATAAAAAAAAAAllc2Nyb3dfaWQAAAAAAAAEAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAA",
         "AAAABQAAAAAAAAAAAAAAEUVzY3Jvd0Z1bmRlZEV2ZW50AAAAAAAAAQAAABNlc2Nyb3dfZnVuZGVkX2V2ZW50AAAAAAIAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAAI=",
