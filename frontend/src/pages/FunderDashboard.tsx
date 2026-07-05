@@ -527,13 +527,6 @@ function DonorCommitmentsTab() {
     })();
     (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
   }, []);
-      } catch (e) {
-        console.error("Failed to load donor commitments:", e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   const statusTag = (s: any): string => {
     if (s && typeof s === "object" && s.tag) return s.tag;
