@@ -209,7 +209,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [org, setOrg] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [org, setOrg] = useState("");
   const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
   const currency = getCurrency();
 
