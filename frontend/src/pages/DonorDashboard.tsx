@@ -319,6 +319,12 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
             these funds for escrow.
           </p>
         </div>
+        <button type="submit" disabled={busy} className="w-full py-3 btn-primary">
+          {busy ? "Signing..." : "Commit Funding On-Chain"}
+        </button>
+        {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
+      </form>
+    </>
   );
 }
 
