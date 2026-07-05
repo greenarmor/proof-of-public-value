@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
@@ -100,7 +100,7 @@ export function EscrowMonitor() {
         {[
           { label: "Total Escrows", value: escrows.length, color: "text-slate-900" },
           { label: "Active", value: active.length, color: "text-brand-600" },
-          { label: "Total Value", value: `${currency}${(totalValue / 100 / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
+          { label: "Total Value", value: `${currency}${(totalValue / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
           { label: "Released", value: released.length, color: "text-emerald-600" },
           { label: "Disputed", value: disputed.length, color: "text-red-600" },
         ].map((stat) => (
@@ -148,7 +148,7 @@ export function EscrowMonitor() {
                     </div>
                     <h3 className="font-semibold text-slate-900 text-sm">{e.pvoTitle}</h3>
                     <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                      <span>{currency}{(e.amount / 100).toLocaleString()}</span>
+                      <span>{currency}{(e.amount / PPHP_SCALE).toLocaleString()}</span>
                       <span className="text-slate-300">|</span>
                       <span>Contractor: <WalletAddress addr={e.contractor} chars={6}/></span>
                       <span className="text-slate-300">|</span>

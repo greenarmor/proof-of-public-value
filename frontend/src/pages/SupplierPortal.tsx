@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as ProcurementClient } from "../contracts/procurement_market/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -110,7 +110,7 @@ function TendersTab() {
             <span className="badge badge-blue">{statusToString(t.status)}</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>Budget: {currency}{(Number(t.budget) / 100).toLocaleString()}</span>
+            <span>Budget: {currency}{(Number(t.budget) / PPHP_SCALE).toLocaleString()}</span>
             <span>Agency: <WalletAddress addr={t.agency} chars={4}/></span>
           </div>
         </div>
@@ -207,7 +207,7 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
             <option value="">Select a tender...</option>
             {tenders.map((t: any) => (
               <option key={Number(t.id)} value={Number(t.id)}>
-                Tender #{Number(t.id)} - {t.title} ({currency}{(Number(t.budget) / 100).toLocaleString()})
+                Tender #{Number(t.id)} - {t.title} ({currency}{(Number(t.budget) / PPHP_SCALE).toLocaleString()})
               </option>
             ))}
           </select>
@@ -216,12 +216,12 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Bid Price (centavos)</label>
             <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="input" placeholder="180000000" required />
-            {price && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(price) / 100).toLocaleString()}</p>}
+            {price && <p className="text-xs text-slate-400 mt-1">{currency}{(Number(price) / PPHP_SCALE).toLocaleString()}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Quality Score (0-100)</label>
             <input type="number" value={qualityScore} onChange={(e) => setQualityScore(e.target.value)} className="input" min="0" max="100" placeholder="80" />
-            <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/100) × 30</p>
+            <p className="text-xs text-slate-400 mt-1">Self-reported. Scored as (score/PPHP_SCALE) × 30</p>
           </div>
         </div>
         <div>
@@ -231,7 +231,7 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
           <p className="text-sm text-blue-700">
             <strong>Scoring (contract-enforced):</strong><br />
-            Price (discount% × 50) + Quality (self-reported, score/100 × 30) + Timeline (100 − days×10, max 20) + <strong>Integrity (from reputation contract, score/100 × 20)</strong>.<br />
+            Price (discount% × 50) + Quality (self-reported, score/PPHP_SCALE × 30) + Timeline (100 − days×10, max 20) + <strong>Integrity (from reputation contract, score/PPHP_SCALE × 20)</strong>.<br />
             Your on-chain reputation score is pulled automatically from the reputation contract.
             Build your reputation by completing projects on time and within budget.
           </p>
@@ -297,7 +297,7 @@ function MyBidsTab({ address }: { address: string }) {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs text-slate-400 font-mono">Tender #{b.tenderId}</span>
               </div>
-              <p className="font-semibold text-slate-900">{currency}{(Number(b.amount) / 100).toLocaleString()}</p>
+              <p className="font-semibold text-slate-900">{currency}{(Number(b.amount) / PPHP_SCALE).toLocaleString()}</p>
             </div>
             <span className="badge badge-purple">Submitted</span>
           </div>

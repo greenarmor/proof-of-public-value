@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Client as PublicIndexClient } from "../contracts/public_index/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config", { PPHP_SCALE };
 
 interface Benchmark {
   department: string;
@@ -84,7 +84,7 @@ export function IndexLeaderboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: "Total PVOs", value: snapshot.total_pvos, color: "text-gray-900" },
-            { label: "Avg Value Score", value: `${snapshot.avg_value_score}/100`, color: "text-purple-600" },
+            { label: "Avg Value Score", value: `${snapshot.avg_value_score}/PPHP_SCALE`, color: "text-purple-600" },
             { label: "Depts Ranked", value: snapshot.departments_ranked, color: "text-blue-600" },
             { label: "Top Dept", value: `${snapshot.top_dept} (${snapshot.top_dept_score})`, color: "text-green-600" },
           ].map((stat) => (

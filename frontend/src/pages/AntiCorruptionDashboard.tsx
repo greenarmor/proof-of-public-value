@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress, formatTimestamp } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { uploadToIPFS } from "../ipfs";
 import { Client as AiOracleClient, type FraudDetectionResult } from "../contracts/ai_oracle/src";
 import { Client as ComplianceClient, type ViolationRecord } from "../contracts/compliance_engine/src";
@@ -492,7 +492,7 @@ function RiskMapTab({ frauds, violations }: {
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
               <span className={`font-medium ${data.maxRisk >= 70 ? "text-red-600" : data.maxRisk >= 40 ? "text-amber-600" : "text-emerald-600"}`}>
-                Risk Score: {data.maxRisk}/100
+                Risk Score: {data.maxRisk}/PPHP_SCALE
               </span>
               <span className="text-slate-400">
                 {data.maxRisk >= 70 ? "High Risk" : data.maxRisk >= 40 ? "Moderate Risk" : "Low Risk"}

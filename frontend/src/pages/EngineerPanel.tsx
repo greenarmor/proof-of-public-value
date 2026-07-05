@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";
@@ -54,7 +54,7 @@ export function EngineerPanel() {
         <p className="text-gray-500">Review submitted evidence and approve milestones on-chain.</p>
         {reputation !== null && (
           <span className={`badge text-xs ${reputation >= 80 ? "badge-green" : reputation >= 50 ? "badge-amber" : "badge-red"}`}>
-            🛡️ Reputation: {reputation}/100
+            🛡️ Reputation: {reputation}/PPHP_SCALE
           </span>
         )}
       </div>
@@ -233,7 +233,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
       </div>
 
       <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
-        <span>Budget: {currency}{(Number(milestone.budget) / 100).toLocaleString()}</span>
+        <span>Budget: {currency}{(Number(milestone.budget) / PPHP_SCALE).toLocaleString()}</span>
         <span>·</span>
         <span>{milestone.submitted_evidence.length} evidence items</span>
       </div>
@@ -336,7 +336,7 @@ function ApprovedMilestones({ address }: { address: string }) {
                 <span className="text-xs text-slate-300">·</span>
                 <span className="text-xs text-slate-400">Milestone #{e.milestoneId}</span>
               </div>
-              <p className="font-medium text-gray-900">{currency}{(e.amount / 100).toLocaleString()}</p>
+              <p className="font-medium text-gray-900">{currency}{(e.amount / PPHP_SCALE).toLocaleString()}</p>
             </div>
             <span className="badge badge-green">Engineer Approved</span>
           </div>

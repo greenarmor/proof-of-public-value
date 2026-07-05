@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config", { PPHP_SCALE };
 
 export function EconomicMemory() {
   const [query, setQuery] = useState("");
@@ -75,7 +75,7 @@ export function EconomicMemory() {
                 <div>Budget: ₱ {Number(r.budget).toLocaleString()}</div>
                 <div>Status: {r.status}</div>
                 {r.reputation !== undefined && (
-                  <div>Reputation: <span className={`font-medium ${r.reputation >= 80 ? "text-green-600" : r.reputation >= 50 ? "text-yellow-600" : "text-red-600"}`}>{r.reputation}/100</span></div>
+                  <div>Reputation: <span className={`font-medium ${r.reputation >= 80 ? "text-green-600" : r.reputation >= 50 ? "text-yellow-600" : "text-red-600"}`}>{r.reputation}/PPHP_SCALE</span></div>
                 )}
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { uploadToIPFS } from "../ipfs";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
@@ -115,7 +115,7 @@ function AllProjects() {
                   <h4 className="font-medium text-slate-900">Milestone #{Number(m.id)}: {m.title}</h4>
                   <p className="text-xs text-slate-500 mt-0.5">{m.description}</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Status: {statusToString(m.status)} · Budget: {currency}{(Number(m.budget) / 100).toLocaleString()}
+                    Status: {statusToString(m.status)} · Budget: {currency}{(Number(m.budget) / PPHP_SCALE).toLocaleString()}
                   </p>
                 </div>
                 <span className="badge badge-purple">{statusToString(m.status)}</span>

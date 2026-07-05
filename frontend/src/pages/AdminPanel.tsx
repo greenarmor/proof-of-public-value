@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
@@ -418,7 +418,7 @@ function DisputeResolution() {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="card p-4"><p className="stat-label">Disputed Escrows</p><p className="stat-value text-yellow-600">{escrows.length}</p></div>
-        <div className="card p-4"><p className="stat-label">Total in Dispute</p><p className="stat-value text-slate-900">{getCurrency()}{(escrows.reduce((s: number, e: any) => s + Number(e.amount), 0) / 100 / 1_000_000).toFixed(1)}M</p></div>
+        <div className="card p-4"><p className="stat-label">Total in Dispute</p><p className="stat-value text-slate-900">{getCurrency()}{(escrows.reduce((s: number, e: any) => s + Number(e.amount), 0) / PPHP_SCALE / 1_000_000).toFixed(1)}M</p></div>
         <div className="card p-4"><p className="stat-label">Resolution</p><p className="stat-value text-gray-400">Refund only</p></div>
       </div>
       {escrows.length === 0 ? (
@@ -438,7 +438,7 @@ function DisputeResolution() {
                 <tr key={Number(e.id)} className="border-t border-gray-100">
                   <td className="px-4 py-3 font-mono text-xs">#{Number(e.id)}</td>
                   <td className="px-4 py-3">#{Number(e.pvo_id)}</td>
-                  <td className="px-4 py-3 font-medium">{getCurrency()}{(Number(e.amount) / 100).toLocaleString()}</td>
+                  <td className="px-4 py-3 font-medium">{getCurrency()}{(Number(e.amount) / PPHP_SCALE).toLocaleString()}</td>
                   <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={e.funder} chars={4}/></td>
                   <td className="px-4 py-3"><span className="badge badge-red">Disputed</span></td>
                 </tr>

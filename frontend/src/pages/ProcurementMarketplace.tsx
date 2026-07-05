@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
 import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
@@ -110,7 +110,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
             }`}>{t.status.tag}</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-600">
-            <span>Budget: {currency}{(Number(t.budget) / 100).toLocaleString()}</span>
+            <span>Budget: {currency}{(Number(t.budget) / PPHP_SCALE).toLocaleString()}</span>
             {t.winner && <span>Winner: <WalletAddress addr={t.winner} chars={6}/></span>}
           </div>
           <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
@@ -145,7 +145,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
       if (!deadline) throw new Error("Deadline required");
 
       // deadline is a u64 timestamp (seconds since epoch)
-      const dl = Math.floor(new Date(deadline).getTime() / 1000);
+      const dl = Math.floor(new Date(deadline).getTime() / PPHP_SCALE0);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -203,7 +203,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="200000000" required />
-            {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / 100).toLocaleString()}</p>}
+            {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / PPHP_SCALE).toLocaleString()}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
@@ -307,7 +307,7 @@ function TenderAwardCard({ tender, currency, address }: { tender: Tender; curren
           </div>
           <h3 className="font-semibold text-slate-900">{tender.title}</h3>
           <p className="text-sm text-slate-500 mt-0.5">{tender.description}</p>
-          <p className="text-xs text-slate-400 mt-1">Budget: {currency}{(Number(tender.budget)/100).toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-1">Budget: {currency}{(Number(tender.budget)/PPHP_SCALE).toLocaleString()}</p>
         </div>
         <button onClick={handleAward} disabled={busy || bids.length === 0}
           className="btn-primary text-sm px-4 py-2">
@@ -328,7 +328,7 @@ function TenderAwardCard({ tender, currency, address }: { tender: Tender; curren
               <div key={Number(b.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">
                 <div>
                   <span className="font-mono text-xs text-slate-600"><WalletAddress addr={b.contractor} chars={6}/></span>
-                  <span className="text-xs text-slate-400 ml-2">{currency}{(Number(b.price)/100).toLocaleString()}</span>
+                  <span className="text-xs text-slate-400 ml-2">{currency}{(Number(b.price)/PPHP_SCALE).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="text-slate-400">Q:{Number(b.quality_score)} T:{Number(b.timeline_days)}d R:{Number(b.reputation_score)}</span>

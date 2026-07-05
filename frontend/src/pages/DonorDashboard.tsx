@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
 import { Modal } from "../components/Modal";
 
@@ -157,8 +157,8 @@ function PortfolioTab({ grants, loading, address }: {
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Pledged", value: `${currency}${(totalCommitted / 100 / 1_000_000).toFixed(1)}M`, color: "text-slate-900" },
-          { label: "Disbursed", value: `${currency}${(disbursed / 100 / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
+          { label: "Total Pledged", value: `${currency}${(totalCommitted / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-slate-900" },
+          { label: "Disbursed", value: `${currency}${(disbursed / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
           { label: "Total Grants", value: String(grants.length), color: "text-brand-600" },
           { label: "Your Commitments", value: String(myGrants.length), color: "text-blue-600" },
         ].map((stat) => (
@@ -180,7 +180,7 @@ function PortfolioTab({ grants, loading, address }: {
                   <span className="text-xs text-slate-400">PVO #{g.pvoId}</span>
                 </div>
                 <h3 className="font-semibold text-slate-900">Grant #{g.id}</h3>
-                <p className="text-sm text-slate-500">{currency}{(g.amount / 100).toLocaleString()}</p>
+                <p className="text-sm text-slate-500">{currency}{(g.amount / PPHP_SCALE).toLocaleString()}</p>
               </div>
               <div className="text-right">
                 <span className={`badge ${STATUS_COLORS[g.status]}`}>{g.status}</span>
@@ -322,8 +322,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </p>
           {pphpBalance !== null && (
             <p className={`text-sm mt-2 ${hasEnough ? "text-emerald-700" : "text-red-600"}`}>
-              Your pPHP balance: <strong>{getCurrency()}{(Number(pphpBalance) / 100).toLocaleString()}</strong>
-              {!hasEnough && enteredAmount > 0 && ` — need ${getCurrency()}${(enteredAmount / 100).toLocaleString()}`}
+              Your pPHP balance: <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong>
+              {!hasEnough && enteredAmount > 0 && ` — need ${getCurrency()}${(enteredAmount / PPHP_SCALE).toLocaleString()}`}
             </p>
           )}
         </div>
@@ -410,7 +410,7 @@ function TransparencyTab({ grants, loading, address, onAction }: {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-900">{currency}{(g.amount / 100).toLocaleString()}</p>
+                  <p className="text-sm font-semibold text-slate-900">{currency}{(g.amount / PPHP_SCALE).toLocaleString()}</p>
                   <p className="text-xs text-slate-400">By <WalletAddress addr={g.donor} chars={4}/></p>
                 </div>
                 {g.donor === address && g.status === "Committed" && (

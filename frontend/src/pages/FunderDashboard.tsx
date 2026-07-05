@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";
@@ -184,9 +184,9 @@ function EscrowList({ escrows, loading, address, onAction }: {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total Escrows", value: String(escrows.length), color: "text-slate-900" },
-          { label: "Total Value", value: `${currency}${(totalAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
-          { label: "Funded", value: `${currency}${(fundedAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-brand-600" },
-          { label: "Released", value: `${currency}${(releasedAmount / 100 / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
+          { label: "Total Value", value: `${currency}${(totalAmount / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-blue-600" },
+          { label: "Funded", value: `${currency}${(fundedAmount / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-brand-600" },
+          { label: "Released", value: `${currency}${(releasedAmount / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
             <p className="stat-label">{stat.label}</p>
@@ -326,7 +326,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
             <span className={`badge ${STATUS_COLORS[escrow.status]}`}>{escrow.status.replace(/([A-Z])/g, " $1").trim()}</span>
           </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            PVO #{escrow.pvoId} · Milestone #{escrow.milestoneId} · {currency}{(escrow.amount / 100).toLocaleString()}
+            PVO #{escrow.pvoId} · Milestone #{escrow.milestoneId} · {currency}{(escrow.amount / PPHP_SCALE).toLocaleString()}
           </p>
         </div>
         <div className="text-right text-xs text-slate-400">
@@ -360,7 +360,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
             <button onClick={handleFund} disabled={busy || (pphpBalance !== null && !hasEnough)}
               className={`text-xs px-4 py-2 ${pphpBalance !== null && !hasEnough ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}
               title={pphpBalance !== null && !hasEnough ? `Insufficient pPHP balance. You have ${(balanceUnits! / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})} but need ${(escrow.amount / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})}` : ""}>
-              {busy ? "Signing..." : `Fund Escrow (${currency}${(escrow.amount / 100).toLocaleString()})`}
+              {busy ? "Signing..." : `Fund Escrow (${currency}${(escrow.amount / PPHP_SCALE).toLocaleString()})`}
             </button>
             {pphpBalance !== null && !hasEnough && (
               <span className="text-xs text-red-500 self-center">
@@ -482,7 +482,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
               <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP centavos)</label>
               <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input"
                 placeholder="e.g. 500000000 = ₱5,000,000" required />
-              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / 100).toLocaleString()}` : "In centavos (100 = ₱1.00)"}</p>
+              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / PPHP_SCALE).toLocaleString()}` : "In centavos (100 = ₱1.00)"}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Community Confirmations Required</label>
@@ -557,7 +557,7 @@ function DonorCommitmentsTab() {
         <div className="flex items-center justify-between">
           <div>
             <p className="stat-label">Total Donor Pledges</p>
-            <p className="stat-value text-brand-600">{currency}{(totalPledged / 100 / 1_000_000).toFixed(1)}M</p>
+            <p className="stat-value text-brand-600">{currency}{(totalPledged / PPHP_SCALE / 1_000_000).toFixed(1)}M</p>
           </div>
           <div className="text-right">
             <p className="stat-label">Active Grants</p>
@@ -582,7 +582,7 @@ function DonorCommitmentsTab() {
                     <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
-                  <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / 100).toLocaleString()}</p>
+                  <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()}</p>
                   <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as AuditClient } from "../contracts/audit_trail/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { formatAddress, statusToString } from "../helpers";
@@ -250,7 +250,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
             <span className="text-xs text-slate-300">·</span>
             <span className="text-xs text-slate-400">PVO #{Number(escrow.pvo_id)}</span>
           </div>
-          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount) / 100).toLocaleString()}</p>
+          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount) / PPHP_SCALE).toLocaleString()}</p>
           <p className="text-xs text-slate-400 mt-0.5">
             Recipient: <WalletAddress addr={escrow.recipient} chars={4}/> · Funder: <WalletAddress addr={escrow.funder} chars={4}/>
           </p>

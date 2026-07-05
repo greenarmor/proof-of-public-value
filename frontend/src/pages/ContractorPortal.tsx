@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { uploadToIPFS } from "../ipfs";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config", { PPHP_SCALE };
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
@@ -214,7 +214,7 @@ function ProjectsTab({ address }: { address: string }) {
                   <span className={`badge ${mColors[m.status] || "badge-blue"}`}>{m.status}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                  <span>Budget: {currency}{(Number(m.budget) / 100).toLocaleString()}</span>
+                  <span>Budget: {currency}{(Number(m.budget) / PPHP_SCALE).toLocaleString()}</span>
                   <span>·</span>
                   <span>{m.submitted_evidence.length} evidence items</span>
                 </div>
@@ -533,8 +533,8 @@ function PaymentsTab({ address }: { address: string }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total Escrows", value: String(escrows.length), color: "text-slate-900" },
-          { label: "Pending", value: `${currency}${(totalPending / 100 / 1_000_000).toFixed(1)}M`, color: "text-amber-600" },
-          { label: "Released", value: `${currency}${(totalReleased / 100 / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
+          { label: "Pending", value: `${currency}${(totalPending / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-amber-600" },
+          { label: "Released", value: `${currency}${(totalReleased / PPHP_SCALE / 1_000_000).toFixed(1)}M`, color: "text-emerald-600" },
           { label: "Your Address", value: formatAddress(address, 4), color: "text-purple-600" },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
@@ -565,7 +565,7 @@ function PaymentsTab({ address }: { address: string }) {
                     <span className="text-xs text-slate-300">·</span>
                     <span className="text-xs text-slate-400">Milestone #{e.milestoneId}</span>
                   </div>
-                  <p className="font-semibold text-gray-900">{currency}{(e.amount / 100).toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{currency}{(e.amount / PPHP_SCALE).toLocaleString()}</p>
                   <p className="text-xs text-slate-400 mt-0.5">Funded by <WalletAddress addr={e.funder} chars={4}/></p>
                 </div>
                 <span className={`badge ${sColors[e.status] || "badge-blue"}`}>{e.status}</span>
