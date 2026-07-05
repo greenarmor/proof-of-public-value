@@ -129,7 +129,7 @@ function RoleManagement() {
         new Address(addr).toScVal(),
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(r)]),
       );
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(mintOp).setTimeout(30).build();
         .addOperation(op).setTimeout(30).build();
       await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction((await server.prepareTransaction(tx)).toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
@@ -602,7 +602,7 @@ function PledgeManager() {
       const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
-      const pphpAmount = Math.round(Number(pledge.amount) * Number(rate) * 10_000_000);
+      const pphpAmount = Math.round(Number(pledge.amount) * rates[pledge.currency] || 56 * 10_000_000);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount("GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
@@ -611,7 +611,7 @@ function PledgeManager() {
       // Mint SAC pPHP to funding agency
       const mintOp = sacContract.call("mint", new Address(FUNDING).toScVal(), new ScInt(pphpAmount).toI128());
 
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(mintOp).setTimeout(30).build();
 
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
@@ -644,7 +644,7 @@ function PledgeManager() {
             <div key={p.id} className="card p-4 flex items-center justify-between">
               <div>
                 <p className="font-semibold text-slate-900">{p.org_name} — PVO #{p.pvo_id}</p>
-                <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} ≈ {((Number(p.amount) * Number(rate))).toLocaleString()} pPHP</p>
+                <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} ≈ {((Number(p.amount) * rates[pledge.currency] || 56)).toLocaleString()} pPHP</p>
               </div>
               <button onClick={() => handleConvert(p)} className="btn-primary text-xs px-3 py-1.5">
                 💸 Convert &amp; Mint
