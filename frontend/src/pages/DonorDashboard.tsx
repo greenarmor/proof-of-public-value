@@ -472,8 +472,14 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </p>
           {selectedAsset.code === "pPHP" && pphpBalance !== null && (
             <p className={`text-sm mt-2 ${hasEnough ? "text-emerald-700" : "text-red-600"}`}>
-              Your pPHP balance: <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong>
-              {!hasEnough && enteredAmount > 0 && ` — need ${getCurrency()}${(enteredAmount / PPHP_SCALE).toLocaleString()}`}
+              {hasEnough ? (
+                <>✅ Balance sufficient: <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong></>
+              ) : (
+                <>
+                  ⚠️ Insufficient balance: you have <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong> but need <strong>{getCurrency()}{(enteredAmount / PPHP_SCALE).toLocaleString()}</strong>.
+                  <br/><span className="text-xs">Request admin to mint: <code className="bg-red-100 px-1 rounded">stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount {Number(enteredAmount) - Number(pphpBalance || 0n)}</code></span>
+                </>
+              )}
             </p>
           )}
         </div>
