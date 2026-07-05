@@ -5,6 +5,7 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [hasTrustline, setHasTrustline] = useState<boolean | null>(null);
+  const [pphpBalance, setPphpBalance] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -20,7 +21,18 @@ export function CreatePphpTrustline({ address }: { address: string }) {
           ).addOperation(contract.call("balance", new Address(address).toScVal()))
            .setTimeout(30).build()
         );
-        setHasTrustline(!String(JSON.stringify(resp)).includes("Missing"));
+        const simStr = JSON.stringify(resp);
+        setHasTrustline(!simStr.includes("Missing"));
+        // Extract balance from simulation — raw i128 value
+        if (!simStr.includes("Missing")) {
+          try {
+            const bal = (resp as any).result?.retval?._value;
+            if (bal !== undefined) {
+              const n = Number(bal);
+              if (n > 0) setPphpBalance((n / 10_000_000).toLocaleString());
+            }
+          } catch {}
+        }
       } catch {
         setHasTrustline(false);
       }
@@ -62,7 +74,10 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   if (hasTrustline) {
     return (
       <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-        <p className="text-sm text-emerald-700">🪙 pPHP Trustline Active — visible in Freighter</p>
+        <p className="text-sm text-emerald-700">
+          <strong>🪙 pPHP Balance:</strong>{" "}
+          {pphpBalance ? `${pphpBalance} pPHP` : "Trustline active — visible in Freighter"}
+        </p>
       </div>
     );
   }
