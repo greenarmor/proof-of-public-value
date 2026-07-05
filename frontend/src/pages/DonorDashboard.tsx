@@ -226,9 +226,41 @@ export function DonorDashboard() {
           <span>🪙 <strong>Your pPHP:</strong> {currency}{(Number(balance) / PPHP_SCALE).toLocaleString()}</span>
           {balance === 0n && (
             <code className="text-xs bg-white px-2 py-1 rounded border border-red-200 font-mono">
-              stellar contract invoke --source alice --network testnet --id {"${CONTRACT_IDS.pphp}"} -- mint --to {"${address}"} --amount 20000000000000
+              stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount 20000000000000
             </code>
           )}
+        </div>
+      )}
+
+      {balances.length > 0 && (
+        <div className="mb-6 card p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-slate-800 text-sm">💳 Donor Wallet</h3>
+            <span className="text-xs font-mono text-slate-400">{address!.slice(0,8)}...{address!.slice(-4)}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {balances.map(b => {
+              const asset = DONATION_ASSETS.find(a => a.code === b.code);
+              const scale = Math.pow(10, asset?.decimals || 7);
+              const human = Number(b.amt) / scale;
+              const warningThreshold = 20000000000000n;
+              return (
+                <div key={b.code} className="bg-slate-50 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-slate-900">{human.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                  <p className="text-xs text-slate-500">{b.code} ({asset?.symbol || "?"})</p>
+                  {b.amt < warningThreshold && (
+                    <button onClick={() => {
+                      const shortage = warningThreshold - b.amt;
+                      navigator.clipboard.writeText(`stellar contract invoke --source alice --network testnet --id ${CONTRACT_IDS.pphp} -- mint --to ${address} --amount ${shortage}`);
+                      alert(`Mint command copied! Need ${(Number(shortage) / scale).toLocaleString()} more ${b.code}.`);
+                    }} className="mt-2 text-[10px] text-amber-600 hover:underline bg-amber-50 px-2 py-0.5 rounded">
+                      📋 Request more
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
