@@ -96,19 +96,21 @@ const COUNTER: Symbol = symbol_short!("COUNTER");
 const ESCROWS: Symbol = symbol_short!("ESCROWS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 const COMPLIANCE_ENGINE: Symbol = symbol_short!("COMPENG");
+const COMMUNITY_ORACLE: Symbol = symbol_short!("COMOR");
 
 #[contract]
 pub struct DynamicEscrow;
 
 #[contractimpl]
 impl DynamicEscrow {
-    pub fn initialize(env: Env, compliance_engine: Address) {
+    pub fn initialize(env: Env, compliance_engine: Address, community_oracle: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&COUNTER, &0u32);
         storage.set(&COMPLIANCE_ENGINE, &compliance_engine);
+        storage.set(&COMMUNITY_ORACLE, &community_oracle);
         storage.set(&INITIALIZED, &true);
     }
 
@@ -260,6 +262,16 @@ impl DynamicEscrow {
     pub fn community_oracle_validate(env: Env, citizen: Address, escrow_id: u32) {
         citizen.require_auth();
         let storage = env.storage().persistent();
+        
+        // Cross-contract: require at least 1 verified community report for this PVO
+        let escrows_init: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
+        let escrow_check = escrows_init.get(escrow_id).expect("escrow not found");
+        
+        if let Some(oracle_addr) = storage.get::<Symbol, Address>(&COMMUNITY_ORACLE) {
+            let verified: u32 = env.invoke_contract(&oracle_addr, &Symbol::new(&env, "get_verified_report_count"), soroban_sdk::vec![&env, escrow_check.pvo_id.into()]);
+            assert!(verified > 0, "no verified community reports for this PVO");
+        }
+
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
@@ -277,6 +289,16 @@ impl DynamicEscrow {
     pub fn add_community_confirmation(env: Env, citizen: Address, escrow_id: u32) {
         citizen.require_auth();
         let storage = env.storage().persistent();
+        
+        // Cross-contract: require verified community reports for this PVO
+        let escrows_init: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
+        let escrow_check = escrows_init.get(escrow_id).expect("escrow not found");
+        
+        if let Some(oracle_addr) = storage.get::<Symbol, Address>(&COMMUNITY_ORACLE) {
+            let verified: u32 = env.invoke_contract(&oracle_addr, &Symbol::new(&env, "get_verified_report_count"), soroban_sdk::vec![&env, escrow_check.pvo_id.into()]);
+            assert!(verified > 0, "no verified community reports for this PVO");
+        }
+
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 

@@ -288,6 +288,25 @@ impl CommunityOracle {
         reports.len() as u32
     }
 
+    pub fn get_verified_report_count(env: Env, pvo_id: u32) -> u32 {
+        let storage = env.storage().persistent();
+        let pvo_index: Map<u32, Vec<u32>> = storage.get(&PVO_INDEX).unwrap_or_else(|| Map::new(&env));
+        let pvo_report_ids = pvo_index.get(pvo_id).unwrap_or_else(|| Vec::new(&env));
+        let reports: Map<u32, CommunityReport> = storage.get(&REPORTS).unwrap_or_else(|| Map::new(&env));
+
+        let mut count = 0u32;
+        for i in 0..pvo_report_ids.len() {
+            if let Some(rid) = pvo_report_ids.get(i) {
+                if let Some(report) = reports.get(rid) {
+                    if report.verified {
+                        count = count.saturating_add(1);
+                    }
+                }
+            }
+        }
+        count
+    }
+
     fn add_to_pvo_index(env: &Env, pvo_id: u32, report_id: u32) {
         let storage = env.storage().persistent();
         let mut pvo_index: Map<u32, Vec<u32>> = storage.get(&PVO_INDEX).unwrap_or_else(|| Map::new(&env));

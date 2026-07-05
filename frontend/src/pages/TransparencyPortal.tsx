@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
-import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
+import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 
@@ -34,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function TransparencyPortal() {
+  const currency = getCurrency();
   const [pvos, setPvos] = useState<PVOData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PVOData | null>(null);
@@ -197,7 +198,7 @@ export function TransparencyPortal() {
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <span className="text-xs font-mono text-slate-400">Escrow #{e.id} · Milestone #{e.milestoneId}</span>
-                            <p className="font-semibold text-slate-900 mt-0.5">{(e.amount / 100).toLocaleString()} centavos</p>
+                            <p className="font-semibold text-slate-900 mt-0.5">{currency}{(e.amount / 100).toLocaleString()}</p>
                           </div>
                           <span className={`badge text-xs ${e.status === "Released" ? "badge-green" : e.status === "Refunded" ? "badge-red" : "badge-blue"}`}>{e.status}</span>
                         </div>

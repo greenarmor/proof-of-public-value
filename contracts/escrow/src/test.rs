@@ -14,13 +14,49 @@ fn register_compliance(env: &Env) -> Address {
     comp_id
 }
 
+fn register_community(env: &Env) -> Address {
+    let oracle_id = env.register(community_oracle::CommunityOracle, ());
+    env.invoke_contract::<soroban_sdk::Val>(
+        &oracle_id,
+        &Symbol::new(env, "initialize"),
+        soroban_sdk::vec![env],
+    );
+    // Set min RPT balance to 0 so we can submit reports without RPT token
+    let admin = Address::generate(env);
+    env.invoke_contract::<soroban_sdk::Val>(
+        &oracle_id,
+        &Symbol::new(env, "set_citizen_credential"),
+        soroban_sdk::vec![env, admin.to_val(), soroban_sdk::val!(0i128)],
+    );
+    // Submit and verify a report for PVO #1
+    let citizen = Address::generate(env);
+    let report_id: u32 = env.invoke_contract(
+        &oracle_id,
+        &Symbol::new(env, "submit_report"),
+        soroban_sdk::vec![
+            env, citizen.to_val(), soroban_sdk::val!(1u32), soroban_sdk::val!(1u32),
+            soroban_sdk::val!((community_oracle::ReportType::GpsPhoto).to_val()),
+            String::from_str(env, "hash").to_val(),
+            soroban_sdk::val!(1412364i128), soroban_sdk::val!(1210437i128),
+        ],
+    );
+    let verifier = Address::generate(env);
+    env.invoke_contract::<soroban_sdk::Val>(
+        &oracle_id,
+        &Symbol::new(env, "verify_report"),
+        soroban_sdk::vec![env, verifier.to_val(), soroban_sdk::val!(report_id), soroban_sdk::val!(50u32)],
+    );
+    oracle_id
+}
+
 fn setup() -> (Env, DynamicEscrowClient<'static>) {
     let env = Env::default();
     env.mock_all_auths();
     let compliance_id = register_compliance(&env);
+    let oracle_id = register_community(&env);
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize(&compliance_id);
+    client.initialize(&compliance_id, &oracle_id);
     (env, client)
 }
 
@@ -36,10 +72,11 @@ fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTok
     env.mock_all_auths();
 
     let compliance_id = register_compliance(&env);
+    let oracle_id = register_community(&env);
 
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize(&compliance_id);
+    client.initialize(&compliance_id, &oracle_id);
 
     let admin = Address::generate(&env);
     let token_id = env.register(pphp_token::PphpToken, ());
@@ -70,7 +107,7 @@ fn test_initialize() {
 fn test_double_initialize() {
     let (env, client) = setup();
     let dummy = Address::generate(&env);
-    client.initialize(&dummy);
+    client.initialize(&dummy, &dummy);
 }
 
 #[test]
