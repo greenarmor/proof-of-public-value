@@ -10,6 +10,7 @@ pub enum EscrowStatus {
     EngineerApproved,
     AIValidated,
     CompliancePassed,
+    OracleValidated,
     CommunityVerified,
     Ready,
     Released,
@@ -23,6 +24,7 @@ pub struct UnlockCondition {
     pub engineer_approval: bool,
     pub ai_risk_check: bool,
     pub compliance_validation: bool,
+    pub community_oracle_validation: bool,
     pub community_confirmation: u32,
     pub community_required: u32,
 }
@@ -93,18 +95,20 @@ pub struct EscrowDisputedEvent {
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const ESCROWS: Symbol = symbol_short!("ESCROWS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
+const COMPLIANCE_ENGINE: Symbol = symbol_short!("COMPENG");
 
 #[contract]
 pub struct DynamicEscrow;
 
 #[contractimpl]
 impl DynamicEscrow {
-    pub fn initialize(env: Env) {
+    pub fn initialize(env: Env, compliance_engine: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&COUNTER, &0u32);
+        storage.set(&COMPLIANCE_ENGINE, &compliance_engine);
         storage.set(&INITIALIZED, &true);
     }
 
@@ -133,6 +137,7 @@ impl DynamicEscrow {
             compliance_validation: false,
             community_confirmation: 0,
             community_required,
+            community_oracle_validation: false,
         };
 
         let escrow = Escrow {
@@ -198,7 +203,7 @@ impl DynamicEscrow {
 
         escrow.conditions.engineer_approval = true;
         escrow.status = EscrowStatus::EngineerApproved;
-        Self::advance_if_ready(&mut escrow);
+        Self::advance_if_ready(&env, &mut escrow);
         let new_status = escrow.status.clone();
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
@@ -219,7 +224,7 @@ impl DynamicEscrow {
             status_changed = true;
         }
 
-        Self::advance_if_ready(&mut escrow);
+        Self::advance_if_ready(&env, &mut escrow);
         let new_status = escrow.status.clone();
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
@@ -242,7 +247,7 @@ impl DynamicEscrow {
             status_changed = true;
         }
 
-        Self::advance_if_ready(&mut escrow);
+        Self::advance_if_ready(&env, &mut escrow);
         let new_status = escrow.status.clone();
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
@@ -250,6 +255,23 @@ impl DynamicEscrow {
         if status_changed {
             EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
         }
+    }
+
+    pub fn community_oracle_validate(env: Env, citizen: Address, escrow_id: u32) {
+        citizen.require_auth();
+        let storage = env.storage().persistent();
+        let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
+        let mut escrow = escrows.get(escrow_id).expect("escrow not found");
+
+        escrow.conditions.community_oracle_validation = true;
+        escrow.status = EscrowStatus::OracleValidated;
+
+        Self::advance_if_ready(&env, &mut escrow);
+        let new_status = escrow.status.clone();
+        escrows.set(escrow_id, escrow);
+        storage.set(&ESCROWS, &escrows);
+
+        EscrowConditionUpdatedEvent { id: escrow_id, status: new_status }.publish(&env);
     }
 
     pub fn add_community_confirmation(env: Env, citizen: Address, escrow_id: u32) {
@@ -264,7 +286,7 @@ impl DynamicEscrow {
             escrow.status = EscrowStatus::CommunityVerified;
         }
 
-        Self::advance_if_ready(&mut escrow);
+        Self::advance_if_ready(&env, &mut escrow);
         let new_status = escrow.status.clone();
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
@@ -280,9 +302,10 @@ impl DynamicEscrow {
         escrow.conditions.engineer_approval
             && escrow.conditions.ai_risk_check
             && escrow.conditions.compliance_validation
+            && escrow.conditions.community_oracle_validation
             && escrow.conditions.community_confirmation >= escrow.conditions.community_required
             && escrow.status == EscrowStatus::Funded
-            || Self::is_unlocked(&escrow)
+            || Self::is_unlocked(&env, &escrow)
     }
 
     pub fn release(env: Env, caller: Address, escrow_id: u32) -> bool {
@@ -292,7 +315,7 @@ impl DynamicEscrow {
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let escrow = escrows.get(escrow_id).expect("escrow not found");
 
-        if !Self::is_unlocked(&escrow) {
+        if !Self::is_unlocked(&env, &escrow) {
             return false;
         }
 
@@ -337,7 +360,7 @@ impl DynamicEscrow {
             panic!("cannot refund released escrow");
         }
 
-        if escrow.status != EscrowStatus::Disputed && Self::is_unlocked(&escrow) {
+        if escrow.status != EscrowStatus::Disputed && Self::is_unlocked(&env, &escrow) {
             panic!("cannot refund escrow with met conditions");
         }
 
@@ -403,15 +426,30 @@ impl DynamicEscrow {
         escrows.len() as u32
     }
 
-    fn is_unlocked(escrow: &Escrow) -> bool {
-        escrow.conditions.engineer_approval
+    fn is_unlocked(env: &Env, escrow: &Escrow) -> bool {
+        // All 5 gates must pass
+        let gates_ok = escrow.conditions.engineer_approval
             && escrow.conditions.ai_risk_check
             && escrow.conditions.compliance_validation
-            && escrow.conditions.community_confirmation >= escrow.conditions.community_required
+            && escrow.conditions.community_oracle_validation
+            && escrow.conditions.community_confirmation >= escrow.conditions.community_required;
+
+        if !gates_ok {
+            return false;
+        }
+
+        // Cross-contract: check PVO is compliant (no unresolved auto-paused violations)
+        let storage = env.storage().persistent();
+        if let Some(compliance_addr) = storage.get::<Symbol, Address>(&COMPLIANCE_ENGINE) {
+            let compliant: bool = env.invoke_contract(&compliance_addr, &Symbol::new(&env, "is_pvo_compliant"), soroban_sdk::vec![&env, escrow.pvo_id.into()]);
+            compliant
+        } else {
+            true
+        }
     }
 
-    fn advance_if_ready(escrow: &mut Escrow) {
-        if Self::is_unlocked(escrow) && escrow.status != EscrowStatus::Released {
+    fn advance_if_ready(env: &Env, escrow: &mut Escrow) {
+        if Self::is_unlocked(env, escrow) && escrow.status != EscrowStatus::Released {
             escrow.status = EscrowStatus::Ready;
         }
     }

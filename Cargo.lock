@@ -671,6 +671,7 @@ checksum = "2bfcf67fea2815c2fc3b90873fae90957be12ff417335dfadc7f52927feb03b2"
 name = "escrow"
 version = "0.1.0"
 dependencies = [
+ "compliance_engine",
  "pphp-token",
  "soroban-sdk",
 ]
@@ -761,6 +762,7 @@ dependencies = [
 name = "grant_commitment"
 version = "0.1.0"
 dependencies = [
+ "pphp-token",
  "soroban-sdk",
 ]
 

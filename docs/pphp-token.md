@@ -30,7 +30,7 @@ pPHP is a custom Soroban fungible token with **unlimited mintable supply** contr
 | Symbol | `pPHP` |
 | Decimals | `2` (1 peso = 100 centavos) |
 | Admin | `alice` (Administrator) |
-| Contract | `CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6` |
+| Contract | `CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y` |
 | Interface | Soroban `TokenInterface` (SAC-compatible) |
 
 ---
@@ -53,7 +53,7 @@ All on-chain amounts are in **centavos** (the smallest unit). Divide by 100 to g
 
 ## How Escrow Uses pPHP
 
-The escrow contract (`CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6`) stores a `token_address` field. When you create an escrow, you specify which token to use:
+The escrow contract (`CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X`) stores a `token_address` field. When you create an escrow, you specify which token to use:
 
 ```
 create_escrow(funder, recipient, pvo_id, milestone_id, amount, token_address, community_required)
@@ -77,7 +77,7 @@ Before release, tokens are **locked inside the escrow contract address**. No one
 
 ```bash
 stellar contract invoke --source alice --network testnet \
-  --id CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6 \
+  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
   -- balance --id $(stellar keys address funding_agency)
 ```
 
@@ -95,7 +95,7 @@ Only the Administrator (`alice`) can mint:
 
 ```bash
 stellar contract invoke --source alice --network testnet --send=yes \
-  --id CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6 \
+  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
   -- mint --to $(stellar keys address funding_agency) --amount 1000000000
 ```
 
@@ -111,17 +111,17 @@ This mints 10,000,000 pesos (1 billion centavos) to the funding agency wallet.
 ```bash
 # Symbol
 stellar contract invoke --source alice --network testnet \
-  --id CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6 \
+  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
   -- symbol
 
 # Decimals
 stellar contract invoke --source alice --network testnet \
-  --id CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6 \
+  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
   -- decimals
 
 # Total supply
 stellar contract invoke --source alice --network testnet \
-  --id CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6 \
+  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
   -- total_supply
 ```
 
@@ -137,8 +137,8 @@ stellar contract invoke --source alice --network testnet \
 ### Exercise B.4: Create and Fund a 5M Peso Escrow
 
 ```bash
-PPHP="CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6"
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 FUNDER=$(stellar keys address funding_agency)
 CONTRACTOR=$(stellar keys address contractor)
 
@@ -172,7 +172,7 @@ stellar contract invoke --source funding_agency --network testnet --send=yes \
 After funding, verify that tokens actually moved:
 
 ```bash
-PPHP="CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6"
+PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
 
 # Funder balance should have decreased
 stellar contract invoke --source alice --network testnet \
@@ -188,7 +188,7 @@ stellar contract invoke --source alice --network testnet \
 ### Exercise B.6: Complete All 5 Gates and Release
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 ESCROW_ID=1
 
 # Gate 1: Engineer
@@ -224,7 +224,7 @@ stellar contract invoke --source funding_agency --network testnet --send=yes \
 If fraud is detected, the Anti-Corruption Agency can dispute an escrow, and the funder can reclaim funds:
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 
 # Dispute
 stellar contract invoke --source anti_corruption --network testnet --send=yes \
@@ -326,8 +326,8 @@ Moving from testnet to mainnet requires only two changes in `frontend/src/config
 
 ```typescript
 // TESTNET (current)
-escrow: "CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6",  // escrow contract
-pphp: "CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6",  // simulation token
+escrow: "CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X",  // escrow contract
+pphp: "CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y",  // simulation token
 
 // MAINNET (production)
 escrow: "<mainnet_escrow_contract_id>",

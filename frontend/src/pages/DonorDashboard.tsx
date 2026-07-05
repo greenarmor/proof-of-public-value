@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency } from "../config";
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
+import { Modal } from "../components/Modal";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
 
@@ -46,10 +47,11 @@ const STATUS_COLORS: Record<GrantStatusTag, string> = {
 
 export function DonorDashboard() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"portfolio" | "commit" | "transparency">("portfolio");
+  const [activeTab, setActiveTab] = useState<"portfolio" | "transparency">("portfolio");
   const [grants, setGrants] = useState<GrantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [commitModal, setCommitModal] = useState(false);
 
   const loadGrants = useCallback(async () => {
     setLoading(true);
@@ -91,30 +93,35 @@ export function DonorDashboard() {
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">International Donor Dashboard</h1>
-          <p className="text-slate-500">Commit grant funding on-chain. Pledges are recorded permanently before disbursement.</p>
+          <p className="text-slate-500">Commit grant funding on-chain and transfer pPHP to the Funding Agency in one transaction.</p>
         </div>
         <button onClick={refresh} disabled={loading}
           className="btn-secondary text-xs px-3 py-2">
           {loading ? "Loading..." : "↻ Refresh"}
         </button>
+        <button onClick={() => setCommitModal(true)} className="btn-primary text-xs px-4 py-2">
+          🤝 Commit Funds
+        </button>
       </div>
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
-        {(["portfolio", "commit", "transparency"] as const).map((tab) => (
+        {(["portfolio", "transparency"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
             {tab === "portfolio" && `📊 Grant Portfolio (${grants.length})`}
-            {tab === "commit" && "🤝 Commit Funds"}
             {tab === "transparency" && "🔍 Transparency"}
           </button>
         ))}
       </div>
 
       {activeTab === "portfolio" && <PortfolioTab grants={grants} loading={loading} address={address!} />}
-      {activeTab === "commit" && <CommitForm address={address!} onCommitted={refresh} />}
       {activeTab === "transparency" && <TransparencyTab grants={grants} loading={loading} address={address!} onAction={refresh} />}
+
+      <Modal open={commitModal} onClose={() => setCommitModal(false)} title="Commit Grant Funding">
+        <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }} />
+      </Modal>
     </div>
   );
 }
@@ -195,7 +202,31 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [org, setOrg] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
   const currency = getCurrency();
+
+  // Check donor's custom pPHP balance
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.pphp);
+        const acct = await server.getAccount(address);
+        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("balance", new Address(address).toScVal()))
+          .setTimeout(30).build();
+        const resp = await server.simulateTransaction(tx);
+        if (!resp.error && resp.result?.retval) {
+          setPphpBalance(scValToBigInt(resp.result.retval));
+        }
+      } catch {}
+    })();
+  }, [address]);
+
+  const balanceUnits = pphpBalance !== null ? Number(pphpBalance) : null;
+  const enteredAmount = amount ? Math.round(Number(amount) * 100) : 0;
+  const hasEnough = balanceUnits !== null && balanceUnits >= enteredAmount && enteredAmount > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,6 +250,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         xdr.ScVal.scvU32(Number(pvoId)),
         new ScInt(amt).toI128(),
         orgStr,
+        new Address(FUNDING_AGENCY).toScVal(),
+        new Address(CONTRACT_IDS.pphp).toScVal(),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -246,11 +279,11 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="card p-6 max-w-xl">
-      <h2 className="text-lg font-semibold mb-2 text-slate-900">Commit Grant Funding</h2>
-      <p className="text-sm text-slate-500 mb-4">
-        Records a pledge on-chain. No tokens move yet. The funding agency sees this commitment
-        and can create an escrow when ready for disbursement.
+    <>
+      <p className="text-sm text-slate-500 -mt-2 mb-4">
+        Commits a grant and transfers pPHP to the Funding Agency in one transaction.
+        The FA can then use these funds to create and fund escrows for the designated PVO.
+        Ensure you have pPHP tokens first — <strong>admin mints them via CLI</strong>.
       </p>
 
       {txMsg && (
@@ -283,17 +316,24 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
-            <strong>How it works:</strong> This records a commitment on the grant_commitment contract.
-            The funding agency can see all commitments. When ready to disburse, they create an escrow
-            with real token transfers. No money moves at this step.
+            <strong>How it works:</strong> This commits a grant AND transfers pPHP to the Funding Agency
+            ({formatAddress(FUNDING_AGENCY, 6)}) in one atomic transaction. The FA can immediately use
+            these funds for escrow.
           </p>
+          {pphpBalance !== null && (
+            <p className={`text-sm mt-2 ${hasEnough ? "text-emerald-700" : "text-red-600"}`}>
+              Your pPHP balance: <strong>{getCurrency()}{(Number(pphpBalance) / 100).toLocaleString()}</strong>
+              {!hasEnough && enteredAmount > 0 && ` — need ${getCurrency()}${(enteredAmount / 100).toLocaleString()}`}
+            </p>
+          )}
         </div>
-        <button type="submit" disabled={busy} className="btn-primary w-full py-3">
+        <button type="submit" disabled={busy || (amount !== "" && pphpBalance !== null && !hasEnough)}
+          className={`w-full py-3 ${amount !== "" && pphpBalance !== null && !hasEnough ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}>
           {busy ? "Signing..." : "Commit Funding On-Chain"}
         </button>
         {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 

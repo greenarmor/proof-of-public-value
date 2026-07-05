@@ -4,6 +4,7 @@ import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { Modal } from "../components/Modal";
 
 const ROLES = [
   "Citizen", "Engineer", "Inspector", "Contractor", "Supplier",
@@ -20,7 +21,9 @@ interface SystemHealth {
 
 export function AdminPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"roles" | "mint" | "disputes" | "health" | "upgrade" | "settings">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "disputes" | "health" | "upgrade" | "settings">("roles");
+  const [assignModal, setAssignModal] = useState(false);
+  const [mintModal, setMintModal] = useState(false);
 
   if (!connected) {
     return (
@@ -39,43 +42,50 @@ export function AdminPanel() {
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
       <p className="text-gray-500 mb-6">Manage roles, handle disputes, and monitor system health.</p>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["roles", "mint", "disputes", "health", "upgrade", "settings"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-              activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab === "roles" && "👥 Roles"}
-            {tab === "mint" && "🪙 Mint RPT"}
-            {tab === "disputes" && "⚖️ Dispute Resolution"}
-            {tab === "health" && "📊 Health"}
-            {tab === "upgrade" && "🔄 Upgrade"}
-            {tab === "settings" && "⚡ Settings"}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-1 border-b border-gray-200">
+          {(["roles", "disputes", "health", "upgrade", "settings"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+                activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab === "roles" && "👥 Roles"}
+              {tab === "disputes" && "⚖️ Dispute Resolution"}
+              {tab === "health" && "📊 Health"}
+              {tab === "upgrade" && "🔄 Upgrade"}
+              {tab === "settings" && "⚡ Settings"}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setAssignModal(true)} className="btn-primary text-xs px-4 py-2">👤 Assign Role</button>
+          <button onClick={() => setMintModal(true)} className="btn-secondary text-xs px-4 py-2">🪙 Mint RPT</button>
+        </div>
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
-      {activeTab === "mint" && <MintRPT />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
       {activeTab === "settings" && <SettingsTab />}
+
+      <Modal open={assignModal} onClose={() => setAssignModal(false)} title="Assign Role">
+        <AssignRoleForm onDone={() => setAssignModal(false)} />
+      </Modal>
+      <Modal open={mintModal} onClose={() => setMintModal(false)} title="Mint RPT Tokens">
+        <MintRPTForm onDone={() => setMintModal(false)} />
+      </Modal>
     </div>
   );
 }
 
 function RoleManagement() {
   const { address } = useWallet();
-  const [userAddress, setUserAddress] = useState("");
-  const [role, setRole] = useState<string>("Contractor");
-  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [assignments, setAssignments] = useState<{ address: string; role: string }[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
 
   const loadAssignments = useCallback(async () => {
     setLoadingAssignments(true);
@@ -84,7 +94,7 @@ function RoleManagement() {
       const all: { address: string; role: string }[] = [];
       for (const r of ROLES.slice()) {
         try {
-          const result = await client.get_addresses_by_role({ role: r as any });
+          const result = await client.get_addresses_by_role({ role: { tag: r, values: undefined } as any });
           const addresses = result.result;
           if (addresses) {
             for (const addr of addresses) {
@@ -103,81 +113,11 @@ function RoleManagement() {
 
   useEffect(() => { loadAssignments(); }, [loadAssignments]);
 
-  const handleAssign = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !userAddress) return;
-    setSubmitting(true);
-    setMessage(null);
-    try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
-      const account = await server.getAccount(address);
-      const adminAddr = new Address(address);
-      const targetAddr = new Address(userAddress);
-
-      const ops: any[] = [];
-
-      // Op 1: Always assign the access_control role
-      const acContract = new Contract(CONTRACT_IDS.access_control);
-      ops.push(acContract.call("assign_role",
-        adminAddr.toScVal(),
-        targetAddr.toScVal(),
-        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)]),
-      ));
-
-      const extraPerms: string[] = [];
-
-      // Op 2+: Auto-whitelist in related contracts based on role
-      if (role === "AntiCorruptionAgency") {
-        const aiContract = new Contract(CONTRACT_IDS.ai_oracle);
-        ops.push(aiContract.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
-        extraPerms.push("AI Oracle (fraud detection)");
-        const compContract = new Contract(CONTRACT_IDS.compliance_engine);
-        ops.push(compContract.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
-        extraPerms.push("Compliance Engine (violations)");
-      }
-      if (role === "AIAuditor") {
-        const aiContract = new Contract(CONTRACT_IDS.ai_oracle);
-        ops.push(aiContract.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
-        extraPerms.push("AI Oracle (fraud detection)");
-      }
-      if (role === "Auditor" || role === "CommissionOnAudit") {
-        const compContract = new Contract(CONTRACT_IDS.compliance_engine);
-        ops.push(compContract.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
-        extraPerms.push("Compliance Engine (violations)");
-      }
-
-      const txBuilder = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE });
-      ops.forEach(op => txBuilder.addOperation(op));
-      const tx = txBuilder.setTimeout(30).build();
-
-      const permSummary = extraPerms.length > 0
-        ? ` + auto-whitelisted: ${extraPerms.join(", ")}`
-        : "";
-      setMessage({ text: `Check Freighter to sign ${ops.length} operation(s)...`, ok: true });
-      const prepared = await server.prepareTransaction(tx);
-      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-
-      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!${permSummary}`, ok: true });
-      setUserAddress("");
-      await loadAssignments();
-    } catch (err: any) {
-      setMessage({ text: `Error: ${err.message}`, ok: false });
-    } finally { setSubmitting(false); }
-  };
-
   const handleRevoke = async (addr: string, r: string) => {
     if (!address) return;
-    setMessage(null); setSubmitting(true);
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
-
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.access_control);
@@ -186,108 +126,148 @@ function RoleManagement() {
         new Address(addr).toScVal(),
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(r)]),
       );
-
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(op).setTimeout(30).build();
+      await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction((await server.prepareTransaction(tx)).toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await loadAssignments();
+    } catch (err: any) { console.error(err); }
+  };
 
-      setMessage({ text: "Check Freighter to sign...", ok: true });
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 className="font-semibold">Current Role Assignments</h3>
+        <button onClick={loadAssignments} className="text-sm text-purple-600 hover:underline">Refresh</button>
+      </div>
+      {loadingAssignments ? (
+        <div className="text-center py-8 text-gray-400">Loading...</div>
+      ) : assignments.length === 0 ? (
+        <div className="text-center py-8 text-gray-400">No roles assigned yet. Use the Assign Role button above.</div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Role</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-500">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {assignments.map((a, i) => (
+              <tr key={i} className="border-t border-gray-100">
+                <td className="px-4 py-3 font-mono text-xs text-gray-600"><WalletAddress addr={a.address} chars={8}/></td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">{a.role.replace(/([A-Z])/g, " $1").trim()}</span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <button onClick={() => handleRevoke(a.address, a.role)}
+                    className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100">
+                    Revoke
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+function AssignRoleForm({ onDone }: { onDone: () => void }) {
+  const { address } = useWallet();
+  const [userAddress, setUserAddress] = useState("");
+  const [role, setRole] = useState<string>("Contractor");
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !userAddress) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const adminAddr = new Address(address);
+      const targetAddr = new Address(userAddress);
+      const ops: any[] = [];
+      const acContract = new Contract(CONTRACT_IDS.access_control);
+      ops.push(acContract.call("assign_role", adminAddr.toScVal(), targetAddr.toScVal(), xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(role)])));
+      const extraPerms: string[] = [];
+      if (role === "AntiCorruptionAgency") {
+        const aiC = new Contract(CONTRACT_IDS.ai_oracle);
+        ops.push(aiC.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("AI Oracle");
+        const compC = new Contract(CONTRACT_IDS.compliance_engine);
+        ops.push(compC.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("Compliance Engine");
+      }
+      if (role === "AIAuditor") {
+        const aiC = new Contract(CONTRACT_IDS.ai_oracle);
+        ops.push(aiC.call("add_ai_auditor", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("AI Oracle");
+      }
+      if (role === "Auditor" || role === "CommissionOnAudit") {
+        const compC = new Contract(CONTRACT_IDS.compliance_engine);
+        ops.push(compC.call("add_compliance_officer", adminAddr.toScVal(), targetAddr.toScVal()));
+        extraPerms.push("Compliance Engine");
+      }
+      const txBuilder = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE });
+      ops.forEach((op: any) => txBuilder.addOperation(op));
+      const tx = txBuilder.setTimeout(30).build();
+      const permSummary = extraPerms.length > 0 ? ` + auto-whitelisted: ${extraPerms.join(", ")}` : "";
+      setMessage({ text: `Check Freighter to sign ${ops.length} operation(s)...`, ok: true });
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
-
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setMessage({ text: `Revoked ${r} from ${formatAddress(addr)}.`, ok: true });
-      await loadAssignments();
+      setMessage({ text: `Role ${role} assigned to ${formatAddress(userAddress)}!${permSummary}`, ok: true });
+      setUserAddress("");
+      setTimeout(onDone, 2000);
     } catch (err: any) {
       setMessage({ text: `Error: ${err.message}`, ok: false });
     } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="space-y-6">
+    <>
       {message && (
-        <div className={`p-4 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+        <div className={`mb-4 p-3 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {message.text}
         </div>
       )}
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg">
-        <h2 className="text-lg font-semibold mb-4">Assign Role</h2>
-        <div className="mb-4">
-          <p className="text-sm text-gray-400 mb-2">Only the Administrator wallet can assign roles. The contract enforces this on-chain.</p>
-          <p className="text-xs text-gray-400">Roles that auto-grant contract permissions:</p>
-          <ul className="text-xs text-gray-500 mt-1 ml-4 list-disc">
-            <li><strong>AntiCorruptionAgency</strong> → access_control + AI Oracle + Compliance Engine</li>
-            <li><strong>AIAuditor</strong> → access_control + AI Oracle</li>
-            <li><strong>Auditor / CommissionOnAudit</strong> → access_control + Compliance Engine</li>
-          </ul>
-          <p className="text-xs text-gray-400 mt-1">All permissions are bundled into a single transaction (one Freighter signature).</p>
-        </div>
-        <form className="space-y-4" onSubmit={handleAssign}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Address (G...)</label>
-            <input type="text" value={userAddress} onChange={(e) => setUserAddress(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-purple-500"
-              placeholder="G..." required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-              {ROLES.map((r) => <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>)}
-            </select>
-          </div>
-          <button type="submit" disabled={submitting}
-            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
-            {submitting ? "Assigning..." : "Assign Role"}
-          </button>
-        </form>
+      <div className="mb-4">
+        <p className="text-sm text-gray-400">Only the Administrator wallet can assign roles. The contract enforces this on-chain.</p>
+        <p className="text-xs text-gray-400 mt-1">Auto-whitelist: AntiCorruptionAgency → AI Oracle + Compliance. AIAuditor → AI Oracle. Auditor/COA → Compliance.</p>
       </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold">Current Role Assignments</h3>
-          <button onClick={loadAssignments} className="text-sm text-purple-600 hover:underline">Refresh</button>
+      <form className="space-y-4" onSubmit={handleAssign}>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Address (G...)</label>
+          <input type="text" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} className="input font-mono text-xs" placeholder="G..." required />
         </div>
-        {loadingAssignments ? (
-          <div className="text-center py-8 text-gray-400">Loading...</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Role</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((a, i) => (
-                <tr key={i} className="border-t border-gray-100">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600"><WalletAddress addr={a.address} chars={8}/></td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">{a.role.replace(/([A-Z])/g, " $1").trim()}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => handleRevoke(a.address, a.role)}
-                      className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100">
-                      Revoke
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {!loadingAssignments && assignments.length === 0 && (
-          <div className="text-center py-8 text-gray-400">No roles assigned yet. Use the form above to assign roles.</div>
-        )}
-      </div>
-    </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value)} className="select">
+            {ROLES.map((r) => <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>)}
+          </select>
+        </div>
+        <button type="submit" disabled={submitting} className="btn-primary w-full py-3">
+          {submitting ? "Assigning..." : "Assign Role"}
+        </button>
+      </form>
+    </>
   );
 }
 
-function MintRPT() {
+function MintRPTForm({ onDone }: { onDone: () => void }) {
   const { address } = useWallet();
   const [wallet, setWallet] = useState("");
   const [amount, setAmount] = useState("10");
@@ -343,6 +323,7 @@ function MintRPT() {
         setMessage({ text: `Minted ${amount} RPT to ${formatAddress(wallet, 8)}! Tx: ${result.hash.slice(0, 10)}...`, ok: true });
         setRecentMints((prev) => [{ to: wallet, amount }, ...prev].slice(0, 5));
         setWallet("");
+        setTimeout(onDone, 2000);
       } else {
         throw new Error(`Transaction status: ${result.status}`);
       }
@@ -354,16 +335,14 @@ function MintRPT() {
   };
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <>
       {message && (
-        <div className={`p-4 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+        <div className={`mb-4 p-3 rounded-lg text-sm ${message.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {message.text}
         </div>
       )}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-2">🪙 Mint RPT Tokens</h2>
-        <p className="text-sm text-gray-400 mb-4">Mint RPT to any wallet that has a trustline. Wallet must create trustline first via the Citizen page.</p>
-        <form className="space-y-4" onSubmit={handleMint}>
+      <p className="text-sm text-gray-400 mb-4">Mint RPT to any wallet that has a trustline. Wallet must create trustline first via the Citizen page.</p>
+      <form className="space-y-4" onSubmit={handleMint}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Wallet (G...)</label>
             <input type="text" value={wallet} onChange={(e) => setWallet(e.target.value)}
@@ -381,7 +360,6 @@ function MintRPT() {
             {submitting ? "Opening Freighter..." : "Mint RPT"}
           </button>
         </form>
-      </div>
 
       {recentMints.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -404,7 +382,7 @@ function MintRPT() {
           </table>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

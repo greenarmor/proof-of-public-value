@@ -4,12 +4,14 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as ProcurementClient } from "../contracts/procurement_market/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { Modal } from "../components/Modal";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function SupplierPortal() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"tenders" | "bid" | "my_bids">("tenders");
+  const [activeTab, setActiveTab] = useState<"tenders" | "my_bids">("tenders");
+  const [bidModal, setBidModal] = useState(false);
 
   if (!connected) {
     return (
@@ -40,8 +42,15 @@ export function SupplierPortal() {
       </div>
 
       {activeTab === "tenders" && <TendersTab />}
-      {activeTab === "bid" && <SubmitBidTab address={address!} />}
       {activeTab === "my_bids" && <MyBidsTab address={address!} />}
+
+      <Modal open={bidModal} onClose={() => setBidModal(false)} title="Submit Bid">
+        <SubmitBidTab address={address!} onDone={() => setBidModal(false)} />
+      </Modal>
+
+      <Modal open={bidModal} onClose={() => setBidModal(false)} title="Submit Bid">
+        <SubmitBidTab address={address!} onDone={() => setBidModal(false)} />
+      </Modal>
     </div>
   );
 }
@@ -49,6 +58,7 @@ export function SupplierPortal() {
 function TendersTab() {
   const [tenders, setTenders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bidModal, setBidModal] = useState(false);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -109,7 +119,7 @@ function TendersTab() {
   );
 }
 
-function SubmitBidTab({ address }: { address: string }) {
+function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void }) {
   const [tenders, setTenders] = useState<any[]>([]);
   const [tenderId, setTenderId] = useState("");
   const [price, setPrice] = useState("");
@@ -183,10 +193,7 @@ function SubmitBidTab({ address }: { address: string }) {
   const currency = getCurrency();
 
   return (
-    <div className="card p-6 max-w-xl">
-      <h2 className="text-lg font-semibold mb-2 text-slate-900">Submit Bid</h2>
-      <p className="text-sm text-slate-500 mb-4">Bid on an open procurement tender. Scored on Price, Quality, Timeline, and Integrity.</p>
-
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" ? "✅ " : "❌ "}{txMsg}
@@ -234,13 +241,14 @@ function SubmitBidTab({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 
 function MyBidsTab({ address }: { address: string }) {
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bidModal, setBidModal] = useState(false);
   const currency = getCurrency();
 
   useEffect(() => {

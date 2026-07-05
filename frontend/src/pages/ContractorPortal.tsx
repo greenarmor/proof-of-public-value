@@ -7,6 +7,7 @@ import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
+import { Modal } from "../components/Modal";
 
 // --- chain data types ---
 
@@ -38,7 +39,8 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ContractorPortal() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"projects" | "evidence" | "payments" | "history">("projects");
+  const [activeTab, setActiveTab] = useState<"projects" | "payments" | "history">("projects");
+  const [evidenceModal, setEvidenceModal] = useState(false);
 
   if (!connected) {
     return (
@@ -58,29 +60,34 @@ export function ContractorPortal() {
       <p className="text-gray-500 mb-4">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
       <CreatePphpTrustline address={address!} />
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["projects", "evidence", "payments", "history"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-              activeTab === tab
-                ? "border-purple-600 text-purple-700"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab === "projects" && "📋 My Projects"}
-            {tab === "evidence" && "📎 Submit Evidence"}
-            {tab === "payments" && "💳 Payments"}
-            {tab === "history" && "📄 History"}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-1 border-b border-gray-200">
+          {(["projects", "payments", "history"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+                activeTab === tab
+                  ? "border-purple-600 text-purple-700"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab === "projects" && "📋 My Projects"}
+              {tab === "payments" && "💳 Payments"}
+              {tab === "history" && "📄 History"}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setEvidenceModal(true)} className="btn-primary text-xs px-4 py-2">📎 Submit Evidence</button>
       </div>
 
       {activeTab === "projects" && <ProjectsTab address={address!} />}
-      {activeTab === "evidence" && <EvidenceTab address={address!} />}
       {activeTab === "payments" && <PaymentsTab address={address!} />}
       {activeTab === "history" && <HistoryTab address={address!} />}
+
+      <Modal open={evidenceModal} onClose={() => setEvidenceModal(false)} title="Submit Evidence">
+        <EvidenceTab address={address!} onDone={() => setEvidenceModal(false)} />
+      </Modal>
     </div>
   );
 }
@@ -271,7 +278,7 @@ function ProjectsTab({ address }: { address: string }) {
 
 // --- Evidence Tab ---
 
-function EvidenceTab({ address }: { address: string }) {
+function EvidenceTab({ address, onDone }: { address: string; onDone: () => void }) {
   const [pvos, setPvos] = useState<{ id: number; title: string }[]>([]);
   const [selectedPvoId, setSelectedPvoId] = useState("");
   const [milestoneId, setMilestoneId] = useState("");
@@ -370,9 +377,8 @@ function EvidenceTab({ address }: { address: string }) {
   const busy = txState === "preparing" || txState === "signing" || txState === "sending" || uploading;
 
   return (
-    <div className="card p-6 max-w-xl">
-      <h2 className="text-lg font-semibold mb-2 text-gray-900">Submit Evidence On-Chain</h2>
-      <p className="text-sm text-gray-500 mb-4">
+    <>
+      <p className="text-sm text-slate-500 -mt-2 mb-4">
         Uploads to IPFS then records the evidence on the pvo_core contract. This is <strong>Gate 1</strong> of the 5-gate escrow system.
       </p>
 
@@ -446,7 +452,7 @@ function EvidenceTab({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-purple-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 
@@ -544,6 +550,7 @@ function PaymentsTab({ address }: { address: string }) {
             { label: "Engineer", done: e.engineerApproval },
             { label: "AI", done: e.aiRiskCheck },
             { label: "Compliance", done: e.complianceValidation },
+            { label: "Oracle", done: (e as any).oracleApproval },
             { label: `Community (${e.communityConfirmation}/${e.communityRequired})`, done: e.communityConfirmation >= e.communityRequired },
           ];
           const passed = gates.filter(g => g.done).length;
@@ -564,7 +571,7 @@ function PaymentsTab({ address }: { address: string }) {
                 <span className={`badge ${sColors[e.status] || "badge-blue"}`}>{e.status}</span>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2">
                 {gates.map((gate, i) => (
                   <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${
                     gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
@@ -576,7 +583,7 @@ function PaymentsTab({ address }: { address: string }) {
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <span className="text-[11px] text-slate-400">{passed}/4 gates passed</span>
+                <span className="text-[11px] text-slate-400">{passed}/5 gates passed</span>
                 {e.status === "Released" && (
                   <span className="text-xs text-emerald-600 font-medium">✓ Payment received</span>
                 )}

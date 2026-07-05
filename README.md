@@ -18,20 +18,7 @@ National Budget → PVO → Milestones → Evidence Collection
 
 ## Deployed Contracts (Testnet)
 
-| Contract | Testnet ID | WASM | Functions | Tests |
-|----------|-----------|------|-----------|-------|
-| `access_control` | `CCJKHTUZEDT4E5W2VIW2KSOPKMA5Z6K4QUMYSTQOBFTUSLBSM3OBCMVP` | 7.9 KB | 9 | 11 |
-| `pvo_core` | `CAJHYJL5E6IPHMYMCODTI5PBLK4TNN2YCT34KAUBIFIL4SJSQW5MVNOD` | 19.9 KB | 17 | 18 |
-| `escrow` | `CDTH4UPAZW6CZXONDGRFBSIYRLFWJX4XSQ5YKOCYP7BL24CACQTEDZT3` | 13.2 KB | 14 | 15 |
-| `community_oracle` | `CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS` | 11.2 KB | 8 | 12 |
-| `reputation` | `CACWGE2KH37SNHJOMXRMGAXYGWDT7HX7XDF7O5PE36DTDJO2C4OJ4ADN` | 12.2 KB | 12 | 19 |
-| `audit_trail` | `CA2O7WXT6PQJLE4HW5KFDMWI4AJWSPDDO7K2OM756HMMF2E7RJDPBROZ` | 10.1 KB | 10 | 12 |
-| `value_score` | `CCTC3HR4RIKQQWMPUU5XQ3BLNWUPCTLPDANHTWVWQZYWVVSCPXXSE3YN` | 9.6 KB | 11 | 20 |
-| `ai_oracle` | `CDR5OICDQYT33V7XPPD63YAUDMKRTWSKN7MD5VPS5K773PVU5AAMID43` | 16.5 KB | 13 | 17 |
-| `public_index` | `CCN74K6E6NKEXMT2U5Y3JQ5RYCDP2MYBV3OJG4PSUH2WUNFRXHNSJG7J` | 9.1 KB | 7 | 7 |
-| `compliance_engine` | `CCRSE76TWXO6TPEWMBKT2577AVYPKKNF5LSWUGUFXKA5XQGPFFZMGRTD` | 7.6 KB | 8 | 8 |
-| `procurement_market` | `CB4QLZTS4ANWFGYYE6USGFGZ6JXXH7U7Y32CLHFYL2HIWC447LC6TUDQ` | 10.8 KB | 5 | 5 |
-| `grant_commitment` | `CCBXEOHTCHQDO57I5UA7XJKLHBGOUEPUNE6I4AEJ4GSHO6QDA2GIFOZM` | 8.0 KB | 7 | 13 |
+
 
 **Total: 167 tests, 121 functions, ~139 KB WASM**
 
@@ -44,7 +31,7 @@ pPHP (Philippine Peso Testnet) is a custom Soroban token implementing `TokenInte
 | Field | Value |
 |-------|-------|
 | Asset Code | `pPHP` |
-| Contract | `CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6` |
+
 | Decimals | 2 (100 centavos = ₱1.00) |
 | Supply | Unlimited (admin-gated mint) |
 | Purpose | Escrow settlement token — fund, release, refund |
@@ -104,21 +91,7 @@ The same escrow Rust binary runs unchanged on both networks. Only the `token_add
 > Secret keys are stored in `.dev-logs/role-credentials.md` (gitignored — never committed).
 > To import in Freighter: Add Account → Import Secret Key or Seed Phrase.
 
-| # | Role | Alias | Public Key |
-|---|------|-------|-----------|
-| 1 | Administrator | alice | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
-| 2 | GovernmentAgency | agency | `GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN` |
-| 3 | Contractor | contractor | `GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW` |
-| 4 | Engineer | engineer | `GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN` |
-| 5 | Inspector | inspector | `GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI` |
-| 6 | Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
-| 7 | CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
-| 8 | Supplier | supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
-| 9 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
-| 10 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
-| 11 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
-| 12 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
-| 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+
 
 All wallets are funded via Friendbot and assigned their roles on-chain via `access_control.assign_role`.
 CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stellar CLI for `--source` invocation.

@@ -6,10 +6,11 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";
+import { Modal } from "../components/Modal";
 
 type EscrowStatus =
   | "Created" | "Funded" | "EngineerApproved" | "AIValidated"
-  | "CompliancePassed" | "CommunityVerified" | "Ready" | "Released" | "Refunded" | "Disputed";
+  | "CompliancePassed" | "OracleValidated" | "CommunityVerified" | "Ready" | "Released" | "Refunded" | "Disputed";
 
 function statusFromChain(s: any): EscrowStatus {
   if (s && typeof s === "object" && s.tag) return s.tag as EscrowStatus;
@@ -30,6 +31,7 @@ function escrowFromChain(e: ChainEscrow): EscrowData {
     engineerApproval: e.conditions.engineer_approval,
     aiRiskCheck: e.conditions.ai_risk_check,
     complianceValidation: e.conditions.compliance_validation,
+    oracleApproval: (e.conditions as any).community_oracle_validation,
     communityConfirmation: Number(e.conditions.community_confirmation),
     communityRequired: Number(e.conditions.community_required),
     createdAt: Number(e.created_at),
@@ -49,6 +51,7 @@ interface EscrowData {
   engineerApproval: boolean;
   aiRiskCheck: boolean;
   complianceValidation: boolean;
+  oracleApproval: boolean;
   communityConfirmation: number;
   communityRequired: number;
   createdAt: number;
@@ -59,10 +62,11 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function FunderDashboard() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"escrows" | "commitments" | "create" | "guide">("escrows");
+  const [activeTab, setActiveTab] = useState<"escrows" | "commitments" | "guide">("escrows");
   const [escrows, setEscrows] = useState<EscrowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [createModal, setCreateModal] = useState(false);
 
   const loadEscrows = useCallback(async () => {
     setLoading(true);
@@ -119,17 +123,19 @@ export function FunderDashboard() {
           className="btn-secondary text-xs px-3 py-2">
           {loading ? "Loading..." : "↻ Refresh"}
         </button>
+        <button onClick={() => setCreateModal(true)} className="btn-primary text-xs px-4 py-2">
+          ➕ Create Escrow
+        </button>
       </div>
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
-        {(["escrows", "commitments", "create", "guide"] as const).map((tab) => (
+        {(["escrows", "commitments", "guide"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
             {tab === "escrows" && `🔒 Escrows (${escrows.length})`}
             {tab === "commitments" && "🌍 Donor Commitments"}
-            {tab === "create" && "➕ Create Escrow"}
             {tab === "guide" && "📖 How It Works"}
           </button>
         ))}
@@ -137,8 +143,11 @@ export function FunderDashboard() {
 
       {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} />}
       {activeTab === "commitments" && <DonorCommitmentsTab />}
-      {activeTab === "create" && <CreateEscrowForm address={address!} onCreated={refresh} />}
       {activeTab === "guide" && <EscrowGuide />}
+
+      <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Escrow">
+        <CreateEscrowForm address={address!} onCreated={() => { refresh(); setCreateModal(false); }} />
+      </Modal>
     </div>
   );
 }
@@ -197,7 +206,8 @@ function EscrowList({ escrows, loading, address, onAction }: {
 
 const STATUS_COLORS: Record<EscrowStatus, string> = {
   Created: "badge-amber", Funded: "badge-blue", EngineerApproved: "badge-purple",
-  AIValidated: "badge-purple", CompliancePassed: "badge-purple", CommunityVerified: "badge-purple",
+  AIValidated: "badge-purple", CompliancePassed: "badge-purple", OracleValidated: "badge-purple",
+  CommunityVerified: "badge-purple",
   Ready: "badge-green", Released: "badge-green", Refunded: "badge-red", Disputed: "badge-red",
 };
 
@@ -206,13 +216,38 @@ function EscrowCard({ escrow, currency, address, onAction }: {
 }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
 
   const isFunder = escrow.funder === address;
+
+  // Check funder's pPHP balance for the "Fund Escrow" button
+  useEffect(() => {
+    if (!isFunder || escrow.status !== "Created") return;
+    (async () => {
+      try {
+        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.pphp_sac);
+        const account = await server.getAccount(address);
+        const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("balance", new Address(address).toScVal()))
+          .setTimeout(30).build();
+        const resp = await server.simulateTransaction(tx);
+        if (!resp.error && resp.result?.retval) {
+          setPphpBalance(scValToBigInt(resp.result.retval));
+        }
+      } catch {}
+    })();
+  }, [isFunder, escrow.status, address]);
+
+  const balanceUnits = pphpBalance !== null ? Number(pphpBalance) : null;
+  const hasEnough = balanceUnits !== null && balanceUnits >= escrow.amount;
 
   const gates = [
     { label: "Engineer", done: escrow.engineerApproval },
     { label: "AI Risk", done: escrow.aiRiskCheck },
     { label: "Compliance", done: escrow.complianceValidation },
+    { label: "Oracle", done: (escrow as any).oracleApproval },
     { label: `Community (${escrow.communityConfirmation}/${escrow.communityRequired})`, done: escrow.communityConfirmation >= escrow.communityRequired },
   ];
   const gatesPassed = gates.filter(g => g.done).length;
@@ -304,9 +339,9 @@ function EscrowCard({ escrow, currency, address, onAction }: {
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs mb-1.5">
           <span className="text-slate-500 font-medium">Release Gates</span>
-          <span className="text-slate-400">{gatesPassed}/4 passed</span>
+          <span className="text-slate-400">{gatesPassed}/5 passed</span>
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {gates.map((gate, i) => (
             <div key={i} className={`rounded-lg p-2 text-center text-xs font-medium border ${
               gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
@@ -321,9 +356,18 @@ function EscrowCard({ escrow, currency, address, onAction }: {
       {/* Action buttons */}
       <div className="flex gap-2 pt-3 border-t border-slate-100">
         {escrow.status === "Created" && isFunder && (
-          <button onClick={handleFund} disabled={busy} className="btn-primary text-xs px-4 py-2">
-            {busy ? "Signing..." : `Fund Escrow (${currency}${(escrow.amount / 100).toLocaleString()})`}
-          </button>
+          <>
+            <button onClick={handleFund} disabled={busy || (pphpBalance !== null && !hasEnough)}
+              className={`text-xs px-4 py-2 ${pphpBalance !== null && !hasEnough ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}
+              title={pphpBalance !== null && !hasEnough ? `Insufficient pPHP balance. You have ${(balanceUnits! / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})} but need ${(escrow.amount / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})}` : ""}>
+              {busy ? "Signing..." : `Fund Escrow (${currency}${(escrow.amount / 100).toLocaleString()})`}
+            </button>
+            {pphpBalance !== null && !hasEnough && (
+              <span className="text-xs text-red-500 self-center">
+                ⚠️ Insufficient pPHP — you have {(balanceUnits! / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})} pPHP
+              </span>
+            )}
+          </>
         )}
         {escrow.status === "Ready" && (
           <button onClick={handleRelease} disabled={busy} className="btn-primary text-xs px-4 py-2">
@@ -411,15 +455,13 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="max-w-xl">
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-xl text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" && "✅ "}{txMsg}
         </div>
       )}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 text-slate-900">Create New Escrow</h2>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Recipient (Contractor)</label>
             <input type="text" value={recipient} onChange={e => setRecipient(e.target.value)} className="input font-mono text-xs"
@@ -453,17 +495,16 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
               <strong>pPHP Token Escrow:</strong> Escrows are funded in pPHP (Philippine Peso testnet token, 2 decimals). Amounts are in centavos — 100 centavos = ₱1.00.
             </p>
             <p className="text-sm text-blue-700 mt-2">
-              <strong>Multi-Gate Escrow:</strong> Funds are locked until all 4 gates pass:
-              Engineer approval, AI risk check, Compliance validation, and Community confirmation.
+              <strong>Multi-Gate Escrow:</strong> Funds are locked until all 5 gates pass:
+              Engineer approval, AI risk check, Compliance validation, Community Oracle, and Community confirmation.
             </p>
           </div>
           <button type="submit" disabled={busy} className="btn-primary w-full py-3">
             {busy ? "Creating..." : "Create Escrow"}
           </button>
         </form>
-      </div>
-    </div>
-  );
+      </>
+      );
 }
 
 function DonorCommitmentsTab() {
@@ -570,21 +611,23 @@ function DonorCommitmentsTab() {
 
 function EscrowGuide() {
   const steps = [
+    { n: 0, title: "Donor Commits + Transfers", icon: "🌍", desc: "International donor commits a grant, atomically transferring pPHP to the Funding Agency wallet.", actor: "InternationalDonor" },
     { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with recipient, PVO, milestone, amount, and required community confirmations.", actor: "FundingAgency" },
-    { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount. Escrow status changes to Funded.", actor: "FundingAgency" },
+    { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded.", actor: "FundingAgency" },
     { n: 3, title: "Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
     { n: 4, title: "AI Risk Check", icon: "🤖", desc: "AI oracle validates evidence and assigns a risk score. Must pass.", actor: "AIAuditor" },
     { n: 5, title: "Compliance Validate", icon: "⚖️", desc: "Compliance officer checks regulatory adherence.", actor: "Auditor / COA" },
-    { n: 6, title: "Community Confirm", icon: "📸", desc: "Citizens submit field reports. Must reach the required threshold.", actor: "Citizens" },
-    { n: 7, title: "Release or Dispute", icon: "🔓", desc: "Once all gates pass (Ready), anyone can trigger release. Dispute can be raised anytime before release.", actor: "Any Role" },
+    { n: 6, title: "Community Oracle", icon: "📊", desc: "Citizen reports from the community oracle verify real-world project existence.", actor: "Citizens" },
+    { n: 7, title: "Community Confirm", icon: "📸", desc: "Citizens submit field reports. Must reach the required threshold.", actor: "Citizens" },
+    { n: 8, title: "Release or Dispute", icon: "🔓", desc: "Once all gates pass (Ready), anyone can trigger release. Dispute can be raised anytime before release.", actor: "Any Role" },
   ];
 
   return (
     <div className="max-w-2xl">
       <div className="card p-6 mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System + Donor Funding</h2>
         <p className="text-sm text-slate-500">
-          Every escrow must pass through 4 independent verification gates before funds can be released.
+          Donors first commit and transfer pPHP to the Funding Agency. Then every escrow passes through 5 independent verification gates before funds can be released.
           This ensures no single party can authorize payment alone — preventing corruption and ensuring quality.
         </p>
       </div>

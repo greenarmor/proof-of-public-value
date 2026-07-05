@@ -5,12 +5,14 @@ import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { uploadToIPFS } from "../ipfs";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { Modal } from "../components/Modal";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function InspectorPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"pvos" | "submit" | "reports" | "history">("pvos");
+  const [activeTab, setActiveTab] = useState<"pvos" | "reports" | "history">("pvos");
+  const [submitModal, setSubmitModal] = useState(false);
 
   if (!connected) {
     return (
@@ -43,9 +45,12 @@ export function InspectorPanel() {
       </div>
 
       {activeTab === "pvos" && <AllProjects />}
-      {activeTab === "submit" && <SubmitInspection address={address!} />}
       {activeTab === "reports" && <MyReports address={address!} />}
       {activeTab === "history" && <EvidenceHistory address={address!} />}
+
+      <Modal open={submitModal} onClose={() => setSubmitModal(false)} title="Submit Inspection Report">
+        <SubmitInspection address={address!} onDone={() => setSubmitModal(false)} />
+      </Modal>
     </div>
   );
 }
@@ -161,7 +166,7 @@ function AllProjects() {
   );
 }
 
-function SubmitInspection({ address }: { address: string }) {
+function SubmitInspection({ address, onDone }: { address: string; onDone: () => void }) {
   const [pvos, setPvos] = useState<{ id: number; title: string }[]>([]);
   const [selectedPvoId, setSelectedPvoId] = useState("");
   const [milestoneId, setMilestoneId] = useState("");
@@ -260,12 +265,7 @@ function SubmitInspection({ address }: { address: string }) {
   const busy = txState === "preparing" || txState === "signing" || txState === "sending" || uploading;
 
   return (
-    <div className="card p-6 max-w-xl">
-      <h2 className="text-lg font-semibold mb-2 text-slate-900">Inspection Report</h2>
-      <p className="text-sm text-slate-500 mb-4">
-        Submit an inspection report on-chain. Your report is recorded as <code>InspectionReport</code> evidence type on the pvo_core contract.
-      </p>
-
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-xl text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" ? "✅ " : txState === "error" ? "❌ " : ""}{txMsg}
@@ -325,7 +325,7 @@ function SubmitInspection({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 

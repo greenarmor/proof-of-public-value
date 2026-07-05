@@ -75,7 +75,7 @@ The escrow is a **lockbox**, not a currency. Its job is to hold tokens until 5 g
 
 International donors (World Bank, JICA, USAID, etc.) follow a **commit then disburse** model, just like in real development finance:
 
-1. **Commit** - The donor records a pledge on-chain via the `grant_commitment` contract. This records the organization name, PVO ID, amount, and donor address. **No tokens move.** It is a public, immutable promise.
+1. **Commit & Transfer** - The donor records a pledge on-chain via the `grant_commitment` contract. This records the organization name, PVO ID, amount, and donor address, **and atomically transfers pPHP from the donor to the Funding Agency** in a single transaction. No separate mint-and-send step needed.
 
 2. **Disburse** - When the funding agency is ready, they create an escrow for the PVO and fund it with real tokens. The donor marks the commitment as "Disbursed."
 
@@ -154,7 +154,7 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
 | `procurement_market` | `CB4Q...TUDQ` | 5 | 5 |
 | `pPHP token` | `CA6U...FLE6` | 8 | 8 |
-| `grant_commitment` | `CCBX...FOZM` | 7 | 13 |
+| `grant_commitment` | `CDTJ...FFWRK` | 7 | 13 |
 
 **183 tests, all passing. 0 npm vulnerabilities.**
 
@@ -177,17 +177,17 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | # | Role | Alias | Public Key |
 |---|------|-------|-----------|
 | 1 | Administrator | alice | `GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV` |
-| 2 | GovernmentAgency | agency | `GAUMOR3FOVZCUPUZGFGORYWXQVE7IDAI7XTZCWNOL3EKK6GI3F4KGYDN` |
-| 3 | Contractor | contractor | `GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW` |
-| 4 | Engineer | engineer | `GB7JLZ33J643CIAKC3APGMTVD2MAYNFI3C4EDDOOYVHOKTWVMDHJ42MN` |
-| 5 | Inspector | inspector | `GC7KDB6WJXNE7SJH3ZITQ56MNHGJGKXBS47IUBUMBLZFHHXQXFPDICSI` |
-| 6 | Auditor | auditor | `GC3E277DKK7C7AIQ5G4G632RRPSWJBX33DB4OB54SS3XEKUY6EW5Z5F7` |
-| 7 | CommissionOnAudit | coa | `GAXUYK7RP3TWWOOBRDQJ7FBVG5C7ZF2PUQ3AAT2JA2U2QEMI5MUGO4OK` |
-| 8 | Supplier | supplier | `GAETC2ETXVK452VRPIWXA25TCQFSP6TYSPOSTC6UXM7AJFMZOK3LB33T` |
-| 9 | AntiCorruptionAgency | anti_corruption | `GACVW3NYKARN3C7TJFQVVTOVRPD5BF3KCQDSYUMSEDBGYPFBWWMF7OTC` |
-| 10 | FundingAgency | funding_agency | `GBVHSRHLDZPZ6A7VIYS6G572OHI2WEW24Q4GGRFZBLY2ZGPM3LHPSEZF` |
-| 11 | InternationalDonor | international_donor | `GDUOHRAMDVFJKC4DOLF2OFGTQXL7NSZASZUNN5IZEXR3ZPQVBWMRW76D` |
-| 12 | AIAuditor | ai_auditor | `GAKJTLALTPWV4DLQGUCBMSO36EL3YIXK6X774D27Q3HBIR4GPDX2BL5J` |
+| 2 | GovernmentAgency | agency | `GDLLOPL2UMTGK2QW62IIJTEANBO4NX5QP4TEJAOP67SCDVG2D5AIY5X2` |
+| 3 | Contractor | contractor | `GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF` |
+| 4 | Engineer | engineer | `GCSABAMCW3TBATE43TQWCH3YKSHPHCIGCKL44DWSJHKFOLDSZGWA72CZ` |
+| 5 | Inspector | inspector | `GAPFYWRZYETAWKY4G7VCAAIZ64PZLMDF4MWRYYTLRU4QTN6RLXSXQNGV` |
+| 6 | Auditor | auditor | `GAAL24R63KQJADAOLLMC6PLK7VZW2VCYBDLJYHT6X73NY73W7R4XIAYN` |
+| 7 | CommissionOnAudit | coa | `GCDE4KUZV7JC7RGESQYCBKKK2ALB6B7HTALB3KYIACGKNVKTVAMKSFJB` |
+| 8 | Supplier | supplier | `GCOWOAKYKW3PNKY6HBVTHRJBXBQ3PT2V4N6KGR3ROMKLMUSVDJVYLGMM` |
+| 9 | AntiCorruptionAgency | anti_corruption | `GBU4SHHRZPIHJL3BX6LYQMS5WW4HYXENBHSUHSEFPZQCZQ25ZOQWC6E7` |
+| 10 | FundingAgency | funding_agency | `GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO` |
+| 11 | InternationalDonor | international_donor | `GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44` |
+| 12 | AIAuditor | ai_auditor | `GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW` |
 | 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
 
 All wallets are funded via Friendbot and assigned their roles on-chain.

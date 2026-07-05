@@ -230,6 +230,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
     { label: "Engineer", done: escrow.conditions.engineer_approval },
     { label: "AI", done: escrow.conditions.ai_risk_check },
     { label: "Compliance", done: escrow.conditions.compliance_validation },
+    { label: "Oracle", done: (escrow.conditions as any).community_oracle_validation || false },
     { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
   ];
   const passed = gates.filter(g => g.done).length;
@@ -257,7 +258,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
         <span className="badge badge-amber">{statusToString(escrow.status)}</span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-5 gap-2 mb-4">
         {gates.map((gate, i) => (
           <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${
             gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
@@ -269,7 +270,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
       </div>
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-        <span className="text-[11px] text-slate-400">{passed}/4 gates passed</span>
+        <span className="text-[11px] text-slate-400">{passed}/5 gates passed</span>
         <div className="flex gap-2">
           <button onClick={() => handleApprove(true)} disabled={busy}
             className="btn-primary text-xs px-4 py-2">

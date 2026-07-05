@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
+import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -36,6 +37,8 @@ export function TransparencyPortal() {
   const [pvos, setPvos] = useState<PVOData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PVOData | null>(null);
+  const [escrows, setEscrows] = useState<any[]>([]);
+  const [escrowsLoading, setEscrowsLoading] = useState(false);
   const [filter, setFilter] = useState("");
 
   const loadPVOs = useCallback(async () => {
@@ -88,6 +91,34 @@ export function TransparencyPortal() {
   }, []);
 
   useEffect(() => { loadPVOs(); }, [loadPVOs]);
+
+  // Load escrows when a PVO is selected
+  useEffect(() => {
+    if (!selected) { setEscrows([]); return; }
+    (async () => {
+      setEscrowsLoading(true);
+      try {
+        const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await client.get_escrows_by_pvo({ pvo_id: selected.id });
+        const raw = (result.result || []) as ChainEscrow[];
+        const mapped = raw.map(e => ({
+          id: Number(e.id),
+          milestoneId: Number(e.milestone_id),
+          funder: e.funder,
+          recipient: e.recipient,
+          amount: Number(e.amount),
+          status: statusToString(e.status),
+          engineer: e.conditions.engineer_approval,
+          ai: e.conditions.ai_risk_check,
+          compliance: e.conditions.compliance_validation,
+          oracle: (e.conditions as any).community_oracle_validation || false,
+          community: Number(e.conditions.community_confirmation),
+          communityRequired: Number(e.conditions.community_required),
+        }));
+        setEscrows(mapped);
+      } catch {} finally { setEscrowsLoading(false); }
+    })();
+  }, [selected]);
 
   const filtered = filter ? pvos.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.department.toLowerCase().includes(filter.toLowerCase()) || p.municipality.toLowerCase().includes(filter.toLowerCase())) : pvos;
 
@@ -145,6 +176,50 @@ export function TransparencyPortal() {
                   <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestones.length}</dd></div>
                 </div>
               </div>
+
+              {/* Escrow Cards */}
+              {escrowsLoading ? (
+                <div className="card p-4 mt-4 text-center text-sm text-slate-400">Loading escrows...</div>
+              ) : escrows.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-700">🔒 Escrows ({escrows.length})</h3>
+                  {escrows.map(e => {
+                    const gates = [
+                      { label: "Engineer", done: e.engineer },
+                      { label: "AI", done: e.ai },
+                      { label: "Compliance", done: e.compliance },
+                      { label: "Oracle", done: e.oracle },
+                      { label: `Community (${e.community}/${e.communityRequired})`, done: e.community >= e.communityRequired },
+                    ];
+                    const passed = gates.filter((g: any) => g.done).length;
+                    return (
+                      <div key={e.id} className="card p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <span className="text-xs font-mono text-slate-400">Escrow #{e.id} · Milestone #{e.milestoneId}</span>
+                            <p className="font-semibold text-slate-900 mt-0.5">{(e.amount / 100).toLocaleString()} centavos</p>
+                          </div>
+                          <span className={`badge text-xs ${e.status === "Released" ? "badge-green" : e.status === "Refunded" ? "badge-red" : "badge-blue"}`}>{e.status}</span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-1.5 mb-2">
+                          {gates.map((gate: any, i: number) => (
+                            <div key={i} className={`rounded-md p-1 text-center text-[10px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+                              <div className="text-xs">{gate.done ? "✓" : "○"}</div>
+                              {gate.label}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
+                          <span className="text-[10px] text-slate-400">{passed}/5 gates · Funder: <WalletAddress addr={e.funder} chars={4} /></span>
+                          <span className="text-[10px] text-slate-400">Recipient: <WalletAddress addr={e.recipient} chars={4} /></span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="card p-4 mt-4 text-center text-sm text-slate-400">No escrows for this PVO yet.</div>
+              )}
             </div>
           ) : (
             /* Card grid */

@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, String, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, String, Symbol, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -58,12 +58,18 @@ impl GrantCommitment {
         pvo_id: u32,
         amount: i128,
         org_name: String,
+        funding_agency: Address,
+        token_address: Address,
     ) -> u32 {
         donor.require_auth();
 
         if amount <= 0 {
             panic!("amount must be positive");
         }
+
+        // Transfer pPHP from donor to funding agency atomically with the commitment
+        let token_client = token::Client::new(&env, &token_address);
+        token_client.transfer(&donor, &funding_agency, &amount);
 
         let id = Self::next_id(&env);
         let now = env.ledger().timestamp();

@@ -211,7 +211,7 @@ Expected result: report is submitted on-chain.
 
 ```bash
 stellar contract invoke --source citizen --network testnet --send=yes \
-  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
+  --id CBPOFXY2W6XGT4SHLSTJHPCV7VIQH3Z4ZSUOZA2CVYBUV7XQVUPZVQGS \
   -- submit_report \
   --citizen citizen \
   --pvo-id 1 \
@@ -234,7 +234,7 @@ To verify a report from CLI:
 
 ```bash
 stellar contract invoke --source alice --network testnet --send=yes \
-  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
+  --id CBPOFXY2W6XGT4SHLSTJHPCV7VIQH3Z4ZSUOZA2CVYBUV7XQVUPZVQGS \
   -- verify_report \
   --verifier alice \
   --report-id 1 \
@@ -257,7 +257,7 @@ Expected result: report is marked verified and the submitter's reputation improv
 
 ```bash
 stellar contract invoke --source alice --network testnet \
-  --id CDTZOXPFVGN7SFRMANOJ4C3KN6PHJARPMDLN7ZTLLXJAWUCU4YPGK7RS \
+  --id CBPOFXY2W6XGT4SHLSTJHPCV7VIQH3Z4ZSUOZA2CVYBUV7XQVUPZVQGS \
   -- get_citizen_reputation \
   --citizen GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES
 ```

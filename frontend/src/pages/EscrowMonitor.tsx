@@ -16,6 +16,7 @@ interface EscrowView {
   engineer: boolean;
   ai: boolean;
   compliance: boolean;
+  oracle: boolean;
   community: number;
   communityRequired: number;
   funder: string;
@@ -63,6 +64,7 @@ export function EscrowMonitor() {
                 engineer: e.conditions.engineer_approval,
                 ai: e.conditions.ai_risk_check,
                 compliance: e.conditions.compliance_validation,
+                oracle: (e.conditions as any).community_oracle_validation || false,
                 community: Number(e.conditions.community_confirmation),
                 communityRequired: Number(e.conditions.community_required),
                 funder: e.funder,
@@ -121,13 +123,15 @@ export function EscrowMonitor() {
               { label: "Engineer", done: e.engineer },
               { label: "AI", done: e.ai },
               { label: "Compliance", done: e.compliance },
+              { label: "Oracle", done: (e as any).oracle },
               { label: "Community", done: e.community >= e.communityRequired },
             ];
             const passed = gates.filter(g => g.done).length;
 
             const sColors: Record<string, string> = {
               Created: "badge-amber", Funded: "badge-blue", EngineerApproved: "badge-purple",
-              AIValidated: "badge-purple", CompliancePassed: "badge-purple", CommunityVerified: "badge-purple",
+              AIValidated: "badge-purple", CompliancePassed: "badge-purple", OracleValidated: "badge-purple",
+              CommunityVerified: "badge-purple",
               Ready: "badge-green", Released: "badge-green", Refunded: "badge-red", Disputed: "badge-red",
             };
 
@@ -155,7 +159,7 @@ export function EscrowMonitor() {
                 </div>
 
                 {/* Gate progress */}
-                <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="grid grid-cols-5 gap-2 mb-2">
                   {gates.map((gate, i) => (
                     <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${
                       gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
@@ -167,7 +171,7 @@ export function EscrowMonitor() {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="text-[11px] text-slate-400">{passed}/4 gates passed</span>
+                  <span className="text-[11px] text-slate-400">{passed}/5 gates passed</span>
                   {e.status === "Released" && (
                     <span className="text-xs text-emerald-600 font-medium">✓ Paid to contractor</span>
                   )}

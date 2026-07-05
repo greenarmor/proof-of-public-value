@@ -7,12 +7,14 @@ import { WalletAddress } from "../components/WalletAddress";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
 import CitizenReportForm from "./CitizenReportForm";
 import { ReportType } from "../contracts/community_oracle/src";
+import { Modal } from "../components/Modal";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
 export function CitizenInterface() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"browse"|"report"|"my">("browse");
+  const [activeTab, setActiveTab] = useState<"browse"|"my">("browse");
+  const [reportModal, setReportModal] = useState(false);
   if (!connected) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
       <div className="text-7xl mb-6">📸</div>
@@ -28,17 +30,23 @@ export function CitizenInterface() {
         <p className="text-slate-500">Browse, report, and track your civic impact.</p>
       </div>
       <CitizenDashboard />
-      <div className="flex gap-0 mb-6 bg-slate-100 rounded-xl p-1">
-        {(["browse","report","my"] as const).map(tab => (
+      <div className="flex items-center justify-between mb-6 bg-slate-100 rounded-xl p-1">
+        {(["browse","my"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab===tab?"bg-white text-brand-700 shadow-sm":"text-slate-500 hover:text-slate-700"}`}>
-            {tab==="browse"?"🗺️ Browse":tab==="report"?"📸 Report":"⭐ Reputation"}
+            {tab==="browse"?"🗺️ Browse":"⭐ Reputation"}
           </button>
         ))}
+        <button onClick={() => setReportModal(true)} className="flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700">
+          📸 Report
+        </button>
       </div>
       {activeTab==="browse" && <CitizenBrowse />}
-      {activeTab==="report" && <CitizenReportForm />}
       {activeTab==="my" && <CitizenReputation />}
+
+      <Modal open={reportModal} onClose={() => setReportModal(false)} title="Submit Community Report">
+        <CitizenReportForm onDone={() => setReportModal(false)} />
+      </Modal>
     </div>
   );
 }

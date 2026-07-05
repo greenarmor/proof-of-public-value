@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
+import { NETWORK_PASSPHRASE, CONTRACT_IDS, RPC_URL } from "../config";
 
 export function CreatePphpTrustline({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
@@ -10,28 +10,23 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   useEffect(() => {
     (async () => {
       try {
-        const { Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-        const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
         const contract = new Contract(CONTRACT_IDS.pphp_sac);
-        // Simulate balance call — succeeds if trustline exists, fails if missing
-        const resp = await server.simulateTransaction(
-          new (await import("@stellar/stellar-sdk")).TransactionBuilder(
-            await server.getAccount(address),
-            { fee: "100", networkPassphrase: NETWORK_PASSPHRASE }
-          ).addOperation(contract.call("balance", new Address(address).toScVal()))
-           .setTimeout(30).build()
-        );
-        const simStr = JSON.stringify(resp);
-        setHasTrustline(!simStr.includes("Missing"));
-        // Extract balance from simulation — raw i128 value
-        if (!simStr.includes("Missing")) {
-          try {
-            const bal = (resp as any).result?.retval?._value;
-            if (bal !== undefined) {
-              const n = Number(bal);
-              if (n > 0) setPphpBalance((n / 10_000_000).toLocaleString());
-            }
-          } catch {}
+        const account = await server.getAccount(address);
+        const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("balance", new Address(address).toScVal()))
+          .setTimeout(30)
+          .build();
+        const resp = await server.simulateTransaction(tx);
+        if (!resp.error && resp.result?.retval) {
+          setHasTrustline(true);
+          const bal = scValToBigInt(resp.result.retval);
+          if (bal > 0n) {
+            setPphpBalance((Number(bal) / 10_000_000).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+          }
+        } else {
+          setHasTrustline(false);
         }
       } catch {
         setHasTrustline(false);
@@ -44,7 +39,7 @@ export function CreatePphpTrustline({ address }: { address: string }) {
     try {
       const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+      const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({

@@ -4,6 +4,7 @@ import { Client as ProcurementMarketClient } from "../contracts/procurement_mark
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { Modal } from "../components/Modal";
 
 interface Tender {
   id: number;
@@ -19,9 +20,10 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ProcurementMarketplace() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"browse" | "create" | "award">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "award">("browse");
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createModal, setCreateModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -81,7 +83,7 @@ export function ProcurementMarketplace() {
       </div>
 
       {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
-      {activeTab === "create" && <CreateTenderForm address={address!} />}
+      
       {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} />}
     </div>
   );
@@ -121,7 +123,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
   );
 }
 
-function CreateTenderForm({ address }: { address: string }) {
+function CreateTenderForm({ address, onDone }: { address: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
@@ -181,10 +183,7 @@ function CreateTenderForm({ address }: { address: string }) {
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="card p-6 max-w-2xl">
-      <h2 className="text-lg font-semibold mb-2 text-gray-900">Create Procurement Tender</h2>
-      <p className="text-sm text-gray-500 mb-4">Opens a new tender on the procurement_market contract. Suppliers can then browse and bid.</p>
-
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" ? "✅ " : "❌ "}{txMsg}
@@ -222,7 +221,7 @@ function CreateTenderForm({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-purple-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 

@@ -2,14 +2,25 @@
 
 use super::*;
 use soroban_sdk::testutils::Address as AddressTestUtils;
-use soroban_sdk::{Address, Env, String};
+use soroban_sdk::{Address, Env, String, Symbol};
+
+fn register_compliance(env: &Env) -> Address {
+    let comp_id = env.register(compliance_engine::ComplianceEngine, ());
+    env.invoke_contract::<soroban_sdk::Val>(
+        &comp_id,
+        &Symbol::new(env, "initialize"),
+        soroban_sdk::vec![env],
+    );
+    comp_id
+}
 
 fn setup() -> (Env, DynamicEscrowClient<'static>) {
     let env = Env::default();
     env.mock_all_auths();
+    let compliance_id = register_compliance(&env);
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize();
+    client.initialize(&compliance_id);
     (env, client)
 }
 
@@ -24,9 +35,11 @@ fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTok
     let env = Env::default();
     env.mock_all_auths();
 
+    let compliance_id = register_compliance(&env);
+
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize();
+    client.initialize(&compliance_id);
 
     let admin = Address::generate(&env);
     let token_id = env.register(pphp_token::PphpToken, ());
@@ -55,8 +68,9 @@ fn test_initialize() {
 #[test]
 #[should_panic(expected = "already initialized")]
 fn test_double_initialize() {
-    let (_env, client) = setup();
-    client.initialize();
+    let (env, client) = setup();
+    let dummy = Address::generate(&env);
+    client.initialize(&dummy);
 }
 
 #[test]
@@ -74,6 +88,7 @@ fn test_create_escrow() {
     assert_eq!(escrow.status, EscrowStatus::Created);
     assert_eq!(escrow.conditions.community_required, 2);
     assert_eq!(escrow.token_address, token_addr);
+    assert_eq!(escrow.conditions.community_oracle_validation, false);
 }
 
 #[test]
@@ -127,6 +142,7 @@ fn test_full_unlock_and_release() {
     client.engineer_approve(&engineer, &id);
     client.ai_validate(&auditor, &id, &true);
     client.compliance_validate(&officer, &id, &true);
+    client.community_oracle_validate(&citizen1, &id);
     client.add_community_confirmation(&citizen1, &id);
     client.add_community_confirmation(&citizen2, &id);
 
@@ -187,6 +203,7 @@ fn test_refund_after_release() {
     client.engineer_approve(&engineer, &id);
     client.ai_validate(&auditor, &id, &true);
     client.compliance_validate(&officer, &id, &true);
+    client.community_oracle_validate(&citizen1, &id);
     client.add_community_confirmation(&citizen1, &id);
     client.add_community_confirmation(&citizen2, &id);
 

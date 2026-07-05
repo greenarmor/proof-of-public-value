@@ -4,12 +4,15 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../confi
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { Modal } from "../components/Modal";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function AgencyDashboard() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"overview" | "create_pvo" | "create_milestone">("overview");
+  const [pvoModal, setPvoModal] = useState(false);
+  const [milestoneModal, setMilestoneModal] = useState(false);
 
   if (!connected) {
     return (
@@ -25,14 +28,20 @@ export function AgencyDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Government Agency Dashboard</h1>
-      <p className="text-gray-500 mb-6">Create and manage Public Value Objects (PVOs) on-chain.</p>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Government Agency Dashboard</h1>
+          <p className="text-gray-500">Create and manage Public Value Objects (PVOs) on-chain.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setPvoModal(true)} className="btn-primary text-xs px-4 py-2">➕ New PVO</button>
+          <button onClick={() => setMilestoneModal(true)} className="btn-secondary text-xs px-4 py-2">🏗️ Define Milestone</button>
+        </div>
+      </div>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {([
           { id: "overview", label: "📋 Project Overview" },
-          { id: "create_pvo", label: "➕ New PVO" },
-          { id: "create_milestone", label: "🏗️ Define Milestone" },
         ] as const).map((tab) => (
           <button
             key={tab.id}
@@ -46,14 +55,18 @@ export function AgencyDashboard() {
         ))}
       </div>
 
-      {activeTab === "overview" && <ProjectOverview />}
-      {activeTab === "create_pvo" && <CreatePVOForm address={address!} />}
-      {activeTab === "create_milestone" && <CreateMilestoneForm address={address!} />}
+      {activeTab === "overview" && <ProjectOverview onNewPvo={() => setPvoModal(true)} onNewMilestone={() => setMilestoneModal(true)} />}
+      <Modal open={pvoModal} onClose={() => setPvoModal(false)} title="Create New PVO">
+        <CreatePVOForm address={address!} onDone={() => setPvoModal(false)} />
+      </Modal>
+      <Modal open={milestoneModal} onClose={() => setMilestoneModal(false)} title="Define Milestone">
+        <CreateMilestoneForm address={address!} onDone={() => setMilestoneModal(false)} />
+      </Modal>
     </div>
   );
 }
 
-function ProjectOverview() {
+function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; onNewMilestone: () => void }) {
   const [pvos, setPvos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const currency = getCurrency();
@@ -84,7 +97,11 @@ function ProjectOverview() {
       <div className="card p-12 text-center">
         <div className="text-5xl mb-4">📋</div>
         <h3 className="font-semibold text-gray-700 mb-1">No projects yet</h3>
-        <p className="text-sm text-gray-400">Create your first PVO using the New PVO tab.</p>
+        <p className="text-sm text-gray-400 mb-4">Create your first PVO to get started.</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={onNewPvo} className="btn-primary text-sm px-5 py-2.5">➕ Create PVO</button>
+          <button onClick={onNewMilestone} className="btn-secondary text-sm px-5 py-2.5">🏗️ Define Milestone</button>
+        </div>
       </div>
     );
   }
@@ -138,7 +155,7 @@ function ProjectOverview() {
   );
 }
 
-function CreatePVOForm({ address }: { address: string }) {
+function CreatePVOForm({ address, onDone }: { address: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [department, setDepartment] = useState("");
   const [municipality, setMunicipality] = useState("");
@@ -200,8 +217,9 @@ function CreatePVOForm({ address }: { address: string }) {
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
 
       setTxState("done");
-      setTxMsg("PVO created on-chain! Refresh overview to see it.");
+      setTxMsg("PVO created on-chain!");
       setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource(""); setContractor(""); setLatitude(""); setLongitude("");
+      setTimeout(onDone, 1500);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -212,10 +230,7 @@ function CreatePVOForm({ address }: { address: string }) {
   const currency = getCurrency();
 
   return (
-    <div className="card p-4 md:p-6 max-w-2xl mx-auto">
-      <h2 className="text-lg font-semibold mb-2 text-gray-900">Create New PVO</h2>
-      <p className="text-sm text-gray-500 mb-4">Creates a Public Value Object on the pvo_core contract. This is the first step in the project lifecycle.</p>
-
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" ? "✅ " : "❌ "}{txMsg}
@@ -273,7 +288,7 @@ function CreatePVOForm({ address }: { address: string }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Contractor Address (optional)</label>
-          <input type="text" value={contractor} onChange={(e) => setContractor(e.target.value)} className="input font-mono text-xs" placeholder="GAZENYNRLICJYECZ66IGSOHH2N246P3CGZMI2DJ2G3RFK6A5WF42LPRW" />
+          <input type="text" value={contractor} onChange={(e) => setContractor(e.target.value)} className="input font-mono text-xs" placeholder="GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF" />
           {contractor && <p className="text-xs text-gray-400 mt-1">Contractor: <WalletAddress addr={contractor}/></p>}
         </div>
         <div>
@@ -285,11 +300,11 @@ function CreatePVOForm({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-purple-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }
 
-function CreateMilestoneForm({ address }: { address: string }) {
+function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () => void }) {
   const [pvoId, setPvoId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -375,6 +390,7 @@ function CreateMilestoneForm({ address }: { address: string }) {
       setTxMsg("Milestone created on-chain!");
       setPvoId(""); setTitle(""); setDescription(""); setBudget("");
       setCommunityRequired("3"); setEvidenceTypes(["DroneImagery"]);
+      setTimeout(onDone, 1500);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -384,10 +400,7 @@ function CreateMilestoneForm({ address }: { address: string }) {
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
 
   return (
-    <div className="card p-4 md:p-6 max-w-2xl mx-auto">
-      <h2 className="text-lg font-semibold mb-2 text-gray-900">Define Milestone</h2>
-      <p className="text-sm text-gray-500 mb-4">Creates a milestone on the pvo_core contract. Each milestone will later have an escrow for payment.</p>
-
+    <>
       {txMsg && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {txState === "done" ? "✅ " : "❌ "}{txMsg}
@@ -456,6 +469,6 @@ function CreateMilestoneForm({ address }: { address: string }) {
         </button>
         {busy && <p className="text-xs text-purple-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
       </form>
-    </div>
+    </>
   );
 }

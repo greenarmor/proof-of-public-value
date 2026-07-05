@@ -554,6 +554,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
     { label: "Engineer", done: escrow.conditions.engineer_approval },
     { label: "AI", done: escrow.conditions.ai_risk_check },
     { label: "Compliance", done: escrow.conditions.compliance_validation },
+    { label: "Oracle", done: (escrow.conditions as any).community_oracle_validation || false },
     { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
   ];
 
@@ -601,7 +602,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
           {aiVerdict ? "✅ Pass Gate 3" : `❌ Reject Gate 3 — ${issues.join(", ")}`}
         </p>
       </div>
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-5 gap-2 mb-4">
         {gates.map((gate, i) => (
           <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
             <div className="text-sm mb-0.5">{gate.done ? "✓" : "○"}</div>{gate.label}
@@ -609,7 +610,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
         ))}
       </div>
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-        <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/4 gates passed</span>
+        <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/5 gates passed</span>
         <button onClick={() => handleGate()} disabled={busy}
           className="btn-primary text-xs px-4 py-2">
           {busy ? "Signing..." : aiVerdict ? "🤖 Submit AI Verdict (Pass Gate 3)" : "🚨 Reject Gate 3 — Fraud Detected"}

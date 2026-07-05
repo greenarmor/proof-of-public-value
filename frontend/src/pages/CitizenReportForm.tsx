@@ -5,7 +5,7 @@ import { uploadToIPFS } from "../ipfs";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
-export default function CitizenReportForm() {
+export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
   const { address } = useWallet();
   const [pvoId, setPvoId] = useState("");
   const [milestoneId, setMilestoneId] = useState("");
@@ -74,6 +74,7 @@ export default function CitizenReportForm() {
 
       setMessage({ text: `Report submitted! ✅`, ok: true });
       setPvoId(""); setMilestoneId(""); setDataHash(""); setLat(""); setLon(""); setFile(null);
+      if (onDone) setTimeout(onDone, 1500);
     } catch (er: any) {
       const msg = String(er?.message || er);
       if (msg.includes("insufficient") || msg.includes("balance")) setMessage({ text: "❌ Insufficient RPT balance.", ok: false });
@@ -86,8 +87,7 @@ export default function CitizenReportForm() {
   };
 
   return (
-    <div className="card p-4 md:p-6 max-w-lg mx-auto">
-      <h2 className="text-lg font-semibold mb-4">Submit Community Report</h2>
+    <>
       {message && (
         <div className={`mb-4 p-3 rounded-xl text-sm ${message.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
           {message.text}
@@ -159,6 +159,6 @@ export default function CitizenReportForm() {
           {uploading ? "Uploading to IPFS..." : submitting ? "Submitting..." : "Submit Report"}
         </button>
       </form>
-    </div>
+    </>
   );
 }

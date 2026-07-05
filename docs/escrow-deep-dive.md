@@ -23,7 +23,7 @@ Advanced exercises on the Dynamic Escrow contract.
 
 ### Exercise A.1: Deploy and Initialize
 
-The escrow contract is already deployed to testnet at `CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6`. You can use it directly.
+The escrow contract is already deployed to testnet at `CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X`. You can use it directly.
 
 To deploy your own instance:
 
@@ -53,8 +53,8 @@ stellar contract invoke \
 Create an escrow for Milestone 1 (3M pesos = 300,000,000 centavos), requiring 2 community confirmations:
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
-PPHP="CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
+PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
 ALICE=$(stellar keys address alice)
 BOB=$(stellar keys address bob)
 
@@ -85,7 +85,7 @@ stellar contract invoke \
 The funder deposits the exact amount. **Real pPHP tokens transfer from the funder wallet to the escrow contract address:**
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 
 stellar contract invoke \
   --id $ESCROW \
@@ -105,7 +105,7 @@ stellar contract invoke \
 ### Exercise A.4: Complete All Unlock Conditions
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 
 # Gate 1: Engineer approval
 stellar contract invoke \
@@ -146,7 +146,7 @@ done
 ### Exercise A.5: Check Conditions
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 
 stellar contract invoke \
   --id $ESCROW \
@@ -165,7 +165,7 @@ stellar contract invoke \
 **Real pPHP tokens transfer from the escrow contract to the recipient (contractor):**
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
 
 stellar contract invoke \
   --id $ESCROW \
@@ -186,8 +186,8 @@ stellar contract invoke \
 Create a second escrow (5M pesos) and dispute it. **Refund returns real pPHP tokens to the funder:**
 
 ```bash
-ESCROW="CAD7IAKM6RQFNX3RO5GL65LDFIVHWIHUGB26A7GUDJMUTIJRPDXAXQM6"
-PPHP="CA6U3UQ6NXANCOVNFJVQEDCKDZJ5KOIGROG7BU55AMJC2NEWBB2GFLE6"
+ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
+PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
 BOB=$(stellar keys address bob)
 
 # Create new escrow
