@@ -580,7 +580,6 @@ function SettingsTab() {
 function PledgeManager() {
   const [pledges, setPledges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rate, setRate] = useState("56"); // ₱56 per $1 USD
   const [busy, setBusy] = useState<number | null>(null);
   const currency = getCurrency();
 
@@ -601,14 +600,14 @@ function PledgeManager() {
       const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
-      const pphpAmount = Math.round(Number(pledge.amount) * Number(rate) * 10_000_000);
+      const pphpValue = Math.round(Number(pledge.amount) * rates[pledge.currency] || 56 * 10_000_000);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount("GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
       const sacContract = new Contract("CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X");
 
       // Mint SAC pPHP to funding agency
-      const mintOp = sacContract.call("mint", new Address(FUNDING).toScVal(), new ScInt(pphpAmount).toI128());
+      const mintOp = sacContract.call("mint", new Address(FUNDING).toScVal(), new ScInt(pphpValue).toI128());
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
 
@@ -619,7 +618,7 @@ function PledgeManager() {
       await server.sendTransaction(signedTx);
 
       setPledges(prev => prev.filter(p => p.id !== pledge.id));
-      alert(`Minted ${(pphpAmount/10_000_000).toLocaleString()} pPHP to Funding Agency`);
+      alert(`Minted ${(pphpValue/10_000_000).toLocaleString()} pPHP to Funding Agency`);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
     } finally { setBusy(null); }
@@ -631,27 +630,3 @@ function PledgeManager() {
     <div>
       <div className="flex items-center gap-4 mb-4">
         <div>
-          <label className="text-sm text-slate-600">Exchange Rate ({currency} per $1)</label>
-          <input type="number" value={rate} onChange={e => setRate(e.target.value)} className="input w-24 ml-2" />
-        </div>
-      </div>
-      {pledges.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400">No pending pledges to convert.</div>
-      ) : (
-        <div className="space-y-3">
-          {pledges.map((p: any) => (
-            <div key={p.id} className="card p-4 flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-slate-900">{p.org_name} — PVO #{p.pvo_id}</p>
-                <p className="text-sm text-slate-500">{p.currency} {Number(p.amount).toLocaleString()} ≈ {((Number(p.amount) * Number(rate))).toLocaleString()} pPHP</p>
-              </div>
-              <button onClick={() => handleConvert(p)} className="btn-primary text-xs px-3 py-1.5">
-                💸 Convert &amp; Mint
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
