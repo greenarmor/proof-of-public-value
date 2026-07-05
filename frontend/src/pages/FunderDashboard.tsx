@@ -523,6 +523,10 @@ function DonorCommitmentsTab() {
         const result = await client.get_all_grants();
         const chainGrants = result.result || [];
         setGrants(chainGrants);
+      } catch(e){} finally{setLoading(false)}
+    })();
+    (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
+  }, []);
       } catch (e) {
         console.error("Failed to load donor commitments:", e);
       } finally {
@@ -581,7 +585,7 @@ function DonorCommitmentsTab() {
                     <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
-                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()}</p>
+                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()} <span className="text-xs text-slate-400">≈ {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} pPHP</span>
                   <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>
