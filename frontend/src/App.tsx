@@ -10,6 +10,7 @@ import { AuditorDashboard } from "./pages/AuditorDashboard";
 import { IndexLeaderboard } from "./pages/IndexLeaderboard";
 import { ComplianceDashboard } from "./pages/ComplianceDashboard";
 import { ProcurementMarketplace } from "./pages/ProcurementMarketplace";
+import { EscrowMonitor } from "./pages/EscrowMonitor";
 import { EconomicMemory } from "./pages/EconomicMemory";
 import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
@@ -27,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Public Portal", icon: "🏛️", group: "public" },
   { to: "/index", label: "Index", icon: "🏆", group: "public" },
   { to: "/memory", label: "Search", icon: "🔍", group: "public" },
+  { to: "/escrows", label: "Escrows", icon: "🔒", group: "public" },
   { to: "/#features", label: "How It Works", icon: "🔄", group: "landing" },
   { to: "/#capabilities", label: "Capabilities", icon: "✨", group: "landing" },
   { to: "/#connect", label: "Connect", icon: "🔗", group: "landing" },
@@ -314,6 +316,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
+              <Route path="/escrows" element={<EscrowMonitor />} />
               <Route path="/citizen" element={<ProtectedRoute element={<CitizenInterface />} roles={["Citizen", "Administrator"]} />} />
               <Route path="/agency" element={<ProtectedRoute element={<AgencyDashboard />} roles={["GovernmentAgency", "Administrator"]} />} />
               <Route path="/contractor" element={<ProtectedRoute element={<ContractorPortal />} roles={["Contractor", "Administrator"]} />} />
