@@ -230,13 +230,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   }, []);
 
   // Check donor's balances across all donation assets
-  const balanceUnits = pphpBalance !== null ? Number(pphpBalance) : null;
-  const enteredAmount = amount ? Number(amount) : 0;
-  const hasEnough = balanceUnits !== null && balanceUnits >= enteredAmount && enteredAmount > 0;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setTxState("preparing");
     setTxMsg("");
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal, ScInt } = await import("@stellar/stellar-sdk");
@@ -257,7 +250,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
         new ScInt(amt).toI128(),
         orgStr,
         new Address(FUNDING_AGENCY).toScVal(),
-        new Address(selectedAsset.contractId).toScVal(),
+        new Address(CONTRACT_IDS.pphp).toScVal(),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -299,13 +292,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Asset</label>
-              <option key={a.code} value={a.code}>
-              </option>
-            ))}
-          </select>
-        </div>
         <Autosuggest label="PVO" value={pvoId ? String(pvoId) : ""} options={pvoOptions}
           onChange={setPvoId} placeholder="Search by project name..." />
         <div>
@@ -321,9 +307,8 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({selectedAsset.code} units)</label>
+<label class="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP units)</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="input" placeholder={`e.g. ${Math.pow(10, selectedAsset.decimals).toLocaleString().replace(/,/g,"")} = ${selectedAsset.symbol}1.00`} required />
-          <p className="text-xs text-slate-400 mt-1">{selectedAsset.decimals} decimal places. 1 {selectedAsset.code} unit = {selectedAsset.symbol}{(1 / Math.pow(10, selectedAsset.decimals)).toFixed(selectedAsset.decimals)}</p>
         </div>
         <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
           <p className="text-sm text-brand-700">
@@ -331,26 +316,12 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
             ({formatAddress(FUNDING_AGENCY, 6)}) in one atomic transaction. The FA can immediately use
             these funds for escrow.
           </p>
-          {selectedAsset.code === "pPHP" && pphpBalance !== null && (
-            <p className={`text-sm mt-2 ${hasEnough ? "text-emerald-700" : "text-red-600"}`}>
-              {hasEnough ? (
-                <>✅ Balance sufficient: <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong></>
-              ) : (
-                <>
-                  ⚠️ Insufficient balance: you have <strong>{getCurrency()}{(Number(pphpBalance) / PPHP_SCALE).toLocaleString()}</strong> but need <strong>{getCurrency()}{(enteredAmount / PPHP_SCALE).toLocaleString()}</strong>.
                   <br/><span className="text-xs">Request admin to mint: <code className="bg-red-100 px-1 rounded">stellar contract invoke --source alice --network testnet --id {CONTRACT_IDS.pphp} -- mint --to {address} --amount {Number(enteredAmount) - Number(pphpBalance || 0n)}</code></span>
                 </>
               )}
             </p>
           )}
         </div>
-        <button type="submit" disabled={busy || (amount !== "" && pphpBalance !== null && !hasEnough)}
-          className={`w-full py-3 ${amount !== "" && pphpBalance !== null && !hasEnough ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}>
-          {busy ? "Signing..." : "Commit Funding On-Chain"}
-        </button>
-        {busy && <p className="text-xs text-brand-600 text-center animate-pulse">Check Freighter for signing prompt...</p>}
-      </form>
-    </>
   );
 }
 
