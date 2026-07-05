@@ -110,35 +110,6 @@ export function DonorDashboard() {
         </button>
       </div>
 
-        <div className="mb-6 card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-slate-800 text-sm">💳 Donor Wallet</h3>
-            <span className="text-xs font-mono text-slate-400">{address!.slice(0,8)}...{address!.slice(-4)}</span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {balances.map(b => {
-              const scale = Math.pow(10, asset?.decimals || 7);
-              const human = Number(b.amt) / scale;
-              const warningThreshold = 20000000000000n;
-              return (
-                <div key={b.code} className="bg-slate-50 rounded-xl p-3 text-center">
-                  <p className="text-lg font-bold text-slate-900">{human.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-                  <p className="text-xs text-slate-500">{b.code} ({asset?.symbol || "?"})</p>
-                  {b.amt < warningThreshold && (
-                    <button onClick={() => {
-                      const shortage = warningThreshold - b.amt;
-                      navigator.clipboard.writeText(`stellar contract invoke --source alice --network testnet --id ${CONTRACT_IDS.pphp} -- mint --to ${address} --amount ${shortage}`);
-                      alert(`Mint command copied! Need ${(Number(shortage) / scale).toLocaleString()} more ${b.code}.`);
-                    }} className="mt-2 text-[10px] text-amber-600 hover:underline bg-amber-50 px-2 py-0.5 rounded">
-                      📋 Request more
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
         {(["portfolio", "transparency"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
@@ -155,7 +126,7 @@ export function DonorDashboard() {
       {activeTab === "transparency" && <TransparencyTab grants={grants} loading={loading} address={address!} onAction={refresh} />}
 
       <Modal open={commitModal} onClose={() => setCommitModal(false)} title="Commit Grant Funding">
-        <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }}
+        <CommitForm address={address!} onCommitted={() => { refresh(); setCommitModal(false); }} />
       </Modal>
     </div>
   );
@@ -238,7 +209,7 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   const [org, setOrg] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
+  const [org, setOrg] = useState("");
   const [pvoOptions, setPvoOptions] = useState<{ id: number; title: string }[]>([]);
   const currency = getCurrency();
 
@@ -259,29 +230,6 @@ function CommitForm({ address, onCommitted }: { address: string; onCommitted: ()
   }, []);
 
   // Check donor's balances across all donation assets
-  useEffect(() => {
-    (async () => {
-      try {
-        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
-        const server = new rpc.Server(RPC_URL);
-        const acct = await server.getAccount(address);
-        const bals: Record<string, bigint> = {};
-          try {
-            const contract = new Contract(asset.contractId);
-            const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-              .addOperation(contract.call("balance", new Address(address).toScVal()))
-              .setTimeout(30).build();
-            const resp = await server.simulateTransaction(tx);
-            if (!resp.error && resp.result?.retval) {
-              bals[asset.code] = scValToBigInt(resp.result.retval);
-              if (asset.code === "pPHP") setPphpBalance(bals[asset.code]);
-            }
-          } catch {}
-        }
-      } catch {}
-    })();
-  }, [address]);
-
   const balanceUnits = pphpBalance !== null ? Number(pphpBalance) : null;
   const enteredAmount = amount ? Number(amount) : 0;
   const hasEnough = balanceUnits !== null && balanceUnits >= enteredAmount && enteredAmount > 0;
