@@ -1,9 +1,31 @@
-import { useState } from "react";
-import { NETWORK_PASSPHRASE } from "../config";
+import { useState, useEffect } from "react";
+import { NETWORK_PASSPHRASE, CONTRACT_IDS } from "../config";
 
 export function CreatePphpTrustline({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [hasTrustline, setHasTrustline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+        const contract = new Contract(CONTRACT_IDS.pphp_sac);
+        // Simulate balance call — succeeds if trustline exists, fails if missing
+        const resp = await server.simulateTransaction(
+          new (await import("@stellar/stellar-sdk")).TransactionBuilder(
+            await server.getAccount(address),
+            { fee: "100", networkPassphrase: NETWORK_PASSPHRASE }
+          ).addOperation(contract.call("balance", new Address(address).toScVal()))
+           .setTimeout(30).build()
+        );
+        setHasTrustline(!String(JSON.stringify(resp)).includes("Missing"));
+      } catch {
+        setHasTrustline(false);
+      }
+    })();
+  }, [address]);
 
   const setup = async () => {
     setLoading(true); setMsg(null);
@@ -22,16 +44,28 @@ export function CreatePphpTrustline({ address }: { address: string }) {
       const signedTx = TransactionBuilder.fromXDR(sr.signedTxXdr, NETWORK_PASSPHRASE);
       const result = await server.sendTransaction(signedTx);
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
-        setMsg({ text: "✅ pPHP trustline created! Admin can now mint pPHP.", ok: true });
+        setMsg({ text: "✅ pPHP trustline created!", ok: true });
+        setHasTrustline(true);
       } else throw new Error(`Tx status: ${result.status}`);
     } catch (err: any) {
       if (err.message?.includes("already") || err.message?.includes("exist")) {
         setMsg({ text: "Trustline already exists!", ok: true });
+        setHasTrustline(true);
       } else {
         setMsg({ text: `Failed: ${String(err?.message || err).slice(0, 150)}`, ok: false });
       }
     } finally { setLoading(false); }
   };
+
+  if (hasTrustline === null) return null;
+
+  if (hasTrustline) {
+    return (
+      <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <p className="text-sm text-emerald-700">🪙 pPHP Trustline Active — visible in Freighter</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-xl">
