@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";

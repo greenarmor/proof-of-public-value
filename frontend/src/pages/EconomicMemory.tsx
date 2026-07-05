@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config";
 
 export function EconomicMemory() {
   const [query, setQuery] = useState("");

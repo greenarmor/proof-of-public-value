@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress, formatTimestamp } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, 100 } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config";
 import { uploadToIPFS } from "../ipfs";
 import { Client as AiOracleClient, type FraudDetectionResult } from "../contracts/ai_oracle/src";
 import { Client as ComplianceClient, type ViolationRecord } from "../contracts/compliance_engine/src";

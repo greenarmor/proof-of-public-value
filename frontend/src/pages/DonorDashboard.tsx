@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency, PPHP_SCALE } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, FUNDING_AGENCY, getCurrency, PPHP_SCALE } from "../config";
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
 import { Modal } from "../components/Modal";
 

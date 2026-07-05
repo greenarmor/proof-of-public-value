@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, 100 } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";

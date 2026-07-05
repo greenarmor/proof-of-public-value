@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as AuditClient } from "../contracts/audit_trail/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { formatAddress, statusToString } from "../helpers";

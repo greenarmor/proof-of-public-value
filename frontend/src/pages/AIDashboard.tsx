@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, 100 } from "../config";;
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatAddress } from "../helpers";
 
 interface FraudResult {
