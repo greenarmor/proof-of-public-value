@@ -606,7 +606,7 @@ function PledgeManager() {
       const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
-      const pphpAmount = Math.round(Number(pledge.amount) * rates[pledge.currency] || 56 * 10_000_000);
+      const pphpAmount = Math.round(Number(pledge.amount) * (rates[pledge.currency] || 56) * 10_000_000);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount("GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
