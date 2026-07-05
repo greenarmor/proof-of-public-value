@@ -21,7 +21,7 @@ export function CreatePphpTrustline({ address }: { address: string }) {
         }))
         .setTimeout(30).build();
 
-      const signed: any = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE, accountToSign: address });
+      const signed: any = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signed?.error) throw new Error(signed.error.message);
 
       const signedTx = TransactionBuilder.fromXDR(signed.signedTxXdr, NETWORK_PASSPHRASE);
