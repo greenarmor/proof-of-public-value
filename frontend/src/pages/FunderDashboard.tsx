@@ -5,6 +5,7 @@ import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
+import { Client as GrantClient } from "../contracts/grant_commitment/src";
 
 type EscrowStatus =
   | "Created" | "Funded" | "EngineerApproved" | "AIValidated"
