@@ -61,6 +61,7 @@ export function DonorDashboard() {
   const [grants, setGrants] = useState<GrantData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [commitModal, setCommitModal] = useState(false);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [balances, setBalances] = useState<{code: string; amt: bigint}[]>([]);
   const currency = getCurrency();
@@ -157,25 +158,56 @@ export function DonorDashboard() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">International Donor Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-slate-500">Commit grant funding on-chain and transfer pPHP to the Funding Agency in one transaction.</p>
-            {balances.length > 0 && (
-              <div className="flex items-center gap-2">
+      {/* Zero-balance onboarding */}
+      {balance === 0n && balances.length === 0 && (
+        <div className="mb-6 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
+          <div className="flex items-start gap-4">
+            <div className="text-3xl">💡</div>
+            <div>
+              <h3 className="font-semibold text-amber-800 mb-1">No donation assets yet</h3>
+              <p className="text-sm text-amber-700 mb-3">
+                Your wallet has no pPHP (or other donation tokens). The admin must mint tokens for you before you can commit grants.
+              </p>
+              <div className="bg-white rounded-lg p-3 font-mono text-xs text-amber-800 border border-amber-200">
+                <p className="mb-1"><strong>Admin CLI:</strong></p>
+                <code>stellar contract invoke --source alice --network testnet --id CCJRBA... -- mint --to {address} --amount 2000000000000000</code>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button onClick={refresh} className="btn-secondary text-xs px-3 py-1.5">🔄 Check again</button>
+                <p className="text-xs text-amber-600 mt-1">After admin mints, refresh to see your balance.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {balances.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-brand-50 to-emerald-50 border border-brand-200 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🏦</span>
+            <div>
+              <p className="text-sm font-medium text-brand-800">Donation Assets Available</p>
+              <div className="flex items-center gap-3 mt-1">
                 {balances.map(b => {
                   const asset = DONATION_ASSETS.find(a => a.code === b.code);
-                  const scale = asset ? Math.pow(10, asset.decimals) : PPHP_SCALE;
-                  const sym = asset?.symbol || "";
+                  const scale = Math.pow(10, asset?.decimals || 7);
                   return (
-                    <span key={b.code} className="text-xs font-mono bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
-                      🪙 {b.code}: {sym}{(Number(b.amt) / scale).toLocaleString(undefined, {maximumFractionDigits: 2})}
+                    <span key={b.code} className="text-xs font-mono bg-white text-brand-700 px-2 py-0.5 rounded-full border border-brand-200">
+                      {asset?.symbol} {Number(b.amt) / scale} {b.code}
                     </span>
                   );
                 })}
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">International Donor Dashboard</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-slate-500">Commit grant funding on-chain and transfer assets to the Funding Agency in one transaction.</p>
           </div>
         </div>
         <button onClick={refresh} disabled={loading}
