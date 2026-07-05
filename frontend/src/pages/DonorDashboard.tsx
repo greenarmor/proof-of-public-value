@@ -48,8 +48,10 @@ export function DonorDashboard() {
 
       const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const cnt = await pc.get_pvo_count();
+      const total = Number(cnt.result);
+      console.log("PVO count:", total);
       const list: PVOCard[] = [];
-      for (let i = 1; i <= Number(cnt.result); i++) {
+      for (let i = 1; i <= total; i++) {
         const r = await pc.get_pvo({ pvo_id: i });
         if (r.result) list.push({
           id: r.result.id, title: r.result.title, department: r.result.department,
@@ -58,7 +60,7 @@ export function DonorDashboard() {
         });
       }
       setPvos(list);
-    } catch {} finally { setLoading(false); }
+    } catch (e) { console.error("DonorDashboard loadAll:", e); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
