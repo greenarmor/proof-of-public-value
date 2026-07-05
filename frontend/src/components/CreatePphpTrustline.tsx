@@ -8,30 +8,27 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   const setup = async () => {
     setLoading(true); setMsg(null);
     try {
-      const { TransactionBuilder, Operation, Asset, Horizon, rpc } = await import("@stellar/stellar-sdk");
+      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
-
-      // Classic Horizon server — ChangeTrust requires classic operations, not Soroban RPC
-      const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
-      const acct = await horizon.loadAccount(address);
-
+      const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+      const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({
           asset: new Asset("pPHP", "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV"),
         }))
         .setTimeout(30).build();
-
-      const signed: any = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signed?.error) throw new Error(signed.error.message);
-
-      const signedTx = TransactionBuilder.fromXDR(signed.signedTxXdr, NETWORK_PASSPHRASE);
-      await horizon.submitTransaction(signedTx);
-      setMsg({ text: "✅ pPHP trustline created! Admin can now mint pPHP to you.", ok: true });
-    } catch (e: any) {
-      if (e.message?.includes("already") || e.message?.includes("exist")) {
+      const sr: any = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (sr?.error) throw new Error(sr.error.message || "Freighter signing failed");
+      const signedTx = TransactionBuilder.fromXDR(sr.signedTxXdr, NETWORK_PASSPHRASE);
+      const result = await server.sendTransaction(signedTx);
+      if (result.status === "PENDING" || result.status === "DUPLICATE") {
+        setMsg({ text: "✅ pPHP trustline created! Admin can now mint pPHP.", ok: true });
+      } else throw new Error(`Tx status: ${result.status}`);
+    } catch (err: any) {
+      if (err.message?.includes("already") || err.message?.includes("exist")) {
         setMsg({ text: "Trustline already exists!", ok: true });
       } else {
-        setMsg({ text: e.message?.slice(0, 120) || "Failed", ok: false });
+        setMsg({ text: `Failed: ${String(err?.message || err).slice(0, 150)}`, ok: false });
       }
     } finally { setLoading(false); }
   };
