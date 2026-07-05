@@ -4,7 +4,7 @@ import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
-import { Client as GrantClient } from "../contracts/grant_commitment/src";
+import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 
 type EscrowStatus =
   | "Created" | "Funded" | "EngineerApproved" | "AIValidated"
@@ -111,7 +111,8 @@ export function FunderDashboard() {
       <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Funding Agency Dashboard</h1>
-          <p className="text-slate-500">On-chain escrow management with 5-gate release conditions.</p>
+          <p className="text-slate-500 mt-1">On-chain escrow management with 5-gate release conditions.</p>
+          <CreatePphpTrustline address={address!} />
         </div>
         <button onClick={refresh} disabled={loading}
           className="btn-secondary text-xs px-3 py-2">

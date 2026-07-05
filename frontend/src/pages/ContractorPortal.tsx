@@ -6,6 +6,7 @@ import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 
 // --- chain data types ---
 
@@ -54,7 +55,8 @@ export function ContractorPortal() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Contractor Portal</h1>
-      <p className="text-gray-500 mb-6">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
+      <p className="text-gray-500 mb-4">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
+      <CreatePphpTrustline address={address!} />
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {(["projects", "evidence", "payments", "history"] as const).map((tab) => (
