@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
@@ -584,6 +584,7 @@ function SettingsTab() {
 
 function PledgeManager() {
   const [pledges, setPledges] = useState<any[]>([]);
+  const loaded = useRef(false);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [busy, setBusy] = useState<number | null>(null);
@@ -596,6 +597,7 @@ function PledgeManager() {
         const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await gc.get_all_grants();
         const raw = (result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"); const seen = new Set(); const unique = raw.filter((g: any) => !seen.has(g.id) && seen.add(g.id)); setPledges(unique) // was: setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
+        loaded.current = true;
       } catch (e) { console.error("PledgeManager:", e); } finally { setLoading(false); }
     })();
   }, []);
