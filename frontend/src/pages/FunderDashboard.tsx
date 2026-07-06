@@ -512,7 +512,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
                 <div className={`h-full rounded-full transition-all ${pct >= 80 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: pct + "%" }} />
               </div>
               {Number(amount) > 0 && Number(amount) > pledged && (
-                <p className="text-red-600 mt-1">⚠️ Escrow amount exceeds total pledged ({currency}{Number(amount).toLocaleString()} > {currency}{pledged.toLocaleString()})</p>
+                <p className="text-red-600 mt-1">⚠️ Escrow ({currency}{Number(amount).toLocaleString()}) exceeds pledged ({currency}{pledged.toLocaleString()})</p>
               )}
             </div>
           )}
