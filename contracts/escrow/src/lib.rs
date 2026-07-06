@@ -94,14 +94,8 @@ pub struct EscrowDisputedEvent {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum PVOStatus {
-    Proposed,
-    Approved,
+pub enum PvoStatus {
     InProgress,
-    UnderReview,
-    Completed,
-    Suspended,
-    Terminated,
 }
 
 const COUNTER: Symbol = symbol_short!("COUNTER");
@@ -379,7 +373,7 @@ impl DynamicEscrow {
             recipient,
         }.publish(&env);
 
-        // Auto-complete PVO when escrow releases
+        // Transition PVO to InProgress when escrow releases
         if let Some(pvo_core_addr) = storage.get::<Symbol, Address>(&PVO_CORE) {
             let _: () = env.invoke_contract(
                 &pvo_core_addr,
@@ -388,7 +382,7 @@ impl DynamicEscrow {
                     &env,
                     env.current_contract_address().into_val(&env),
                     pvo_id.into(),
-                    PVOStatus::Completed.into_val(&env),
+                    PvoStatus::InProgress.into_val(&env),
                 ],
             );
         }

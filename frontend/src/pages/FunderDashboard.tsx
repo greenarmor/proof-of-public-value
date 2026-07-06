@@ -141,7 +141,7 @@ export function FunderDashboard() {
       </div>
 
       {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} />}
-      {activeTab === "commitments" && <DonorCommitmentsTab onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setCreateModal(true); }} />}
+      {activeTab === "commitments" && <DonorCommitmentsTab key={refreshKey} onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setCreateModal(true); }} />}
       {activeTab === "guide" && <EscrowGuide />}
 
       <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Escrow">
@@ -620,6 +620,8 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
   const currency = getCurrency();
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => setRefreshKey(k => k + 1);
 
   useEffect(() => {
     (async () => {
@@ -632,14 +634,15 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
         const result = await client.get_all_grants();
         const chainGrants = result.result || [];
         chainGrants.sort((a: any, b: any) => {
-          const aComm = (a.status?.tag || a.status) === "Committed" ? 0 : 1;
-          const bComm = (b.status?.tag || b.status) === "Committed" ? 0 : 1;
-          return aComm - bComm || Number(b.id) - Number(a.id);
+          const order = (s: string) => s === "Committed" ? 0 : s === "Disbursed" ? 1 : 2;
+          const aOrd = order(a.status?.tag || a.status);
+          const bOrd = order(b.status?.tag || b.status);
+          return aOrd - bOrd || Number(b.id) - Number(a.id);
         });
         setGrants(chainGrants);
       } catch(e){} finally{setLoading(false)}
     })();
-  }, []);
+  }, [refreshKey]);
 
   const [pvoBudgets, setPvoBudgets] = useState<Record<number, string>>({});
   useEffect(() => { (async () => { try { const { Client } = await import("../contracts/pvo_core/src"); const pc = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; for(let i=1;i<=Number(cnt.result);i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} setPvoBudgets(b); }catch{}})(); }, []);
@@ -671,9 +674,10 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
             <p className="stat-label">Total Donor Pledges</p>
             <p className="stat-value text-brand-600">{currency}{(grants.reduce((sum: number, g: any) => sum + Number(g.amount), 0) / PPHP_SCALE).toLocaleString()}</p>
           </div>
-          <div className="text-right">
-            <p className="stat-label">Active Grants</p>
-            <p className="stat-value text-slate-900">{grants.length}</p>
+          <div className="flex items-center gap-3">
+            <button onClick={refresh} className="text-xs text-brand-600 hover:underline">↻ Refresh</button>
+            <span className="stat-value text-slate-900">{grants.length}</span>
+            <span className="stat-label">grants</span>
           </div>
         </div>
       </div>
@@ -700,22 +704,33 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
                 <span className={`badge ${colorClass}`}>{status}</span>
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                {status === "Committed" && (
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs text-slate-500">Ready. Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
+                {(status === "Committed" || status === "Disbursed") && (
+                  <div className="flex items-center gap-3 w-full">
+                    <div>
+                      {status === "Committed" && (
+                        <p className="text-xs text-purple-600 font-medium">Donor pledged — awaiting admin mint</p>
+                      )}
+                      {status === "Disbursed" && (
+                        <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency — ready for escrow</p>
+                      )}
+                      <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
+                    </div>
                     <button onClick={() => onCreateEscrow(Number(g.pvo_id))} className="btn-primary text-xs px-3 py-1 ml-auto">
                       ➕ Create Escrow
                     </button>
                   </div>
                 )}
-                {status === "Disbursed" && (
-                  <p className="text-xs text-blue-600">Funds disbursed into escrow.</p>
-                )}
                 {status === "Completed" && (
-                  <p className="text-xs text-emerald-600">Grant fully completed.</p>
+                  <div>
+                    <p className="text-xs text-emerald-600 font-medium">All gates passed, payment released</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Escrow released funds to the contractor after all 5 gates passed. The PVO milestone is complete. This grant is fully settled.</p>
+                  </div>
                 )}
                 {status === "Cancelled" && (
-                  <p className="text-xs text-red-500">Grant cancelled by donor.</p>
+                  <div>
+                    <p className="text-xs text-red-500 font-medium">Grant revoked before disbursement</p>
+                    <p className="text-xs text-slate-400 mt-0.5">The donor cancelled this commitment. Funds were never locked in escrow. The PVO budget slot is available again for another donor.</p>
+                  </div>
                 )}
               </div>
             </div>

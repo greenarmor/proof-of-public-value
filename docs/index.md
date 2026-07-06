@@ -1,103 +1,230 @@
-# Proof of Public Value - Hackathon User Manual
+# Proof of Public Value — User Manual
 
-> **Track:** Local Finance & Real World Access - Stellar Build Better Hackathon
+> **Track:** Local Finance & Real World Access — Stellar Build Better Hackathon
+> **Serverless dApp** on Stellar Soroban testnet. No backend, no database — the blockchain is the infrastructure.
+
+---
+
+➡️ **Reference: [Appendix A — Glossary of Terms](appendices.md)** — Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC units, and more.
+
+➡️ **Read: [Why PoPV Exists — The Philippine Corruption Crisis](philippines-corruption.md)**
 
 ---
 
 ## The Problem
 
-Every year, governments lose **$2.6 trillion to corruption** - ghost projects that exist only on paper, inflated budgets, substandard infrastructure, and untraceable fund flows.
+Every year, governments lose **$2.6 trillion to corruption** — ghost projects, inflated budgets, substandard infrastructure, and untraceable fund flows.
 
-The root cause: **public money is released based on signatures and paperwork, not on proof that value was actually created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
+The root cause: **public money is released based on signatures and paperwork, not on proof of value created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
 
-**The Philippines is a primary case study.** From the ₱10 billion PDAF pork barrel scam to billions in DPWH ghost infrastructure projects, the pattern is always the same: funds released upfront, projects never verified on the ground, and no one held accountable until years later.
-
-➡️ **Read: [Why PoPV idea Exists - The Philippine Corruption Crisis](philippines-corruption.md)**
-
-➡️ **Reference: [Appendix A — Glossary of Terms](appendices.md)** — Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC, and more.
+---
 
 ## What PoPV Solves
 
 Proof of Public Value enforces one rule: **No Proof. No Payment.**
 
-Every public project becomes a **Public Value Object (PVO)** - a programmable digital entity on the Stellar blockchain. Funds are locked in a dynamic escrow smart contract and released **only after passing 5 independent verification gates:**
+Every public project becomes a **Public Value Object (PVO)** — a programmable digital entity on Stellar. Funds are locked in escrow smart contracts and released **only after passing 5 independent verification gates:**
 
-| Gate | Who Verifies | What They Check |
-|------|-------------|-----------------|
-| 1. Evidence | Contractor | Drone imagery, GPS, photos, engineering reports |
-| 2. Engineer | Licensed Professional | Physical work meets specifications |
-| 3. AI Risk | Artificial Intelligence | Fraud detection, anomaly scanning |
-| 4. Compliance | Auditor / COA | Procurement law, budget rules, safety |
-| 5. Community | Citizens | GPS-tagged photos, flood reports, quality checks |
+| Gate | Who | What |
+|------|-----|------|
+| 1. Engineer | Licensed Professional | Physical work meets specifications |
+| 2. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification |
+| 3. Compliance | Auditor / COA | Procurement law, budget rules, safety regulations |
+| 4. Community Oracle | Citizens | Verified GPS field reports confirm project exists on the ground |
+| 5. Community Confirmations | Citizens | Must reach the threshold set at escrow creation — multiple independent witnesses |
 
-If **any gate fails**, funds remain locked. No single person can release money - it requires cryptographic consensus.
+If any gate fails, funds remain locked. No single person can release money.
 
 ---
 
-## Stellar Integration (DeFi Escrow)
+## How It Works — Full Lifecycle
 
-PoPV is **serverless** - there is no backend, no database, no centralized server. **The Stellar blockchain is the infrastructure.**
+### 1. Government Agency Creates a PVO
 
-### Dynamic DeFi Escrow
+A Government Agency wallet creates a Public Value Object on-chain. Each PVO has a title, department, municipality, total budget (in pesos), and contractor address.
 
-Every milestone has an independent escrow contract on Stellar. Funds are deposited and locked with multi-condition unlock rules:
+The PVO starts as **Proposed**.
 
-```rust
-// Funds release only when all 5 conditions are met
-if !engineer_approved { return false; }
-if !ai_validated { return false; }
-if !compliance_passed { return false; }
-if community_confirmations < required { return false; }
-if !evidence_submitted { return false; }
-// Release payment via Stellar rails
-escrow.release(funds, recipient);
+### 2. Government Agency Defines Milestones
+
+Instead of paying the entire budget upfront, the project is broken into milestones — individual phases each with their own budget, evidence requirements, and community confirmation threshold. For example:
+
+- **Milestone 1:** Site Preparation — ₱50M
+- **Milestone 2:** Foundation — ₱150M
+- **Milestone 3:** Structure — ₱200M
+- **Milestone 4:** Finishing — ₱100M
+
+Budget input is in **pesos** — the contract auto-converts to SAC atomic units (pesos × 10,000,000).
+
+### 3. International Donor Pledges Exact PVO Budget
+
+Donors (World Bank, JICA, ADB, etc.) commit grants through the Donor Dashboard. The commitment contract enforces **exact-match pledging**: the pledge must equal **PVO budget minus already-committed funds**. This prevents over/under-committing.
+
+The grant status is **Committed**.
+
+### 4. Admin Mints pPHP & Marks Disbursed
+
+From the **Admin/System Panel → Pledges tab**, the administrator clicks **"Mint & Disburse"** on a Committed grant. This:
+
+1. Mints the exact pPHP SAC amount to the Funding Agency's wallet (Transaction 1)
+2. Marks the grant as **Disbursed** on-chain (Transaction 2)
+
+These are two separate transactions because Freighter only supports one operation per transaction.
+
+### 5. Funding Agency Creates Escrows Per Milestone
+
+From the **Funding Agency Dashboard → Donor Commitments tab**, each Disbursed grant shows a **"Create Escrow"** button. Clicking it opens a form with:
+
+- **Recipient (Contractor)** — autocomplete dropdown of all Contractor-role wallet addresses
+- **PVO ID** — pre-filled from the grant, non-editable
+- **Milestone ID** — autocomplete showing all milestones under that PVO; selecting one auto-fills the amount
+- **Amount** — in pPHP SAC units (with peso conversion shown below)
+- **Community Confirmations Required** — how many verified citizen GPS field reports must confirm this milestone
+
+The funding agency can create **multiple escrows** against a single grant — one per milestone. The button stays visible until all funds are escrowed.
+
+### 6. Escrow is Funded
+
+The funding agency deposits the milestone amount into the escrow contract. The escrow status becomes **Funded**.
+
+### 7. Five Gates Verify the Work
+
+Each gate is an independent on-chain verification:
+
+**Gate 1 — Engineer:** Licensed engineer signs off that physical work meets specifications.
+
+**Gate 2 — AI Oracle:** AI scans evidence for anomalies — duplicate GPS, metadata tampering, suspicious patterns.
+
+**Gate 3 — Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
+
+**Gate 4 — Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
+
+**Gate 5 — Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
+
+### 8. Escrow Releases — PVO Goes InProgress
+
+Once all 5 gates pass, anyone can trigger release. The escrow contract:
+
+1. Transfers the pPHP tokens to the contractor
+2. Cross-calls `pvo_core.update_pvo_status(InProgress)` — auto-transitioning the PVO from Proposed to **InProgress**
+
+The PVO stays InProgress until **all milestones are Released AND the total Released milestone budgets equal or exceed the PVO budget**. Only then can it become **Completed**.
+
+### 9. Repeat for Remaining Milestones
+
+Steps 5-8 repeat for each remaining milestone. After all milestones are released and the budget is fully accounted for, the PVO can be marked **Completed**.
+
+### Status Flow Summary
+
+```
+Committed → Disbursed → Escrows Created → Escrows Released → PVO InProgress → All Done → PVO Completed
 ```
 
-### Settlement Token: Testnet vs Mainnet
+---
 
-The escrow uses a `token_address` parameter to specify which token to lock and release. This makes the escrow **asset-agnostic**.
+## PVO Status Lifecycle
 
-**On testnet**, PoPV uses **pPHP** (Philippine Peso Testnet), a custom Soroban token with unlimited mintable supply. It has no real-world value, no peg, and no liquidity. It exists purely to test the escrow lock/unlock logic with realistic peso amounts (millions) that would be impossible with Friendbot's 10K XLM limit.
+| Status | Meaning | Trigger |
+|--------|---------|---------|
+| **Proposed** | PVO created, awaiting funding | Agency creates PVO on-chain |
+| **InProgress** | At least one milestone escrow released | Escrow cross-calls `update_pvo_status` |
+| **Completed** | All milestones Released AND total released ≥ total budget | Explicit call (only succeeds if conditions met) |
+| **Suspended** | Under investigation, all escrows paused | Dispute raised |
+| **Terminated** | Project permanently cancelled | Admin action |
 
-**On mainnet**, pPHP is replaced by a real backed asset. The same escrow code runs unchanged. Only the `token_address` parameter switches:
+**Key rule:** A PVO CANNOT be Completed if:
+1. Any milestone is still in a pre-Release status, OR
+2. The sum of all Released milestone budgets is less than the PVO total budget
 
-| Environment | Token | Backing | Value |
-|-------------|-------|---------|-------|
-| Testnet | pPHP | Nothing (simulation) | 0 |
-| Mainnet | USDC | Circle USD reserves | 1 USD |
-| Mainnet | GovPHP | Peso deposits at custodian bank | 1 peso |
-| Mainnet | EURC | Circle EUR reserves | 1 EUR |
+---
 
-The escrow is a **lockbox**, not a currency. Its job is to hold tokens until 5 gates pass, then release them. The token contract provides the value. On testnet we use a worthless token to prove the lockbox works. On mainnet we plug in a real one.
+## Grant Status Explained
 
-??? info "Want the full details?"
-    See **[Appendix B: pPHP Token & Escrow Settlement](pphp-token.md)** for mint/balance CLI exercises, the full escrow lifecycle with real token transfers, and the complete testnet-vs-mainnet value model explanation.
+| Status | Meaning | Who Acts Next |
+|--------|---------|---------------|
+| **Committed** | Donor pledged exact PVO budget on-chain. pPHP transferred to funding agency. | Admin: Mint & Disburse |
+| **Disbursed** | pPHP minted and sent to funding agency wallet. Funds ready for escrowing. | Funding Agency: Create Escrow |
+| **Completed** | All escrows for this PVO released through 5 gates. Grant fully settled. | — |
+| **Cancelled** | Donor revoked pledge before disbursement. Budget slot freed. | — |
 
-### International Donor Commitments
+---
 
-International donors (World Bank, JICA, USAID, etc.) follow a **commit then disburse** model, just like in real development finance:
+## Donor Commitments Tab (Funding Agency Dashboard)
 
-1. **Commit & Transfer** - The donor records a pledge on-chain via the `grant_commitment` contract. This records the organization name, PVO ID, amount, and donor address, **and atomically transfers pPHP from the donor to the Funding Agency** in a single transaction. No separate mint-and-send step needed.
+The Donor Commitments tab shows all grants with real-time status:
 
-2. **Disburse** - When the funding agency is ready, they create an escrow for the PVO and fund it with real tokens. The donor marks the commitment as "Disbursed."
+- **Committed** — "Donor pledged — awaiting admin mint" + Create Escrow button
+- **Disbursed** — "pPHP minted to funding agency — ready for escrow" + Create Escrow button
+- **Completed** — "All gates passed, payment released" (no button)
+- **Cancelled** — "Grant revoked before disbursement"
 
-3. **Complete** - After the escrow releases funds through all 5 gates, the donor marks the commitment as "Completed."
+Grants are sorted: Committed first, then Disbursed, then others. A **↻ Refresh** button re-reads the chain.
 
-The funding agency dashboard has a **Donor Commitments** tab that shows all pledges. This lets the agency see which donors have committed to which projects before creating escrows.
+The summary card shows **Total Donor Pledges** (sum of all grant amounts) in pesos.
 
-### On-Chain Audit Trail
+---
 
-Every decision is immutably recorded on Stellar:
+## Budget Tracking — Funded vs Escrowed
 
-- **Who** approved (cryptographic address)
-- **What** they approved (milestone ID, evidence hash)
-- **When** (blockchain timestamp)
-- **Why** (rationale, supporting IPFS documents)
-- **Risk score** and compliance result
+Every PVO card (Transparency Portal and Agency Dashboard) shows a visual budget allocation bar:
 
-### Soroban Events
+- **Green bar** — amount already locked in escrow
+- **Amber bar** — amount committed by donors but not yet escrowed
+- **Gray background** — total PVO budget
 
-All 11 contracts emit typed Stellar events for real-time indexing. Every state change - from PVO creation to payment release - is publicly auditable.
+The bar lets you see at a glance: "₱50M escrowed, ₱800M committed but still available."
+
+---
+
+## Map Pin Color Legend
+
+| Color | Status |
+|-------|--------|
+| 🟢 Green | Completed |
+| 🟠 Orange | Proposed |
+| 🔵 Blue | InProgress / Approved |
+| 🔴 Red | Suspended / Terminated |
+| ⚪ Gray | Unknown / Under Review |
+| 🟣 Purple | GPS Evidence (citizen field reports) |
+
+Pins are custom SVG `divIcon` markers with drop shadows — no external image dependencies.
+
+---
+
+## SAC Atomic Units
+
+All on-chain amounts are stored in **SAC atomic units**: pesos × 10,000,000 (10⁷).
+
+| Amount | SAC Units |
+|--------|-----------|
+| ₱1 | 10,000,000 |
+| ₱1,000 | 10,000,000,000 |
+| ₱1,000,000 | 10,000,000,000,000 |
+| ₱500,000,000 | 5,000,000,000,000,000 |
+
+The frontend divides by `PPHP_SCALE` (10⁷) for display. PVO budgets, donor pledges, escrow amounts, and milestone budgets all use the same scale.
+
+The **Milestone Budget** form accepts input in pesos and shows the SAC unit equivalent below: "= 500,000,000,000,000 SAC units (₱50,000,000)".
+
+---
+
+## Create Escrow Form — Autocomplete
+
+The Create Escrow form has intelligent autocomplete on all fields:
+
+- **Recipient (Contractor)** — dropdown of all addresses with the Contractor role from `access_control`
+- **PVO ID** — when opened from a grant row, pre-filled and locked. Manual entry shows search by title or ID
+- **Milestone ID** — loaded when PVO is selected. Shows milestone title, budget. Selecting a milestone auto-fills the Amount field
+
+---
+
+## RPT Reputation Token Gate
+
+Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a **real security gate** — it prevents Sybil attacks (one person creating thousands of fake wallets).
+
+- RPT is soulbound — cannot be transferred between wallets
+- Only admin can mint RPT
+- Citizens get 100 RPT on initial setup
 
 ---
 
@@ -110,15 +237,16 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 │                                                              │
 │  ┌─────────────────┐     ┌─────────────────────────────┐   │
 │  │  access_control  │────▶│        pvo_core              │   │
-│  │  13 roles        │     │  PVO + Milestones + Evidence │   │
-│  └─────────────────┘     └──────────┬──────────────────┘   │
+│  │  13 roles        │     │  PVO + Milestones + Budget   │   │
+│  └─────────────────┘     │  + Evidence + Status Flow    │   │
+│                           └──────────┬──────────────────┘   │
 │                                      │                       │
 │                    ┌─────────────────┼─────────────────┐   │
-│                    │                 │                   │   │
 │                    ▼                 ▼                   ▼   │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
 │  │   escrow     │  │ community_   │  │  reputation      │  │
-│  │  DeFi locks  │  │ oracle       │  │  Integrity Graph │  │
+│  │  5-gate lock │  │ oracle       │  │  RPT gate + score│  │
+│  │  InProgress  │  │ report verify │  │                  │  │
 │  └──────────────┘  └──────────────┘  └──────────────────┘  │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
@@ -133,7 +261,8 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  grant_commitment                                     │   │
-│  │  International donor pledges (Committed -> Disbursed) │   │
+│  │  Donor pledges (Committed→Disbursed→Completed)        │   │
+│  │  Exact-budget enforcement + disbursement tracking     │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -144,37 +273,34 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 
 | Contract | ID | Functions | Tests |
 |----------|----|-----------|-------|
-| `access_control` | `CCJK...BCMVP` | 9 | 11 |
-| `pvo_core` | `CAJH...MVNOD` | 17 | 18 |
-| `escrow` | `CAD7...XQM6` | 14 | 15 |
-| `community_oracle` | `CDTZ...K7RS` | 8 | 12 |
-| `reputation` | `CACW...4ADN` | 12 | 19 |
-| `audit_trail` | `CA2O...BROZ` | 10 | 12 |
-| `value_score` | `CCTC...3YN` | 11 | 20 |
-| `ai_oracle` | `CDR5...ID43` | 13 | 17 |
-| `public_index` | `CCN7...JG7J` | 7 | 7 |
-| `compliance_engine` | `CCRS...GRTD` | 8 | 8 |
-| `procurement_market` | `CB4Q...TUDQ` | 5 | 5 |
-| `pPHP token` | `CA6U...FLE6` | 8 | 8 |
-| `grant_commitment` | `CDTJ...FFWRK` | 7 | 13 |
+| `access_control` | `CCBO...USY3` | 9 | 11 |
+| `pvo_core` | `CCFB...4AVR` | 17 | 18 |
+| `escrow` | `CBD4...SGLZ` | 14 | 15 |
+| `community_oracle` | `CDEV...36ZG` | 8 | 12 |
+| `reputation` | `CBBM...ZKX4` | 12 | 19 |
+| `audit_trail` | `CADO...662F` | 10 | 12 |
+| `value_score` | `CAWB...E76` | 11 | 20 |
+| `ai_oracle` | `CDWZ...G7C` | 13 | 17 |
+| `public_index` | `CDU6...7LH` | 7 | 7 |
+| `compliance_engine` | `CDUL...XXD` | 8 | 8 |
+| `procurement_market` | `CDZH...KSM` | 5 | 5 |
+| `pPHP SAC` | `CCJR...32X` | 8 | 8 |
+| `grant_commitment` | `CASS...PEG` | 7 | 13 |
 
-**183 tests, all passing. 0 npm vulnerabilities.**
+**33 tests (escrow + pvo_core) × all passing. Frontend: 0 npm vulnerabilities.**
+
+Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-reset script.
 
 ---
 
 ## Try It Live
 
-**Frontend:** `http://localhost:5174` (run `npm run dev` in `frontend/`)
-
-1. **Public pages** - Browse projects, national index, search - no wallet needed
-2. **Connect Freighter** - Click "Connect Wallet" (install [Freighter](https://freighter.app) first)
-3. **Citizen** - Connect citizen wallet → click "Create RPT Trustline" → submit GPS report
-4. **Admin** - Connect alice wallet → assign roles → mint RPT → manage system
+**Production build:** `npm run build && npm start` from project root → `http://localhost:5174`
 
 ### Demo Wallets (Testnet)
 
-> ⚠️ **Testnet only.** Secret keys are in `.dev-logs/role-credentials.md` (gitignored).
-> To import in Freighter: Add Account → Import Secret Key or Seed Phrase.
+> ⚠️ **Testnet only.** Secret keys in `.dev-logs/newrolecreden.md` (gitignored).
+> Import in Freighter: Add Account → Import Secret Key or Seed Phrase.
 
 | # | Role | Alias | Public Key |
 |---|------|-------|-----------|
@@ -192,66 +318,317 @@ All 11 contracts emit typed Stellar events for real-time indexing. Every state c
 | 12 | AIAuditor | ai_auditor | `GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW` |
 | 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
 
-All wallets are funded via Friendbot and assigned their roles on-chain.
+All wallets funded via Friendbot. Roles assigned on-chain via `access_control`. Citizens 1–4 receive 100 RPT tokens each.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Run frontend
-cd frontend && npm install && npm run dev
+# Build & serve frontend (production)
+npm run build && npm start   # → http://localhost:5174
 
 # Build contracts
 stellar contract build
 
 # Run all tests
-cargo test
+cargo test -p escrow -p pvo_core   # 33 tests
 
-# Deploy all contracts
-./scripts/deploy.sh
+# Full system reset
+node .dev-logs/master-reset.js     # ~8 min
+```
 
-# Run e2e
-cd frontend && npx tsx e2e-test.ts
+---
+
+## Roles & Responsibilities
+
+PoPV uses 13 on-chain roles managed by the `access_control` contract. Every action requires the correct role — no role can bypass another's gate.
+
+| Role | Dashboard | Core Actions | Purpose |
+|------|-----------|-------------|---------|
+| **Administrator** | System Panel | Assign roles, mint RPT, mint pPHP, mark grants disbursed | System governance, token issuance |
+| **GovernmentAgency** | Agency Dashboard | Create PVOs, define milestones with budgets + evidence types | Project definition, budget planning |
+| **FundingAgency** | Funding Agency Dashboard | Create escrows, fund escrows, view donor commitments | Lock funds behind 5-gate verification |
+| **InternationalDonor** | Donor Dashboard | Pledge grants (exact-match PVO budget), commit pPHP | Fund projects conditionally |
+| **Contractor** | Contractor Portal | View assigned PVOs, submit milestone evidence (drone, GPS, photos, reports) | Prove work completed |
+| **Engineer** | Engineer Panel | Approve milestones after physical inspection | Technical quality gate |
+| **Auditor** | Auditor Dashboard | Compliance validation, procurement law checks | Regulatory compliance gate |
+| **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review | Government audit oversight |
+| **AIAuditor** | AI Dashboard | Run AI validation on evidence, assign risk scores | Fraud/anomaly detection gate |
+| **Citizen** | Citizen Report Form | Submit GPS-tagged field reports, verify others' reports | Community verification gate |
+| **Inspector** | Inspector Panel | Verify evidence quality, validate reports | Evidence quality assurance |
+| **Supplier** | Procurement Market | Register in pre-qualification registry | Supply chain transparency |
+| **AntiCorruptionAgency** | Anti-Corruption Dashboard | Raise disputes, investigate flagged projects, review audit trails | Corruption investigation |
+
+### Role Interactions — The 5-Gate Trust Model
+
+No single role can release funds. Each gate is held by a different role:
+
+```
+Contractor → submits evidence
+Engineer → approves physical work       [Gate 1]
+AI Auditor → validates for fraud        [Gate 2]
+Auditor/COA → compliance check          [Gate 3]
+Citizens → submit GPS field reports     [Gate 4 — Oracle]
+Citizens → reach confirmation threshold [Gate 5 — Threshold]
+→ Funding Agency creates escrow         [Funds locked]
+→ Anyone triggers release               [All gates must pass]
 ```
 
 ---
 
 ## Exercises
 
-### Exercise 1: Explore Without Login
+### Exercise 1: Public Transparency Portal (No Wallet Required)
 
-1. Open the Public Transparency Portal
-2. Browse available projects - see budgets, status, value scores
-3. View the National Index with department rankings
-4. Use the Economic Memory search
+**Goal:** Browse the public-facing project registry.
 
-### Exercise 2: Citizen Verification
+1. Open `http://localhost:5174`
+2. Browse the **Transparency Portal** — 20 PVOs with budgets, status, value scores
+3. Click any PVO to see detail panel: milestones, escrows, gates progress
+4. Observe the **funded vs escrowed** bar — green = locked in escrow, amber = committed but available
+5. View the **Project Map** — color-coded pins per status
+6. Note PVO #1 is **InProgress** (blue pin) — one milestone escrow was released
 
-1. Connect the citizen wallet in Freighter
-2. Go to Citizen Interface → check RPT status
-3. Click "Create RPT Trustline" → sign in Freighter
-4. Admin mints RPT tokens to you via Admin Panel
-5. Submit a GPS-tagged photo or video report
-6. Another citizen/verifier verifies your report
-7. Check your reputation score
+---
 
-### Exercise 3: Full Payment Flow
+### Exercise 2: Administrator — System Governance
 
-1. Create a PVO (Agency Dashboard)
-2. Define a milestone with evidence requirements
-3. Fund the escrow
-4. Contractor submits evidence (drone imagery, GPS)
-5. Engineer approves → AI validates → Compliance checks → Citizens verify
-6. Release milestone payment
-7. Verify audit trail entry is recorded
+**Role:** Administrator  
+**Wallet:** alice (`GBDNQE...ACMSV`)  
+**Dashboard:** System Panel
 
-### Exercise 4: Admin Operations
+| Step | Action | Tab | Notes |
+|------|--------|-----|-------|
+| 1 | Connect alice wallet | — | |
+| 2 | Go to System Panel → **Roles** | Roles | See all 13 roles with assigned wallets |
+| 3 | Assign a new role | Click "Assign Role" | Enter wallet + select role |
+| 4 | Go to **Pledges** | Pledges | See Committed donor grants |
+| 5 | Click **"Mint & Disburse"** on a grant | — | Sign 2 Freighter popups: mint pPHP + mark disbursed |
+| 6 | Go to **Health** | Health | System health dashboard |
+| 7 | Go to **Settings** | Settings | Change currency symbol |
 
-1. Assign roles to wallet addresses
-2. Mint RPT tokens to citizen wallets
-3. Check system health monitor
-4. Change currency symbol setting
+**What happens:** The admin mints pPHP into existence and sends it to the Funding Agency wallet. The grant moves from Committed → Disbursed. The Funding Agency can now create escrows.
+
+---
+
+### Exercise 3: Government Agency — Create PVO & Milestones
+
+**Role:** GovernmentAgency  
+**Wallet:** gov_agency_role (`GDLLO...Y5X2`)  
+**Dashboard:** Agency Dashboard
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect gov_agency_role wallet | |
+| 2 | Click **"Create PVO"** | Title, department, municipality, budget (in pesos), contractor address, description |
+| 3 | Submit → signed in Freighter | PVO appears in overview table |
+| 4 | Click **"Define Milestone"** | Search for PVO by title |
+| 5 | Enter milestone title + description | |
+| 6 | Enter budget **in pesos** (e.g., 50000000 = ₱50M) | See SAC unit conversion below field |
+| 7 | Select **evidence types** | DroneImagery, GpsCoordinates, TimestampedPhoto, EngineeringReport, etc. |
+| 8 | Set **Community Confirmations Required** | e.g., 3 citizens must verify |
+| 9 | Submit → signed in Freighter | Milestone created on-chain |
+
+**What happens:** The PVO defines what needs to be built. Milestones define how payment is released in phases — each phase has its own budget, evidence requirements, and citizen verification threshold.
+
+---
+
+### Exercise 4: International Donor — Pledge Funds
+
+**Role:** InternationalDonor  
+**Wallet:** international_donor (`GBUI4...EV44`)  
+**Dashboard:** Donor Dashboard
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect international_donor wallet | |
+| 2 | Browse PVOs in Donor Dashboard | Each card shows budget, remaining, status |
+| 3 | Fully-funded PVOs are **greyed out** | |
+| 4 | Click **"Pledge"** on a PVO with remaining budget | Pledge form pre-fills exact remaining amount (read-only) |
+| 5 | Enter org name (e.g., "World Bank") | |
+| 6 | Submit → signed in Freighter | Grant appears as Committed in Admin Panel |
+
+**What happens:** The donor's pPHP is transferred atomically to the Funding Agency. The pledge must exactly equal the PVO's remaining budget — the contract rejects mismatches on-chain. The grant waits for admin to mint and disburse.
+
+---
+
+### Exercise 5: Funding Agency — Create & Fund Escrows
+
+**Role:** FundingAgency  
+**Wallet:** funding_agency (`GBM5Y...5PBO`)  
+**Dashboard:** Funding Agency Dashboard
+
+| Step | Action | Tab | Details |
+|------|--------|-----|---------|
+| 1 | Connect funding_agency wallet | — | |
+| 2 | Go to **Donor Commitments** | Commitments | See all grants sorted: Committed first, then Disbursed |
+| 3 | Click **↻ Refresh** | — | Re-reads from chain |
+| 4 | Find a **Disbursed** grant | — | Shows pPHP amount + "ready for escrow" |
+| 5 | Click **"Create Escrow"** | — | Opens modal |
+| 6 | Type in **Recipient** field | — | Autocomplete shows all Contractor wallet addresses |
+| 7 | **PVO ID** is pre-filled (read-only) | — | Locked to the grant's PVO |
+| 8 | Click **Milestone ID** field | — | Autocomplete shows all milestones for this PVO |
+| 9 | Select a milestone | — | Auto-fills the Amount field with milestone budget |
+| 10 | Set **Community Confirmations Required** | — | How many citizen GPS reports needed |
+| 11 | Submit → signed in Freighter | — | Escrow created |
+| 12 | Go to **Escrows** tab | Escrows | See the new escrow |
+| 13 | Click **"Fund Escrow"** | — | Deposits pPHP from your wallet into escrow |
+| 14 | Go to **How It Works** tab | Guide | Read full 5-gate explanation |
+
+**What happens:** The Funding Agency locks funds behind verification gates. The escrow is now Funded — payment can only be released after all 5 gates pass. Create multiple escrows against the same grant for each milestone. The button stays visible until all funds are escrowed.
+
+---
+
+### Exercise 6: Contractor — Submit Evidence
+
+**Role:** Contractor  
+**Wallet:** contractor (`GDH34...VDRF`)  
+**Dashboard:** Contractor Portal
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect contractor wallet | |
+| 2 | View assigned PVOs | Budget, milestones count, status |
+| 3 | Submit milestone evidence | Upload drone imagery, GPS coordinates, timestamped photos, engineering reports |
+| 4 | Each evidence submission recorded on-chain | Immutable audit trail |
+
+**What happens:** Evidence submission starts the 5-gate verification. Without evidence, no gate can proceed. The contractor proves the work was actually done.
+
+---
+
+### Exercise 7: Engineer — Technical Approval
+
+**Role:** Engineer  
+**Wallet:** engineer (`GCSAB...72CZ`)  
+**Dashboard:** Engineer Panel
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect engineer wallet | |
+| 2 | View PVOs with milestones pending approval | |
+| 3 | Approve a milestone | Signs off that physical work meets specifications |
+| 4 | Escrow gate 1 passes | Engineer Approved ✓ |
+
+**What happens:** Gate 1 — the licensed engineer's sign-off is the first of five independent verifications required before any peso is released.
+
+---
+
+### Exercise 8: AI Auditor — Fraud Detection
+
+**Role:** AIAuditor  
+**Wallet:** ai_auditor (`GATLF...AWW`)  
+**Dashboard:** AI Dashboard
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect ai_auditor wallet | |
+| 2 | Run AI validation on evidence | Scans for duplicate GPS, metadata tampering, anomalies |
+| 3 | AI assigns risk score | Green = low risk, Red = flagged |
+| 4 | If passed, escrow gate 2 unlocks | AI Validated ✓ |
+
+**What happens:** Gate 2 — AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.
+
+---
+
+### Exercise 9: Auditor / COA — Compliance Check
+
+**Role:** Auditor + CommissionOnAudit  
+**Wallets:** auditor (`GAAL2...IAYN`), coa (`GCDE4...FJB`)  
+**Dashboards:** Auditor Dashboard, Compliance Dashboard
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect auditor wallet | |
+| 2 | Run compliance validation | Checks procurement law, budget rules, safety regulations |
+| 3 | Pass the check | Escrow gate 3 unlocks — Compliance Passed ✓ |
+| 4 | Connect coa wallet | |
+| 5 | Review audit trail | Full history of who approved what and when |
+| 6 | Final compliance sign-off | Regulatory oversight complete |
+
+**What happens:** Gate 3 — legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.
+
+---
+
+### Exercise 10: Citizen — Community Verification
+
+**Role:** Citizen  
+**Wallets:** citizen_1 through citizen_4 (see credentials file)  
+**Dashboard:** Citizen Report Form
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect citizen_1 wallet | |
+| 2 | Check RPT trustline is set up | If not, admin must first mint RPT (Exercise 2) |
+| 3 | Click **"Submit Report"** | |
+| 4 | Enter GPS coordinates, description, photos | Report links to a PVO and milestone |
+| 5 | Submit → signed in Freighter | |
+| 6 | Another citizen verifies the report | Verification cross-checks GPS plausibility |
+| 7 | Each verified report increments counter | Community Confirmations ++ |
+| 8 | When counter ≥ threshold | Community Oracle gate + Community Confirmations gate pass ✓ |
+| 9 | Repeat with citizen_2, citizen_3 to reach threshold | |
+
+**What happens:** Gates 4 & 5 — real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.
+
+---
+
+### Exercise 11: Inspector — Evidence Quality
+
+**Role:** Inspector  
+**Wallet:** inspector (`GAPFY...NGV`)  
+**Dashboard:** Inspector Panel
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect inspector wallet | |
+| 2 | Review submitted evidence | Check drone imagery quality, GPS accuracy, report completeness |
+| 3 | Validate or flag evidence | |
+
+---
+
+### Exercise 12: Anti-Corruption Agency — Disputes
+
+**Role:** AntiCorruptionAgency  
+**Wallet:** anti_corruption (`GBU4S...E7`)  
+**Dashboard:** Anti-Corruption Dashboard
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Connect anti_corruption wallet | |
+| 2 | Review flagged projects | |
+| 3 | Raise dispute on suspicious escrow | Dispute status → suspends all escrows under that PVO |
+| 4 | Review audit trail | Full cryptographic history of who did what |
+
+**What happens:** The dispute mechanism is the emergency brake. Any flagged project pauses all payments until investigation concludes.
+
+---
+
+### Exercise 13: Full End-to-End Walkthrough
+
+**Goal:** Complete the entire lifecycle — PVO creation through payment release.
+
+**Roles needed:** GovernmentAgency, Administrator, InternationalDonor, FundingAgency, Contractor, Engineer, AIAuditor, Auditor, 3 Citizens
+
+| # | Role | Action |
+|---|------|--------|
+| 1 | GovernmentAgency | Create PVO (Exercise 3, steps 1–3) |
+| 2 | GovernmentAgency | Define 2 milestones (Exercise 3, steps 4–9) |
+| 3 | InternationalDonor | Pledge exact PVO budget (Exercise 4) |
+| 4 | Administrator | Mint & Disburse the grant (Exercise 2, step 5) |
+| 5 | FundingAgency | Create Escrow for milestone 1 (Exercise 5, steps 5–11) |
+| 6 | FundingAgency | Fund the escrow (Exercise 5, step 13) |
+| 7 | Contractor | Submit evidence (Exercise 6) |
+| 8 | Engineer | Approve milestone (Exercise 7) |
+| 9 | AI Auditor | Validate for fraud (Exercise 8) |
+| 10 | Auditor | Compliance check (Exercise 9) |
+| 11 | 3 Citizens | Submit and verify GPS reports (Exercise 10) |
+| 12 | Anyone | Release escrow → PVO goes InProgress |
+| 13 | Repeat steps 5–12 for milestone 2 | |
+| 14 | Verify PVO is NOT yet Completed | Only ₱100M of ₱500M released |
+| 15 | Continue creating escrows until full budget covered | |
+| 16 | PVO becomes **Completed** | All milestones Released + total ≥ budget |
+
+**Key verification:** After step 12, the PVO status is **InProgress** — NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
 
 ---
 
@@ -259,12 +636,31 @@ cd frontend && npx tsx e2e-test.ts
 
 | Layer | Technology |
 |-------|-----------|
-| Blockchain | Stellar Testnet |
-| Smart Contracts | Soroban SDK v26, Rust (#![no_std]) |
+| Blockchain | Stellar Testnet (Soroban) |
+| Smart Contracts | Soroban SDK v26, Rust `#![no_std]` |
 | Frontend | React 19, TypeScript, Vite 8, Tailwind CSS v4 |
 | Mobile | Flutter 3.x (Android/iOS) |
-| DeFi | Dynamic escrow, conditional payments, auto-pause |
-| Identity | Stellar key pairs + Freighter wallet |
+| Wallet | Freighter browser extension |
 | Storage | Soroban persistent storage + IPFS for evidence |
-| Events | Soroban contract events with event indexer |
+| Events | Soroban contract events |
+| Token Standard | Stellar Asset Contract (SAC), 7 decimals |
 | RPC | `soroban-testnet.stellar.org:443` |
+
+---
+
+## Security Features
+
+- **RPT Gatekeeper** — Citizens need reputation tokens to report (anti-Sybil)
+- **Exact-amount pledges** — Donors cannot over/under-commit; contract panics on mismatch
+- **5-gate consensus** — No single role can release funds
+- **Immutable audit trail** — Every decision recorded on Stellar
+- **Freighter retry logic** — Production builds include retry for Freighter content script race condition
+- **Cross-contract validation** — Escrow checks PVO integrity, grant commitment checks PVO budget
+
+---
+
+## Production Notes
+
+- **Freighter handshake:** Production bundles execute faster than Freighter's content script injects. PoPV includes retry logic (300ms delay, 10 retries at 500ms) to handle this race condition.
+- **React StrictMode:** Double-renders only in dev mode. Production builds (`npm start`) are single-render.
+- **Port 5174:** Production serve uses port 5174 to avoid conflicts with other local services.

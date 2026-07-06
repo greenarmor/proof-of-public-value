@@ -41,6 +41,7 @@ export function TransparencyPortal() {
   const [escrows, setEscrows] = useState<any[]>([]);
   const [escrowsLoading, setEscrowsLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number }>>({});
 
   const loadPVOs = useCallback(async () => {
     setLoading(true);
@@ -89,6 +90,37 @@ export function TransparencyPortal() {
       }
       setPvos(list);
     } catch {} finally { setLoading(false); }
+  }, []);
+
+  // Fetch funding data (grants + escrows) per PVO
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client: GC } = await import("../contracts/grant_commitment/src");
+        const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const grants = (await gc.get_all_grants()).result || [];
+
+        const ec = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ecCnt = Number((await ec.get_escrow_count()).result);
+        const allEscrows: any[] = [];
+        for (let eid = 1; eid <= ecCnt; eid++) {
+          try { const r = await ec.get_escrow({ escrow_id: eid }); if (r.result) allEscrows.push(r.result); } catch {}
+        }
+
+        const funding: Record<number, { funded: number; escrowed: number }> = {};
+        for (const g of grants) {
+          const pid = Number(g.pvo_id);
+          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0 };
+          funding[pid].funded += Number(g.amount);
+        }
+        for (const e of allEscrows) {
+          const pid = Number(e.pvo_id);
+          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0 };
+          funding[pid].escrowed += Number(e.amount);
+        }
+        setPvoFunding(funding);
+      } catch {}
+    })();
   }, []);
 
   useEffect(() => { loadPVOs(); }, [loadPVOs]);
@@ -236,10 +268,32 @@ export function TransparencyPortal() {
                     </div>
                     <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
                     <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
-                    <div className="flex items-center justify-between text-xs mb-3">
+                    <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
                       <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
                     </div>
+                    {pvoFunding[pvo.id] && Number(pvo.total_budget) > 0 && (() => {
+                      const budget = Number(pvo.total_budget);
+                      const funded = pvoFunding[pvo.id].funded;
+                      const escrowed = pvoFunding[pvo.id].escrowed;
+                      const fundedPct = Math.min(100, (funded / budget) * 100);
+                      const escrowedPct = Math.min(100, (escrowed / budget) * 100);
+                      const remaining = Math.max(0, funded - escrowed);
+                      return (
+                        <div className="mb-2">
+                          <div className="flex items-center justify-between text-[10px] mb-0.5">
+                            <span className="text-slate-400">Escrowed {currency}{(escrowed / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
+                            {remaining > 0 && <span className="text-amber-500">+{currency}{(remaining / PPHP_SCALE / 1_000_000).toFixed(1)}M available</span>}
+                          </div>
+                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                            <div className="h-full bg-emerald-500 rounded-l-full transition-all" style={{ width: escrowedPct + "%" }} />
+                            {escrowedPct < fundedPct && (
+                              <div className="h-full bg-amber-300 transition-all" style={{ width: (fundedPct - escrowedPct) + "%" }} />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="pt-2 border-t border-slate-100">
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className="text-slate-400">Value Score</span><span className="font-semibold text-slate-600">{pvo.public_value_score}/100</span>

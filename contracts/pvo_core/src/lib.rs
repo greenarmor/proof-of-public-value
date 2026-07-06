@@ -215,6 +215,25 @@ impl PVOCore {
         let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
         let mut pvo = pvos.get(pvo_id).expect("PVO not found");
 
+        // Prevent premature completion: all milestones Released AND total released >= budget
+        if new_status == PVOStatus::Completed {
+            let milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));
+            let mut released_total: i128 = 0;
+            for i in 0..pvo.milestones.len() {
+                if let Some(mid) = pvo.milestones.get(i) {
+                    if let Some(m) = milestones.get(mid) {
+                        if m.status != MilestoneStatus::Released {
+                            return; // not all milestones done yet
+                        }
+                        released_total = released_total.checked_add(m.budget).unwrap_or(i128::MAX);
+                    }
+                }
+            }
+            if released_total < pvo.total_budget {
+                return; // total released milestone budgets don't cover the PVO budget yet
+            }
+        }
+
         let old_status = pvo.status.clone();
         pvo.status = new_status.clone();
         pvo.updated_at = env.ledger().timestamp();

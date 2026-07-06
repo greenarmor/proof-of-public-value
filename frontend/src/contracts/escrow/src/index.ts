@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CAHCHIL67KRPP4TGCU7ODKU3PKLYFMSWR3FQYM3JETKJKA4DAAFSLJJQ",
+    contractId: "CBD4Z5VNVYT7UUQH6U7FIHOWXOQB5AO3IXSQXUNBVKY7ZFHICLUHSGLZ",
   }
 } as const
 
@@ -53,7 +53,7 @@ export interface Escrow {
   token_address: string;
 }
 
-export type PVOStatus = {tag: "Proposed", values: void} | {tag: "Approved", values: void} | {tag: "InProgress", values: void} | {tag: "UnderReview", values: void} | {tag: "Completed", values: void} | {tag: "Suspended", values: void} | {tag: "Terminated", values: void};
+export type PvoStatus = {tag: "InProgress", values: void};
 
 export type EscrowStatus = {tag: "Created", values: void} | {tag: "Funded", values: void} | {tag: "EngineerApproved", values: void} | {tag: "AIValidated", values: void} | {tag: "CompliancePassed", values: void} | {tag: "OracleValidated", values: void} | {tag: "CommunityVerified", values: void} | {tag: "Ready", values: void} | {tag: "Released", values: void} | {tag: "Refunded", values: void} | {tag: "Disputed", values: void};
 
@@ -168,7 +168,7 @@ export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABkVzY3JvdwAAAAAACwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAApjb25kaXRpb25zAAAAAAfQAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAALcmVsZWFzZWRfYXQAAAAABgAAAAAAAAAGc3RhdHVzAAAAAAfQAAAADEVzY3Jvd1N0YXR1cwAAAAAAAAANdG9rZW5fYWRkcmVzcwAAAAAAABM=",
-        "AAAAAgAAAAAAAAAAAAAACVBWT1N0YXR1cwAAAAAAAAcAAAAAAAAAAAAAAAhQcm9wb3NlZAAAAAAAAAAAAAAACEFwcHJvdmVkAAAAAAAAAAAAAAAKSW5Qcm9ncmVzcwAAAAAAAAAAAAAAAAALVW5kZXJSZXZpZXcAAAAAAAAAAAAAAAAJQ29tcGxldGVkAAAAAAAAAAAAAAAAAAAJU3VzcGVuZGVkAAAAAAAAAAAAAAAAAAAKVGVybWluYXRlZAAA",
+        "AAAAAgAAAAAAAAAAAAAACVB2b1N0YXR1cwAAAAAAAAEAAAAAAAAAAAAAAApJblByb2dyZXNzAAA=",
         "AAAAAgAAAAAAAAAAAAAADEVzY3Jvd1N0YXR1cwAAAAsAAAAAAAAAAAAAAAdDcmVhdGVkAAAAAAAAAAAAAAAABkZ1bmRlZAAAAAAAAAAAAAAAAAAQRW5naW5lZXJBcHByb3ZlZAAAAAAAAAAAAAAAC0FJVmFsaWRhdGVkAAAAAAAAAAAAAAAAEENvbXBsaWFuY2VQYXNzZWQAAAAAAAAAAAAAAA9PcmFjbGVWYWxpZGF0ZWQAAAAAAAAAAAAAAAARQ29tbXVuaXR5VmVyaWZpZWQAAAAAAAAAAAAAAAAAAAVSZWFkeQAAAAAAAAAAAAAAAAAACFJlbGVhc2VkAAAAAAAAAAAAAAAIUmVmdW5kZWQAAAAAAAAAAAAAAAhEaXNwdXRlZA==",
         "AAAAAAAAAAAAAAAGcmVmdW5kAAAAAAACAAAAAAAAAAZmdW5kZXIAAAAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAABAAAAAQ==",
         "AAAAAAAAAAAAAAAHZGlzcHV0ZQAAAAACAAAAAAAAAAhkaXNwdXRlcgAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAAA",

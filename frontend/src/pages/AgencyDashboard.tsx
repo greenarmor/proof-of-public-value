@@ -69,6 +69,7 @@ export function AgencyDashboard() {
 function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; onNewMilestone: () => void }) {
   const [pvos, setPvos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number }>>({});
   const currency = getCurrency();
 
   useEffect(() => {
@@ -87,6 +88,21 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
         setPvos(list);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
+    })();
+    // Fetch escrow and grant totals per PVO
+    (async () => {
+      try {
+        const { Client: GC } = await import("../contracts/grant_commitment/src");
+        const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const grants = (await gc.get_all_grants()).result || [];
+        const { Client: EC } = await import("../contracts/escrow/src");
+        const ec = new EC({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ecCnt = Number((await ec.get_escrow_count()).result);
+        const funding: Record<number, { funded: number; escrowed: number }> = {};
+        for (const g of grants) { const pid = Number(g.pvo_id); if (!funding[pid]) funding[pid]={funded:0,escrowed:0}; funding[pid].funded += Number(g.amount); }
+        for (let eid=1;eid<=ecCnt;eid++){try{const r=await ec.get_escrow({escrow_id:eid});if(r.result){const pid=Number(r.result.pvo_id);if(!funding[pid])funding[pid]={funded:0,escrowed:0};funding[pid].escrowed+=Number(r.result.amount);}}catch{}}
+        setPvoFunding(funding);
+      } catch {}
     })();
   }, []);
 
@@ -133,6 +149,8 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
               <th className="text-left px-4 py-3 font-medium text-gray-500">Project</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Department</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Budget</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Escrowed</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Available</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Score</th>
             </tr>
@@ -144,6 +162,35 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
                 <td className="px-4 py-3 font-medium text-gray-900">{p.title}</td>
                 <td className="px-4 py-3 text-gray-600">{p.department}</td>
                 <td className="px-4 py-3 font-mono text-gray-600">{currency}{formatBudget(String(p.total_budget))}</td>
+                <td className="px-4 py-3">
+                  {(() => {
+                    const f = pvoFunding[Number(p.id)];
+                    const budget = Number(p.total_budget);
+                    if (!f || budget === 0) return <span className="text-gray-300">—</span>;
+                    const escPct = Math.min(100, (f.escrowed / budget) * 100);
+                    return (
+                      <div>
+                        <span className="text-xs text-emerald-600 font-medium">{currency}{(f.escrowed / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-0.5"><div className="h-full bg-emerald-500 rounded-full" style={{width: escPct+"%"}}/></div>
+                      </div>
+                    );
+                  })()}
+                </td>
+                <td className="px-4 py-3">
+                  {(() => {
+                    const f = pvoFunding[Number(p.id)];
+                    const budget = Number(p.total_budget);
+                    if (!f || budget === 0) return <span className="text-gray-300">—</span>;
+                    const remaining = Math.max(0, f.funded - f.escrowed);
+                    const availPct = Math.min(100, (remaining / budget) * 100);
+                    return remaining > 0 ? (
+                      <div>
+                        <span className="text-xs text-amber-600 font-medium">{currency}{(remaining / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-0.5"><div className="h-full bg-amber-400 rounded-full" style={{width: availPct+"%"}}/></div>
+                      </div>
+                    ) : <span className="text-xs text-slate-400">Fully escrowed</span>;
+                  })()}
+                </td>
                 <td className="px-4 py-3"><span className="badge badge-blue">{statusToString(p.status)}</span></td>
                 <td className="px-4 py-3"><span className="font-semibold text-gray-700">{Number(p.public_value_score)}</span><span className="text-gray-400">/100</span></td>
               </tr>
@@ -351,7 +398,7 @@ function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () 
       const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const amt = Number(budget);
+      const amt = Math.round(Number(budget) * PPHP_SCALE);
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
       if (evidenceTypes.length === 0) throw new Error("Select at least one evidence type");
 
@@ -433,8 +480,9 @@ function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () 
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
-            <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="500000000" required />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (in Pesos)</label>
+            <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="e.g. 5000000 = ₱5,000,000" required min="1" step="0.01" />
+            <p className="text-xs text-slate-400 mt-1">{budget && Number(budget) > 0 ? `= ${(Number(budget) * PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 0})} SAC units (₱${Number(budget).toLocaleString()})` : "1 peso = 10,000,000 SAC units"}</p>
           </div>
         </div>
         <div>

@@ -33,6 +33,7 @@ fn register_community(env: &Env) -> Address {
     oracle_id
 }
 
+
 fn register_pvo_core(env: &Env) -> Address {
     let pvo_id = env.register(pvo_core::PVOCore, ());
     let client = pvo_core::PVOCoreClient::new(env, &pvo_id);
@@ -82,7 +83,6 @@ fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTok
     let compliance_id = register_compliance(&env);
     let oracle_id = register_community(&env);
     let pvo_core_id = register_pvo_core(&env);
-
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
     client.initialize(&compliance_id, &oracle_id, &pvo_core_id);
