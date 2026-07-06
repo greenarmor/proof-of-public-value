@@ -106,7 +106,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
     );
   }
 
-  const totalBudget = pvos.reduce((s: number, p: any) => s + Number(p.total_budget), 0);
+  const totalBudget = pvos.reduce((s: number, p: any) => s + Number(p.total_budget)/100, 0);
   const totalMilestones = pvos.reduce((s: number, p: any) => s + (p.milestones || []).length, 0);
 
   return (

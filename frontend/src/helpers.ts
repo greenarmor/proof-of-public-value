@@ -47,8 +47,9 @@ export function isBlockedWallet(addr: string): boolean {
 }
 
 export function formatBudget(budget: string | number | bigint): string {
+  // PVO budgets are stored in centavos (2 decimals). Divide by 100 for pesos.
   const str = typeof budget === "string" ? budget.replace(/,/g, "") : String(budget);
-  const num = Number(str);
+  const num = Number(str) / 100;
   if (isNaN(num)) return "0";
   if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;

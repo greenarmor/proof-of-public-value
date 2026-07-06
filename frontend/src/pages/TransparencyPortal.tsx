@@ -170,7 +170,7 @@ export function TransparencyPortal() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
                   <div><dt className="stat-label">Department</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.department}</dd></div>
                   <div><dt className="stat-label">Location</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.municipality}</dd></div>
-                  <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{currency}{(Number(selected.total_budget)/100).toLocaleString()}</dd></div>
+                  <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatBudget(selected.total_budget)}</dd></div>
                   <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1"><WalletAddress addr={selected.contractor}/></dd></div>
                   <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
                   <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
@@ -237,7 +237,7 @@ export function TransparencyPortal() {
                     <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
                     <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
                     <div className="flex items-center justify-between text-xs mb-3">
-                      <span className="font-semibold text-slate-700">{currency}{(Number(pvo.total_budget)/100).toLocaleString()}</span>
+                      <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
                       <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
                     </div>
                     <div className="pt-2 border-t border-slate-100">
