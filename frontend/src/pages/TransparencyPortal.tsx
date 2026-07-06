@@ -237,7 +237,7 @@ export function TransparencyPortal() {
                     <h3 className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 group-hover:text-brand-700 transition-colors">{pvo.title}</h3>
                     <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
                     <div className="flex items-center justify-between text-xs mb-3">
-                      <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
+                      <span className="font-semibold text-slate-700">{currency}{(Number(pvo.total_budget)/100).toLocaleString()}</span>
                       <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
                     </div>
                     <div className="pt-2 border-t border-slate-100">
