@@ -529,6 +529,9 @@ function DonorCommitmentsTab() {
     (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
   }, []);
 
+  const [pvoBudgets, setPvoBudgets] = useState<Record<number, string>>({});
+  useEffect(() => { (async () => { try { const { Client } = await import("../contracts/pvo_core/src"); const pc = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; for(let i=1;i<=Number(cnt.result);i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} setPvoBudgets(b); }catch{}})(); }, []);
+
   const statusTag = (s: any): string => {
     if (s && typeof s === "object" && s.tag) return s.tag;
     if (typeof s === "string") return s;
@@ -586,7 +589,7 @@ function DonorCommitmentsTab() {
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
                 {status === "Committed" && (
-                  <p className="text-xs text-slate-500">Ready for disbursement. Create an escrow to fund this PVO.</p>
+                  <p className="text-xs text-slate-500">Ready. Pledged: {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)])).toLocaleString() : "..."}</p>
                 )}
                 {status === "Disbursed" && (
                   <p className="text-xs text-blue-600">Funds disbursed into escrow.</p>
