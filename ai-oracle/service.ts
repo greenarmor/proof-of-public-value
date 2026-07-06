@@ -21,6 +21,7 @@
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { Keypair } from "@stellar/stellar-sdk";
 
 // ── Config ──────────────────────────────────────────────
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -88,9 +89,8 @@ const AI_AUDITOR_SECRET = getSecretKey();
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
 
-const AI_AUDITOR_PUBLIC = execSync(
-  `${STELLAR} keys address --secret ${AI_AUDITOR_SECRET}`
-).toString().trim();
+// Derive public key directly from secret (avoids CLI --secret flag which was removed)
+const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
 
 const opts = {
   env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` },
