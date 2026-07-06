@@ -20,7 +20,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ProcurementMarketplace() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"browse" | "award">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "award" | "create">("browse");
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
@@ -145,7 +145,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
       if (!deadline) throw new Error("Deadline required");
 
       // deadline is a u64 timestamp (seconds since epoch)
-      const dl = Math.floor(new Date(deadline).getTime() / PPHP_SCALE0);
+      const dl = Math.floor(new Date(deadline).getTime() / PPHP_SCALE);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);

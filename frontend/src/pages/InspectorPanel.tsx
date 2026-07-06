@@ -11,7 +11,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function InspectorPanel() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"pvos" | "reports" | "history">("pvos");
+  const [activeTab, setActiveTab] = useState<"pvos" | "submit" | "reports" | "history">("pvos");
   const [submitModal, setSubmitModal] = useState(false);
 
   if (!connected) {

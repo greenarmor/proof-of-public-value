@@ -10,7 +10,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function SupplierPortal() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"tenders" | "my_bids">("tenders");
+  const [activeTab, setActiveTab] = useState<"tenders" | "my_bids" | "bid">("tenders");
   const [bidModal, setBidModal] = useState(false);
 
   if (!connected) {

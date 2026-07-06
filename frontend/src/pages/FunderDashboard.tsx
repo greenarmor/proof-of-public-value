@@ -596,7 +596,7 @@ function DonorCommitmentsTab() {
         <div className="flex items-center justify-between">
           <div>
             <p className="stat-label">Total Donor Pledges</p>
-            <p class="stat-value text-brand-600">{grants.map(g => g.currency + " " + Number(g.amount).toLocaleString()).join(", ") || "None"}</p>
+            <p className="stat-value text-brand-600">{grants.map(g => g.currency + " " + Number(g.amount).toLocaleString()).join(", ") || "None"}</p>
           </div>
           <div className="text-right">
             <p className="stat-label">Active Grants</p>
