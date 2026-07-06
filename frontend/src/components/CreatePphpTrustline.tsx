@@ -18,8 +18,8 @@ export function CreatePphpTrustline({ address }: { address: string }) {
           .addOperation(contract.call("balance", new Address(address).toScVal()))
           .setTimeout(30)
           .build();
-        const resp = await server.simulateTransaction(tx);
-        if (!resp.error && resp.result?.retval) {
+        const resp: any = await server.simulateTransaction(tx);
+        if (!resp.isError?.() && resp.result?.retval) {
           setHasTrustline(true);
           const bal = scValToBigInt(resp.result.retval);
           if (bal > 0n) {

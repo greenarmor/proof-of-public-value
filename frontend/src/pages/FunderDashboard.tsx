@@ -233,7 +233,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
         const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
           .addOperation(contract.call("balance", new Address(address).toScVal()))
           .setTimeout(30).build();
-        const resp = await server.simulateTransaction(tx);
+        const resp: any = await server.simulateTransaction(tx);
         if (!resp.error && resp.result?.retval) {
           setPphpBalance(scValToBigInt(resp.result.retval));
         }

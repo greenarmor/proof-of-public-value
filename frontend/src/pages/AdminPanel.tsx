@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
@@ -129,7 +129,7 @@ function RoleManagement() {
         new Address(addr).toScVal(),
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(r)]),
       );
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(mintOp).setTimeout(30).build();
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction((await server.prepareTransaction(tx)).toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
@@ -414,11 +414,6 @@ function DisputeResolution() {
     })();
   }, []);
 
-      <div className="mb-4 grid grid-cols-4 gap-2 text-xs text-slate-500">
-        {Object.entries(rates).map(([cur, r]) => (<span key={cur} className="bg-slate-50 px-2 py-1 rounded">{cur}/PHP: ₱{r}</span>))}
-        <span className="text-slate-400 italic">Live rates</span>
-      </div>
-
   if (loading) return <div className="card p-12 skeleton h-48" />;
 
   return (
@@ -584,7 +579,6 @@ function SettingsTab() {
 
 function PledgeManager() {
   const [pledges, setPledges] = useState<any[]>([]);
-  const loaded = useRef(false);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [busy, setBusy] = useState<number | null>(null);
@@ -597,7 +591,6 @@ function PledgeManager() {
         const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await gc.get_all_grants();
         const raw = (result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"); const seen = new Set(); const unique = raw.filter((g: any) => !seen.has(g.id) && seen.add(g.id)); setPledges(unique) // was: setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
-        loaded.current = true;
       } catch (e) { console.error("PledgeManager:", e); } finally { setLoading(false); }
     })();
   }, []);
