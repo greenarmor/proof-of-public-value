@@ -423,7 +423,6 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
         for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) b[r.result.id] = Number(r.result.total_budget); } catch {} }
         setPvBudgets(b);
       } catch {} (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
-      } catch {}
     })();
   }, []);
 
