@@ -510,6 +510,7 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
 function DonorCommitmentsTab() {
   const currency = getCurrency();
   const [grants, setGrants] = useState<any[]>([]);
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
