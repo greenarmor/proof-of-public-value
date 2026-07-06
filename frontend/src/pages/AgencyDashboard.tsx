@@ -69,7 +69,7 @@ export function AgencyDashboard() {
 function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; onNewMilestone: () => void }) {
   const [pvos, setPvos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number }>>({});
+  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number; released: number }>>({});
   const currency = getCurrency();
 
   useEffect(() => {
@@ -98,9 +98,9 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
         const { Client: EC } = await import("../contracts/escrow/src");
         const ec = new EC({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const ecCnt = Number((await ec.get_escrow_count()).result);
-        const funding: Record<number, { funded: number; escrowed: number }> = {};
-        for (const g of grants) { const pid = Number(g.pvo_id); if (!funding[pid]) funding[pid]={funded:0,escrowed:0}; funding[pid].funded += Number(g.amount); }
-        for (let eid=1;eid<=ecCnt;eid++){try{const r=await ec.get_escrow({escrow_id:eid});if(r.result){const pid=Number(r.result.pvo_id);if(!funding[pid])funding[pid]={funded:0,escrowed:0};funding[pid].escrowed+=Number(r.result.amount);}}catch{}}
+        const funding: Record<number, { funded: number; escrowed: number; released: number }> = {};
+        for (const g of grants) { const pid = Number(g.pvo_id); if (!funding[pid]) funding[pid]={funded:0,escrowed:0,released:0}; funding[pid].funded += Number(g.amount); }
+        for (let eid=1;eid<=ecCnt;eid++){try{const r=await ec.get_escrow({escrow_id:eid});if(r.result){const pid=Number(r.result.pvo_id);if(!funding[pid])funding[pid]={funded:0,escrowed:0,released:0};funding[pid].escrowed+=Number(r.result.amount);const s=r.result.status;const eStatus=typeof s==="string"?s:typeof s==="number"?String(s):(s as any)?.tag||"";if(eStatus==="Released")funding[pid].released+=Number(r.result.amount);}}catch{}}
         setPvoFunding(funding);
       } catch {}
     })();

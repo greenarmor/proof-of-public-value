@@ -12,7 +12,10 @@ interface PVOData {
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
-  latitude?: number; longitude?: number;  // from description [lat,lng] prefix
+  latitude?: number; longitude?: number;
+  milestonesReleased: number;
+  milestonesTotal: number;
+  budgetReleased: number;
 }
 
 function parseCoords(desc: string): { lat?: number; lng?: number; clean: string } {
@@ -41,7 +44,7 @@ export function TransparencyPortal() {
   const [escrows, setEscrows] = useState<any[]>([]);
   const [escrowsLoading, setEscrowsLoading] = useState(false);
   const [filter, setFilter] = useState("");
-  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number }>>({});
+  const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number; released: number }>>({});
 
   const loadPVOs = useCallback(async () => {
     setLoading(true);
@@ -54,14 +57,23 @@ export function TransparencyPortal() {
           const r = await client.get_pvo({ pvo_id: i });
           if (r.result) {
             const { lat, lng, clean } = parseCoords(r.result.description || "");
-            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: clean, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [], latitude: lat, longitude: lng };
+            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: clean, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [], latitude: lat, longitude: lng, milestonesReleased: 0, milestonesTotal: (r.result.milestones as any[] || []).length, budgetReleased: 0 };
 
-            // Fetch milestone evidence to extract GPS coordinates
+            // Fetch milestone evidence to extract GPS coordinates + count Released
             try {
               const mResult = await client.get_pvo_milestones({ pvo_id: i });
               const milestones = (mResult.result || []) as any[];
               const coords: PVOData["gpsCoordinates"] = [];
+              let releasedCount = 0;
+              let budgetReleased = 0;
               for (const m of milestones) {
+                // Count Released milestones + sum budgets
+                const mStatus = statusToString(m.status);
+                if (mStatus === "Released") {
+                  releasedCount++;
+                  budgetReleased += Number(m.budget || 0);
+                }
+                // GPS extraction
                 const items = m.submitted_evidence || [];
                 for (const ev of items) {
                   const type = statusToString(ev.evidence_type);
@@ -82,6 +94,8 @@ export function TransparencyPortal() {
                 }
               }
               pvo.gpsCoordinates = coords;
+              pvo.milestonesReleased = releasedCount;
+              pvo.budgetReleased = budgetReleased;
             } catch {}
 
             list.push(pvo);
@@ -107,16 +121,26 @@ export function TransparencyPortal() {
           try { const r = await ec.get_escrow({ escrow_id: eid }); if (r.result) allEscrows.push(r.result); } catch {}
         }
 
-        const funding: Record<number, { funded: number; escrowed: number }> = {};
+        const funding: Record<number, { funded: number; escrowed: number; released: number }> = {};
         for (const g of grants) {
           const pid = Number(g.pvo_id);
-          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0 };
+          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0, released: 0 };
           funding[pid].funded += Number(g.amount);
         }
         for (const e of allEscrows) {
           const pid = Number(e.pvo_id);
-          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0 };
+          if (!funding[pid]) funding[pid] = { funded: 0, escrowed: 0, released: 0 };
           funding[pid].escrowed += Number(e.amount);
+          // Check if escrow was Released to contractor
+          let eStatus = "";
+          if (e.status) {
+            if (typeof e.status === "string") eStatus = e.status;
+            else if (typeof e.status === "number") eStatus = String(e.status);
+            else eStatus = (e.status as any).tag || "";
+          }
+          if (eStatus === "Released") {
+            funding[pid].released += Number(e.amount);
+          }
         }
         setPvoFunding(funding);
       } catch {}
@@ -206,9 +230,50 @@ export function TransparencyPortal() {
                   <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1"><WalletAddress addr={selected.contractor}/></dd></div>
                   <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
                   <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
-                  <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestones.length}</dd></div>
+                  <div><dt className="stat-label">Milestones</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.milestonesReleased}/{selected.milestonesTotal} released</dd></div>
                 </div>
               </div>
+
+              {/* PVO Progress — same as card grid */}
+              {pvoFunding[selected.id] && Number(selected.total_budget) > 0 && (() => {
+                const budget = Number(selected.total_budget);
+                const funded = pvoFunding[selected.id].funded;
+                const escrowed = pvoFunding[selected.id].escrowed;
+                const released = pvoFunding[selected.id].released;
+                const rPct = Math.min(100, Math.round((released / budget) * 100));
+                const fundedPct = Math.min(100, (funded / budget) * 100);
+                const escrowedPct = Math.min(100, (escrowed / budget) * 100);
+                const remaining = Math.max(0, funded - escrowed);
+                return (
+                <div className="card p-4 mt-4">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-semibold text-slate-700">{formatBudget(selected.total_budget)}</span>
+                    <span className="text-slate-400">{selected.milestonesReleased}/{selected.milestonesTotal} milestones</span>
+                  </div>
+                  <div className="mb-2">
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-slate-400">Released to contractor</span>
+                      <span className="font-medium text-purple-600">{rPct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full transition-all" style={{width: `${rPct}%`}}/>
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="text-slate-400">Escrowed {formatBudget(String(escrowed))}</span>
+                      {remaining > 0 && <span className="text-amber-500">+{formatBudget(String(remaining))} available</span>}
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-emerald-500 rounded-l-full transition-all" style={{width: escrowedPct + "%"}}/>
+                      {escrowedPct < fundedPct && (
+                        <div className="h-full bg-amber-300 transition-all" style={{width: (fundedPct - escrowedPct) + "%"}}/>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                );
+              })()}
 
               {/* Escrow Cards */}
               {escrowsLoading ? (
@@ -270,8 +335,25 @@ export function TransparencyPortal() {
                     <p className="text-xs text-slate-500 mb-3">{pvo.department} · {pvo.municipality}</p>
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-semibold text-slate-700">{formatBudget(pvo.total_budget)}</span>
-                      <span className="text-slate-400">{pvo.milestones.length} milestone{pvo.milestones.length!==1?"s":""}</span>
+                      <span className="text-slate-400">{pvo.milestonesReleased}/{pvo.milestonesTotal} milestones</span>
                     </div>
+                    {/* PVO Progress — released / budget */}
+                    {pvoFunding[pvo.id] && Number(pvo.total_budget) > 0 && (() => {
+                      const budget = Number(pvo.total_budget);
+                      const released = pvoFunding[pvo.id].released;
+                      const pct = Math.min(100, Math.round((released / budget) * 100));
+                      return (
+                        <div className="mb-2">
+                          <div className="flex justify-between text-[10px] mb-0.5">
+                            <span className="text-slate-400">Released</span>
+                            <span className="font-medium text-purple-600">{pct}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-purple-500 rounded-full transition-all" style={{width: `${pct}%`}}/>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {pvoFunding[pvo.id] && Number(pvo.total_budget) > 0 && (() => {
                       const budget = Number(pvo.total_budget);
                       const funded = pvoFunding[pvo.id].funded;
