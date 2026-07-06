@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, IntoVal, Map, Symbol, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -92,18 +92,31 @@ pub struct EscrowDisputedEvent {
     pub disputer: Address,
 }
 
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PVOStatus {
+    Proposed,
+    Approved,
+    InProgress,
+    UnderReview,
+    Completed,
+    Suspended,
+    Terminated,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const ESCROWS: Symbol = symbol_short!("ESCROWS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 const COMPLIANCE_ENGINE: Symbol = symbol_short!("COMPENG");
 const COMMUNITY_ORACLE: Symbol = symbol_short!("COMOR");
+const PVO_CORE: Symbol = symbol_short!("PVOCORE");
 
 #[contract]
 pub struct DynamicEscrow;
 
 #[contractimpl]
 impl DynamicEscrow {
-    pub fn initialize(env: Env, compliance_engine: Address, community_oracle: Address) {
+    pub fn initialize(env: Env, compliance_engine: Address, community_oracle: Address, pvo_core: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
@@ -111,6 +124,7 @@ impl DynamicEscrow {
         storage.set(&COUNTER, &0u32);
         storage.set(&COMPLIANCE_ENGINE, &compliance_engine);
         storage.set(&COMMUNITY_ORACLE, &community_oracle);
+        storage.set(&PVO_CORE, &pvo_core);
         storage.set(&INITIALIZED, &true);
     }
 
@@ -351,6 +365,7 @@ impl DynamicEscrow {
         let amount = escrow.amount;
         let recipient = escrow.recipient.clone();
         let token_address = escrow.token_address.clone();
+        let pvo_id = escrow.pvo_id;
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 
@@ -363,6 +378,20 @@ impl DynamicEscrow {
             amount,
             recipient,
         }.publish(&env);
+
+        // Auto-complete PVO when escrow releases
+        if let Some(pvo_core_addr) = storage.get::<Symbol, Address>(&PVO_CORE) {
+            let _: () = env.invoke_contract(
+                &pvo_core_addr,
+                &Symbol::new(&env, "update_pvo_status"),
+                soroban_sdk::vec![
+                    &env,
+                    env.current_contract_address().into_val(&env),
+                    pvo_id.into(),
+                    PVOStatus::Completed.into_val(&env),
+                ],
+            );
+        }
 
         true
     }

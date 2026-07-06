@@ -67,6 +67,7 @@ export function FunderDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [createModal, setCreateModal] = useState(false);
+  const [prefillPvoId, setPrefillPvoId] = useState<number>(0);
 
   const loadEscrows = useCallback(async () => {
     setLoading(true);
@@ -123,9 +124,7 @@ export function FunderDashboard() {
           className="btn-secondary text-xs px-3 py-2">
           {loading ? "Loading..." : "↻ Refresh"}
         </button>
-        <button onClick={() => setCreateModal(true)} className="btn-primary text-xs px-4 py-2">
-          ➕ Create Escrow
-        </button>
+
       </div>
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
@@ -142,11 +141,11 @@ export function FunderDashboard() {
       </div>
 
       {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} />}
-      {activeTab === "commitments" && <DonorCommitmentsTab />}
+      {activeTab === "commitments" && <DonorCommitmentsTab onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setCreateModal(true); }} />}
       {activeTab === "guide" && <EscrowGuide />}
 
       <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Escrow">
-        <CreateEscrowForm address={address!} onCreated={() => { refresh(); setCreateModal(false); }} />
+        <CreateEscrowForm key={prefillPvoId} address={address!} prefillPvoId={prefillPvoId} onCreated={() => { refresh(); setCreateModal(false); setPrefillPvoId(0); }} />
       </Modal>
     </div>
   );
@@ -397,17 +396,22 @@ function EscrowCard({ escrow, currency, address, onAction }: {
   );
 }
 
-function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: () => void }) {
+function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: string; prefillPvoId?: number; onCreated: () => void }) {
   const [recipient, setRecipient] = useState("");
-  const [pvoId, setPvoId] = useState("");
+  const [pvoId, setPvoId] = useState(String(prefillPvoId || ""));
   const [milestoneId, setMilestoneId] = useState("");
   const [amount, setAmount] = useState("");
   const [communityRequired, setCommunityRequired] = useState("1");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [grantsF, setGrantsF] = useState<any[]>([]);
   const [pvBudgets, setPvBudgets] = useState<Record<number,number>>({});
+  const [pvList, setPvList] = useState<{id:number;title:string;municipality:string;budget:number}[]>([]);
+  const [contractors, setContractors] = useState<string[]>([]);
+  const [milestones, setMilestones] = useState<{id:number;title:string;budget:number}[]>([]);
+  const [showRecipientDd, setShowRecipientDd] = useState(false);
+  const [showPvoDd, setShowPvoDd] = useState(false);
+  const [showMilestoneDd, setShowMilestoneDd] = useState(false);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -420,14 +424,40 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
         const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pc.get_pvo_count();
         const b: Record<number,number> = {};
-        for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) b[r.result.id] = Number(r.result.total_budget); } catch {} }
+        const pl: {id:number;title:string;municipality:string;budget:number}[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) { b[r.result.id] = Number(r.result.total_budget); pl.push({id:r.result.id,title:r.result.title,municipality:r.result.municipality,budget:Number(r.result.total_budget)}); } } catch {} }
         setPvBudgets(b);
-      } catch {} (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
+        setPvList(pl);
+      } catch {}
+      try {
+        const { Client: AC } = await import("../contracts/access_control/src");
+        const ac = new AC({ contractId: CONTRACT_IDS.access_control, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await ac.get_addresses_by_role({ role: { tag: "Contractor", values: undefined } as any });
+        setContractors(result.result || []);
+      } catch {}
     })();
   }, []);
 
+  // Fetch milestones when PVO is selected
+  useEffect(() => {
+    if (!pvoId) { setMilestones([]); return; }
+    (async () => {
+      try {
+        const { Client: PC } = await import("../contracts/pvo_core/src");
+        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await pc.get_pvo_milestones({ pvo_id: Number(pvoId) });
+        const ml = (result.result || []).map((m: any) => ({ id: Number(m.id), title: m.title || "", budget: Number(m.budget) }));
+        setMilestones(ml);
+      } catch { setMilestones([]); }
+    })();
+  }, [pvoId]);
+
+  const filteredContractors = contractors.filter(c => c.toLowerCase().includes(recipient.toLowerCase()));
+  const filteredPvos = pvList.filter(p => !pvoId || p.title.toLowerCase().includes(pvoId.toLowerCase()) || String(p.id).includes(pvoId));
+  const filteredMilestones = milestones.filter(m => !milestoneId || m.title.toLowerCase().includes(milestoneId.toLowerCase()) || String(m.id).includes(milestoneId));
+
   const pvoGrants = grantsF.filter((g: any) => Number(g.pvo_id) === Number(pvoId));
-  const pledged = Math.round(pvoGrants.reduce((s: number, g: any) => s + Number(g.amount)*(rates[g.currency]||56), 0));
+  const pledged = pvoGrants.reduce((s: number, g: any) => s + Number(g.amount), 0);
   const budget = pvBudgets[Number(pvoId)] || 0;
   const pct = budget > 0 ? Math.min(100, Math.round((pledged / budget) * 100)) : 0;
 
@@ -487,32 +517,72 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
         </div>
       )}
       <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-slate-700 mb-1">Recipient (Contractor)</label>
-            <input type="text" value={recipient} onChange={e => setRecipient(e.target.value)} className="input font-mono text-xs"
-              placeholder="G..." required />
+            <input type="text" value={recipient} onChange={e => { setRecipient(e.target.value); setShowRecipientDd(true); }}
+              onFocus={() => setShowRecipientDd(true)}
+              onBlur={() => setTimeout(() => setShowRecipientDd(false), 200)}
+              className="input font-mono text-xs" placeholder="Search contractor address..." required />
+            {showRecipientDd && filteredContractors.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                {filteredContractors.slice(0, 8).map(c => (
+                  <button key={c} type="button" onMouseDown={() => { setRecipient(c); setShowRecipientDd(false); }}
+                    className="w-full text-left px-3 py-2 text-xs font-mono hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label>
-              <input type="number" value={pvoId} onChange={e => setPvoId(e.target.value)} className="input" required />
+              <input type="text" value={pvoId} onChange={e => { setPvoId(e.target.value); setShowPvoDd(true); }}
+                onFocus={() => { if (!prefillPvoId) setShowPvoDd(true); }}
+                onBlur={() => setTimeout(() => setShowPvoDd(false), 200)}
+                className="input" placeholder="Search by ID or title…" readOnly={!!prefillPvoId} required />
+              {!prefillPvoId && showPvoDd && filteredPvos.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredPvos.slice(0, 10).map(p => (
+                    <button key={p.id} type="button" onMouseDown={() => { setPvoId(String(p.id)); setShowPvoDd(false); }}
+                      className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
+                      <span className="text-sm font-medium text-slate-900">#{p.id} {p.title}</span>
+                      <span className="text-xs text-slate-400 ml-2">{p.municipality}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-slate-700 mb-1">Milestone ID</label>
-              <input type="number" value={milestoneId} onChange={e => setMilestoneId(e.target.value)} className="input" required />
+              <input type="text" value={milestoneId} onChange={e => { setMilestoneId(e.target.value); setShowMilestoneDd(true); }}
+                onFocus={() => setShowMilestoneDd(true)}
+                onBlur={() => setTimeout(() => setShowMilestoneDd(false), 200)}
+                className="input" placeholder={pvoId ? "Select milestone…" : "Select PVO first"} disabled={!pvoId} required />
+              {showMilestoneDd && filteredMilestones.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {filteredMilestones.slice(0, 10).map(m => (
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget)); }}
+                      className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
+                      <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
+                      <span className="text-xs text-slate-400 ml-2">{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           {pvoId && budget > 0 && (
             <div className="bg-slate-50 rounded-xl p-3 text-xs">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-slate-500">Pledged: {currency}{pledged.toLocaleString()} / {currency}{budget.toLocaleString()}</span>
+                <span className="text-slate-500">Pledged: {currency}{(pledged / PPHP_SCALE).toLocaleString()} / {currency}{(budget / PPHP_SCALE).toLocaleString()}</span>
                 <span className={`font-semibold ${pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-red-600"}`}>{pct}%</span>
               </div>
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all ${pct >= 80 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: pct + "%" }} />
               </div>
               {Number(amount) > 0 && Number(amount) > pledged && (
-                <p className="text-red-600 mt-1">⚠️ Escrow ({currency}{Number(amount).toLocaleString()}) exceeds pledged ({currency}{pledged.toLocaleString()})</p>
+                <p className="text-red-600 mt-1">⚠️ Escrow ({currency}{(Number(amount) / PPHP_SCALE).toLocaleString()}) exceeds pledged ({currency}{(pledged / PPHP_SCALE).toLocaleString()})</p>
               )}
             </div>
           )}
@@ -546,10 +616,9 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
       );
 }
 
-function DonorCommitmentsTab() {
+function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: number) => void }) {
   const currency = getCurrency();
   const [grants, setGrants] = useState<any[]>([]);
-  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -562,10 +631,14 @@ function DonorCommitmentsTab() {
         });
         const result = await client.get_all_grants();
         const chainGrants = result.result || [];
+        chainGrants.sort((a: any, b: any) => {
+          const aComm = (a.status?.tag || a.status) === "Committed" ? 0 : 1;
+          const bComm = (b.status?.tag || b.status) === "Committed" ? 0 : 1;
+          return aComm - bComm || Number(b.id) - Number(a.id);
+        });
         setGrants(chainGrants);
       } catch(e){} finally{setLoading(false)}
     })();
-    (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
   }, []);
 
   const [pvoBudgets, setPvoBudgets] = useState<Record<number, string>>({});
@@ -596,7 +669,7 @@ function DonorCommitmentsTab() {
         <div className="flex items-center justify-between">
           <div>
             <p className="stat-label">Total Donor Pledges</p>
-            <p className="stat-value text-brand-600">{grants.map(g => g.currency + " " + Number(g.amount).toLocaleString()).join(", ") || "None"}</p>
+            <p className="stat-value text-brand-600">{currency}{(grants.reduce((sum: number, g: any) => sum + Number(g.amount), 0) / PPHP_SCALE).toLocaleString()}</p>
           </div>
           <div className="text-right">
             <p className="stat-label">Active Grants</p>
@@ -621,14 +694,19 @@ function DonorCommitmentsTab() {
                     <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
-                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()} <span className="text-xs text-slate-400">≈ {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} pPHP</span></p>
+                  <p className="text-sm text-slate-500">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()}</p>
                   <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
                 {status === "Committed" && (
-                  <p className="text-xs text-slate-500">Ready. Pledged: {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)])).toLocaleString() : "..."}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs text-slate-500">Ready. Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
+                    <button onClick={() => onCreateEscrow(Number(g.pvo_id))} className="btn-primary text-xs px-3 py-1 ml-auto">
+                      ➕ Create Escrow
+                    </button>
+                  </div>
                 )}
                 {status === "Disbursed" && (
                   <p className="text-xs text-blue-600">Funds disbursed into escrow.</p>
@@ -651,13 +729,13 @@ function DonorCommitmentsTab() {
 function EscrowGuide() {
   const steps = [
     { n: 0, title: "Donor Commits + Transfers", icon: "🌍", desc: "International donor commits a grant, atomically transferring pPHP to the Funding Agency wallet.", actor: "InternationalDonor" },
-    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with recipient, PVO, milestone, amount, and required community confirmations.", actor: "FundingAgency" },
+    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with recipient, PVO, milestone, amount, and sets the Community Confirmations Required threshold — the number of verified citizen GPS field reports needed to unlock the final gate.", actor: "FundingAgency" },
     { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded.", actor: "FundingAgency" },
     { n: 3, title: "Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
     { n: 4, title: "AI Risk Check", icon: "🤖", desc: "AI oracle validates evidence and assigns a risk score. Must pass.", actor: "AIAuditor" },
     { n: 5, title: "Compliance Validate", icon: "⚖️", desc: "Compliance officer checks regulatory adherence.", actor: "Auditor / COA" },
     { n: 6, title: "Community Oracle", icon: "📊", desc: "Citizen reports from the community oracle verify real-world project existence.", actor: "Citizens" },
-    { n: 7, title: "Community Confirm", icon: "📸", desc: "Citizens submit field reports. Must reach the required threshold.", actor: "Citizens" },
+    { n: 7, title: "Community Confirm", icon: "📸", desc: "Citizens submit GPS-tagged field reports. Each verified report increments the counter. When the counter reaches the threshold set at escrow creation, the gate passes. Higher thresholds = stronger anti-corruption, slower release.", actor: "Citizens" },
     { n: 8, title: "Release or Dispute", icon: "🔓", desc: "Once all gates pass (Ready), anyone can trigger release. Dispute can be raised anytime before release.", actor: "Any Role" },
   ];
 
@@ -668,6 +746,14 @@ function EscrowGuide() {
         <p className="text-sm text-slate-500">
           Donors first commit and transfer pPHP to the Funding Agency. Then every escrow passes through 5 independent verification gates before funds can be released.
           This ensures no single party can authorize payment alone — preventing corruption and ensuring quality.
+        </p>
+      </div>
+      <div className="card p-5 mb-4 bg-amber-50 border-amber-200">
+        <h3 className="font-semibold text-amber-800 mb-1">📸 Community Confirmations Threshold</h3>
+        <p className="text-sm text-amber-700">
+          When creating an escrow, the funding agency sets how many <strong>verified citizen GPS field reports</strong> are required to unlock the final gate.
+          Each citizen must visit the project site, submit a report with GPS coordinates and evidence, and have it verified by the Community Oracle.
+          Only verified reports count. Set a higher number for projects in high-corruption areas — this forces multiple independent on-the-ground verifications before any peso is released.
         </p>
       </div>
       <div className="space-y-3">

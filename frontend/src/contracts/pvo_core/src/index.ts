@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCIFTFOECO3NQVKOBWVWOQNJ2XVCLTDXSNFJD637KSRNJMPNHKX5UUTM",
+    contractId: "CDE45UWFGGCQLKW42AGEU23ATCUKYH64J4ILXWHKBNQANQMY7STPIYND",
   }
 } as const
 
@@ -129,6 +129,11 @@ export interface Client {
   get_pvo_count: (options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
+   * Construct and simulate a get_pvo_budget transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_pvo_budget: ({pvo_id}: {pvo_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+
+  /**
    * Construct and simulate a submit_evidence transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
   submit_evidence: ({submitter, pvo_id, milestone_id, evidence_type, data_hash, metadata}: {submitter: string, pvo_id: u32, milestone_id: u32, evidence_type: EvidenceType, data_hash: string, metadata: string}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
@@ -211,6 +216,7 @@ export class Client extends ContractClient {
         "AAAAAgAAAAAAAAAAAAAADEV2aWRlbmNlVHlwZQAAAAoAAAAAAAAAAAAAAAxEcm9uZUltYWdlcnkAAAAAAAAAAAAAABBTYXRlbGxpdGVJbWFnZXJ5AAAAAAAAAAAAAAAOR3BzQ29vcmRpbmF0ZXMAAAAAAAAAAAAAAAAAEFRpbWVzdGFtcGVkUGhvdG8AAAAAAAAAAAAAABBUaW1lc3RhbXBlZFZpZGVvAAAAAAAAAAAAAAAJSW9UU2Vuc29yAAAAAAAAAAAAAAAAAAARRW5naW5lZXJpbmdSZXBvcnQAAAAAAAAAAAAAAAAAAAlMYWJSZXN1bHQAAAAAAAAAAAAAAAAAABBJbnNwZWN0aW9uUmVwb3J0AAAAAAAAAAAAAAAVQ29tbXVuaXR5VmVyaWZpY2F0aW9uAAAA",
         "AAAAAAAAAAAAAAANZ2V0X21pbGVzdG9uZQAAAAAAAAEAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAABAAAD6AAAB9AAAAAJTWlsZXN0b25lAAAA",
         "AAAAAAAAAAAAAAANZ2V0X3B2b19jb3VudAAAAAAAAAAAAAABAAAABA==",
+        "AAAAAAAAAAAAAAAOZ2V0X3B2b19idWRnZXQAAAAAAAEAAAAAAAAABnB2b19pZAAAAAAABAAAAAEAAAAL",
         "AAAAAgAAAAAAAAAAAAAAD01pbGVzdG9uZVN0YXR1cwAAAAAIAAAAAAAAAAAAAAAHUGVuZGluZwAAAAAAAAAAAAAAABFFdmlkZW5jZVN1Ym1pdHRlZAAAAAAAAAAAAAAAAAAAEEVuZ2luZWVyQXBwcm92ZWQAAAAAAAAAAAAAAAtBSVZhbGlkYXRlZAAAAAAAAAAAAAAAABFDb21tdW5pdHlWZXJpZmllZAAAAAAAAAAAAAAAAAAAEENvbXBsaWFuY2VQYXNzZWQAAAAAAAAAAAAAAAhSZWxlYXNlZAAAAAAAAAAAAAAACFJlamVjdGVk",
         "AAAAAAAAAAAAAAAPc3VibWl0X2V2aWRlbmNlAAAAAAYAAAAAAAAACXN1Ym1pdHRlcgAAAAAAABMAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAAAAAANZXZpZGVuY2VfdHlwZQAAAAAAB9AAAAAMRXZpZGVuY2VUeXBlAAAAAAAAAAlkYXRhX2hhc2gAAAAAAAAQAAAAAAAAAAhtZXRhZGF0YQAAABAAAAABAAAABA==",
         "AAAABQAAAAAAAAAAAAAAD1BWT0NyZWF0ZWRFdmVudAAAAAABAAAAEXB2b19jcmVhdGVkX2V2ZW50AAAAAAAABAAAAAAAAAACaWQAAAAAAAQAAAAAAAAAAAAAAAV0aXRsZQAAAAAAABAAAAAAAAAAAAAAAApjb250cmFjdG9yAAAAAAATAAAAAAAAAAAAAAAMdG90YWxfYnVkZ2V0AAAACwAAAAAAAAAC",
@@ -240,6 +246,7 @@ export class Client extends ContractClient {
         ai_validate: this.txFromJSON<null>,
         get_milestone: this.txFromJSON<Option<Milestone>>,
         get_pvo_count: this.txFromJSON<u32>,
+        get_pvo_budget: this.txFromJSON<i128>,
         submit_evidence: this.txFromJSON<u32>,
         compliance_check: this.txFromJSON<null>,
         create_milestone: this.txFromJSON<u32>,

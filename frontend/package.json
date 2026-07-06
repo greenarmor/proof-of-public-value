@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "vite preview --host --port 5174",
     "lint": "oxlint",
     "preview": "vite preview",
     "ai": "NODE_PATH=./node_modules npx tsx ../.aim/ai-service.ts"

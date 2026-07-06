@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCDRYCDA7J77I36D66HRMOO2JQZXLMXLHKG43KLQHZUCB5E4DXKUXGRW",
+    contractId: "CAHCHIL67KRPP4TGCU7ODKU3PKLYFMSWR3FQYM3JETKJKA4DAAFSLJJQ",
   }
 } as const
 
@@ -52,6 +52,8 @@ export interface Escrow {
   status: EscrowStatus;
   token_address: string;
 }
+
+export type PVOStatus = {tag: "Proposed", values: void} | {tag: "Approved", values: void} | {tag: "InProgress", values: void} | {tag: "UnderReview", values: void} | {tag: "Completed", values: void} | {tag: "Suspended", values: void} | {tag: "Terminated", values: void};
 
 export type EscrowStatus = {tag: "Created", values: void} | {tag: "Funded", values: void} | {tag: "EngineerApproved", values: void} | {tag: "AIValidated", values: void} | {tag: "CompliancePassed", values: void} | {tag: "OracleValidated", values: void} | {tag: "CommunityVerified", values: void} | {tag: "Ready", values: void} | {tag: "Released", values: void} | {tag: "Refunded", values: void} | {tag: "Disputed", values: void};
 
@@ -95,7 +97,7 @@ export interface Client {
   /**
    * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: ({compliance_engine, community_oracle}: {compliance_engine: string, community_oracle: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  initialize: ({compliance_engine, community_oracle, pvo_core}: {compliance_engine: string, community_oracle: string, pvo_core: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a ai_validate transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -166,13 +168,14 @@ export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABkVzY3JvdwAAAAAACwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAApjb25kaXRpb25zAAAAAAfQAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAABmZ1bmRlcgAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAJcmVjaXBpZW50AAAAAAAAEwAAAAAAAAALcmVsZWFzZWRfYXQAAAAABgAAAAAAAAAGc3RhdHVzAAAAAAfQAAAADEVzY3Jvd1N0YXR1cwAAAAAAAAANdG9rZW5fYWRkcmVzcwAAAAAAABM=",
+        "AAAAAgAAAAAAAAAAAAAACVBWT1N0YXR1cwAAAAAAAAcAAAAAAAAAAAAAAAhQcm9wb3NlZAAAAAAAAAAAAAAACEFwcHJvdmVkAAAAAAAAAAAAAAAKSW5Qcm9ncmVzcwAAAAAAAAAAAAAAAAALVW5kZXJSZXZpZXcAAAAAAAAAAAAAAAAJQ29tcGxldGVkAAAAAAAAAAAAAAAAAAAJU3VzcGVuZGVkAAAAAAAAAAAAAAAAAAAKVGVybWluYXRlZAAA",
         "AAAAAgAAAAAAAAAAAAAADEVzY3Jvd1N0YXR1cwAAAAsAAAAAAAAAAAAAAAdDcmVhdGVkAAAAAAAAAAAAAAAABkZ1bmRlZAAAAAAAAAAAAAAAAAAQRW5naW5lZXJBcHByb3ZlZAAAAAAAAAAAAAAAC0FJVmFsaWRhdGVkAAAAAAAAAAAAAAAAEENvbXBsaWFuY2VQYXNzZWQAAAAAAAAAAAAAAA9PcmFjbGVWYWxpZGF0ZWQAAAAAAAAAAAAAAAARQ29tbXVuaXR5VmVyaWZpZWQAAAAAAAAAAAAAAAAAAAVSZWFkeQAAAAAAAAAAAAAAAAAACFJlbGVhc2VkAAAAAAAAAAAAAAAIUmVmdW5kZWQAAAAAAAAAAAAAAAhEaXNwdXRlZA==",
         "AAAAAAAAAAAAAAAGcmVmdW5kAAAAAAACAAAAAAAAAAZmdW5kZXIAAAAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAABAAAAAQ==",
         "AAAAAAAAAAAAAAAHZGlzcHV0ZQAAAAACAAAAAAAAAAhkaXNwdXRlcgAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAAA",
         "AAAAAAAAAAAAAAAHcmVsZWFzZQAAAAACAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAACWVzY3Jvd19pZAAAAAAAAAQAAAABAAAAAQ==",
         "AAAAAQAAAAAAAAAAAAAAD1VubG9ja0NvbmRpdGlvbgAAAAAGAAAAAAAAAA1haV9yaXNrX2NoZWNrAAAAAAAAAQAAAAAAAAAWY29tbXVuaXR5X2NvbmZpcm1hdGlvbgAAAAAABAAAAAAAAAAbY29tbXVuaXR5X29yYWNsZV92YWxpZGF0aW9uAAAAAAEAAAAAAAAAEmNvbW11bml0eV9yZXF1aXJlZAAAAAAABAAAAAAAAAAVY29tcGxpYW5jZV92YWxpZGF0aW9uAAAAAAAAAQAAAAAAAAARZW5naW5lZXJfYXBwcm92YWwAAAAAAAAB",
         "AAAAAAAAAAAAAAAKZ2V0X2VzY3JvdwAAAAAAAQAAAAAAAAAJZXNjcm93X2lkAAAAAAAABAAAAAEAAAPoAAAH0AAAAAZFc2Nyb3cAAA==",
-        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAgAAAAAAAAARY29tcGxpYW5jZV9lbmdpbmUAAAAAAAATAAAAAAAAABBjb21tdW5pdHlfb3JhY2xlAAAAEwAAAAA=",
+        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAwAAAAAAAAARY29tcGxpYW5jZV9lbmdpbmUAAAAAAAATAAAAAAAAABBjb21tdW5pdHlfb3JhY2xlAAAAEwAAAAAAAAAIcHZvX2NvcmUAAAATAAAAAA==",
         "AAAAAAAAAAAAAAALYWlfdmFsaWRhdGUAAAAAAwAAAAAAAAAHYXVkaXRvcgAAAAATAAAAAAAAAAllc2Nyb3dfaWQAAAAAAAAEAAAAAAAAAAZwYXNzZWQAAAAAAAEAAAAA",
         "AAAAAAAAAAAAAAALZnVuZF9lc2Nyb3cAAAAAAwAAAAAAAAAGZnVuZGVyAAAAAAATAAAAAAAAAAllc2Nyb3dfaWQAAAAAAAAEAAAAAAAAAAZhbW91bnQAAAAAAAsAAAAA",
         "AAAABQAAAAAAAAAAAAAAEUVzY3Jvd0Z1bmRlZEV2ZW50AAAAAAAAAQAAABNlc2Nyb3dfZnVuZGVkX2V2ZW50AAAAAAIAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAAI=",

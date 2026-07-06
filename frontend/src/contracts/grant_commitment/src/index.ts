@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCEKAPJ4H3OISYBZ67FOEBCHV6TDM6MJSMB42ONMRVOC67F2ZR2YJXSE",
+    contractId: "CACKV7KP2FNO5FGX6SNXTUNGUBWCAOMVRUOLPWEAGRA7X2SQV4RWKKMQ",
   }
 } as const
 
@@ -62,6 +62,11 @@ export interface Client {
   get_grant: ({grant_id}: {grant_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<Option<Grant>>>
 
   /**
+   * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  initialize: ({pvo_core}: {pvo_core: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
+  /**
    * Construct and simulate a commit_grant transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
   commit_grant: ({donor, pvo_id, amount, org_name, currency}: {donor: string, pvo_id: u32, amount: i128, org_name: string, currency: string}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
@@ -87,9 +92,24 @@ export interface Client {
   get_grants_by_pvo: ({pvo_id}: {pvo_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<Array<Grant>>>
 
   /**
+   * Construct and simulate a get_pvo_remaining transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_pvo_remaining: ({pvo_id}: {pvo_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+
+  /**
+   * Construct and simulate a get_committed_total transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  get_committed_total: ({pvo_id}: {pvo_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<i128>>
+
+  /**
    * Construct and simulate a get_grants_by_donor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
   get_grants_by_donor: ({donor}: {donor: string}, options?: MethodOptions) => Promise<AssembledTransaction<Array<Grant>>>
+
+  /**
+   * Construct and simulate a admin_mark_disbursed transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  admin_mark_disbursed: ({caller, grant_id}: {caller: string, grant_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
 }
 export class Client extends ContractClient {
@@ -112,6 +132,7 @@ export class Client extends ContractClient {
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAABUdyYW50AAAAAAAACQAAAAAAAAAGYW1vdW50AAAAAAALAAAAAAAAAApjcmVhdGVkX2F0AAAAAAAGAAAAAAAAAAhjdXJyZW5jeQAAABAAAAAAAAAABWRvbm9yAAAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAACG9yZ19uYW1lAAAAEAAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAZzdGF0dXMAAAAAB9AAAAALR3JhbnRTdGF0dXMAAAAAAAAAAAp1cGRhdGVkX2F0AAAAAAAG",
         "AAAAAgAAAAAAAAAAAAAAC0dyYW50U3RhdHVzAAAAAAQAAAAAAAAAAAAAAAlDb21taXR0ZWQAAAAAAAAAAAAAAAAAAAlEaXNidXJzZWQAAAAAAAAAAAAAAAAAAAlDb21wbGV0ZWQAAAAAAAAAAAAAAAAAAAlDYW5jZWxsZWQAAAA=",
         "AAAAAAAAAAAAAAAJZ2V0X2dyYW50AAAAAAAAAQAAAAAAAAAIZ3JhbnRfaWQAAAAEAAAAAQAAA+gAAAfQAAAABUdyYW50AAAA",
+        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAAIcHZvX2NvcmUAAAATAAAAAA==",
         "AAAABQAAAAAAAAAAAAAAE0dyYW50Q29tbWl0dGVkRXZlbnQAAAAAAQAAABVncmFudF9jb21taXR0ZWRfZXZlbnQAAAAAAAAFAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAAAAAABWRvbm9yAAAAAAAAEwAAAAAAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAAAAAACG9yZ19uYW1lAAAAEAAAAAAAAAAC",
         "AAAAAAAAAAAAAAAMY29tbWl0X2dyYW50AAAABQAAAAAAAAAFZG9ub3IAAAAAAAATAAAAAAAAAAZwdm9faWQAAAAAAAQAAAAAAAAABmFtb3VudAAAAAAACwAAAAAAAAAIb3JnX25hbWUAAAAQAAAAAAAAAAhjdXJyZW5jeQAAABAAAAABAAAABA==",
         "AAAAAAAAAAAAAAANdXBkYXRlX3N0YXR1cwAAAAAAAAMAAAAAAAAABWRvbm9yAAAAAAAAEwAAAAAAAAAIZ3JhbnRfaWQAAAAEAAAAAAAAAApuZXdfc3RhdHVzAAAAAAfQAAAAC0dyYW50U3RhdHVzAAAAAAA=",
@@ -119,17 +140,24 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAPZ2V0X2dyYW50X2NvdW50AAAAAAAAAAABAAAABA==",
         "AAAABQAAAAAAAAAAAAAAF0dyYW50U3RhdHVzVXBkYXRlZEV2ZW50AAAAAAEAAAAaZ3JhbnRfc3RhdHVzX3VwZGF0ZWRfZXZlbnQAAAAAAAMAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAKb2xkX3N0YXR1cwAAAAAH0AAAAAtHcmFudFN0YXR1cwAAAAAAAAAAAAAAAApuZXdfc3RhdHVzAAAAAAfQAAAAC0dyYW50U3RhdHVzAAAAAAAAAAAC",
         "AAAAAAAAAAAAAAARZ2V0X2dyYW50c19ieV9wdm8AAAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAD6gAAB9AAAAAFR3JhbnQAAAA=",
-        "AAAAAAAAAAAAAAATZ2V0X2dyYW50c19ieV9kb25vcgAAAAABAAAAAAAAAAVkb25vcgAAAAAAABMAAAABAAAD6gAAB9AAAAAFR3JhbnQAAAA=" ]),
+        "AAAAAAAAAAAAAAARZ2V0X3B2b19yZW1haW5pbmcAAAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAACw==",
+        "AAAAAAAAAAAAAAATZ2V0X2NvbW1pdHRlZF90b3RhbAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAACw==",
+        "AAAAAAAAAAAAAAATZ2V0X2dyYW50c19ieV9kb25vcgAAAAABAAAAAAAAAAVkb25vcgAAAAAAABMAAAABAAAD6gAAB9AAAAAFR3JhbnQAAAA=",
+        "AAAAAAAAAAAAAAAUYWRtaW5fbWFya19kaXNidXJzZWQAAAACAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAACGdyYW50X2lkAAAABAAAAAA=" ]),
       options
     )
   }
   public readonly fromJSON = {
     get_grant: this.txFromJSON<Option<Grant>>,
+        initialize: this.txFromJSON<null>,
         commit_grant: this.txFromJSON<u32>,
         update_status: this.txFromJSON<null>,
         get_all_grants: this.txFromJSON<Array<Grant>>,
         get_grant_count: this.txFromJSON<u32>,
         get_grants_by_pvo: this.txFromJSON<Array<Grant>>,
-        get_grants_by_donor: this.txFromJSON<Array<Grant>>
+        get_pvo_remaining: this.txFromJSON<i128>,
+        get_committed_total: this.txFromJSON<i128>,
+        get_grants_by_donor: this.txFromJSON<Array<Grant>>,
+        admin_mark_disbursed: this.txFromJSON<null>
   }
 }

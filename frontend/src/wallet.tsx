@@ -40,10 +40,44 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    checkConnection();
+    let cancelled = false;
+
+    async function checkWithRetry(attempt = 0) {
+      if (cancelled) return;
+      try {
+        const c = await isConnected();
+        if (c) {
+          if (cancelled) return;
+          const r = await getAddress();
+          if (cancelled) return;
+          setAddress(r.address);
+          fetchRoles(r.address);
+        } else if (attempt < 10) {
+          setTimeout(() => checkWithRetry(attempt + 1), 500);
+        } else {
+          setAddress(null);
+          setRoles([]);
+        }
+      } catch {
+        if (attempt < 10) {
+          setTimeout(() => checkWithRetry(attempt + 1), 500);
+        } else {
+          setAddress(null);
+          setRoles([]);
+        }
+      }
+    }
+
+    const timer = setTimeout(() => checkWithRetry(), 300);
     const watcher = new WatchWalletChanges(60000);
-    watcher.watch(() => checkConnection());
-    return () => watcher.stop();
+    watcher.watch(() => {
+      if (!cancelled) checkConnection();
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      watcher.stop();
+    };
   }, []);
 
   async function checkConnection() {

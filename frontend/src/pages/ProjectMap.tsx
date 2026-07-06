@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import L from "leaflet";
 import { formatBudget } from "../helpers";
 import "leaflet/dist/leaflet.css";
@@ -10,6 +10,51 @@ interface PVOData {
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
   latitude?: number; longitude?: number;
+}
+
+function statusColor(status: string): string {
+  const s = status.toLowerCase();
+  if (s.includes("completed")) return "#16a34a";   // green
+  if (s.includes("proposed")) return "#f97316";      // orange
+  if (s.includes("progress") || s.includes("approved")) return "#2563eb"; // blue
+  if (s.includes("suspended") || s.includes("terminated")) return "#dc2626"; // red
+  return "#64748b"; // gray for unknown/review
+}
+
+const PIN_SVG = (color: string) => `
+<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
+  <path d="M14 0C6.27 0 0 6.27 0 14c0 9.5 14 26 14 26s14-16.5 14-26C28 6.27 21.73 0 14 0z" fill="${color}" stroke="white" stroke-width="2"/>
+  <circle cx="14" cy="14" r="5" fill="white"/>
+</svg>`;
+
+const PIN_SHADOW_SVG = `
+<svg width="28" height="14" viewBox="0 0 28 14" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="14" cy="7" rx="10" ry="4" fill="rgba(0,0,0,0.3)"/>
+</svg>`;
+
+function makePinIcon(status: string) {
+  const color = statusColor(status);
+  return L.divIcon({
+    html: `
+      <div style="position:relative;width:28px;height:54px;">
+        <img src="data:image/svg+xml;base64,${btoa(PIN_SHADOW_SVG)}" style="position:absolute;top:36px;left:4px;width:20px;height:10px;display:block;"/>
+        <img src="data:image/svg+xml;base64,${btoa(PIN_SVG(color))}" style="width:28px;height:40px;display:block;position:relative;"/>
+      </div>`,
+    iconSize: [28, 54],
+    iconAnchor: [14, 40],
+    popupAnchor: [0, -38],
+    className: "pvo-marker",
+  });
+}
+
+function makeGpsIcon() {
+  return L.divIcon({
+    html: `<img src="data:image/svg+xml;base64,${btoa(PIN_SVG("#a855f7"))}" style="width:20px;height:28px;display:block;"/>`,
+    iconSize: [20, 28],
+    iconAnchor: [10, 28],
+    popupAnchor: [0, -26],
+    className: "gps-marker",
+  });
 }
 
 const geo: Record<string, [number, number]> = {
@@ -52,7 +97,7 @@ function PVOMarker({ pvo, selected, onRegister }: { pvo: PVOData; selected: bool
   }, [pvo.id, onRegister]);
 
   return (
-    <Marker position={getCoords(pvo)} ref={markerRef} zIndexOffset={selected ? 1000 : 0}>
+    <Marker position={getCoords(pvo)} ref={markerRef} icon={makePinIcon(pvo.status)} zIndexOffset={selected ? 1000 : 0}>
       <Popup>
         <strong>{pvo.title}</strong><br />
         {pvo.department} · {pvo.municipality}<br />
@@ -106,7 +151,7 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
         ))}
         {pvos.flatMap((pvo) =>
           (pvo.gpsCoordinates || []).map((gps, i) => (
-            <Marker key={`gps-${pvo.id}-${i}`} position={[gps.lat, gps.lng]} zIndexOffset={2000}>
+            <Marker key={`gps-${pvo.id}-${i}`} position={[gps.lat, gps.lng]} icon={makeGpsIcon()} zIndexOffset={2000}>
               <Popup>
                 <strong>{pvo.title}</strong><br />
                 📍 GPS Evidence #{gps.evidenceId}<br />

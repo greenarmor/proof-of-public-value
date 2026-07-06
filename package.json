@@ -5,6 +5,8 @@
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:indexer\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:indexer": "cd services/event-indexer && npm start",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm start",
     "test": "cd frontend && npx tsx e2e-test.ts",
     "build:contracts": "stellar contract build",
     "deploy": "./scripts/deploy.sh"

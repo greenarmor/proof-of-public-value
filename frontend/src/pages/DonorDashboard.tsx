@@ -14,7 +14,7 @@ interface GrantData {
   orgName: string; currency: string; status: GrantStatusTag; createdAt: number;
 }
 
-interface PVOCard { id: number; title: string; department: string; municipality: string; totalBudget: string; status: string; }
+interface PVOCard { id: number; title: string; department: string; municipality: string; totalBudget: string; status: string; remaining: string; }
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -33,7 +33,7 @@ export function DonorDashboard() {
   const [pvos, setPvos] = useState<PVOCard[]>([]);
   const [grants, setGrants] = useState<GrantData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pledgeModal, setPledgeModal] = useState<{ pvoId: number; title: string } | null>(null);
+  const [pledgeModal, setPledgeModal] = useState<{ pvoId: number; title: string; remaining: string } | null>(null);
   const currency = getCurrency();
 
   const loadAll = useCallback(async () => {
@@ -58,8 +58,16 @@ export function DonorDashboard() {
               id: r.result.id, title: r.result.title, department: r.result.department,
               municipality: r.result.municipality, totalBudget: String(r.result.total_budget),
               status: String((r.result.status as any)?.tag || r.result.status || "Proposed"),
+              remaining: "0",
             });
           }
+        } catch {}
+      }
+      // Fetch remaining funding for each PVO
+      for (const pvo of list) {
+        try {
+          const rem = await gc.get_pvo_remaining({ pvo_id: pvo.id });
+          pvo.remaining = String(rem.result || 0);
         } catch {}
       }
       setPvos(list);
@@ -113,9 +121,10 @@ export function DonorDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {pvos.map(pvo => {
             const pledges = getPvoPledges(pvo.id);
-            const pledged = pledges.reduce((s, g) => s + g.amount, 0);
+            const remaining = Number(pvo.remaining);
+            const fullyFunded = remaining <= 0;
             return (
-              <div key={pvo.id} className="card p-5 hover:shadow-md transition">
+              <div key={pvo.id} className={`card p-5 hover:shadow-md transition ${fullyFunded ? "opacity-60" : ""}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-slate-900">{pvo.title}</h3>
@@ -124,14 +133,16 @@ export function DonorDashboard() {
                   <span className={`badge text-xs ${pvo.status === "Completed" ? "badge-green" : pvo.status === "Proposed" ? "badge-blue" : "badge-purple"}`}>{pvo.status}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Budget: {currency}{Number(pvo.totalBudget).toLocaleString()}</span>
-                  {pledges.length > 0 && (
-                    <span className="text-xs text-brand-600 font-medium">{pledges.length} pledge{pledges.length > 1 ? "s" : ""} · ${pledged.toLocaleString()}</span>
-                  )}
+                  <span className="text-slate-500">Budget: {currency}{formatBudget(pvo.totalBudget)}</span>
+                  <span className={`text-xs font-medium ${fullyFunded ? "text-emerald-600" : "text-brand-600"}`}>
+                    {fullyFunded ? "✅ Fully Funded" : `Needed: ${currency}${formatBudget(pvo.remaining)}`}
+                  </span>
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => setPledgeModal({ pvoId: pvo.id, title: pvo.title })}
-                    className="btn-primary text-xs px-3 py-1.5">🤝 Pledge Funds</button>
+                <div className="mt-3 flex gap-2 items-center">
+                  {!fullyFunded && (
+                    <button onClick={() => setPledgeModal({ pvoId: pvo.id, title: pvo.title, remaining: pvo.remaining })}
+                      className="btn-primary text-xs px-3 py-1.5">🤝 Pledge Exact Amount</button>
+                  )}
                   {pledges.map(g => (
                     <span key={g.id} className="text-[10px] text-slate-400 font-mono">{g.currency} {g.amount.toLocaleString()}</span>
                   ))}
@@ -166,17 +177,18 @@ export function DonorDashboard() {
 
       <Modal open={!!pledgeModal} onClose={() => setPledgeModal(null)} title={`Pledge to: ${pledgeModal?.title || ""}`}>
         {pledgeModal && (
-          <PledgeForm address={address!} pvoId={pledgeModal.pvoId} onDone={() => { loadAll(); setPledgeModal(null); }} />
+          <PledgeForm address={address!} pvoId={pledgeModal.pvoId} remaining={pledgeModal.remaining} onDone={() => { loadAll(); setPledgeModal(null); }} />
         )}
       </Modal>
     </div>
   );
 }
 
-function PledgeForm({ address, pvoId, onDone }: { address: string; pvoId: number; onDone: () => void }) {
-  const [amount, setAmount] = useState("");
+function PledgeForm({ address, pvoId, remaining, onDone }: { address: string; pvoId: number; remaining: string; onDone: () => void }) {
+  const requiredAmount = Number(remaining);
+  const [amount, setAmount] = useState(String(requiredAmount));
   const [org, setOrg] = useState("World Bank");
-  const [fiat, setFiat] = useState<typeof CURRENCIES[number]>("USD");
+  const cur = getCurrency();
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
 
@@ -193,7 +205,7 @@ function PledgeForm({ address, pvoId, onDone }: { address: string; pvoId: number
       const contract = new Contract(CONTRACT_IDS.grant_commitment);
       const op = contract.call("commit_grant",
         new Address(address).toScVal(), xdr.ScVal.scvU32(pvoId), new ScInt(amt).toI128(),
-        xdr.ScVal.scvString(org), xdr.ScVal.scvString(fiat),
+        xdr.ScVal.scvString(org), xdr.ScVal.scvString("pPHP"),
       );
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       setTxState("signing");
@@ -203,7 +215,7 @@ function PledgeForm({ address, pvoId, onDone }: { address: string; pvoId: number
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg(`Pledged ${fiat} ${amount}!`);
+      setTxState("done"); setTxMsg(`Pledged ${cur}${formatBudget(amount)}!`);
       setTimeout(onDone, 2000);
     } catch (err: any) {
       setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed");
@@ -218,33 +230,25 @@ function PledgeForm({ address, pvoId, onDone }: { address: string; pvoId: number
         </div>
       )}
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Organization</label>
-            <select value={org} onChange={e => setOrg(e.target.value)} className="select" required>
-              <option>World Bank</option><option>Asian Development Bank</option><option>JICA</option>
-              <option>USAID</option><option>European Union</option><option>UNDP</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-            <select value={fiat} onChange={e => setFiat(e.target.value as any)} className="select" required>
-              {CURRENCIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Organization</label>
+          <select value={org} onChange={e => setOrg(e.target.value)} className="select" required>
+            <option>World Bank</option><option>Asian Development Bank</option><option>JICA</option>
+            <option>USAID</option><option>European Union</option><option>UNDP</option>
+          </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Amount ({fiat})</label>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input" placeholder="e.g. 5000000" required />
-          <p className="text-xs text-slate-400 mt-1">Pledge in {fiat}. Admin converts to pPHP after wire confirmation.</p>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Exact Amount Required (pesos)</label>
+          <input type="number" value={amount} readOnly className="input bg-slate-50 font-mono" />
+          <p className="text-xs text-slate-400 mt-1">{cur}{formatBudget(amount)} — this is the full remaining budget for this PVO.</p>
         </div>
-        <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
-          <p className="text-sm text-brand-700">
-            <strong>How it works:</strong> Your pledge is recorded on-chain. The admin converts your {fiat} pledge to pPHP and mints it to the Funding Agency for escrow.
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-sm text-amber-700">
+            <strong>Exact pledge required:</strong> This PVO needs exactly {cur}{formatBudget(remaining)} more. Partial pledges are rejected on-chain.
           </p>
         </div>
         <button type="submit" disabled={txState !== "idle" && txState !== "error"} className="w-full py-3 btn-primary">
-          {txState === "idle" || txState === "error" ? `Pledge ${fiat} ${amount || "..."} On-Chain` :
+          {txState === "idle" || txState === "error" ? `Pledge ${cur}${formatBudget(amount)} On-Chain` :
            txState === "preparing" ? "Preparing..." : txState === "signing" ? "Check Freighter..." : "Sending..."}
         </button>
       </form>

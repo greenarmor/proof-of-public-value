@@ -14,6 +14,8 @@ The root cause: **public money is released based on signatures and paperwork, no
 
 ➡️ **Read: [Why PoPV idea Exists - The Philippine Corruption Crisis](philippines-corruption.md)**
 
+➡️ **Reference: [Appendix A — Glossary of Terms](appendices.md)** — Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC, and more.
+
 ## What PoPV Solves
 
 Proof of Public Value enforces one rule: **No Proof. No Payment.**

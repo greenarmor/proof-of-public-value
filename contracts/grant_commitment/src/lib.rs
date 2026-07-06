@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, token, Address, Env, Map, String, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, IntoVal, Map, String, Symbol, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -47,12 +47,23 @@ const COUNTER: Symbol = symbol_short!("COUNTER");
 const GRANTS: Symbol = symbol_short!("GRANTS");
 const PVO_INDEX: Symbol = symbol_short!("PVO_IDX");
 const DONOR_INDEX: Symbol = symbol_short!("DONOR_IDX");
+const PVO_CORE: Symbol = symbol_short!("PVOCORE");
+const INITIALIZED: Symbol = symbol_short!("INIT");
 
 #[contract]
 pub struct GrantCommitment;
 
 #[contractimpl]
 impl GrantCommitment {
+    pub fn initialize(env: Env, pvo_core: Address) {
+        let storage = env.storage().persistent();
+        if storage.has(&INITIALIZED) {
+            panic!("already initialized");
+        }
+        storage.set(&PVO_CORE, &pvo_core);
+        storage.set(&INITIALIZED, &true);
+    }
+
     pub fn commit_grant(
         env: Env,
         donor: Address,
@@ -67,8 +78,11 @@ impl GrantCommitment {
             panic!("amount must be positive");
         }
 
-        // Donor commits pledge in real currency (USD, EUR, etc.)
-        // Admin later converts to pPHP and mints to funding agency
+        // Enforce exact remaining amount: pledge must equal (budget - already committed)
+        let remaining = Self::get_pvo_remaining(env.clone(), pvo_id);
+        if amount != remaining {
+            panic!("pledge must exactly match the remaining PVO budget");
+        }
 
         let id = Self::next_id(&env);
         let now = env.ledger().timestamp();
@@ -117,6 +131,26 @@ impl GrantCommitment {
         storage.set(&GRANTS, &grants);
 
         GrantStatusUpdatedEvent { id: grant_id, old_status, new_status }.publish(&env);
+    }
+
+    pub fn admin_mark_disbursed(env: Env, caller: Address, grant_id: u32) {
+        caller.require_auth();
+
+        let storage = env.storage().persistent();
+        let mut grants: Map<u32, Grant> = storage.get(&GRANTS).unwrap_or_else(|| Map::new(&env));
+        let mut grant = grants.get(grant_id).expect("grant not found");
+
+        if grant.status != GrantStatus::Committed {
+            panic!("grant must be in Committed status to disburse");
+        }
+
+        let old_status = grant.status.clone();
+        grant.status = GrantStatus::Disbursed;
+        grant.updated_at = env.ledger().timestamp();
+        grants.set(grant_id, grant);
+        storage.set(&GRANTS, &grants);
+
+        GrantStatusUpdatedEvent { id: grant_id, old_status, new_status: GrantStatus::Disbursed }.publish(&env);
     }
 
     pub fn get_grant(env: Env, grant_id: u32) -> Option<Grant> {
@@ -183,6 +217,39 @@ impl GrantCommitment {
 
     pub fn get_grant_count(env: Env) -> u32 {
         env.storage().persistent().get(&COUNTER).unwrap_or(0)
+    }
+
+    pub fn get_committed_total(env: Env, pvo_id: u32) -> i128 {
+        let storage = env.storage().persistent();
+        let pvo_index: Map<u32, Vec<u32>> = storage.get(&PVO_INDEX).unwrap_or_else(|| Map::new(&env));
+        let grant_ids = pvo_index.get(pvo_id).unwrap_or_else(|| Vec::new(&env));
+        let grants: Map<u32, Grant> = storage.get(&GRANTS).unwrap_or_else(|| Map::new(&env));
+
+        let mut total: i128 = 0;
+        let mut i = 0u32;
+        while i < grant_ids.len() {
+            if let Some(id) = grant_ids.get(i) {
+                if let Some(g) = grants.get(id) {
+                    if g.status != GrantStatus::Cancelled {
+                        total += g.amount;
+                    }
+                }
+            }
+            i += 1;
+        }
+        total
+    }
+
+    pub fn get_pvo_remaining(env: Env, pvo_id: u32) -> i128 {
+        let storage = env.storage().persistent();
+        let pvo_core_addr: Address = storage.get(&PVO_CORE).expect("not initialized");
+        let budget: i128 = env.invoke_contract(
+            &pvo_core_addr,
+            &Symbol::new(&env, "get_pvo_budget"),
+            soroban_sdk::vec![&env, pvo_id.into_val(&env)],
+        );
+        let committed = Self::get_committed_total(env.clone(), pvo_id);
+        budget - committed
     }
 
     fn next_id(env: &Env) -> u32 {

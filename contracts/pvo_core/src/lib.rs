@@ -463,6 +463,13 @@ impl PVOCore {
         pvos.get(pvo_id)
     }
 
+    pub fn get_pvo_budget(env: Env, pvo_id: u32) -> i128 {
+        let storage = env.storage().persistent();
+        let pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
+        let pvo = pvos.get(pvo_id).expect("PVO not found");
+        pvo.total_budget
+    }
+
     pub fn get_milestone(env: Env, milestone_id: u32) -> Option<Milestone> {
         let storage = env.storage().persistent();
         let milestones: Map<u32, Milestone> = storage.get(&MILESTONES).unwrap_or_else(|| Map::new(&env));

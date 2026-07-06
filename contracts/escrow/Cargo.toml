@@ -19,3 +19,4 @@ soroban-sdk = { workspace = true, features = ["testutils"] }
 pphp-token = { path = "../token" }
 compliance_engine = { workspace = true }
 community_oracle = { workspace = true }
+pvo_core = { workspace = true }

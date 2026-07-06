@@ -34,6 +34,7 @@ fn create_test_pvo(env: &Env, client: &PVOCoreClient) -> u32 {
         &make_string(env, "Quezon City"),
         &10_000_000,
         &make_string(env, "National Budget 2026"),
+        &0u64,
     )
 }
 
@@ -264,14 +265,14 @@ fn test_get_pv_os_by_contractor() {
         &creator, &make_string(&env, "Project A"), &make_string(&env, ""),
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "QC"),
-        &5_000_000, &make_string(&env, "Budget"),
+        &5_000_000, &make_string(&env, "Budget"), &0u64,
     );
 
     client.create_pvo(
         &creator, &make_string(&env, "Project B"), &make_string(&env, ""),
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "Manila"),
-        &3_000_000, &make_string(&env, "Budget"),
+        &3_000_000, &make_string(&env, "Budget"), &0u64,
     );
 
     let other_contractor = Address::generate(&env);
@@ -279,7 +280,7 @@ fn test_get_pv_os_by_contractor() {
         &creator, &make_string(&env, "Project C"), &make_string(&env, ""),
         &agency, &other_contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "Cebu"),
-        &2_000_000, &make_string(&env, "Budget"),
+        &2_000_000, &make_string(&env, "Budget"), &0u64,
     );
 
     let pvos = client.get_pv_os_by_contractor(&contractor);
@@ -357,7 +358,7 @@ fn test_max_budget_pvo() {
         &make_string(&env, "National-scale project"),
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "Manila"),
-        &max_budget, &make_string(&env, "Sovereign Fund"),
+        &max_budget, &make_string(&env, "Sovereign Fund"), &0u64,
     );
 
     let pvo = client.get_pvo(&id).unwrap();
@@ -398,7 +399,7 @@ fn test_long_strings() {
         &creator, &long_title, &long_desc,
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "QC"),
-        &5_000_000, &make_string(&env, "Budget 2026"),
+        &5_000_000, &make_string(&env, "Budget 2026"), &0u64,
     );
 
     let pvo = client.get_pvo(&id).unwrap();

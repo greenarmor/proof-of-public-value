@@ -674,6 +674,7 @@ dependencies = [
  "community_oracle",
  "compliance_engine",
  "pphp-token",
+ "pvo_core",
  "soroban-sdk",
 ]
 
@@ -763,7 +764,7 @@ dependencies = [
 name = "grant_commitment"
 version = "0.1.0"
 dependencies = [
- "pphp-token",
+ "pvo_core",
  "soroban-sdk",
 ]
 

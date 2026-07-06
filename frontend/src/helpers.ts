@@ -1,5 +1,5 @@
 import { rpc } from "@stellar/stellar-sdk";
-import { RPC_URL, CONTRACT_IDS } from "./config";
+import { RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "./config";
 
 export function getServer(): rpc.Server {
   return new rpc.Server(RPC_URL);
@@ -47,9 +47,10 @@ export function isBlockedWallet(addr: string): boolean {
 }
 
 export function formatBudget(budget: string | number | bigint): string {
-  // PVO budgets are stored in centavos (2 decimals). Divide by 100 for pesos.
+  // All on-chain amounts are in SAC atomic units (pesos × 10^7).
+  // Divide by PPHP_SCALE to display as pesos.
   const str = typeof budget === "string" ? budget.replace(/,/g, "") : String(budget);
-  const num = Number(str) / 100;
+  const num = Number(str) / PPHP_SCALE;
   if (isNaN(num)) return "0";
   if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;

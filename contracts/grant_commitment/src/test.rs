@@ -2,200 +2,243 @@
 
 use crate::{GrantCommitment, GrantCommitmentClient, GrantStatus};
 use soroban_sdk::testutils::Address as AddressTestUtils;
-use soroban_sdk::{Address, Env, String};
+use soroban_sdk::{Address, Env, String, Symbol};
 
-fn setup_token<'a>(env: &'a Env, admin: &Address) -> (Address, pphp_token::PphpTokenClient<'a>) {
-    let token_id = env.register(pphp_token::PphpToken, ());
-    let token_client = pphp_token::PphpTokenClient::new(env, &token_id);
-    token_client.initialize(admin, &2, &String::from_str(env, "pPHP"), &String::from_str(env, "pPHP"));
-    (token_id, token_client)
+fn register_pvo_core(env: &Env) -> Address {
+    let pvo_id = env.register(pvo_core::PVOCore, ());
+    let client = pvo_core::PVOCoreClient::new(env, &pvo_id);
+    client.initialize();
+
+    let creator = Address::generate(env);
+    let fa = Address::generate(env);
+    let ctr = Address::generate(env);
+    let pm = Address::generate(env);
+    client.create_pvo(
+        &creator,
+        &String::from_str(env, "Test PVO"),
+        &String::from_str(env, "desc"),
+        &fa, &ctr, &pm,
+        &String::from_str(env, "DPWH"),
+        &String::from_str(env, "Manila"),
+        &1_000_000_000i128,
+        &String::from_str(env, "National Budget"),
+        &0u64,
+    );
+    pvo_id
 }
 
 fn setup() -> (Env, GrantCommitmentClient<'static>) {
     let env = Env::default();
     env.mock_all_auths();
+    let pvo_core_id = register_pvo_core(&env);
     let contract_id = env.register(GrantCommitment, ());
     let client = GrantCommitmentClient::new(&env, &contract_id);
+    client.initialize(&pvo_core_id);
     (env, client)
 }
 
-fn commit_with_token(
+fn setup_pvo_with_budget(budget: i128) -> (Env, GrantCommitmentClient<'static>, pvo_core::PVOCoreClient<'static>) {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let pvo_core_id = env.register(pvo_core::PVOCore, ());
+    let pvo_client = pvo_core::PVOCoreClient::new(&env, &pvo_core_id);
+    pvo_client.initialize();
+
+    let creator = Address::generate(&env);
+    let fa = Address::generate(&env);
+    let ctr = Address::generate(&env);
+    let pm = Address::generate(&env);
+    pvo_client.create_pvo(
+        &creator,
+        &String::from_str(&env, "Test"),
+        &String::from_str(&env, "desc"),
+        &fa, &ctr, &pm,
+        &String::from_str(&env, "DPWH"),
+        &String::from_str(&env, "Manila"),
+        &budget,
+        &String::from_str(&env, "Fund"),
+        &0u64,
+    );
+
+    let contract_id = env.register(GrantCommitment, ());
+    let client = GrantCommitmentClient::new(&env, &contract_id);
+    client.initialize(&pvo_core_id);
+    (env, client, pvo_client)
+}
+
+fn commit_exact(
     env: &Env,
     client: &GrantCommitmentClient,
-    token_client: &pphp_token::PphpTokenClient,
-    token_id: &Address,
     donor: &Address,
-    funding_agency: &Address,
     pvo_id: u32,
     amount: i128,
     org_name: &str,
+    currency: &str,
 ) -> u32 {
-    token_client.mint(donor, &amount);
-    let id = client.commit_grant(
+    client.commit_grant(
         donor, &pvo_id, &amount,
         &String::from_str(env, org_name),
-        funding_agency, token_id,
-    );
-    id
+        &String::from_str(env, currency),
+    )
 }
 
 #[test]
-fn test_commit_grant_basic() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
+fn test_commit_exact_amount() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
 
-    let id = commit_with_token(&env, &client, &token_client, &token_id, &donor, &fa, 1, 5_000_000_00, "World Bank");
+    // Must pledge exactly the full budget (no prior pledges)
+    let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
     assert_eq!(id, 1);
-}
-
-#[test]
-fn test_commit_transfers_tokens() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    let amount = 5_000_000_00i128;
-    commit_with_token(&env, &client, &token_client, &token_id, &donor, &fa, 1, amount, "World Bank");
-
-    // Donor should have 0, funding agency should have the full amount
-    assert_eq!(token_client.balance(&donor), 0);
-    assert_eq!(token_client.balance(&fa), amount);
-}
-
-#[test]
-fn test_commit_grant_stores_correctly() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    let id = commit_with_token(&env, &client, &token_client, &token_id, &donor, &fa, 3, 1_200_000_00, "JICA");
 
     let grant = client.get_grant(&id).unwrap();
-    assert_eq!(grant.id, 1);
-    assert_eq!(grant.pvo_id, 3);
-    assert_eq!(grant.donor, donor);
-    assert_eq!(grant.amount, 1_200_000_00);
-    assert_eq!(grant.org_name, String::from_str(&env, "JICA"));
+    assert_eq!(grant.amount, 1_000_000_000);
     assert_eq!(grant.status, GrantStatus::Committed);
 }
 
 #[test]
-fn test_commit_multiple_grants() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    let id1 = commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    let id2 = commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 2, 300_000_00, "World Bank");
-    let id3 = commit_with_token(&env, &client, &token_client, &token_id, &donor2, &fa, 1, 800_000_00, "USAID");
-
-    assert_eq!(id1, 1);
-    assert_eq!(id2, 2);
-    assert_eq!(id3, 3);
-    assert_eq!(client.get_grant_count(), 3);
-    // FA got all three amounts
-    assert_eq!(token_client.balance(&fa), 1_600_000_00);
-}
-
-#[test]
-fn test_get_grants_by_pvo() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor2, &fa, 1, 300_000_00, "USAID");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 2, 700_000_00, "World Bank");
-
-    assert_eq!(client.get_grants_by_pvo(&1).len(), 2);
-    assert_eq!(client.get_grants_by_pvo(&2).len(), 1);
-    assert_eq!(client.get_grants_by_pvo(&3).len(), 0);
-}
-
-#[test]
-fn test_get_grants_by_donor() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 2, 300_000_00, "World Bank");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor2, &fa, 1, 800_000_00, "USAID");
-
-    assert_eq!(client.get_grants_by_donor(&donor1).len(), 2);
-    assert_eq!(client.get_grants_by_donor(&donor2).len(), 1);
-}
-
-#[test]
-fn test_update_status() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
+#[should_panic(expected = "pledge must exactly match")]
+fn test_commit_wrong_amount_fails() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
 
-    let id = commit_with_token(&env, &client, &token_client, &token_id, &donor, &fa, 1, 500_000_00, "World Bank");
+    // Try to pledge less than the full budget
+    commit_exact(&env, &client, &donor, 1, 500_000_000, "World Bank", "USD");
+}
 
-    client.update_status(&donor, &id, &GrantStatus::Disbursed);
+#[test]
+#[should_panic(expected = "pledge must exactly match")]
+fn test_commit_more_than_budget_fails() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+
+    commit_exact(&env, &client, &donor, 1, 2_000_000_000, "World Bank", "USD");
+}
+
+#[test]
+fn test_pvo_fully_funded_blocks_new_pledge() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+
+    // First donor pledges exact full budget
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+
+    // Remaining is 0, so any new pledge fails
+    let donor2 = Address::generate(&env);
+    let result = client.try_commit_grant(
+        &donor2, &1u32, &0i128,
+        &String::from_str(&env, "USAID"),
+        &String::from_str(&env, "EUR"),
+    );
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_get_pvo_remaining() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+
+    // Initially, remaining = full budget
+    assert_eq!(client.get_pvo_remaining(&1u32), 1_000_000_000);
+
+    let donor = Address::generate(&env);
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+
+    // After full pledge, remaining = 0
+    assert_eq!(client.get_pvo_remaining(&1u32), 0);
+}
+
+#[test]
+fn test_get_committed_total() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+
+    assert_eq!(client.get_committed_total(&1u32), 0);
+
+    let donor = Address::generate(&env);
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+
+    assert_eq!(client.get_committed_total(&1u32), 1_000_000_000);
+}
+
+#[test]
+fn test_cancelled_grant_excluded_from_committed() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+
+    // Pledge exact amount, then cancel
+    let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+    assert_eq!(client.get_committed_total(&1u32), 1_000_000_000);
+
+    client.update_status(&donor, &id, &GrantStatus::Cancelled);
+
+    // Cancelled grants don't count toward committed total
+    assert_eq!(client.get_committed_total(&1u32), 0);
+    assert_eq!(client.get_pvo_remaining(&1u32), 1_000_000_000);
+}
+
+#[test]
+fn test_admin_mark_disbursed() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+    let admin = Address::generate(&env);
+
+    let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+
+    client.admin_mark_disbursed(&admin, &id);
     let grant = client.get_grant(&id).unwrap();
     assert_eq!(grant.status, GrantStatus::Disbursed);
 }
 
 #[test]
-#[should_panic(expected = "only the original donor")]
-fn test_update_status_wrong_donor() {
-    let (env, client) = setup();
+#[should_panic(expected = "grant must be in Committed status")]
+fn test_admin_mark_disbursed_already_disbursed() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
     let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
 
-    let id = commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    client.update_status(&donor2, &id, &GrantStatus::Disbursed);
+    let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+    client.admin_mark_disbursed(&admin, &id);
+    client.admin_mark_disbursed(&admin, &id);
 }
 
 #[test]
 #[should_panic(expected = "amount must be positive")]
 fn test_commit_zero_amount() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, _) = setup_token(&env, &admin);
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
-    client.commit_grant(&donor, &1, &0, &String::from_str(&env, "World Bank"), &fa, &token_id);
+    client.commit_grant(
+        &donor, &1, &0,
+        &String::from_str(&env, "World Bank"),
+        &String::from_str(&env, "USD"),
+    );
+}
+
+#[test]
+fn test_get_grants_by_pvo() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+    assert_eq!(client.get_grants_by_pvo(&1).len(), 1);
+    assert_eq!(client.get_grants_by_pvo(&2).len(), 0);
+}
+
+#[test]
+fn test_get_grants_by_donor() {
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
+
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+    assert_eq!(client.get_grants_by_donor(&donor).len(), 1);
 }
 
 #[test]
 fn test_get_all_grants() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
+    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let donor = Address::generate(&env);
 
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor2, &fa, 2, 300_000_00, "USAID");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 3, 700_000_00, "World Bank");
-
-    assert_eq!(client.get_all_grants().len(), 3);
+    commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
+    assert_eq!(client.get_all_grants().len(), 1);
 }
 
 #[test]
@@ -208,48 +251,4 @@ fn test_get_nonexistent_grant() {
 fn test_grant_count_starts_zero() {
     let (_env, client) = setup();
     assert_eq!(client.get_grant_count(), 0);
-}
-
-#[test]
-fn test_status_progression() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    let id = commit_with_token(&env, &client, &token_client, &token_id, &donor, &fa, 1, 500_000_00, "JICA");
-
-    client.update_status(&donor, &id, &GrantStatus::Disbursed);
-    assert_eq!(client.get_grant(&id).unwrap().status, GrantStatus::Disbursed);
-
-    client.update_status(&donor, &id, &GrantStatus::Completed);
-    assert_eq!(client.get_grant(&id).unwrap().status, GrantStatus::Completed);
-
-    client.update_status(&donor, &id, &GrantStatus::Cancelled);
-    assert_eq!(client.get_grant(&id).unwrap().status, GrantStatus::Cancelled);
-}
-
-#[test]
-fn test_donor_isolation() {
-    let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_id, token_client) = setup_token(&env, &admin);
-    let donor1 = Address::generate(&env);
-    let donor2 = Address::generate(&env);
-    let fa = Address::generate(&env);
-
-    commit_with_token(&env, &client, &token_client, &token_id, &donor1, &fa, 1, 500_000_00, "World Bank");
-    commit_with_token(&env, &client, &token_client, &token_id, &donor2, &fa, 1, 800_000_00, "USAID");
-
-    let pvo_grants = client.get_grants_by_pvo(&1);
-    assert_eq!(pvo_grants.len(), 2);
-
-    let d1_grants = client.get_grants_by_donor(&donor1);
-    assert_eq!(d1_grants.len(), 1);
-    assert_eq!(d1_grants.get(0).unwrap().org_name, String::from_str(&env, "World Bank"));
-
-    let d2_grants = client.get_grants_by_donor(&donor2);
-    assert_eq!(d2_grants.len(), 1);
-    assert_eq!(d2_grants.get(0).unwrap().org_name, String::from_str(&env, "USAID"));
 }

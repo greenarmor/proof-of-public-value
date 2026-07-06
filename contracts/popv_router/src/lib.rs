@@ -19,6 +19,7 @@ pub struct ContractAddresses {
     pub reputation: Address,
     pub audit_trail: Address,
     pub value_score: Address,
+    pub pphp_token: Address,
 }
 
 #[contracttype]
@@ -89,6 +90,7 @@ impl PoPVRouter {
         required_evidence: Vec<EvidenceType>,
         community_required: u32,
         escrow_community_required: u32,
+        deadline: u64,
     ) -> (u32, u32, u32) {
         creator.require_auth();
 
@@ -106,6 +108,7 @@ impl PoPVRouter {
             &municipality,
             &total_budget,
             &fund_source,
+            &deadline,
         );
 
         let milestone_id = pvo_client.create_milestone(
@@ -125,6 +128,7 @@ impl PoPVRouter {
             &pvo_id,
             &milestone_id,
             &milestone_budget,
+            &addrs.pphp_token,
             &escrow_community_required,
         );
 
