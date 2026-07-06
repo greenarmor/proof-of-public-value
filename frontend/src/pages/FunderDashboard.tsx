@@ -578,7 +578,7 @@ function DonorCommitmentsTab() {
                     <span className="text-xs text-slate-400">PVO #{Number(g.pvo_id)}</span>
                   </div>
                   <h3 className="font-semibold text-slate-900">Grant #{Number(g.id)}</h3>
-                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()} <span className="text-xs text-slate-400">≈ {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} pPHP</span>
+                  <p className="text-sm text-slate-500">{g.currency} {Number(g.amount).toLocaleString()} <span className="text-xs text-slate-400">≈ {currency}{(Math.round(Number(g.amount)*(rates[g.currency]||56))).toLocaleString()} pPHP</span></p>
                   <p className="text-xs text-slate-400 mt-1">Donor: <WalletAddress addr={g.donor} chars={6}/></p>
                 </div>
                 <span className={`badge ${colorClass}`}>{status}</span>
