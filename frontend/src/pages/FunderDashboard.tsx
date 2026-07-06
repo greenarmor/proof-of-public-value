@@ -216,6 +216,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
 }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
   const [pphpBalance, setPphpBalance] = useState<bigint | null>(null);
 
   const isFunder = escrow.funder === address;
@@ -404,7 +405,32 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
   const [communityRequired, setCommunityRequired] = useState("1");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 56, EUR: 61, JPY: 0.37, GBP: 72 });
+  const [grantsF, setGrantsF] = useState<any[]>([]);
+  const [pvBudgets, setPvBudgets] = useState<Record<number,number>>({});
   const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client: GC } = await import("../contracts/grant_commitment/src");
+        const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        setGrantsF(((await gc.get_all_grants()).result || []));
+        const { Client: PC } = await import("../contracts/pvo_core/src");
+        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await pc.get_pvo_count();
+        const b: Record<number,number> = {};
+        for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) b[r.result.id] = Number(r.result.total_budget); } catch {} }
+        setPvBudgets(b);
+      } catch {} (async()=>{try{const r=await fetch("https://open.er-api.com/v6/latest/PHP");const d=await r.json();if(d.rates)setRates({USD:+(1/d.rates.USD).toFixed(2),EUR:+(1/d.rates.EUR).toFixed(2),JPY:+(1/d.rates.JPY).toFixed(4),GBP:+(1/d.rates.GBP).toFixed(2)})}catch{}})();
+      } catch {}
+    })();
+  }, []);
+
+  const pvoGrants = grantsF.filter((g: any) => Number(g.pvo_id) === Number(pvoId));
+  const pledged = Math.round(pvoGrants.reduce((s: number, g: any) => s + Number(g.amount)*(rates[g.currency]||56), 0));
+  const budget = pvBudgets[Number(pvoId)] || 0;
+  const pct = budget > 0 ? Math.min(100, Math.round((pledged / budget) * 100)) : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -477,6 +503,20 @@ function CreateEscrowForm({ address, onCreated }: { address: string; onCreated: 
               <input type="number" value={milestoneId} onChange={e => setMilestoneId(e.target.value)} className="input" required />
             </div>
           </div>
+          {pvoId && budget > 0 && (
+            <div className="bg-slate-50 rounded-xl p-3 text-xs">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-slate-500">Pledged: {currency}{pledged.toLocaleString()} / {currency}{budget.toLocaleString()}</span>
+                <span className={`font-semibold ${pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-red-600"}`}>{pct}%</span>
+              </div>
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${pct >= 80 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: pct + "%" }} />
+              </div>
+              {Number(amount) > 0 && Number(amount) > pledged && (
+                <p className="text-red-600 mt-1">⚠️ Escrow amount exceeds total pledged ({currency}{Number(amount).toLocaleString()} > {currency}{pledged.toLocaleString()})</p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
