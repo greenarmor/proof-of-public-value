@@ -1,4 +1,4 @@
-# PoPV AI Oracle
+# PoPV AI Oracle (TypeScript)
 
 Standalone fraud detection engine for Proof of Public Value.
 
@@ -9,10 +9,10 @@ Standalone fraud detection engine for Proof of Public Value.
 export AI_AUDITOR_SECRET="S..."
 
 # Manual run (process all pending, exit)
-node ai-oracle/service.js --once
+npx tsx ai-oracle/service.ts --once
 
 # Continuous mode (poll every 60s)
-node ai-oracle/service.js
+npx tsx ai-oracle/service.ts
 ```
 
 ## How It Works
@@ -37,16 +37,24 @@ node ai-oracle/service.js
 
 | Method | Command |
 |--------|---------|
-| Manual | `node ai-oracle/service.js --once` |
-| Continuous | `node ai-oracle/service.js` |
-| Cron | `*/5 * * * * cd /path/to/popv && node ai-oracle/service.js --once` |
+| Manual | `npx tsx ai-oracle/service.ts --once` |
+| Continuous | `npx tsx ai-oracle/service.ts` |
+| Cron | `*/5 * * * * cd /path/to/popv && npx tsx ai-oracle/service.ts --once` |
 | Vercel | `frontend/api/ai-oracle.js` (serverless + Vercel Cron) |
 
 ## Requirements
 
 - Node.js v18+
 - Stellar CLI (`stellar`) in PATH
-- AI Auditor secret key
+- AI Auditor secret key (exported as env var or in `.dev-logs/newrolecreden.md`)
 - Internet (testnet RPC)
 
 No Rust, no contracts, no local blockchain, no external APIs.
+
+## Security
+
+The secret key is NEVER hardcoded. It reads from:
+1. `AI_AUDITOR_SECRET` environment variable (preferred — in-memory only)
+2. `.dev-logs/newrolecreden.md` (gitignored, fallback)
+
+Never commit `.env` files. Never paste the key in code. For production, use Vercel environment variables or a secrets manager.

@@ -12,6 +12,7 @@
     "deploy": "./scripts/deploy.sh"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
     "concurrently": "^9.0.0"
   }
 }
