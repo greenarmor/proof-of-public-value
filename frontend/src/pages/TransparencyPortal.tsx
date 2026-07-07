@@ -44,6 +44,8 @@ export function TransparencyPortal() {
   const [escrows, setEscrows] = useState<any[]>([]);
   const [escrowsLoading, setEscrowsLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 15;
   const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number; released: number }>>({});
 
   const loadPVOs = useCallback(async () => {
@@ -178,6 +180,11 @@ export function TransparencyPortal() {
   }, [selected]);
 
   const filtered = filter ? pvos.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.department.toLowerCase().includes(filter.toLowerCase()) || p.municipality.toLowerCase().includes(filter.toLowerCase())) : pvos;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => { setPage(1); }, [filter]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[80vh]">
@@ -186,28 +193,34 @@ export function TransparencyPortal() {
   );
 
   return (
-    <div>
-      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div className="lg:h-auto h-[calc(100vh-4rem)] flex flex-col overflow-hidden lg:overflow-visible">
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 flex-shrink-0">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Public Transparency Portal</h1>
           <p className="text-slate-500 text-sm">{pvos.length} project{pvos.length!==1?"s":""} tracked on-chain · No wallet required</p>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Search — hidden on mobile, shown on desktop */}
+        <div className="hidden md:flex items-center gap-2">
           <input type="text" placeholder="Filter by name, dept, location..." value={filter} onChange={e=>setFilter(e.target.value)} className="input max-w-[260px] text-sm" />
           {filter&&<button onClick={()=>setFilter("")} className="text-xs text-brand-600 hover:underline">Clear</button>}
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Map — always visible on left */}
-        <div className="lg:w-[45%] lg:sticky lg:top-20 lg:self-start">
-          <Suspense fallback={<div className="skeleton-shimmer h-[70vh] rounded-xl"/>}>
+      {/* Mobile: sticky map + scrollable list. Desktop: side-by-side */}
+      <div className="flex-1 lg:flex-none flex flex-col lg:flex-row lg:gap-4 min-h-0">
+        <div className="lg:w-[45%] lg:sticky lg:top-20 lg:self-start flex-shrink-0 h-[40vh] lg:h-[70vh]">
+          <Suspense fallback={<div className="skeleton-shimmer h-full rounded-xl"/>}>
             <ProjectMap pvos={filtered} selectedPvoId={selected?.id} />
           </Suspense>
         </div>
 
-        {/* Right panel: grid or detail */}
-        <div className="flex-1 min-w-0">
+        {/* Right panel: grid or detail — scrollable on mobile */}
+        <div className="flex-1 min-w-0 overflow-y-auto lg:overflow-visible">
+          {/* Mobile search — sticky below map */}
+          <div className="md:hidden sticky top-0 z-10 bg-white pb-2">
+            <input type="text" placeholder="Filter by name, dept, location..." value={filter} onChange={e=>setFilter(e.target.value)} className="input w-full text-sm" />
+            {filter&&<button onClick={()=>setFilter("")} className="text-xs text-brand-600 hover:underline mt-1">Clear filter</button>}
+          </div>
           {selected ? (
             /* PVO Detail — expanded in right panel */
             <div>
@@ -321,11 +334,12 @@ export function TransparencyPortal() {
             </div>
           ) : (
             /* Card grid */
-            filtered.length===0?(
-              <div className="flex flex-col items-center justify-center py-20 text-center"><div className="text-5xl mb-4">📭</div><p className="text-lg text-slate-400">{filter?"No projects match":"No projects on-chain yet"}</p></div>
-            ):(
+            paginated.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center"><div className="text-5xl mb-4">📭</div><p className="text-lg text-slate-400">{filter ? "No projects match" : "No projects on-chain yet"}</p></div>
+            ) : (
+              <>
               <div className="grid gap-3 sm:grid-cols-1 xl:grid-cols-2">
-                {filtered.map(pvo=>(
+                {paginated.map(pvo=>(
                   <button key={pvo.id} onClick={()=>setSelected(pvo)} className="card-interactive text-left p-4 group">
                     <div className="flex items-start justify-between mb-2">
                       <span className="font-mono text-[11px] text-slate-400">#{pvo.id}</span>
@@ -385,6 +399,30 @@ export function TransparencyPortal() {
                   </button>
                 ))}
               </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4 pb-4">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition">
+                    ← Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button key={p} onClick={() => setPage(p)}
+                      className={`w-8 h-8 text-xs rounded-lg transition ${
+                        p === page
+                          ? "bg-brand-600 text-white font-semibold"
+                          : "border border-slate-200 hover:bg-slate-50 text-slate-600"
+                      }`}>
+                      {p}
+                    </button>
+                  ))}
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition">
+                    Next →
+                  </button>
+                </div>
+              )}
+              </>
             )
           )}
         </div>

@@ -139,7 +139,7 @@ export default function ProjectMap({ pvos, selectedPvoId }: { pvos: PVOData[]; s
   }, [selectedPvoId]);
 
   return (
-    <div style={{ height: "70vh", width: "100%" }} className="rounded-xl overflow-hidden border-2 border-brand-100">
+    <div style={{ height: "100%", width: "100%" }} className="rounded-xl overflow-hidden border-2 border-brand-100">
       <MapContainer center={[14.5995, 120.9842]} zoom={6} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

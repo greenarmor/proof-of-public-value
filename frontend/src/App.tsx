@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
+import { RolePlayOnboarding } from "./pages/RolePlayOnboarding";
 import { AgencyDashboard } from "./pages/AgencyDashboard";
 import { ContractorPortal } from "./pages/ContractorPortal";
 import { EngineerPanel } from "./pages/EngineerPanel";
@@ -32,6 +33,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Public Portal", icon: "🏛️", group: "public" },
+  { to: "/onboarding", label: "Role-Play", icon: "🎭", group: "public" },
   { to: "/index", label: "Index", icon: "🏆", group: "public" },
   { to: "/memory", label: "Search", icon: "🔍", group: "public" },
   { to: "/escrows", label: "Escrows", icon: "🔒", group: "public" },
@@ -515,6 +517,7 @@ function App() {
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/onboarding" element={<RolePlayOnboarding />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
               <Route path="/escrows" element={<EscrowMonitor />} />

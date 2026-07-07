@@ -5,6 +5,125 @@
 
 ---
 
+## 🏆 Why This Hackathon Project Exists
+
+The **Stellar Build Better Hackathon** challenges builders to create real-world solutions using Stellar's blockchain infrastructure. The **Local Finance & Real World Access** track asks: how can blockchain make government spending transparent, verifiable, and accessible to ordinary citizens?
+
+**PoPV answers that question directly.**
+
+Government corruption is not a technology problem — it's a trust problem. Public funds flow based on signatures and paperwork, not on proof of work completed. Auditors arrive years late. Citizens have no voice. The system trusts officials to be honest, and when they're not, nobody finds out until the money is gone.
+
+**This hackathon project proves that it doesn't have to be this way.**
+
+By combining Stellar Soroban smart contracts with a serverless frontend, PoPV creates a system where:
+
+- **Every project** is a programmable PVO on-chain — immutable, auditable, public
+- **Every peso** is locked behind 5 independent verification gates — no single person controls release
+- **Every citizen** becomes a verifier — GPS field reports are the final gate
+- **Every decision** is recorded forever on Stellar — who approved, when, and why
+
+No backend. No database. No centralized server. Just Stellar contracts and a static frontend. Anyone can deploy it. Everyone can audit it. No one can cheat it.
+
+**This is what the Build Better Hackathon is about: building technology that makes the world better.** And there is no better place to start than the billions of pesos lost to corruption every year.
+
+---
+
+## ⛓️ Serverless by Design — Stellar Soroban as the Backend
+
+PoPV has **no backend server, no database, no API layer.** The Stellar blockchain is the entire infrastructure.
+
+| Traditional App | PoPV |
+|-----------------|------|
+| Node.js / Python backend | ❌ None — Stellar Soroban contracts handle all logic |
+| PostgreSQL / MongoDB | ❌ None — Soroban persistent storage |
+| REST API endpoints | ❌ None — RPC calls to `soroban-testnet.stellar.org:443` |
+| Auth server (JWT/OAuth) | ❌ None — Freighter wallet signs transactions |
+| File storage (S3) | ❌ None — IPFS for evidence, Soroban events for audit trail |
+| Deployment server (EC2/VPS) | ❌ None — Static HTML/CSS/JS on Vercel (free) |
+
+**13 Soroban smart contracts** execute every business rule on-chain:
+- `access_control` — 13 role-based permissions
+- `pvo_core` — PVO lifecycle, milestones, evidence, budget validation
+- `escrow` — 5-gate conditional fund lock + InProgress auto-transition
+- `grant_commitment` — Donor pledges with exact-budget enforcement
+- `community_oracle` — Citizen report verification
+- `reputation` — RPT soulbound token gatekeeper (anti-Sybil)
+- `ai_oracle` — Fraud detection engine
+- `compliance_engine` — Regulatory validation
+- `audit_trail` — Immutable decision log
+- `value_score` — 0-100 public value rating
+- `public_index` — National department rankings
+- `procurement_market` — Supplier pre-qualification
+- `pphp_sac` — Stellar Asset Contract settlement token (SAC, 7 decimals)
+
+**Cross-contract calls** enable complex workflows without centralized orchestration:
+```
+escrow.release() → pvo_core.update_pvo_status(InProgress)
+grant_commitment.commit() → pvo_core.get_pvo_budget() (verify exact match)
+community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
+```
+
+**Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.
+
+### AI Oracle — One Service, Every Frontend
+
+The AI Oracle is the **only off-chain component**. It's a standalone TypeScript service (`ai-oracle/service.ts`) that:
+
+- Polls testnet for EngineerApproved milestones
+- Runs local fraud detection (GPS bounding box, metadata scanning, description analysis)
+- Submits `ai_validate(passed, risk_score)` on-chain
+- **One instance serves all frontend deployments**
+
+Deploy it anywhere: VPS, Raspberry Pi, cron job, or Vercel serverless function. No cloud dependencies. No API keys. No GPU. Pure rule-based fraud detection.
+
+```bash
+# Manual run:
+npx tsx ai-oracle/service.ts --once
+
+# Cron (every 5 min):
+*/5 * * * * cd /path/to/popv && npx tsx ai-oracle/service.ts --once
+```
+
+---
+
+## 🇵🇭 Philippines as Case Study — Open to Every Government
+
+**Proof of Public Value is not built for one country. It is built for any government that wants to prove its integrity.**
+
+The Philippines serves as our primary case study because the pattern of corruption here is well-documented and devastatingly familiar:
+
+- **₱10 Billion PDAF pork barrel scam** — lawmakers funneled public funds to ghost NGOs
+- **Billions in DPWH ghost infrastructure** — projects paid for but never built
+- **Funds released upfront** — contractors paid before a brick was laid
+- **Projects never verified** — no citizen oversight, no independent audit
+- **Accountability delayed for years** — by the time auditors arrive, evidence is gone
+
+But this pattern is not unique to the Philippines. It happens in Indonesia, Brazil, Kenya, India, Mexico, Nigeria — anywhere public funds flow without verification, corruption follows.
+
+**PoPV is open-source, serverless, and nationality-agnostic.** The Stellar blockchain doesn't care which country deploys it. The 5-gate verification works the same whether you're building roads in Manila, bridges in Nairobi, or schools in São Paulo. Any government can clone the repo, deploy the contracts, and start proving value to its citizens.
+
+---
+
+## 🏛️ Our Mission: Step Up, or Be Watched
+
+**To every government official in every country:** You were given a sacred trust — to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or shilling of the public budget belongs to the people. Your job is to protect it, allocate it wisely, and spend it transparently. If you have been doing that — this system proves your integrity. If you haven't — this system exposes you.
+
+**PoPV exists to digitalize accountability.** We are not here to replace government. We are here to give government the tools to prove they are doing their job — and to give citizens the power to verify it themselves.
+
+**To the honest public servant:** This platform protects you. Every decision you make is recorded on an immutable blockchain. Your approvals are timestamped. Your compliance checks are auditable. When accusations fly, you have cryptographic proof that you did the right thing.
+
+**To the corrupt:** Your time is up. There are no more paper trails to tamper with. No more signatures to forge. No more "lost documents." Every citizen with a phone is now an auditor. Every GPS-tagged report is a permanent record. Every peso is tracked from budget to contractor to ground.
+
+**To every citizen, in every nation:** You are no longer a bystander. Your GPS report is the final gate. Without citizen verification, not a single unit of currency is released from escrow. You don't need to be an auditor. You don't need to work for a government agency. You just need to visit a project site and report what you see — or don't see.
+
+**We built this system to help fix what's broken.** Digitalization is not just about efficiency. It's about transparency that cannot be undone. It's about accountability that cannot be dodged. It's about giving the people the tools to demand proof — and giving honest officials the tools to provide it.
+
+**Government officials: step up. Citizens: watch. The system: prove it.**
+
+➡️ **[🎭 Start Role-Playing Now](https://greenarmor.github.io/proof-of-public-value/onboarding)** — Pick any role and walk through the system.
+
+---
+
 ➡️ **Reference: [Appendix A — Glossary of Terms](appendices.md)** — Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC units, and more.
 
 ➡️ **Read: [Why PoPV Exists — The Philippine Corruption Crisis](philippines-corruption.md)**
@@ -296,6 +415,15 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-rese
 ## Try It Live
 
 **Production build:** `npm run build && npm start` from project root → `http://localhost:5174`
+
+**Live Demo:** [greenarmor.github.io/proof-of-public-value](https://greenarmor.github.io/proof-of-public-value/)
+
+**Quick Start:**
+1. **Public pages** — Browse projects, national index, map, search — no wallet needed
+2. **Role-Play** — Go to `/onboarding` → pick any role → get a demo wallet → walk through the system
+3. **Connect Freighter** — Install [Freighter](https://freighter.app), import a demo wallet from `.dev-logs/newrolecreden.md`
+4. **15 PVOs per page** — Scroll, paginate, or filter by name/department/municipality
+5. **Mobile-friendly** — Sticky map + sticky search, scrollable card list
 
 ### Demo Wallets (Testnet)
 
