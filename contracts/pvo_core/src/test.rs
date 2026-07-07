@@ -261,27 +261,30 @@ fn test_get_pv_os_by_contractor() {
     let contractor = Address::generate(&env);
     let pm = Address::generate(&env);
 
-    client.create_pvo(
+    let pvo1 = client.create_pvo(
         &creator, &make_string(&env, "Project A"), &make_string(&env, ""),
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "QC"),
         &5_000_000, &make_string(&env, "Budget"), &0u64,
     );
+    client.assign_contractor(&creator, &pvo1, &contractor);
 
-    client.create_pvo(
+    let pvo2 = client.create_pvo(
         &creator, &make_string(&env, "Project B"), &make_string(&env, ""),
         &agency, &contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "Manila"),
         &3_000_000, &make_string(&env, "Budget"), &0u64,
     );
+    client.assign_contractor(&creator, &pvo2, &contractor);
 
     let other_contractor = Address::generate(&env);
-    client.create_pvo(
+    let pvo3 = client.create_pvo(
         &creator, &make_string(&env, "Project C"), &make_string(&env, ""),
         &agency, &other_contractor, &pm,
         &make_string(&env, "DPWH"), &make_string(&env, "Cebu"),
         &2_000_000, &make_string(&env, "Budget"), &0u64,
     );
+    client.assign_contractor(&creator, &pvo3, &other_contractor);
 
     let pvos = client.get_pv_os_by_contractor(&contractor);
     assert_eq!(pvos.len(), 2);

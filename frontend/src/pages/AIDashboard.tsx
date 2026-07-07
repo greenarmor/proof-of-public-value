@@ -568,7 +568,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{Number(escrow.pvo_id)}</span></div>
-          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/100).toLocaleString()}</p>
+          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()}</p>
           <p className="text-xs text-slate-400 mt-0.5">Recipient: {formatAddress(escrow.recipient, 4)} · Funder: {formatAddress(escrow.funder, 4)}</p>
         </div>
         <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>

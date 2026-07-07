@@ -360,6 +360,7 @@ impl DynamicEscrow {
         let recipient = escrow.recipient.clone();
         let token_address = escrow.token_address.clone();
         let pvo_id = escrow.pvo_id;
+        let milestone_id = escrow.milestone_id; // capture before move
         escrows.set(escrow_id, escrow);
         storage.set(&ESCROWS, &escrows);
 

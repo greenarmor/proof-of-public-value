@@ -57,7 +57,11 @@ export function ContractorPortal() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Contractor Portal</h1>
-      <p className="text-gray-500 mb-4">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
+      <p className="text-gray-500 mb-2">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
+      <div className="card p-3 mb-4 bg-purple-50 border-purple-200 flex items-center justify-between">
+        <p className="text-sm text-purple-700">Looking for projects to bid on? Browse open tenders and submit your proposal.</p>
+        <a href="/procurement" className="btn-primary text-xs px-3 py-1.5 whitespace-nowrap">🏗️ Procurement Marketplace</a>
+      </div>
       <CreatePphpTrustline address={address!} />
 
       <div className="flex items-center justify-between mb-6">
@@ -248,7 +252,8 @@ function ProjectsTab({ address }: { address: string }) {
         <div className="card p-12 text-center">
           <div className="text-5xl mb-4">🚧</div>
           <h3 className="font-semibold text-gray-700 mb-1">No projects assigned</h3>
-          <p className="text-sm text-gray-400">You are not listed as the contractor on any PVO.</p>
+          <p className="text-sm text-gray-400">You are not listed as the contractor on any PVO yet.</p>
+          <p className="text-sm text-gray-400 mt-2">Win a tender to get assigned — go to the <a href="/procurement" className="text-brand-600 hover:underline font-medium">Procurement Marketplace</a> to browse open tenders and submit bids.</p>
         </div>
       )}
       {pvos.map((p) => (

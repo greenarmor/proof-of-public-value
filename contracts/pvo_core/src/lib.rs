@@ -90,6 +90,7 @@ pub struct PublicValueObject {
     pub public_value_score: u32,
     pub fund_source: String,
     pub deadline: u64,
+    pub contractor_assigned: bool,
 }
 
 #[contractevent]
@@ -152,6 +153,7 @@ const COUNTER: Symbol = symbol_short!("COUNTER");
 const PVOS: Symbol = symbol_short!("PVOS");
 const MILESTONES: Symbol = symbol_short!("MSTNS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
+const CONTRACTOR_INDEX: Symbol = symbol_short!("CTRIDX");
 
 #[contract]
 pub struct PVOCore;
@@ -203,6 +205,7 @@ impl PVOCore {
             public_value_score: 0,
             fund_source,
             deadline,
+            contractor_assigned: false,
         };
 
         let storage = env.storage().persistent();
@@ -258,6 +261,7 @@ impl PVOCore {
         let mut pvo = pvos.get(pvo_id).expect("PVO not found");
 
         pvo.contractor = contractor.clone();
+        pvo.contractor_assigned = true;
         pvo.updated_at = env.ledger().timestamp();
         pvos.set(pvo_id, pvo);
         storage.set(&PVOS, &pvos);
@@ -546,7 +550,7 @@ impl PVOCore {
 
         let mut result: Vec<PublicValueObject> = Vec::new(&env);
         for (_, pvo) in pvos.iter() {
-            if pvo.contractor == contractor {
+            if pvo.contractor == contractor && pvo.contractor_assigned {
                 result.push_back(pvo);
             }
         }

@@ -35,6 +35,7 @@ export function AdminPanel() {
   >("roles");
   const [assignModal, setAssignModal] = useState(false);
   const [mintModal, setMintModal] = useState(false);
+  const [directFundModal, setDirectFundModal] = useState(false);
 
   if (!connected) {
     return (
@@ -91,6 +92,11 @@ export function AdminPanel() {
             🪙 Mint RPT
           </button>
         </div>
+        <div>
+          <button onClick={() => setDirectFundModal(true)} className="btn-primary text-xs px-4 py-2 bg-amber-600 hover:bg-amber-700">
+            💰 Direct Fund
+          </button>
+        </div>
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
@@ -105,6 +111,9 @@ export function AdminPanel() {
       </Modal>
       <Modal open={mintModal} onClose={() => setMintModal(false)} title="Mint RPT Tokens">
         <MintRPTForm onDone={() => setMintModal(false)} />
+      </Modal>
+      <Modal open={directFundModal} onClose={() => setDirectFundModal(false)} title="Direct Fund — National Budget">
+        <DirectFundForm onDone={() => setDirectFundModal(false)} />
       </Modal>
     </div>
   );
@@ -770,6 +779,51 @@ function SettingsTab() {
         </p>
       </div>
     </div>
+  );
+}
+
+function DirectFundForm({ onDone }: { onDone: () => void }) {
+  const { address } = useWallet();
+  const [pvoId, setPvoId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [isBusy, setIsBusy] = useState(false);
+  const [txMsg, setTxMsg] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsBusy(true);
+    setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const acct = await server.getAccount(address!);
+      const sac = new Contract("CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X");
+      const FA = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
+      const sacAmt = Math.round(Number(amount) * PPHP_SCALE);
+      const op = sac.call("mint", new Address(FA).toScVal(), new ScInt(sacAmt).toI128());
+      const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
+      setTxMsg(`Minted ${amount} PHP to Funding Agency`);
+      setTimeout(onDone, 1500);
+    } catch (err: any) {
+      setTxMsg(err.message?.slice(0, 200) || "Failed");
+    } finally { setIsBusy(false); }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {txMsg && <div className={`p-3 rounded-lg text-sm ${txMsg.startsWith("Minted") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{txMsg.startsWith("Minted") ? "✅ " : "❌ "}{txMsg}</div>}
+      <p className="text-xs text-amber-600">For National Budget PVOs — mint pPHP directly to Funding Agency. No donor required.</p>
+      <div><label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label><input type="number" value={pvoId} onChange={e => setPvoId(e.target.value)} className="input" placeholder="1" /></div>
+      <div><label className="block text-sm font-medium text-gray-700 mb-1">Amount (in pesos)</label><input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input" placeholder="500000000" />
+        {amount && <p className="text-xs text-gray-400 mt-1">= {(Number(amount) * PPHP_SCALE).toLocaleString()} SAC units (₱{Number(amount).toLocaleString()})</p>}
+      </div>
+      <button type="submit" disabled={isBusy} className="btn-primary w-full py-3">{isBusy ? "Signing..." : "Mint to Funding Agency"}</button>
+    </form>
   );
 }
 

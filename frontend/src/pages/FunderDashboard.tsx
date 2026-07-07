@@ -62,12 +62,15 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function FunderDashboard() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"escrows" | "commitments" | "guide">("escrows");
+  const [activeTab, setActiveTab] = useState<"escrows" | "awarded" | "commitments" | "guide">("escrows");
   const [escrows, setEscrows] = useState<EscrowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [createModal, setCreateModal] = useState(false);
   const [prefillPvoId, setPrefillPvoId] = useState<number>(0);
+  const [prefillMilestoneId, setPrefillMilestoneId] = useState<number>(0);
+  const [prefillAmount, setPrefillAmount] = useState<string>("");
+  const [prefillRecipient, setPrefillRecipient] = useState<string>("");
 
   const loadEscrows = useCallback(async () => {
     setLoading(true);
@@ -128,31 +131,33 @@ export function FunderDashboard() {
       </div>
 
       <div className="flex gap-1 mb-6 mt-4 border-b border-slate-200">
-        {(["escrows", "commitments", "guide"] as const).map((tab) => (
+        {(["escrows", "awarded", "commitments", "guide"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
             {tab === "escrows" && `🔒 Escrows (${escrows.length})`}
+            {tab === "awarded" && "📋 Awarded PVOs"}
             {tab === "commitments" && "🌍 Donor Commitments"}
             {tab === "guide" && "📖 How It Works"}
           </button>
         ))}
       </div>
 
-      {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} />}
-      {activeTab === "commitments" && <DonorCommitmentsTab key={refreshKey} onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setCreateModal(true); }} />}
+      {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} onCreate={() => { setPrefillPvoId(0); setPrefillMilestoneId(0); setPrefillAmount(""); setPrefillRecipient(""); setCreateModal(true); }} />}
+      {activeTab === "awarded" && <AwardedPvosTab key={refreshKey} onCreateEscrow={(pvoId, milestoneId, amount, recipient) => { setPrefillPvoId(pvoId); setPrefillMilestoneId(milestoneId); setPrefillAmount(amount); setPrefillRecipient(recipient); setCreateModal(true); }} existingEscrows={escrows} />}
+      {activeTab === "commitments" && <DonorCommitmentsTab key={refreshKey} onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setPrefillMilestoneId(0); setPrefillAmount(""); setPrefillRecipient(""); setCreateModal(true); }} />}
       {activeTab === "guide" && <EscrowGuide />}
 
       <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Escrow">
-        <CreateEscrowForm key={prefillPvoId} address={address!} prefillPvoId={prefillPvoId} onCreated={() => { refresh(); setCreateModal(false); setPrefillPvoId(0); }} />
+        <CreateEscrowForm key={`${prefillPvoId}-${prefillMilestoneId}`} address={address!} prefillPvoId={prefillPvoId} prefillMilestoneId={prefillMilestoneId} prefillAmount={prefillAmount} prefillRecipient={prefillRecipient} onCreated={() => { refresh(); setCreateModal(false); setPrefillPvoId(0); setPrefillMilestoneId(0); setPrefillAmount(""); setPrefillRecipient(""); }} />
       </Modal>
     </div>
   );
 }
 
-function EscrowList({ escrows, loading, address, onAction }: {
-  escrows: EscrowData[]; loading: boolean; address: string; onAction: () => void;
+function EscrowList({ escrows, loading, address, onAction, onCreate }: {
+  escrows: EscrowData[]; loading: boolean; address: string; onAction: () => void; onCreate: () => void;
 }) {
   const currency = getCurrency();
 
@@ -169,7 +174,8 @@ function EscrowList({ escrows, loading, address, onAction }: {
       <div className="card p-12 text-center">
         <div className="text-5xl mb-4">📭</div>
         <h3 className="font-semibold text-slate-700 mb-1">No escrows yet</h3>
-        <p className="text-sm text-slate-400">Create an escrow to start tracking funded milestones.</p>
+        <p className="text-sm text-slate-400 mb-4">Select a PVO, choose a milestone, and create an escrow for it.</p>
+        <button onClick={onCreate} className="btn-primary px-6 py-3">🔒 Create Escrow</button>
       </div>
     );
   }
@@ -192,6 +198,10 @@ function EscrowList({ escrows, loading, address, onAction }: {
             <p className={`stat-value ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-end">
+        <button onClick={onCreate} className="btn-primary text-sm px-4 py-2">🔒 Create Escrow</button>
       </div>
 
       <div className="space-y-4">
@@ -274,7 +284,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("Transaction confirmed!");
@@ -396,16 +406,17 @@ function EscrowCard({ escrow, currency, address, onAction }: {
   );
 }
 
-function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: string; prefillPvoId?: number; onCreated: () => void }) {
-  const [recipient, setRecipient] = useState("");
+function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAmount, prefillRecipient, onCreated }: { address: string; prefillPvoId?: number; prefillMilestoneId?: number; prefillAmount?: string; prefillRecipient?: string; onCreated: () => void }) {
+  const [recipient, setRecipient] = useState(prefillRecipient || "");
   const [pvoId, setPvoId] = useState(String(prefillPvoId || ""));
-  const [milestoneId, setMilestoneId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [milestoneId, setMilestoneId] = useState(String(prefillMilestoneId || ""));
+  const [amount, setAmount] = useState(prefillAmount || "");
   const [communityRequired, setCommunityRequired] = useState("1");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [grantsF, setGrantsF] = useState<any[]>([]);
   const [pvBudgets, setPvBudgets] = useState<Record<number,number>>({});
+  const [pvFundSources, setPvFundSources] = useState<Record<number,string>>({});
   const [pvList, setPvList] = useState<{id:number;title:string;municipality:string;budget:number}[]>([]);
   const [contractors, setContractors] = useState<string[]>([]);
   const [milestones, setMilestones] = useState<{id:number;title:string;budget:number}[]>([]);
@@ -425,8 +436,9 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
         const cnt = await pc.get_pvo_count();
         const b: Record<number,number> = {};
         const pl: {id:number;title:string;municipality:string;budget:number}[] = [];
-        for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) { b[r.result.id] = Number(r.result.total_budget); pl.push({id:r.result.id,title:r.result.title,municipality:r.result.municipality,budget:Number(r.result.total_budget)}); } } catch {} }
-        setPvBudgets(b);
+        const fs: Record<number,string> = {};
+        for (let i = 1; i <= Number(cnt.result); i++) { try { const r = await pc.get_pvo({ pvo_id: i }); if (r.result) { b[r.result.id] = Number(r.result.total_budget); fs[r.result.id] = r.result.fund_source || ""; pl.push({id:r.result.id,title:r.result.title,municipality:r.result.municipality,budget:Number(r.result.total_budget)}); } } catch {} }
+        setPvBudgets(b); setPvFundSources(fs);
         setPvList(pl);
       } catch {}
       try {
@@ -460,6 +472,9 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
   const pledged = pvoGrants.reduce((s: number, g: any) => s + Number(g.amount), 0);
   const budget = pvBudgets[Number(pvoId)] || 0;
   const pct = budget > 0 ? Math.min(100, Math.round((pledged / budget) * 100)) : 0;
+  const fundSource = pvFundSources[Number(pvoId)] || "";
+  const isDonorFunded = fundSource.toLowerCase().includes("donor") || fundSource.toLowerCase().includes("international");
+  const amountSAC = Number(amount) * PPHP_SCALE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -471,6 +486,7 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
 
       const amt = Number(amount);
       if (!amt || amt <= 0) throw new Error("Amount must be positive");
+      const amtSAC = Math.round(amt * PPHP_SCALE);
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -480,7 +496,7 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
         new Address(recipient).toScVal(),
         xdr.ScVal.scvU32(Number(pvoId)),
         xdr.ScVal.scvU32(Number(milestoneId)),
-        nativeToScVal(amt, { type: "i128" }),
+        nativeToScVal(amtSAC, { type: "i128" }),
         new Address(CONTRACT_IDS.pphp).toScVal(),
         xdr.ScVal.scvU32(Number(communityRequired)),
       );
@@ -495,7 +511,7 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("Escrow created! Loading...");
@@ -556,13 +572,13 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
             <div className="relative">
               <label className="block text-sm font-medium text-slate-700 mb-1">Milestone ID</label>
               <input type="text" value={milestoneId} onChange={e => { setMilestoneId(e.target.value); setShowMilestoneDd(true); }}
-                onFocus={() => setShowMilestoneDd(true)}
+                onFocus={() => { if (!prefillMilestoneId) setShowMilestoneDd(true); }}
                 onBlur={() => setTimeout(() => setShowMilestoneDd(false), 200)}
-                className="input" placeholder={pvoId ? "Select milestone…" : "Select PVO first"} disabled={!pvoId} required />
+                className="input" placeholder={pvoId ? "Select milestone..." : "Select PVO first"} disabled={!pvoId} readOnly={!!prefillMilestoneId} required />
               {showMilestoneDd && filteredMilestones.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => (
-                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget)); }}
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
                       <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
                       <span className="text-xs text-slate-400 ml-2">{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</span>
@@ -572,7 +588,7 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
               )}
             </div>
           </div>
-          {pvoId && budget > 0 && (
+          {pvoId && budget > 0 && isDonorFunded && (
             <div className="bg-slate-50 rounded-xl p-3 text-xs">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-slate-500">Pledged: {currency}{(pledged / PPHP_SCALE).toLocaleString()} / {currency}{(budget / PPHP_SCALE).toLocaleString()}</span>
@@ -581,17 +597,22 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all ${pct >= 80 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: pct + "%" }} />
               </div>
-              {Number(amount) > 0 && Number(amount) > pledged && (
-                <p className="text-red-600 mt-1">⚠️ Escrow ({currency}{(Number(amount) / PPHP_SCALE).toLocaleString()}) exceeds pledged ({currency}{(pledged / PPHP_SCALE).toLocaleString()})</p>
+              {amountSAC > 0 && amountSAC > pledged && (
+                <p className="text-red-600 mt-1">⚠️ Escrow ({currency}{Number(amount).toLocaleString()}) exceeds pledged ({currency}{(pledged / PPHP_SCALE).toLocaleString()})</p>
               )}
+            </div>
+          )}
+          {pvoId && budget > 0 && !isDonorFunded && (
+            <div className="bg-blue-50 rounded-xl p-3 text-xs">
+              <span className="text-blue-600"><strong>National Budget PVO</strong> — funded directly by the government, no donor pledges needed.</span>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (pPHP SAC units)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Amount (in Pesos)</label>
               <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input"
-                placeholder="e.g. 50000000000000 = ₱5,000,000" required />
-              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${(Number(amount) / PPHP_SCALE).toLocaleString()}` : "1 peso = 10,000,000 SAC units"}</p>
+                placeholder="e.g. 5000000 for ₱5,000,000" required />
+              <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${Number(amount).toLocaleString()} = ${(Number(amount) * PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 0})} SAC units` : "Enter amount in pesos"}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Community Confirmations Required</label>
@@ -614,6 +635,153 @@ function CreateEscrowForm({ address, prefillPvoId, onCreated }: { address: strin
         </form>
       </>
       );
+}
+
+function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
+  onCreateEscrow: (pvoId: number, milestoneId: number, amount: string, recipient: string) => void;
+  existingEscrows: EscrowData[];
+}) {
+  const currency = getCurrency();
+  const [loading, setLoading] = useState(true);
+  const [awardedPvos, setAwardedPvos] = useState<any[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [milestoneCache, setMilestoneCache] = useState<Record<number, any[]>>({});
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client: PM } = await import("../contracts/procurement_market/src");
+        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const tCount = await pm.get_tender_count();
+        const awardedPvoIds = new Set<number>();
+        const contractorMap: Record<number, string> = {};
+        for (let i = 1; i <= Number(tCount.result); i++) {
+          try {
+            const tr = await pm.get_tender({ id: i });
+            if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
+              awardedPvoIds.add(Number(tr.result.pvo_id));
+              contractorMap[Number(tr.result.pvo_id)] = tr.result.winner;
+            }
+          } catch {}
+        }
+        if (awardedPvoIds.size === 0) { setAwardedPvos([]); return; }
+        const { Client: PC } = await import("../contracts/pvo_core/src");
+        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const list: any[] = [];
+        for (const pid of awardedPvoIds) {
+          try {
+            const r = await pc.get_pvo({ pvo_id: pid });
+            if (r.result) {
+              const pvo = r.result as any;
+              pvo.contractor = contractorMap[pid] || pvo.contractor;
+              list.push(pvo);
+            }
+          } catch {}
+        }
+        setAwardedPvos(list);
+      } catch (e) { console.error("Failed to load awarded PVOs:", e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  const toggleExpand = async (pvoId: number) => {
+    if (expandedId === pvoId) { setExpandedId(null); return; }
+    setExpandedId(pvoId);
+    if (!milestoneCache[pvoId]) {
+      try {
+        const { Client: PC } = await import("../contracts/pvo_core/src");
+        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await pc.get_pvo_milestones({ pvo_id: pvoId });
+        const milestones = (result.result || []).map((m: any) => ({
+          id: Number(m.id), title: m.title || "", description: m.description || "", budget: Number(m.budget),
+          status: m.status?.tag || "Pending",
+        }));
+        setMilestoneCache(prev => ({ ...prev, [pvoId]: milestones }));
+      } catch { setMilestoneCache(prev => ({ ...prev, [pvoId]: [] })); }
+    }
+  };
+
+  const hasEscrow = (pvoId: number, milestoneId: number) =>
+    existingEscrows.some(e => e.pvoId === pvoId && e.milestoneId === milestoneId);
+
+  if (loading) return <div className="text-center py-10 text-slate-400">Loading awarded PVOs...</div>;
+
+  if (awardedPvos.length === 0) {
+    return (
+      <div className="card p-12 text-center">
+        <div className="text-5xl mb-4">📋</div>
+        <h3 className="font-semibold text-slate-700 mb-1">No awarded PVOs yet</h3>
+        <p className="text-sm text-slate-400">PVOs with contractors assigned through bidding will appear here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {awardedPvos.map(pvo => {
+        const pvoId = Number(pvo.id);
+        const isExpanded = expandedId === pvoId;
+        const milestones = milestoneCache[pvoId] || [];
+        const totalMs = milestones.length;
+        const escrowedMs = milestones.filter(m => hasEscrow(pvoId, m.id)).length;
+        return (
+          <div key={pvoId} className="card overflow-hidden">
+            <button onClick={() => toggleExpand(pvoId)}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50 transition">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-slate-400 font-mono">PVO #{pvoId}</span>
+                  <span className="badge-green text-xs">Contractor Assigned</span>
+                </div>
+                <h3 className="font-semibold text-slate-900">{pvo.title}</h3>
+                <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
+                  <span>{currency}{(Number(pvo.total_budget) / PPHP_SCALE).toLocaleString()}</span>
+                  <span>{pvo.municipality || pvo.department}</span>
+                  <span>Contractor: <WalletAddress addr={pvo.contractor} chars={6} /></span>
+                  {totalMs > 0 && <span className="text-slate-400">{escrowedMs}/{totalMs} milestones escrowed</span>}
+                </div>
+              </div>
+              <div className="text-2xl text-slate-400">{isExpanded ? "▾" : "▸"}</div>
+            </button>
+
+            {isExpanded && (
+              <div className="border-t border-slate-100 bg-slate-50">
+                {milestones.length === 0 ? (
+                  <p className="text-sm text-slate-400 p-4 text-center">No milestones defined for this PVO.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {milestones.map((m: any) => {
+                      const escrowed = hasEscrow(pvoId, m.id);
+                      return (
+                        <div key={m.id} className="flex items-center justify-between p-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-900">Milestone #{m.id}: {m.title}</span>
+                              {escrowed && <span className="badge-blue text-xs">Escrowed</span>}
+                            </div>
+                            <span className="text-xs text-slate-400">
+                              {m.description && `${m.description} · `}
+                              {currency}{(m.budget / PPHP_SCALE).toLocaleString()}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => onCreateEscrow(pvoId, m.id, String(m.budget / PPHP_SCALE), pvo.contractor)}
+                            disabled={escrowed}
+                            className={`text-xs px-4 py-2 ${escrowed ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}>
+                            {escrowed ? "✓ Escrowed" : "🔒 Escrow"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: number) => void }) {

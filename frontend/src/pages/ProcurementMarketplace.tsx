@@ -19,11 +19,16 @@ interface Tender {
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ProcurementMarketplace() {
-  const { address, connected, connect } = useWallet();
+  const { address, connected, connect, hasRole } = useWallet();
+  const canCreateTender = hasRole("GovernmentAgency", "Administrator");
   const [activeTab, setActiveTab] = useState<"browse" | "award">("browse");
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
+
+  useEffect(() => {
+    if (!canCreateTender) setActiveTab("browse");
+  }, [canCreateTender]);
 
   useEffect(() => {
     (async () => {
@@ -70,29 +75,38 @@ export function ProcurementMarketplace() {
       <p className="text-gray-500 mb-6">Multi-criteria bidding with integrity-weighted ranking and auto-award.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["browse", "award"] as const).map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
+        <button onClick={() => setActiveTab("browse")}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+            activeTab === "browse" ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}>
+          📋 Browse Tenders
+        </button>
+        {canCreateTender && (
+          <button onClick={() => setActiveTab("award")}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-              activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
+              activeTab === "award" ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}>
-            {tab === "browse" && "📋 Browse Tenders"}
-            {tab === "award" && "🏆 Award"}
+            🏆 Award
           </button>
-        ))}
+        )}
       </div>
 
       {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
       
-      {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} />}
+      {activeTab === "award" && canCreateTender && <AwardTab address={address!} tenders={tenders} loading={loading} />}
 
-      <div className="mt-4">
-        <button onClick={() => setCreateModal(true)} className="btn-primary text-sm px-4 py-2">
-          ➕ Create Tender
-        </button>
-      </div>
-      <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Tender">
-        <CreateTenderForm address={address!} onDone={() => { setCreateModal(false); setTenders([]); setLoading(true); }} />
-      </Modal>
+      {canCreateTender && (
+        <div className="mt-4">
+          <button onClick={() => setCreateModal(true)} className="btn-primary text-sm px-4 py-2">
+            ➕ Create Tender
+          </button>
+        </div>
+      )}
+      {canCreateTender && (
+        <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Tender">
+          <CreateTenderForm address={address!} onDone={() => { setCreateModal(false); setTenders([]); setLoading(true); }} />
+        </Modal>
+      )}
     </div>
   );
 }
@@ -143,7 +157,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
 function CreateTenderForm({ address, onDone }: { address: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
   const [pvoId, setPvoId] = useState("");
-  const [milestoneId, setMilestoneId] = useState("");
+  const [milestoneId, setMilestoneId] = useState("0");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -163,20 +177,20 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
       if (!deadline) throw new Error("Deadline required");
 
-      // deadline is a u64 timestamp (seconds since epoch)
-      const dl = Math.floor(new Date(deadline).getTime() / PPHP_SCALE);
+      const dl = deadline ? Math.floor(new Date(deadline).getTime() / 1000) : Math.floor(Date.now() / 1000) + 30 * 24 * 3600;
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
+      const amtSAC = Math.round(amt * PPHP_SCALE);
 
       const op = contract.call("create_tender",
         new Address(address).toScVal(),
         nativeToScVal(Number(pvoId) || 1, { type: "u32" }),
-        nativeToScVal(Number(milestoneId) || 1, { type: "u32" }),
+        nativeToScVal(Number(milestoneId) || 0, { type: "u32" }),
         xdr.ScVal.scvString(title),
         xdr.ScVal.scvString(description || title),
-        new ScInt(amt).toI128(),
+        new ScInt(amtSAC).toI128(),
         nativeToScVal(dl, { type: "u64" }),
       );
 
@@ -190,7 +204,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("Tender created on-chain!");
@@ -218,7 +232,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
             <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)} className="input" placeholder="1" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Milestone ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Milestone ID (0 = all milestones)</label>
             <input type="number" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} className="input" placeholder="1" required />
           </div>
         </div>
@@ -237,7 +251,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
             {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / PPHP_SCALE).toLocaleString()}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bid Submission Deadline</label>
             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="input" required />
           </div>
         </div>
@@ -314,7 +328,7 @@ function TenderAwardCard({ tender, currency, address }: { tender: Tender; curren
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
       setTxState("done");
       setTxMsg("Tender awarded! Contract auto-picks highest-scoring bid.");
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
@@ -412,7 +426,7 @@ function BidForm({ tender, onDone }: { tender: Tender; onDone: () => void }) {
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
       setTxState("done");
       setTxMsg("Bid submitted! Score will appear after award.");
       setTimeout(onDone, 2000);

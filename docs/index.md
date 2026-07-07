@@ -164,57 +164,78 @@ If any gate fails, funds remain locked. No single person can release money.
 
 ### 1. Government Agency Creates a PVO
 
-A Government Agency wallet creates a Public Value Object on-chain. Each PVO has a title, department, municipality, and total budget (in pesos). The contractor field is left as a placeholder - assigned after the bidding process.
+A Government Agency wallet creates a Public Value Object on-chain from the **Agency Dashboard**. The form takes: title, description, department, municipality, total budget (in pesos), fund source (National Budget or Donor), and a deadline date. The contractor field uses a placeholder address - assigned only after bidding.
+
+Budget input is in **pesos** - the frontend auto-converts to SAC atomic units (pesos x 10,000,000).
 
 The PVO starts as **Proposed**.
 
-### 2. Procurement Bidding
+### 2. Government Agency Defines Milestones
 
-Once a PVO is created, the government agency opens a tender linked to a specific milestone via the procurement_market contract. Contractors submit bids with price, quality score, and timeline. The contract scores bids using a weighted formula and awards the highest scorer, then cross-calls pvo_core.assign_contractor to update the PVO on-chain. This means the contractor field remains empty until bidding completes. The Create PVO form shows "TBD - assigned after bidding" for new projects.
-
-### 3. Government Agency Defines Milestones
-
-Instead of paying the entire budget upfront, the project is broken into milestones  -  individual phases each with their own budget, evidence requirements, and community confirmation threshold. For example:
+In the Agency Dashboard, each PVO row has an expandable milestone list. A **"+ Add"** button appears when milestone budgets have not yet covered the total PVO budget. Each milestone has its own title, description, budget (in pesos), required evidence types, and community confirmation threshold. For example:
 
 - **Milestone 1:** Site Preparation  -  ₱50M
 - **Milestone 2:** Foundation  -  ₱150M
 - **Milestone 3:** Structure  -  ₱200M
 - **Milestone 4:** Finishing  -  ₱100M
 
-Budget input is in **pesos**  -  the contract auto-converts to SAC atomic units (pesos × 10,000,000).
+When the sum of all milestone budgets equals the PVO budget, the **"+ Add"** button is replaced by a **"Tender"** button - meaning the PVO is ready for bidding.
 
-### 4. International Donor Pledges Exact PVO Budget
+### 3. Procurement Bidding (Procurement Marketplace)
+
+The Government Agency creates a tender from the Agency Dashboard's **"Tender"** button (pre-fills PVO title and budget as read-only). The tender is linked to the PVO with `milestone_id = 0` (all milestones).
+
+**Contractors** visit the **Procurement Marketplace** (`/procurement`) where they see two views:
+- **Browse Tenders** - open tenders with a **"Bid"** button. Contractors submit a bid with price, quality score, and timeline days.
+- **Award tab** - only visible to GovernmentAgency and Administrator (contractors cannot see it)
+
+**Awarding:** The GovernmentAgency opens the **Award** tab, reviews all bids sorted by final score, and clicks **"Award Tender"**. The contract auto-selects the highest-scoring bid and cross-calls `pvo_core.assign_contractor()`. The winning contractor now appears in the Contractor Portal.
+
+**Scoring formula (max 120):** Price (50) + Quality (30) + Timeline (20) + Integrity from reputation contract (20).
+
+### 4. Funding Path A: National Budget (Direct Fund)
+
+For PVOs with fund source "National Budget", the Administrator uses the **Admin Panel's "Direct Fund"** button. This mints pPHP directly to the Funding Agency wallet - no donor needed. Skip to step 6.
+
+### 5. Funding Path B: International Donor Pledges Exact PVO Budget
 
 Donors (World Bank, JICA, ADB, etc.) commit grants through the Donor Dashboard. The commitment contract enforces **exact-match pledging**: the pledge must equal **PVO budget minus already-committed funds**. This prevents over/under-committing.
 
 The grant status is **Committed**.
 
-### 5. Admin Mints pPHP & Marks Disbursed
+### 6. Admin Mints pPHP & Marks Disbursed (Donor Path Only)
 
-From the **Admin/System Panel → Pledges tab**, the administrator clicks **"Mint & Disburse"** on a Committed grant. This:
+From the **Admin/System Panel**, the administrator clicks **"Mint & Disburse"** on a Committed grant. This:
 
 1. Mints the exact pPHP SAC amount to the Funding Agency's wallet (Transaction 1)
 2. Marks the grant as **Disbursed** on-chain (Transaction 2)
 
 These are two separate transactions because Freighter only supports one operation per transaction.
 
-### 6. Funding Agency Creates Escrows Per Milestone
+### 7. Funding Agency Creates Escrows Per Milestone
 
-From the **Funding Agency Dashboard → Donor Commitments tab**, each Disbursed grant shows a **"Create Escrow"** button. Clicking it opens a form with:
+From the **Funding Agency Dashboard**, the **"Awarded PVOs"** tab shows all PVOs with contractors assigned through bidding. Each PVO is an expandable card showing:
 
-- **Recipient (Contractor)**  -  autocomplete dropdown of all Contractor-role wallet addresses
-- **PVO ID**  -  pre-filled from the grant, non-editable
-- **Milestone ID**  -  autocomplete showing all milestones under that PVO; selecting one auto-fills the amount
-- **Amount**  -  in pPHP SAC units (with peso conversion shown below)
+- PVO title, budget, location, contractor address
+- Escrow progress (e.g. "1/4 milestones escrowed")
+
+Clicking a PVO expands to reveal its milestones. Each milestone shows title, description, budget in pesos, and an **"Escrow"** button (or "Escrowed" badge if already escrowed). Clicking **"Escrow"** opens the Create Escrow form pre-filled with:
+
+- **Recipient (Contractor)**  -  pre-filled from the awarded bid winner (read-only)
+- **PVO ID**  -  pre-filled (read-only)
+- **Milestone ID**  -  pre-filled (read-only)
+- **Amount**  -  in pesos, pre-filled from milestone budget (editable)
 - **Community Confirmations Required**  -  how many verified citizen GPS field reports must confirm this milestone
 
-The funding agency can create **multiple escrows** against a single grant  -  one per milestone. The button stays visible until all funds are escrowed.
+For **National Budget PVOs**, a blue info box confirms "funded directly by the government, no donor pledges needed." For **Donor-funded PVOs**, a pledge progress bar shows committed vs total budget.
 
-### 7. Escrow is Funded
+The Funding Agency creates one escrow per milestone.
+
+### 8. Escrow is Funded
 
 The funding agency deposits the milestone amount into the escrow contract. The escrow status becomes **Funded**.
 
-### 8. Five Gates Verify the Work
+### 9. Five Gates Verify the Work
 
 Each gate is an independent on-chain verification:
 
@@ -228,7 +249,7 @@ Each gate is an independent on-chain verification:
 
 **Gate 5  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
 
-### 9. Escrow Releases  -  PVO Goes InProgress
+### 10. Escrow Releases  -  PVO Goes InProgress
 
 Once all 5 gates pass, anyone can trigger release. The escrow contract:
 
@@ -237,14 +258,20 @@ Once all 5 gates pass, anyone can trigger release. The escrow contract:
 
 The PVO stays InProgress until **all milestones are Released AND the total Released milestone budgets equal or exceed the PVO budget**. Only then can it become **Completed**.
 
-### 10. Repeat for Remaining Milestones
+### 11. Repeat for Remaining Milestones
 
-Steps 5-8 repeat for each remaining milestone. After all milestones are released and the budget is fully accounted for, the PVO can be marked **Completed**.
+Steps 7-10 repeat for each remaining milestone. After all milestones are released and the budget is fully accounted for, the PVO can be marked **Completed**.
 
 ### Status Flow Summary
 
+**National Budget path:**
 ```
-Committed → Disbursed → Escrows Created → Escrows Released → PVO InProgress → All Done → PVO Completed
+PVO Created → Milestones Defined → Tender → Bids → Award → Direct Fund → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
+```
+
+**Donor path:**
+```
+PVO Created → Milestones Defined → Tender → Bids → Award → Donor Pledges → Admin Mints & Disburses → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
 ```
 
 ---
@@ -400,21 +427,21 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 
 | Contract | ID | Functions | Tests |
 |----------|----|-----------|-------|
-| `access_control` | `CCBO...USY3` | 9 | 11 |
-| `pvo_core` | `CCFB...4AVR` | 17 | 18 |
-| `escrow` | `CBD4...SGLZ` | 14 | 15 |
-| `community_oracle` | `CDEV...36ZG` | 8 | 12 |
-| `reputation` | `CBBM...ZKX4` | 12 | 19 |
-| `audit_trail` | `CADO...662F` | 10 | 12 |
-| `value_score` | `CAWB...E76` | 11 | 20 |
-| `ai_oracle` | `CDWZ...G7C` | 13 | 17 |
-| `public_index` | `CDU6...7LH` | 7 | 7 |
-| `compliance_engine` | `CDUL...XXD` | 8 | 8 |
-| `procurement_market` | `CDZH...KSM` | 5 | 5 |
-| `pPHP SAC` | `CCJR...32X` | 8 | 8 |
-| `grant_commitment` | `CASS...PEG` | 7 | 13 |
+| `access_control` | `CBDWH...3746` | 9 | 11 |
+| `pvo_core` | `CBMPR...4XYK` | 18 | 18 |
+| `escrow` | `CCPFT...3DFA` | 15 | 15 |
+| `community_oracle` | `CCDHO...5T3H` | 8 | 12 |
+| `reputation` | `CCHXN...WWIB` | 12 | 19 |
+| `audit_trail` | `CCFCR...5C6YZ` | 10 | 12 |
+| `value_score` | `CBR3T...Q5BD` | 11 | 20 |
+| `ai_oracle` | `CBCL4...ECSQ` | 13 | 17 |
+| `public_index` | `CCHK2...XYZT` | 7 | 7 |
+| `compliance_engine` | `CD5ZA...E7FQ` | 8 | 8 |
+| `procurement_market` | `CCEBA...FCXP` | 7 | 7 |
+| `pPHP SAC` | `CCJRB...A32X` | 8 | 8 |
+| `grant_commitment` | `CC5BH...6CJZ` | 7 | 13 |
 
-**33 tests (escrow + pvo_core) × all passing. Frontend: 0 npm vulnerabilities.**
+**40 tests (pvo_core + escrow + procurement_market) all passing.**
 
 Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-reset script.
 
@@ -468,7 +495,7 @@ npm run build && npm start   # → http://localhost:5174
 stellar contract build
 
 # Run all tests
-cargo test -p escrow -p pvo_core   # 33 tests
+cargo test -p pvo_core -p escrow -p procurement_market   # 40 tests
 
 # Full system reset
 node .dev-logs/master-reset.js     # ~8 min
@@ -486,7 +513,7 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 | **GovernmentAgency** | Agency Dashboard | Create PVOs, define milestones with budgets + evidence types | Project definition, budget planning |
 | **FundingAgency** | Funding Agency Dashboard | Create escrows, fund escrows, view donor commitments | Lock funds behind 5-gate verification |
 | **InternationalDonor** | Donor Dashboard | Pledge grants (exact-match PVO budget), commit pPHP | Fund projects conditionally |
-| **Contractor** | Contractor Portal | View assigned PVOs, submit milestone evidence (drone, GPS, photos, reports) | Prove work completed |
+| **Contractor** | Contractor Portal | Browse tenders at `/procurement`, submit bids, view won projects, submit milestone evidence | Prove work completed |
 | **Engineer** | Engineer Panel | Approve milestones after physical inspection | Technical quality gate |
 | **Auditor** | Auditor Dashboard | Compliance validation, procurement law checks | Regulatory compliance gate |
 | **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review | Government audit oversight |
@@ -501,14 +528,18 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 No single role can release funds. Each gate is held by a different role:
 
 ```
+GovernmentAgency → creates PVO, defines milestones, opens tender
+Contractor → submits bid at /procurement (price, quality, timeline)
+GovernmentAgency → awards tender (auto-picks highest score)
+FundingAgency → creates escrow per milestone (Awarded PVOs tab)
+FundingAgency → funds escrow                           [Funds locked]
 Contractor → submits evidence
-Engineer → approves physical work       [Gate 1]
-AI Auditor → validates for fraud        [Gate 2]
-Auditor/COA → compliance check          [Gate 3]
-Citizens → submit GPS field reports     [Gate 4  -  Oracle]
-Citizens → reach confirmation threshold [Gate 5  -  Threshold]
-→ Funding Agency creates escrow         [Funds locked]
-→ Anyone triggers release               [All gates must pass]
+Engineer → approves physical work                       [Gate 1]
+AI Auditor → validates for fraud                        [Gate 2]
+Auditor/COA → compliance check                          [Gate 3]
+Citizens → submit GPS field reports                     [Gate 4 - Oracle]
+Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
+→ Anyone triggers release                               [All gates must pass]
 ```
 
 ---
@@ -570,6 +601,30 @@ Citizens → reach confirmation threshold [Gate 5  -  Threshold]
 
 ---
 
+### Exercise 3b: Procurement Bidding  -  Tender, Bid, Award
+
+**Roles:** GovernmentAgency + Contractor  
+**Wallets:** gov_agency_role (`GDLLO...Y5X2`), contractor (`GDH34...VDRF`)  
+**Dashboards:** Agency Dashboard + Procurement Marketplace (`/procurement`)
+
+| Step | Role | Action | Details |
+|------|------|--------|---------|
+| 1 | GovernmentAgency | Open Agency Dashboard, find PVO with all milestones defined | The "+ Add" button is now "Tender" |
+| 2 | GovernmentAgency | Click **"Tender"** | Pre-fills PVO title and budget (read-only), set bid deadline |
+| 3 | GovernmentAgency | Submit -> signed in Freighter | Tender created as "Open" |
+| 4 | Contractor | Go to `/procurement` (Procurement Marketplace) | See open tenders in Browse tab |
+| 5 | Contractor | Click **"Bid"** on a tender | Enter price, quality score, timeline days |
+| 6 | Contractor | Submit -> signed in Freighter | Bid submitted on-chain |
+| 7 | GovernmentAgency | Go to `/procurement`, switch to **Award** tab | See all bids sorted by final score |
+| 8 | GovernmentAgency | Click **"Award Tender"** | Contract auto-picks highest bid, assigns contractor |
+| 9 | Contractor | Go to Contractor Portal | Won project now appears |
+
+**Scoring formula (max 120):** Price (50) + Quality (30) + Timeline (20) + Integrity from reputation contract (20). The highest score wins automatically.
+
+**What happens:** The contractor is formally assigned through transparent, score-based bidding. No manual selection, no favoritism - the contract formula decides.
+
+---
+
 ### Exercise 4: International Donor  -  Pledge Funds
 
 **Role:** InternationalDonor  
@@ -598,21 +653,17 @@ Citizens → reach confirmation threshold [Gate 5  -  Threshold]
 | Step | Action | Tab | Details |
 |------|--------|-----|---------|
 | 1 | Connect funding_agency wallet |  -  | |
-| 2 | Go to **Donor Commitments** | Commitments | See all grants sorted: Committed first, then Disbursed |
-| 3 | Click **↻ Refresh** |  -  | Re-reads from chain |
-| 4 | Find a **Disbursed** grant |  -  | Shows pPHP amount + "ready for escrow" |
-| 5 | Click **"Create Escrow"** |  -  | Opens modal |
-| 6 | Type in **Recipient** field |  -  | Autocomplete shows all Contractor wallet addresses |
-| 7 | **PVO ID** is pre-filled (read-only) |  -  | Locked to the grant's PVO |
-| 8 | Click **Milestone ID** field |  -  | Autocomplete shows all milestones for this PVO |
-| 9 | Select a milestone |  -  | Auto-fills the Amount field with milestone budget |
-| 10 | Set **Community Confirmations Required** |  -  | How many citizen GPS reports needed |
-| 11 | Submit → signed in Freighter |  -  | Escrow created |
-| 12 | Go to **Escrows** tab | Escrows | See the new escrow |
-| 13 | Click **"Fund Escrow"** |  -  | Deposits pPHP from your wallet into escrow |
-| 14 | Go to **How It Works** tab | Guide | Read full 5-gate explanation |
+| 2 | Go to **Awarded PVOs** | Awarded PVOs | Shows PVOs with contractors assigned through bidding |
+| 3 | Click a PVO to expand |  -  | Reveals milestones with budgets and Escrow buttons |
+| 4 | Click **"Escrow"** on a milestone |  -  | Opens Create Escrow form pre-filled: recipient, PVO ID, milestone ID, amount |
+| 5 | Adjust amount or community confirmations if needed |  -  | Amount is in pesos, milestone budget pre-filled |
+| 6 | Submit → signed in Freighter |  -  | Escrow created |
+| 7 | Go to **Escrows** tab | Escrows | See the new escrow with "Created" status |
+| 8 | Click **"Fund Escrow"** |  -  | Deposits pPHP from your wallet into escrow |
+| 9 | Repeat for remaining milestones | Awarded PVOs | Escrow button shows "Escrowed" badge after each one |
+| 10 | Go to **How It Works** tab | Guide | Read full 5-gate explanation |
 
-**What happens:** The Funding Agency locks funds behind verification gates. The escrow is now Funded  -  payment can only be released after all 5 gates pass. Create multiple escrows against the same grant for each milestone. The button stays visible until all funds are escrowed.
+**What happens:** The Funding Agency locks funds behind verification gates. Each milestone gets its own escrow with its own 5-gate release conditions. The escrow is now Funded  -  payment can only be released after all 5 gates pass.
 
 ---
 
@@ -745,26 +796,37 @@ Citizens → reach confirmation threshold [Gate 5  -  Threshold]
 
 **Roles needed:** GovernmentAgency, Administrator, InternationalDonor, FundingAgency, Contractor, Engineer, AIAuditor, Auditor, 3 Citizens
 
+**Path A: National Budget (simpler, recommended for first walkthrough)**
+
 | # | Role | Action |
 |---|------|--------|
-| 1 | GovernmentAgency | Create PVO (Exercise 3, steps 1–3) |
-| 2 | GovernmentAgency | Define 2 milestones (Exercise 3, steps 4–9) |
-| 3 | InternationalDonor | Pledge exact PVO budget (Exercise 4) |
-| 4 | Administrator | Mint & Disburse the grant (Exercise 2, step 5) |
-| 5 | FundingAgency | Create Escrow for milestone 1 (Exercise 5, steps 5–11) |
-| 6 | FundingAgency | Fund the escrow (Exercise 5, step 13) |
-| 7 | Contractor | Submit evidence (Exercise 6) |
-| 8 | Engineer | Approve milestone (Exercise 7) |
-| 9 | AI Auditor | Validate for fraud (Exercise 8) |
-| 10 | Auditor | Compliance check (Exercise 9) |
-| 11 | 3 Citizens | Submit and verify GPS reports (Exercise 10) |
-| 12 | Anyone | Release escrow → PVO goes InProgress |
-| 13 | Repeat steps 5–12 for milestone 2 | |
-| 14 | Verify PVO is NOT yet Completed | Only ₱100M of ₱500M released |
-| 15 | Continue creating escrows until full budget covered | |
-| 16 | PVO becomes **Completed** | All milestones Released + total ≥ budget |
+| 1 | GovernmentAgency | Create PVO with fund source "National Budget" (Agency Dashboard) |
+| 2 | GovernmentAgency | Define 4 milestones covering the full PVO budget (Agency Dashboard, "+ Add" button) |
+| 3 | GovernmentAgency | Create Tender when milestones cover full budget ("Tender" button replaces "+ Add") |
+| 4 | Contractor | Browse tenders at `/procurement`, submit a bid (price, quality, timeline) |
+| 5 | GovernmentAgency | Award tender from the Award tab (auto-picks highest bid, assigns contractor) |
+| 6 | Administrator | Direct Fund: mint pPHP to Funding Agency (Admin Panel, "Direct Fund" button) |
+| 7 | FundingAgency | Go to "Awarded PVOs" tab, expand the PVO, click "Escrow" on milestone 1 |
+| 8 | FundingAgency | Fund the escrow (Escrows tab, "Fund Escrow" button) |
+| 9 | Contractor | Submit evidence for milestone 1 |
+| 10 | Engineer | Approve milestone 1 (Gate 1) |
+| 11 | AI Auditor | Validate for fraud (Gate 2) |
+| 12 | Auditor | Compliance check (Gate 3) |
+| 13 | 3 Citizens | Submit and verify GPS reports (Gates 4 & 5) |
+| 14 | Anyone | Release escrow -> PVO goes InProgress |
+| 15 | Repeat steps 7-14 | For each remaining milestone |
+| 16 | PVO becomes **Completed** | All milestones Released + total >= budget |
 
-**Key verification:** After step 12, the PVO status is **InProgress**  -  NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
+**Path B: Donor-funded (includes international donor pledge flow)**
+
+| # | Role | Action |
+|---|------|--------|
+| 1-5 | Same as Path A | Create PVO, milestones, tender, bid, award |
+| 6 | InternationalDonor | Pledge exact PVO budget (Donor Dashboard) |
+| 7 | Administrator | Mint & Disburse the grant (Admin Panel, "Mint & Disburse") |
+| 8-16 | Same as Path A steps 7-16 | Create escrows, fund, pass 5 gates, release, repeat |
+
+**Key verification:** After step 14, the PVO status is **InProgress**  -  NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
 
 ---
 

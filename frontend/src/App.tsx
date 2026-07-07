@@ -552,7 +552,7 @@ function App() {
                 element={
                   <ProtectedRoute
                     element={<ProcurementMarketplace />}
-                    roles={["GovernmentAgency", "Administrator"]}
+                    roles={["GovernmentAgency", "Administrator", "Contractor", "Supplier"]}
                   />
                 }
               />

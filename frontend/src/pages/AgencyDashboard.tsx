@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
@@ -12,7 +12,11 @@ export function AgencyDashboard() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"overview" | "create_pvo" | "create_milestone">("overview");
   const [pvoModal, setPvoModal] = useState(false);
+  const [tenderModal, setTenderModal] = useState(false);
+  const [tenderPvoId, setTenderPvoId] = useState(0);
   const [milestoneModal, setMilestoneModal] = useState(false);
+  const [prefillMilestonePvoId, setPrefillMilestonePvoId] = useState<number>(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (!connected) {
     return (
@@ -55,21 +59,28 @@ export function AgencyDashboard() {
         ))}
       </div>
 
-      {activeTab === "overview" && <ProjectOverview onNewPvo={() => setPvoModal(true)} onNewMilestone={() => setMilestoneModal(true)} />}
+      {activeTab === "overview" && <ProjectOverview key={refreshKey} onNewPvo={() => setPvoModal(true)} onNewMilestone={(pvoId) => { setPrefillMilestonePvoId(pvoId); setMilestoneModal(true); }} onOpenTender={(pvoId) => { setTenderPvoId(pvoId); setTenderModal(true); }} />}
       <Modal open={pvoModal} onClose={() => setPvoModal(false)} title="Create New PVO">
         <CreatePVOForm address={address!} onDone={() => setPvoModal(false)} />
       </Modal>
-      <Modal open={milestoneModal} onClose={() => setMilestoneModal(false)} title="Define Milestone">
-        <CreateMilestoneForm address={address!} onDone={() => setMilestoneModal(false)} />
+      <Modal open={milestoneModal} onClose={() => { setMilestoneModal(false); setRefreshKey(k => k + 1); }} title="Define Milestone">
+        <CreateMilestoneForm address={address!} prefillPvoId={prefillMilestonePvoId || undefined} onDone={() => { setMilestoneModal(false); setPrefillMilestonePvoId(0); setRefreshKey(k => k + 1); }} />
+      </Modal>
+      <Modal open={tenderModal} onClose={() => setTenderModal(false)} title="Create Tender — All Milestones">
+        {tenderPvoId > 0 && <TenderForm pvoId={tenderPvoId} address={address!} onDone={() => { setTenderModal(false); setTenderPvoId(0); }} />}
       </Modal>
     </div>
   );
 }
 
-function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; onNewMilestone: () => void }) {
+function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo: () => void; onNewMilestone: (pvoId: number) => void; onOpenTender: (pvoId: number) => void }) {
   const [pvos, setPvos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number; released: number }>>({});
+  const [pvoMilestoneBudgets, setPvoMilestoneBudgets] = useState<Record<number, number>>({});
+  const [selectedPvo, setSelectedPvo] = useState<number | null>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [mlLoading, setMlLoading] = useState(false);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -106,6 +117,24 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
     })();
   }, []);
 
+  const loadMilestones = async (pvoId: number) => {
+    setMlLoading(true);
+    try {
+      const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const result = await client.get_pvo_milestones({ pvo_id: pvoId });
+      const ml = (result.result || []) as any[];
+      setMilestones(ml);
+      const total = ml.reduce((sum: number, m: any) => sum + Number(m.budget || 0), 0);
+      setPvoMilestoneBudgets(prev => ({ ...prev, [pvoId]: total }));
+    } catch { setMilestones([]); }
+    finally { setMlLoading(false); }
+  };
+
+  const togglePvo = (pvoId: number) => {
+    if (selectedPvo === pvoId) { setSelectedPvo(null); setMilestones([]); }
+    else { setSelectedPvo(pvoId); loadMilestones(pvoId); }
+  };
+
   if (loading) return <div className="card p-12 skeleton h-48" />;
 
   if (pvos.length === 0) {
@@ -116,13 +145,13 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
         <p className="text-sm text-gray-400 mb-4">Create your first PVO to get started.</p>
         <div className="flex gap-3 justify-center">
           <button onClick={onNewPvo} className="btn-primary text-sm px-5 py-2.5">➕ Create PVO</button>
-          <button onClick={onNewMilestone} className="btn-secondary text-sm px-5 py-2.5">🏗️ Define Milestone</button>
+          <button onClick={() => onNewMilestone(0)} className="btn-secondary text-sm px-5 py-2.5">🏗️ Define Milestone</button>
         </div>
       </div>
     );
   }
 
-  const totalBudget = pvos.reduce((s: number, p: any) => s + Number(p.total_budget)/100, 0);
+  const totalBudget = pvos.reduce((s: number, p: any) => s + Number(p.total_budget), 0) / PPHP_SCALE;
   const totalMilestones = pvos.reduce((s: number, p: any) => s + (p.milestones || []).length, 0);
 
   return (
@@ -130,7 +159,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total Projects", value: pvos.length, color: "text-gray-900" },
-          { label: "Total Budget", value: `${currency}${(totalBudget / 100 / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
+          { label: "Total Budget", value: `${currency}${(totalBudget / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
           { label: "Active Milestones", value: totalMilestones, color: "text-blue-600" },
           { label: "Avg Score", value: `${Math.round(pvos.reduce((s: number, p: any) => s + Number(p.public_value_score), 0) / pvos.length)}/100`, color: "text-green-600" },
         ].map((stat) => (
@@ -147,57 +176,87 @@ function ProjectOverview({ onNewPvo, onNewMilestone }: { onNewPvo: () => void; o
             <tr>
               <th className="text-left px-4 py-3 font-medium text-gray-500">ID</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Project</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Department</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Dept.</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Budget</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Escrowed</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Available</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Milestones</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Score</th>
             </tr>
           </thead>
           <tbody>
             {pvos.map((p: any) => (
-              <tr key={Number(p.id)} className="border-t border-gray-100 hover:bg-gray-50">
+              <>
+              <tr key={Number(p.id)} onClick={() => togglePvo(Number(p.id))} className={`border-t border-gray-100 cursor-pointer transition-colors ${selectedPvo === Number(p.id) ? "bg-purple-50" : "hover:bg-gray-50"}`}>
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">#{Number(p.id)}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">{p.title}</td>
-                <td className="px-4 py-3 text-gray-600">{p.department}</td>
-                <td className="px-4 py-3 font-mono text-gray-600">{currency}{formatBudget(String(p.total_budget))}</td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">{p.title}</td>
+                <td className="px-4 py-3 text-gray-600 text-xs">{p.department}</td>
+                <td className="px-4 py-3 font-mono text-gray-600 text-xs">{currency}{formatBudget(String(p.total_budget))}</td>
+                <td className="px-4 py-3 text-xs">
+                  <span className="font-semibold text-purple-600">{(p.milestones || []).length}</span>
+                  <span className="text-gray-400 ml-1">defined</span>
                   {(() => {
                     const f = pvoFunding[Number(p.id)];
                     const budget = Number(p.total_budget);
-                    if (!f || budget === 0) return <span className="text-gray-300">—</span>;
-                    const escPct = Math.min(100, (f.escrowed / budget) * 100);
-                    return (
-                      <div>
-                        <span className="text-xs text-emerald-600 font-medium">{currency}{(f.escrowed / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-0.5"><div className="h-full bg-emerald-500 rounded-full" style={{width: escPct+"%"}}/></div>
-                      </div>
-                    );
+                    const escrowed = f ? f.escrowed : 0;
+                    const mlTotal = pvoMilestoneBudgets[Number(p.id)] || 0;
+                    const milestonesCoverBudget = mlTotal >= budget && budget > 0;
+                    if (budget <= 0 || escrowed < budget) {
+                      return milestonesCoverBudget ? (
+                        <button onClick={(e) => { e.stopPropagation(); onOpenTender(Number(p.id)); }} className="ml-2 text-[10px] text-orange-600 hover:underline font-medium">📋 Tender</button>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); onNewMilestone(Number(p.id)); }} className="ml-2 text-[10px] text-purple-600 hover:underline">+ Add</button>
+                      );
+                    }
+                    return null;
                   })()}
                 </td>
-                <td className="px-4 py-3">
-                  {(() => {
-                    const f = pvoFunding[Number(p.id)];
-                    const budget = Number(p.total_budget);
-                    if (!f || budget === 0) return <span className="text-gray-300">—</span>;
-                    const remaining = Math.max(0, f.funded - f.escrowed);
-                    const availPct = Math.min(100, (remaining / budget) * 100);
-                    return remaining > 0 ? (
-                      <div>
-                        <span className="text-xs text-amber-600 font-medium">{currency}{(remaining / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
-                        <div className="w-full h-1.5 bg-slate-100 rounded-full mt-0.5"><div className="h-full bg-amber-400 rounded-full" style={{width: availPct+"%"}}/></div>
-                      </div>
-                    ) : <span className="text-xs text-slate-400">Fully escrowed</span>;
-                  })()}
-                </td>
-                <td className="px-4 py-3"><span className="badge badge-blue">{statusToString(p.status)}</span></td>
-                <td className="px-4 py-3"><span className="font-semibold text-gray-700">{Number(p.public_value_score)}</span><span className="text-gray-400">/100</span></td>
+                <td className="px-4 py-3"><span className="badge badge-blue text-xs">{statusToString(p.status)}</span></td>
               </tr>
+              {selectedPvo === Number(p.id) && (
+                <tr key={`ml-${p.id}`}>
+                  <td colSpan={6} className="px-4 py-3 bg-purple-50/50">
+                    <MilestoneList pvoId={Number(p.id)} milestones={milestones} loading={mlLoading} onRefresh={() => loadMilestones(Number(p.id))} />
+                  </td>
+                </tr>
+              )}
+              </>
             ))}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function MilestoneList({ pvoId, milestones, loading, onRefresh }: {
+  pvoId: number; milestones: any[]; loading: boolean; onRefresh: () => void;
+}) {
+  const currency = getCurrency();
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-gray-600">🏗️ Milestones for PVO #{pvoId}</span>
+      </div>
+      {loading ? (
+        <div className="text-xs text-gray-400 py-2">Loading...</div>
+      ) : milestones.length === 0 ? (
+        <div className="text-xs text-gray-400 py-2">No milestones defined yet. Click "+ Add Milestone" to create one.</div>
+      ) : (
+        <div className="space-y-1">
+          {milestones.map((m: any) => {
+            const mStatus = typeof m.status === "string" ? m.status : m.status?.tag || "Pending";
+            const statusColor = mStatus === "Released" ? "text-emerald-600" : mStatus === "Pending" ? "text-gray-400" : "text-blue-600";
+            return (
+              <div key={Number(m.id)} className="flex items-center justify-between bg-white rounded px-3 py-2 text-xs border border-gray-100">
+                <div>
+                  <span className="font-medium text-gray-700">#{Number(m.id)} {m.title}</span>
+                  <span className="text-gray-400 ml-2">{currency}{(Number(m.budget) / PPHP_SCALE).toLocaleString()}</span>
+                </div>
+                <span className={statusColor}>{mStatus}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -209,7 +268,8 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
   const [budget, setBudget] = useState("");
   const [description, setDescription] = useState("");
   const [fundSource, setFundSource] = useState("");
-  const [contractor, setContractor] = useState("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); // placeholder, assigned after bidding
+  const [deadline, setDeadline] = useState("");
+  const placeholderAddr = useRef("GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
@@ -220,11 +280,12 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
+      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const amt = Number(budget);
+      const amt = Math.round(Number(budget) * PPHP_SCALE);
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
+      const deadlineTs = deadline ? Math.floor(new Date(deadline).getTime() / 1000) : Math.floor(Date.now() / 1000) + 365 * 24 * 3600;
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -242,13 +303,14 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
         new Address(address).toScVal(),
         xdr.ScVal.scvString(title),
         xdr.ScVal.scvString(desc),
-        new Address(address).toScVal(),       // funding_agency = self
-        new Address(contractor).toScVal(), // contractor (assigned after bidding)
-        pm,                                     // project_manager (vestigial)
+        new Address(address).toScVal(),
+        new Address(placeholderAddr.current).toScVal(),
+        pm,
         xdr.ScVal.scvString(department),
         xdr.ScVal.scvString(municipality),
         new ScInt(amt).toI128(),
         xdr.ScVal.scvString(fundSource),
+        nativeToScVal(deadlineTs, { type: "u64" }),
       );
 
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -261,11 +323,11 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("PVO created on-chain!");
-      setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource(""); setContractor(""); setLatitude(""); setLongitude("");
+      setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource("National Budget"); setLatitude(""); setLongitude("");
       setTimeout(onDone, 1500);
     } catch (err: any) {
       setTxState("error");
@@ -324,9 +386,9 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (centavos)</label>
-            <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="10000000000" required />
-            {budget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(budget) / 100).toLocaleString()}</p>}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (in Pesos)</label>
+            <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="500000000" min="1" step="0.01" />
+            {budget && Number(budget) > 0 && <p className="text-xs text-gray-400 mt-1">= {(Number(budget) * PPHP_SCALE).toLocaleString()} SAC units (₱{Number(budget).toLocaleString()})</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fund Source</label>
@@ -351,8 +413,84 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
   );
 }
 
-function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () => void }) {
-  const [pvoId, setPvoId] = useState("");
+function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string; onDone: () => void }) {
+  const [pvoTitle, setPvoTitle] = useState("");
+  const [pvoBudget, setPvoBudget] = useState("");
+  const [desc, setDesc] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+  const currency = getCurrency();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const r = await client.get_pvo({ pvo_id: pvoId });
+        if (r.result) {
+          setPvoTitle(r.result.title);
+          setPvoBudget(String(r.result.total_budget));
+        }
+      } catch {}
+    })();
+  }, [pvoId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTxState("preparing");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+      const dl = deadline ? Math.floor(new Date(deadline).getTime() / 1000) : Math.floor(Date.now() / 1000) + 30 * 24 * 3600;
+      const op = contract.call("create_tender",
+        new Address(address).toScVal(),
+        nativeToScVal(pvoId, { type: "u32" }),
+        nativeToScVal(0, { type: "u32" }), // milestone_id=0 = all milestones
+        xdr.ScVal.scvString(`PVO #${pvoId} — ${pvoTitle}`),
+        xdr.ScVal.scvString(desc || "Whole project tender for PVO #" + pvoId),
+        new ScInt(Number(pvoBudget) || 1).toI128(),
+        nativeToScVal(dl, { type: "u64" }),
+      );
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setTxState("done");
+      setTxMsg("Tender created on-chain!");
+      setTimeout(onDone, 1500);
+    } catch (err: any) {
+      setTxState("error");
+      setTxMsg(err.message?.slice(0, 150) || "Failed");
+    }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {txMsg && <div className={`p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{txState === "done" ? "✅ " : "❌ "}{txMsg}</div>}
+      <div><p className="text-xs text-amber-600 mb-2">Tender for PVO #{pvoId} — covers all milestones. Contractors bid on the whole project.</p></div>
+      <div><label className="block text-sm font-medium text-gray-700 mb-1">Tender Title</label><input type="text" value={`PVO #${pvoId} — ${pvoTitle}`} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
+      <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={desc} onChange={e => setDesc(e.target.value)} className="input" rows={2} placeholder="Describe the scope of work..." /></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div><label className="block text-sm font-medium text-gray-700 mb-1">Budget (SAC units)</label><input type="text" value={pvoBudget} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono" />
+          {pvoBudget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(pvoBudget) / PPHP_SCALE).toLocaleString()}</p>}
+        </div>
+        <div><label className="block text-sm font-medium text-gray-700 mb-1">Bid Submission Deadline</label><input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} className="input" /></div>
+      </div>
+      <button type="submit" disabled={busy} className="btn-primary w-full py-3">{busy ? "Signing..." : "Create Tender On-Chain"}</button>
+    </form>
+  );
+}
+
+function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: string; prefillPvoId?: number; onDone: () => void }) {
+  const [pvoId, setPvoId] = useState(prefillPvoId ? String(prefillPvoId) : "");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
@@ -365,6 +503,14 @@ function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () 
   const [pvos, setPvos] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // Auto-set PVO title when pre-filled
+  useEffect(() => {
+    if (prefillPvoId) {
+      const pvo = pvos.find((p: any) => Number(p.id) === prefillPvoId);
+      if (pvo) { setSearchQuery(pvo.title); setPvoId(String(prefillPvoId)); }
+    }
+  }, [prefillPvoId, pvos]);
 
   useEffect(() => {
     (async () => {
@@ -431,7 +577,7 @@ function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () 
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("Milestone created on-chain!");
@@ -459,11 +605,11 @@ function CreateMilestoneForm({ address, onDone }: { address: string; onDone: () 
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">Search PVO</label>
             <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setShowDropdown(true); }}
-              onFocus={() => setShowDropdown(true)}
+              onFocus={() => { if (!prefillPvoId) setShowDropdown(true); }}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              className="input" placeholder="Type project title..." />
-            {pvoId && <p className="text-xs text-brand-600 mt-1">PVO #{pvoId} selected</p>}
-            {showDropdown && (searchQuery || filtered.length > 0) && (
+              className="input" placeholder="Type project title..." readOnly={!!prefillPvoId} />
+            {pvoId && <p className="text-xs text-brand-600 mt-1">PVO #{pvoId} selected {prefillPvoId ? "(locked)" : ""}</p>}
+            {!prefillPvoId && showDropdown && (searchQuery || filtered.length > 0) && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                 {filtered.map((pvo: any) => (
                   <button type="button" key={Number(pvo.id)}
