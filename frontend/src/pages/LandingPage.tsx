@@ -1,10 +1,22 @@
+import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useWallet } from "../wallet";
 
 export function LandingPage() {
   const { connect } = useWallet();
+  const location = useLocation();
   const heroRef = useRef<HTMLDivElement>(null);
   const [offsets, setOffsets] = useState({ hero: 0, stats: 0, features: 0, grid: 0, cta: 0 });
+
+  // Scroll to hash section on mount/navigation
+  useEffect(() => {
+    const hash = location.hash?.replace("#", "");
+    if (hash) {
+      setTimeout(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [location]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -19,7 +31,7 @@ export function LandingPage() {
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 overflow-x-hidden">

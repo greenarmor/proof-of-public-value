@@ -32,7 +32,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Public Portal", icon: "🏛️", group: "public" },
+  { to: "/portal", label: "Public Portal", icon: "🏛️", group: "public" },
   { to: "/onboarding", label: "Role-Play", icon: "🎭", group: "public" },
   { to: "/index", label: "Index", icon: "🏆", group: "public" },
   { to: "/memory", label: "Search", icon: "🔍", group: "public" },
@@ -220,43 +220,30 @@ function Header() {
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <div className="flex items-center gap-6">
-          <button
-            onClick={() => {
-              if (!connected) {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                navigate("/");
-              }
-            }}
-            className="flex items-center gap-2 font-bold text-lg text-slate-900 tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
+          <NavLink
+            to="/#hero"
+            className="flex items-center gap-2 font-bold text-lg text-slate-900 tracking-tight hover:opacity-80 transition-opacity"
           >
             <span className="w-8 h-8 rounded-lg gradient-brand flex items-center justify-center text-white text-sm">
               P
             </span>
             <span className="hidden sm:inline">PoPV</span>
-          </button>
+          </NavLink>
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
             {/* Landing page nav — hidden when wallet connected */}
             {!connected &&
-              landingItems.map((item) => {
-                const sectionId = item.to.split("#")[1];
-                return (
-                  <button
-                    key={item.to}
-                    onClick={() =>
-                      document
-                        .getElementById(sectionId)
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }
-                    className="nav-link nav-link-inactive"
-                  >
-                    <span className="mr-1">{item.icon}</span>
-                    {item.label}
-                  </button>
-                );
-              })}
+              landingItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="nav-link nav-link-inactive"
+                >
+                  <span className="mr-1">{item.icon}</span>
+                  {item.label}
+                </NavLink>
+              ))}
             {/* Public nav — always visible */}
             {publicItems.map((item) => (
               <NavLink
@@ -420,24 +407,17 @@ function Header() {
                 Public
               </p>
               {!connected &&
-                landingItems.map((item) => {
-                  const sectionId = item.to.split("#")[1];
-                  return (
-                    <button
-                      key={item.to}
-                      onClick={() => {
-                        setMobileOpen(false);
-                        document
-                          .getElementById(sectionId)
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 w-full text-left"
-                    >
-                      <span>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
+                landingItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50 w-full text-left"
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
               {publicItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -517,6 +497,7 @@ function App() {
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/portal" element={<TransparencyPortal />} />
               <Route path="/onboarding" element={<RolePlayOnboarding />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
