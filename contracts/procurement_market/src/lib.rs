@@ -1,6 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, Map, String, Symbol, Vec};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, IntoVal, Map, String, Symbol, Vec};
 
 // Cross-contract: import reputation client from its deployed WASM spec
 mod reputation_client {
@@ -10,6 +10,14 @@ mod reputation_client {
 }
 
 use reputation_client::Client as ReputationClient;
+
+// Cross-contract: import pvo_core client
+mod pvo_core_client {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/pvo_core.wasm"
+    );
+}
+use pvo_core_client::Client as PvoCoreClient;
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -25,6 +33,8 @@ pub enum TenderStatus {
 pub struct Tender {
     pub id: u32,
     pub agency: Address,
+    pub pvo_id: u32,
+    pub milestone_id: u32,
     pub title: String,
     pub description: String,
     pub budget: i128,
@@ -79,25 +89,29 @@ const BIDS: Symbol = symbol_short!("BIDS");
 const TENDER_BIDS: Symbol = symbol_short!("TNDRBIDS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 const REPUTATION: Symbol = symbol_short!("REP");
+const PVO_CORE_ADDR: Symbol = symbol_short!("PVOCORE");
 
 #[contract]
 pub struct ProcurementMarket;
 
 #[contractimpl]
 impl ProcurementMarket {
-    pub fn initialize(env: Env, reputation_address: Address) {
+    pub fn initialize(env: Env, reputation_address: Address, pvo_core_address: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&COUNTER, &0u32);
         storage.set(&REPUTATION, &reputation_address);
+        storage.set(&PVO_CORE_ADDR, &pvo_core_address);
         storage.set(&INITIALIZED, &true);
     }
 
     pub fn create_tender(
         env: Env,
         agency: Address,
+        pvo_id: u32,
+        milestone_id: u32,
         title: String,
         description: String,
         budget: i128,
@@ -109,6 +123,8 @@ impl ProcurementMarket {
         let tender = Tender {
             id,
             agency: agency.clone(),
+            pvo_id,
+            milestone_id,
             title: title.clone(),
             description,
             budget,
@@ -218,12 +234,29 @@ impl ProcurementMarket {
 
         assert!(winner.is_some(), "no bids to award");
         let w = winner.unwrap();
+        let pvo_id = tender.pvo_id; // capture before move
         tender.status = TenderStatus::Awarded;
         tender.winner = Some(w.clone());
         tenders.set(tender_id, tender);
         storage.set(&TENDERS, &tenders);
 
-        TenderAwardedEvent { tender_id, winner: w, final_score: best_score }.publish(&env);
+        TenderAwardedEvent { tender_id, winner: w.clone(), final_score: best_score }.publish(&env);
+
+        // Auto-assign winner as contractor on the PVO
+        if pvo_id > 0 {
+            if let Some(pvo_core_addr) = storage.get::<Symbol, Address>(&PVO_CORE_ADDR) {
+                let _: () = env.invoke_contract(
+                    &pvo_core_addr,
+                    &Symbol::new(&env, "assign_contractor"),
+                    soroban_sdk::vec![
+                        &env,
+                        env.current_contract_address().into_val(&env),
+                        pvo_id.into(),
+                        w.into_val(&env),
+                    ],
+                );
+            }
+        }
     }
 
     // ─── Queries ───

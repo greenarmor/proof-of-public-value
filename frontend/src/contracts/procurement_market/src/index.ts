@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CDZHMQAONGPLJ2QSUGKKXYS6PSTF3ZAYBGL2XIQG5FRU4D3E6SFA6KSM",
+    contractId: "CA7LLUS5Z5NQIYMYPBZYMZD5XNWYB7GELCHIN6WIVVQ5OTWGQRCKOG27",
   }
 } as const
 
@@ -59,6 +59,8 @@ export interface Tender {
   deadline: u64;
   description: string;
   id: u32;
+  milestone_id: u32;
+  pvo_id: u32;
   status: TenderStatus;
   title: string;
   winner: Option<string>;
@@ -78,7 +80,7 @@ export interface Client {
   /**
    * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  initialize: ({reputation_address}: {reputation_address: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+  initialize: ({reputation_address, pvo_core_address}: {reputation_address: string, pvo_core_address: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a submit_bid transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -93,7 +95,7 @@ export interface Client {
   /**
    * Construct and simulate a create_tender transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
-  create_tender: ({agency, title, description, budget, deadline}: {agency: string, title: string, description: string, budget: i128, deadline: u64}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
+  create_tender: ({agency, pvo_id, milestone_id, title, description, budget, deadline}: {agency: string, pvo_id: u32, milestone_id: u32, title: string, description: string, budget: i128, deadline: u64}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 
   /**
    * Construct and simulate a get_tender_count transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -124,16 +126,16 @@ export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
     super(
       new ContractSpec([ "AAAAAQAAAAAAAAAAAAAAA0JpZAAAAAAJAAAAAAAAAApjb250cmFjdG9yAAAAAAATAAAAAAAAAAtmaW5hbF9zY29yZQAAAAAEAAAAAAAAAAJpZAAAAAAABAAAAAAAAAAFcHJpY2UAAAAAAAALAAAAAAAAAA1xdWFsaXR5X3Njb3JlAAAAAAAABAAAAAAAAAAQcmVwdXRhdGlvbl9zY29yZQAAAAQAAAAAAAAACXRlbmRlcl9pZAAAAAAAAAQAAAAAAAAADXRpbWVsaW5lX2RheXMAAAAAAAAEAAAAAAAAAAl0aW1lc3RhbXAAAAAAAAAG",
-        "AAAAAQAAAAAAAAAAAAAABlRlbmRlcgAAAAAACQAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAZidWRnZXQAAAAAAAsAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAACGRlYWRsaW5lAAAABgAAAAAAAAALZGVzY3JpcHRpb24AAAAAEAAAAAAAAAACaWQAAAAAAAQAAAAAAAAABnN0YXR1cwAAAAAH0AAAAAxUZW5kZXJTdGF0dXMAAAAAAAAABXRpdGxlAAAAAAAAEAAAAAAAAAAGd2lubmVyAAAAAAPoAAAAEw==",
+        "AAAAAQAAAAAAAAAAAAAABlRlbmRlcgAAAAAACwAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAZidWRnZXQAAAAAAAsAAAAAAAAACmNyZWF0ZWRfYXQAAAAAAAYAAAAAAAAACGRlYWRsaW5lAAAABgAAAAAAAAALZGVzY3JpcHRpb24AAAAAEAAAAAAAAAACaWQAAAAAAAQAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAGc3RhdHVzAAAAAAfQAAAADFRlbmRlclN0YXR1cwAAAAAAAAAFdGl0bGUAAAAAAAAQAAAAAAAAAAZ3aW5uZXIAAAAAA+gAAAAT",
         "AAAAAgAAAAAAAAAAAAAADFRlbmRlclN0YXR1cwAAAAQAAAAAAAAAAAAAAARPcGVuAAAAAAAAAAAAAAAGQ2xvc2VkAAAAAAAAAAAAAAAAAAdBd2FyZGVkAAAAAAAAAAAAAAAACUNhbmNlbGxlZAAAAA==",
         "AAAABQAAAAAAAAAAAAAAEUJpZFN1Ym1pdHRlZEV2ZW50AAAAAAAAAQAAABNiaWRfc3VibWl0dGVkX2V2ZW50AAAAAAQAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAJdGVuZGVyX2lkAAAAAAAABAAAAAAAAAAAAAAACmNvbnRyYWN0b3IAAAAAABMAAAAAAAAAAAAAAAtmaW5hbF9zY29yZQAAAAAEAAAAAAAAAAI=",
         "AAAABQAAAAAAAAAAAAAAElRlbmRlckF3YXJkZWRFdmVudAAAAAAAAQAAABR0ZW5kZXJfYXdhcmRlZF9ldmVudAAAAAMAAAAAAAAACXRlbmRlcl9pZAAAAAAAAAQAAAAAAAAAAAAAAAZ3aW5uZXIAAAAAABMAAAAAAAAAAAAAAAtmaW5hbF9zY29yZQAAAAAEAAAAAAAAAAI=",
         "AAAABQAAAAAAAAAAAAAAElRlbmRlckNyZWF0ZWRFdmVudAAAAAAAAQAAABR0ZW5kZXJfY3JlYXRlZF9ldmVudAAAAAMAAAAAAAAAAmlkAAAAAAAEAAAAAAAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAAAAAAGYnVkZ2V0AAAAAAALAAAAAAAAAAI=",
         "AAAAAAAAAAAAAAAKZ2V0X3RlbmRlcgAAAAAAAQAAAAAAAAACaWQAAAAAAAQAAAABAAAD6AAAB9AAAAAGVGVuZGVyAAA=",
-        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAQAAAAAAAAAScmVwdXRhdGlvbl9hZGRyZXNzAAAAAAATAAAAAA==",
+        "AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAAAgAAAAAAAAAScmVwdXRhdGlvbl9hZGRyZXNzAAAAAAATAAAAAAAAABBwdm9fY29yZV9hZGRyZXNzAAAAEwAAAAA=",
         "AAAAAAAAAAAAAAAKc3VibWl0X2JpZAAAAAAABQAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAAAAAAJdGVuZGVyX2lkAAAAAAAABAAAAAAAAAAFcHJpY2UAAAAAAAALAAAAAAAAAA1xdWFsaXR5X3Njb3JlAAAAAAAABAAAAAAAAAANdGltZWxpbmVfZGF5cwAAAAAAAAQAAAABAAAABA==",
         "AAAAAAAAAAAAAAAMYXdhcmRfdGVuZGVyAAAAAgAAAAAAAAAGYWdlbmN5AAAAAAATAAAAAAAAAAl0ZW5kZXJfaWQAAAAAAAAEAAAAAA==",
-        "AAAAAAAAAAAAAAANY3JlYXRlX3RlbmRlcgAAAAAAAAUAAAAAAAAABmFnZW5jeQAAAAAAEwAAAAAAAAAFdGl0bGUAAAAAAAAQAAAAAAAAAAtkZXNjcmlwdGlvbgAAAAAQAAAAAAAAAAZidWRnZXQAAAAAAAsAAAAAAAAACGRlYWRsaW5lAAAABgAAAAEAAAAE",
+        "AAAAAAAAAAAAAAANY3JlYXRlX3RlbmRlcgAAAAAAAAcAAAAAAAAABmFnZW5jeQAAAAAAEwAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAxtaWxlc3RvbmVfaWQAAAAEAAAAAAAAAAV0aXRsZQAAAAAAABAAAAAAAAAAC2Rlc2NyaXB0aW9uAAAAABAAAAAAAAAABmJ1ZGdldAAAAAAACwAAAAAAAAAIZGVhZGxpbmUAAAAGAAAAAQAAAAQ=",
         "AAAAAAAAAAAAAAAQZ2V0X3RlbmRlcl9jb3VudAAAAAAAAAABAAAABA==",
         "AAAAAAAAAAAAAAASZ2V0X2JpZHNfYnlfdGVuZGVyAAAAAAABAAAAAAAAAAl0ZW5kZXJfaWQAAAAAAAAEAAAAAQAAA+oAAAfQAAAAA0JpZAA=" ]),
       options

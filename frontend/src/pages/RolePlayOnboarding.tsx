@@ -100,14 +100,14 @@ const ROLES = [
     title: "Contractor",
     icon: "🏗️",
     color: "bg-orange-500",
-    desc: "Do the actual work. Submit drone imagery, GPS, engineering reports as evidence. Prove you built what you were paid to build.",
+    desc: "Bid on government tenders. Submit competitive offers with price, quality, and timeline. Win contracts, do the work, submit evidence. Prove you built what you were paid to build.",
     steps: [
       "Connect the Contractor wallet in Freighter",
-      "Go to Contractor Portal",
-      "View assigned PVOs and milestones",
-      "Submit evidence: drone imagery, GPS, photos, reports",
+      "Go to Procurement Marketplace — browse open tenders",
+      "Submit a bid with price, quality score, and timeline",
+      "If awarded, view your assigned PVOs in Contractor Portal",
+      "Submit evidence for milestones: drone imagery, GPS, photos, reports",
       "Each submission is recorded on-chain — immutable audit trail",
-      "Evidence starts the 5-gate verification process",
     ],
   },
   {
@@ -119,10 +119,10 @@ const ROLES = [
     steps: [
       "Connect the Government Agency wallet in Freighter",
       "Go to Agency Dashboard",
-      "Click Create PVO — enter title, department, budget, contractor",
-      "Define milestones — set budget per phase, evidence types needed",
-      "Set community confirmation threshold per milestone",
-      "PVOs appear in the Public Transparency Portal",
+      "Click Create PVO — enter title, department, budget (contractor assigned after bidding)",
+      "Define milestones with budget, evidence types, and community threshold",
+      "Open tenders via Procurement Marketplace for bidding",
+      "Award the winning bid — contractor auto-assigned on-chain",
     ],
   },
   {
@@ -198,7 +198,7 @@ export function RolePlayOnboarding() {
           When accusations fly, you have cryptographic proof that you did the right thing.<br /><br />
           <strong>If you are corrupt, your time is up.</strong> There are no more paper trails to tamper with.
           No more signatures to forge. No more "lost documents." Every citizen with a phone is now an auditor.
-          Every GPS-tagged report is a permanent record. Every peso is tracked from budget to contractor to ground.<br /><br />
+          Every GPS-tagged report is a permanent record. Every peso is tracked from budget to tender to contractor to ground.<br /><br />
           <strong>To every citizen, in every nation:</strong> you are no longer a bystander. Your GPS report is the
           final gate. Without citizen verification, not a single peso is released from escrow. You don't
           need to be an auditor. You just need to visit a project site and report what you see — or don't see.<br /><br />

@@ -29,7 +29,8 @@ fn setup() -> (Env, ProcurementMarketClient<'static>, Address) {
 
     let contract_id = env.register(ProcurementMarket, ());
     let client = ProcurementMarketClient::new(&env, &contract_id);
-    client.initialize(&reputation_id);
+    let dummy = Address::generate(&env);
+    client.initialize(&reputation_id, &dummy);
     (env, client, reputation_id)
 }
 
@@ -40,6 +41,8 @@ fn test_create_tender() {
 
     let id = client.create_tender(
         &agency,
+        &0u32,
+        &0u32,
         &make_string(&env, "Road Paving Tender"),
         &make_string(&env, "10km road construction"),
         &10_000_000_i128,
@@ -63,7 +66,7 @@ fn test_submit_bid_and_award() {
     register_entity(&env, &reputation_id, &c1, EntityType::Contractor);
     register_entity(&env, &reputation_id, &c2, EntityType::Contractor);
 
-    let tid = client.create_tender(&agency, &make_string(&env, "Bridge"), &make_string(&env, "Build"), &10_000_000_i128, &1000);
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "Bridge"), &make_string(&env, "Build"), &10_000_000_i128, &1000);
 
     // Contractor 1: good price, high quality
     client.submit_bid(&c1, &tid, &9_000_000_i128, &90, &30);
@@ -91,7 +94,7 @@ fn test_get_bids() {
 
     register_entity(&env, &reputation_id, &c1, EntityType::Contractor);
 
-    let tid = client.create_tender(&agency, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
 
     client.submit_bid(&c1, &tid, &4_500_000_i128, &85, &20);
     client.submit_bid(&c1, &tid, &4_800_000_i128, &90, &15);
@@ -107,7 +110,7 @@ fn test_bid_with_no_reputation() {
     let c1 = Address::generate(&env);
 
     // Don't register c1 in reputation — they get score 0
-    let tid = client.create_tender(&agency, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
 
     client.submit_bid(&c1, &tid, &4_000_000_i128, &70, &30);
 
@@ -121,7 +124,7 @@ fn test_bid_with_no_reputation() {
 fn test_award_empty_tender() {
     let (env, client, _rep_id) = setup();
     let agency = Address::generate(&env);
-    let tid = client.create_tender(&agency, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
     client.award_tender(&agency, &tid);
 }
 
@@ -130,8 +133,8 @@ fn test_tender_count() {
     let (env, client, _rep_id) = setup();
     let agency = Address::generate(&env);
     assert_eq!(client.get_tender_count(), 0);
-    client.create_tender(&agency, &make_string(&env, "T1"), &make_string(&env, "D"), &1_000_000_i128, &100);
-    client.create_tender(&agency, &make_string(&env, "T2"), &make_string(&env, "D"), &2_000_000_i128, &200);
+    client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T1"), &make_string(&env, "D"), &1_000_000_i128, &100);
+    client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T2"), &make_string(&env, "D"), &2_000_000_i128, &200);
     assert_eq!(client.get_tender_count(), 2);
 }
 
@@ -149,7 +152,7 @@ fn test_reputation_affects_final_score() {
     let reputation_client = reputation::ReputationLedgerClient::new(&env, &reputation_id);
     reputation_client.record_audit_finding(&agency, &bad, &5);
 
-    let tid = client.create_tender(&agency, &make_string(&env, "Test"), &make_string(&env, "Desc"), &10_000_000_i128, &1000);
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "Test"), &make_string(&env, "Desc"), &10_000_000_i128, &1000);
 
     client.submit_bid(&good, &tid, &9_000_000_i128, &90, &30);
     client.submit_bid(&bad, &tid, &9_000_000_i128, &90, &30);

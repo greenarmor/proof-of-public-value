@@ -141,6 +141,13 @@ pub struct ValueScoreUpdatedEvent {
     pub score: u32,
 }
 
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractorAssignedEvent {
+    pub pvo_id: u32,
+    pub contractor: Address,
+}
+
 const COUNTER: Symbol = symbol_short!("COUNTER");
 const PVOS: Symbol = symbol_short!("PVOS");
 const MILESTONES: Symbol = symbol_short!("MSTNS");
@@ -241,6 +248,21 @@ impl PVOCore {
         storage.set(&PVOS, &pvos);
 
         PVOStatusChangedEvent { id: pvo_id, old_status, new_status }.publish(&env);
+    }
+
+    pub fn assign_contractor(env: Env, caller: Address, pvo_id: u32, contractor: Address) {
+        caller.require_auth();
+
+        let storage = env.storage().persistent();
+        let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
+        let mut pvo = pvos.get(pvo_id).expect("PVO not found");
+
+        pvo.contractor = contractor.clone();
+        pvo.updated_at = env.ledger().timestamp();
+        pvos.set(pvo_id, pvo);
+        storage.set(&PVOS, &pvos);
+
+        ContractorAssignedEvent { pvo_id, contractor }.publish(&env);
     }
 
     pub fn update_value_score(env: Env, updater: Address, pvo_id: u32, score: u32) {

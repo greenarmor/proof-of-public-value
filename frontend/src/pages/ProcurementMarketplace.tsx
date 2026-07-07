@@ -20,7 +20,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function ProcurementMarketplace() {
   const { address, connected, connect } = useWallet();
-  const [activeTab, setActiveTab] = useState<"browse" | "award" | "create">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "award">("browse");
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
@@ -70,13 +70,12 @@ export function ProcurementMarketplace() {
       <p className="text-gray-500 mb-6">Multi-criteria bidding with integrity-weighted ranking and auto-award.</p>
 
       <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(["browse", "create", "award"] as const).map((tab) => (
+        {(["browse", "award"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}>
             {tab === "browse" && "📋 Browse Tenders"}
-            {tab === "create" && "➕ Create Tender"}
             {tab === "award" && "🏆 Award"}
           </button>
         ))}
@@ -85,15 +84,26 @@ export function ProcurementMarketplace() {
       {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
       
       {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} />}
+
+      <div className="mt-4">
+        <button onClick={() => setCreateModal(true)} className="btn-primary text-sm px-4 py-2">
+          ➕ Create Tender
+        </button>
+      </div>
+      <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Tender">
+        <CreateTenderForm address={address!} onDone={() => { setCreateModal(false); setTenders([]); setLoading(true); }} />
+      </Modal>
     </div>
   );
 }
 
 function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boolean }) {
   const currency = getCurrency();
+  const [bidModal, setBidModal] = useState<Tender | null>(null);
   if (loading) return <div className="text-center py-10 text-gray-400">Loading tenders...</div>;
 
   return (
+    <>
     <div className="grid gap-4">
       {tenders.map(t => (
         <div key={t.id} className="bg-white border border-gray-200 rounded-lg p-5">
@@ -113,18 +123,27 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
             <span>Budget: {currency}{(Number(t.budget) / PPHP_SCALE).toLocaleString()}</span>
             {t.winner && <span>Winner: <WalletAddress addr={t.winner} chars={6}/></span>}
           </div>
-          <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-            Scoring: Price (max 50) + Quality (max 30) + Timeline (max 20) + Integrity (max 20)
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-400">Scoring: Price (max 50) + Quality (max 30) + Timeline (max 20)</span>
+            {t.status.tag === "Open" && (
+              <button onClick={() => setBidModal(t)} className="btn-primary text-xs px-3 py-1">📤 Bid</button>
+            )}
           </div>
         </div>
       ))}
       {tenders.length === 0 && <div className="text-center py-10 text-gray-400">No tenders yet. Create one with the "Create Tender" tab.</div>}
     </div>
+    <Modal open={!!bidModal} onClose={() => setBidModal(null)} title="Submit Bid">
+      {bidModal && <BidForm tender={bidModal} onDone={() => setBidModal(null)} />}
+    </Modal>
+    </>
   );
 }
 
 function CreateTenderForm({ address, onDone }: { address: string; onDone: () => void }) {
   const [title, setTitle] = useState("");
+  const [pvoId, setPvoId] = useState("");
+  const [milestoneId, setMilestoneId] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -153,8 +172,10 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
 
       const op = contract.call("create_tender",
         new Address(address).toScVal(),
+        nativeToScVal(Number(pvoId) || 1, { type: "u32" }),
+        nativeToScVal(Number(milestoneId) || 1, { type: "u32" }),
         xdr.ScVal.scvString(title),
-        xdr.ScVal.scvString(description),
+        xdr.ScVal.scvString(description || title),
         new ScInt(amt).toI128(),
         nativeToScVal(dl, { type: "u64" }),
       );
@@ -173,7 +194,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
 
       setTxState("done");
       setTxMsg("Tender created on-chain!");
-      setTitle(""); setDescription(""); setBudget(""); setDeadline("");
+      setTitle(""); setPvoId(""); setMilestoneId(""); setDescription(""); setBudget(""); setDeadline("");
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -191,6 +212,16 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label>
+            <input type="number" value={pvoId} onChange={(e) => setPvoId(e.target.value)} className="input" placeholder="1" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Milestone ID</label>
+            <input type="number" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} className="input" placeholder="1" required />
+          </div>
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tender Title</label>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Asphalt Supply for Road Paving" required />
@@ -340,5 +371,82 @@ function TenderAwardCard({ tender, currency, address }: { tender: Tender; curren
         )}
       </div>
     </div>
+  );
+}
+
+function BidForm({ tender, onDone }: { tender: Tender; onDone: () => void }) {
+  const { address } = useWallet();
+  const [price, setPrice] = useState("");
+  const [quality, setQuality] = useState("80");
+  const [timeline, setTimeline] = useState("180");
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+  const currency = getCurrency();
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTxState("preparing");
+    setTxMsg("");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address!);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+
+      const op = contract.call("submit_bid",
+        new Address(address!).toScVal(),
+        xdr.ScVal.scvU32(tender.id),
+        new ScInt(Number(price)).toI128(),
+        xdr.ScVal.scvU32(Number(quality)),
+        xdr.ScVal.scvU32(Number(timeline)),
+      );
+
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      setTxState("done");
+      setTxMsg("Bid submitted! Score will appear after award.");
+      setTimeout(onDone, 2000);
+    } catch (err: any) {
+      setTxState("error");
+      setTxMsg(err.message?.slice(0, 200) || "Bid failed");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {txMsg && (
+        <div className={`p-2 rounded-lg text-xs ${txState === "done" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Price (SAC)</label>
+          <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="input text-xs" required />
+          {price && <p className="text-[10px] text-slate-400">{currency}{(Number(price)/PPHP_SCALE).toLocaleString()}</p>}
+        </div>
+        <div>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Quality (0-100)</label>
+          <input type="number" value={quality} onChange={e => setQuality(e.target.value)} className="input text-xs" min="0" max="100" />
+        </div>
+        <div>
+          <label className="block text-[10px] text-slate-500 mb-0.5">Timeline (days)</label>
+          <input type="number" value={timeline} onChange={e => setTimeline(e.target.value)} className="input text-xs" min="1" />
+        </div>
+      </div>
+      <button type="submit" disabled={busy} className="btn-primary text-xs w-full py-1.5">
+        {busy ? "Submitting..." : "📤 Submit Bid"}
+      </button>
+    </form>
   );
 }

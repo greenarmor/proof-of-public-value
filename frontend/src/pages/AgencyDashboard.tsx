@@ -209,7 +209,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
   const [budget, setBudget] = useState("");
   const [description, setDescription] = useState("");
   const [fundSource, setFundSource] = useState("");
-  const [contractor, setContractor] = useState("");
+  const [contractor, setContractor] = useState("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); // placeholder, assigned after bidding
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [txState, setTxState] = useState<TxState>("idle");
@@ -243,7 +243,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
         xdr.ScVal.scvString(title),
         xdr.ScVal.scvString(desc),
         new Address(address).toScVal(),       // funding_agency = self
-        new Address(contractor || address).toScVal(), // contractor
+        new Address(contractor).toScVal(), // contractor (assigned after bidding)
         pm,                                     // project_manager (vestigial)
         xdr.ScVal.scvString(department),
         xdr.ScVal.scvString(municipality),
@@ -334,9 +334,9 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contractor Address (optional)</label>
-          <input type="text" value={contractor} onChange={(e) => setContractor(e.target.value)} className="input font-mono text-xs" placeholder="GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF" />
-          {contractor && <p className="text-xs text-gray-400 mt-1">Contractor: <WalletAddress addr={contractor}/></p>}
+          <label className="block text-sm font-medium text-gray-700 mb-1">Contractor</label>
+          <input type="text" value="TBD — assigned after bidding" readOnly className="input text-slate-400 cursor-not-allowed" />
+          <p className="text-xs text-amber-600 mt-1">Contractor will be assigned on-chain after the bidding process is complete.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

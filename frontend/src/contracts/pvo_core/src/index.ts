@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCFBBSDV2KEVO4EIEFL5QNS3QZP4VH24RSBWLKANWBC5SYRVCCWM4AVR",
+    contractId: "CBGEP7TWEUCROBO42HZGH3VAGM5N6WF2FYDW77DJNEAJI2QIC2D7BQFG",
   }
 } as const
 
@@ -97,6 +97,7 @@ export interface PublicValueObject {
 
 
 
+
 export interface Client {
   /**
    * Construct and simulate a get_pvo transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -152,6 +153,11 @@ export interface Client {
    * Construct and simulate a engineer_approve transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
   engineer_approve: ({engineer, milestone_id}: {engineer: string, milestone_id: u32}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
+
+  /**
+   * Construct and simulate a assign_contractor transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   */
+  assign_contractor: ({caller, pvo_id, contractor}: {caller: string, pvo_id: u32, contractor: string}, options?: MethodOptions) => Promise<AssembledTransaction<null>>
 
   /**
    * Construct and simulate a release_milestone transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -224,6 +230,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAQY3JlYXRlX21pbGVzdG9uZQAAAAcAAAAAAAAAB2NyZWF0b3IAAAAAEwAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAV0aXRsZQAAAAAAABAAAAAAAAAAC2Rlc2NyaXB0aW9uAAAAABAAAAAAAAAABmJ1ZGdldAAAAAAACwAAAAAAAAARcmVxdWlyZWRfZXZpZGVuY2UAAAAAAAPqAAAH0AAAAAxFdmlkZW5jZVR5cGUAAAAAAAAAEmNvbW11bml0eV9yZXF1aXJlZAAAAAAABAAAAAEAAAAE",
         "AAAAAAAAAAAAAAAQZW5naW5lZXJfYXBwcm92ZQAAAAIAAAAAAAAACGVuZ2luZWVyAAAAEwAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAA=",
         "AAAAAQAAAAAAAAAAAAAAEVB1YmxpY1ZhbHVlT2JqZWN0AAAAAAAAEAAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAAAAAAKY3JlYXRlZF9hdAAAAAAABgAAAAAAAAAIZGVhZGxpbmUAAAAGAAAAAAAAAApkZXBhcnRtZW50AAAAAAAQAAAAAAAAAAtkZXNjcmlwdGlvbgAAAAAQAAAAAAAAAAtmdW5kX3NvdXJjZQAAAAAQAAAAAAAAAA5mdW5kaW5nX2FnZW5jeQAAAAAAEwAAAAAAAAACaWQAAAAAAAQAAAAAAAAACm1pbGVzdG9uZXMAAAAAA+oAAAAEAAAAAAAAAAxtdW5pY2lwYWxpdHkAAAAQAAAAAAAAAA9wcm9qZWN0X21hbmFnZXIAAAAAEwAAAAAAAAAScHVibGljX3ZhbHVlX3Njb3JlAAAAAAAEAAAAAAAAAAZzdGF0dXMAAAAAB9AAAAAJUFZPU3RhdHVzAAAAAAAAAAAAAAV0aXRsZQAAAAAAABAAAAAAAAAADHRvdGFsX2J1ZGdldAAAAAsAAAAAAAAACnVwZGF0ZWRfYXQAAAAAAAY=",
+        "AAAAAAAAAAAAAAARYXNzaWduX2NvbnRyYWN0b3IAAAAAAAADAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAA=",
         "AAAAAAAAAAAAAAARcmVsZWFzZV9taWxlc3RvbmUAAAAAAAACAAAAAAAAAAZjYWxsZXIAAAAAABMAAAAAAAAADG1pbGVzdG9uZV9pZAAAAAQAAAABAAAAAQ==",
         "AAAAAAAAAAAAAAARdXBkYXRlX3B2b19zdGF0dXMAAAAAAAADAAAAAAAAAAd1cGRhdGVyAAAAABMAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAKbmV3X3N0YXR1cwAAAAAH0AAAAAlQVk9TdGF0dXMAAAAAAAAA",
         "AAAAAAAAAAAAAAASZ2V0X3B2b19taWxlc3RvbmVzAAAAAAABAAAAAAAAAAZwdm9faWQAAAAAAAQAAAABAAAD6gAAB9AAAAAJTWlsZXN0b25lAAAA",
@@ -234,6 +241,7 @@ export class Client extends ContractClient {
         "AAAABQAAAAAAAAAAAAAAFkV2aWRlbmNlU3VibWl0dGVkRXZlbnQAAAAAAAEAAAAYZXZpZGVuY2Vfc3VibWl0dGVkX2V2ZW50AAAABAAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAAAAAAAAAAAC2V2aWRlbmNlX2lkAAAAAAQAAAAAAAAAAAAAAA1ldmlkZW5jZV90eXBlAAAAAAAH0AAAAAxFdmlkZW5jZVR5cGUAAAAAAAAAAg==",
         "AAAABQAAAAAAAAAAAAAAFlZhbHVlU2NvcmVVcGRhdGVkRXZlbnQAAAAAAAEAAAAZdmFsdWVfc2NvcmVfdXBkYXRlZF9ldmVudAAAAAAAAAIAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAAAAAABXNjb3JlAAAAAAAABAAAAAAAAAAC",
         "AAAAAAAAAAAAAAAXZ2V0X3B2X29zX2J5X2NvbnRyYWN0b3IAAAAAAQAAAAAAAAAKY29udHJhY3RvcgAAAAAAEwAAAAEAAAPqAAAH0AAAABFQdWJsaWNWYWx1ZU9iamVjdAAAAA==",
+        "AAAABQAAAAAAAAAAAAAAF0NvbnRyYWN0b3JBc3NpZ25lZEV2ZW50AAAAAAEAAAAZY29udHJhY3Rvcl9hc3NpZ25lZF9ldmVudAAAAAAAAAIAAAAAAAAABnB2b19pZAAAAAAABAAAAAAAAAAAAAAACmNvbnRyYWN0b3IAAAAAABMAAAAAAAAAAg==",
         "AAAAAAAAAAAAAAAaYWRkX2NvbW11bml0eV92ZXJpZmljYXRpb24AAAAAAAIAAAAAAAAAB2NpdGl6ZW4AAAAAEwAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAA=",
         "AAAABQAAAAAAAAAAAAAAG01pbGVzdG9uZVN0YXR1c0NoYW5nZWRFdmVudAAAAAABAAAAHm1pbGVzdG9uZV9zdGF0dXNfY2hhbmdlZF9ldmVudAAAAAAAAwAAAAAAAAAGcHZvX2lkAAAAAAAEAAAAAAAAAAAAAAAMbWlsZXN0b25lX2lkAAAABAAAAAAAAAAAAAAACm5ld19zdGF0dXMAAAAAB9AAAAAPTWlsZXN0b25lU3RhdHVzAAAAAAAAAAAC" ]),
       options
@@ -251,6 +259,7 @@ export class Client extends ContractClient {
         compliance_check: this.txFromJSON<null>,
         create_milestone: this.txFromJSON<u32>,
         engineer_approve: this.txFromJSON<null>,
+        assign_contractor: this.txFromJSON<null>,
         release_milestone: this.txFromJSON<boolean>,
         update_pvo_status: this.txFromJSON<null>,
         get_pvo_milestones: this.txFromJSON<Array<Milestone>>,

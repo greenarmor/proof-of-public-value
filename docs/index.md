@@ -164,11 +164,15 @@ If any gate fails, funds remain locked. No single person can release money.
 
 ### 1. Government Agency Creates a PVO
 
-A Government Agency wallet creates a Public Value Object on-chain. Each PVO has a title, department, municipality, total budget (in pesos), and contractor address.
+A Government Agency wallet creates a Public Value Object on-chain. Each PVO has a title, department, municipality, and total budget (in pesos). The contractor field is left as a placeholder - assigned after the bidding process.
 
 The PVO starts as **Proposed**.
 
-### 2. Government Agency Defines Milestones
+### 2. Procurement Bidding
+
+Once a PVO is created, the government agency opens a tender linked to a specific milestone via the procurement_market contract. Contractors submit bids with price, quality score, and timeline. The contract scores bids using a weighted formula and awards the highest scorer, then cross-calls pvo_core.assign_contractor to update the PVO on-chain. This means the contractor field remains empty until bidding completes. The Create PVO form shows "TBD - assigned after bidding" for new projects.
+
+### 3. Government Agency Defines Milestones
 
 Instead of paying the entire budget upfront, the project is broken into milestones  -  individual phases each with their own budget, evidence requirements, and community confirmation threshold. For example:
 
@@ -179,13 +183,13 @@ Instead of paying the entire budget upfront, the project is broken into mileston
 
 Budget input is in **pesos**  -  the contract auto-converts to SAC atomic units (pesos × 10,000,000).
 
-### 3. International Donor Pledges Exact PVO Budget
+### 4. International Donor Pledges Exact PVO Budget
 
 Donors (World Bank, JICA, ADB, etc.) commit grants through the Donor Dashboard. The commitment contract enforces **exact-match pledging**: the pledge must equal **PVO budget minus already-committed funds**. This prevents over/under-committing.
 
 The grant status is **Committed**.
 
-### 4. Admin Mints pPHP & Marks Disbursed
+### 5. Admin Mints pPHP & Marks Disbursed
 
 From the **Admin/System Panel → Pledges tab**, the administrator clicks **"Mint & Disburse"** on a Committed grant. This:
 
@@ -194,7 +198,7 @@ From the **Admin/System Panel → Pledges tab**, the administrator clicks **"Min
 
 These are two separate transactions because Freighter only supports one operation per transaction.
 
-### 5. Funding Agency Creates Escrows Per Milestone
+### 6. Funding Agency Creates Escrows Per Milestone
 
 From the **Funding Agency Dashboard → Donor Commitments tab**, each Disbursed grant shows a **"Create Escrow"** button. Clicking it opens a form with:
 
@@ -206,11 +210,11 @@ From the **Funding Agency Dashboard → Donor Commitments tab**, each Disbursed 
 
 The funding agency can create **multiple escrows** against a single grant  -  one per milestone. The button stays visible until all funds are escrowed.
 
-### 6. Escrow is Funded
+### 7. Escrow is Funded
 
 The funding agency deposits the milestone amount into the escrow contract. The escrow status becomes **Funded**.
 
-### 7. Five Gates Verify the Work
+### 8. Five Gates Verify the Work
 
 Each gate is an independent on-chain verification:
 
@@ -224,7 +228,7 @@ Each gate is an independent on-chain verification:
 
 **Gate 5  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
 
-### 8. Escrow Releases  -  PVO Goes InProgress
+### 9. Escrow Releases  -  PVO Goes InProgress
 
 Once all 5 gates pass, anyone can trigger release. The escrow contract:
 
@@ -233,7 +237,7 @@ Once all 5 gates pass, anyone can trigger release. The escrow contract:
 
 The PVO stays InProgress until **all milestones are Released AND the total Released milestone budgets equal or exceed the PVO budget**. Only then can it become **Completed**.
 
-### 9. Repeat for Remaining Milestones
+### 10. Repeat for Remaining Milestones
 
 Steps 5-8 repeat for each remaining milestone. After all milestones are released and the budget is fully accounted for, the PVO can be marked **Completed**.
 
