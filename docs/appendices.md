@@ -11,16 +11,16 @@
 A **Public Value Object** is the digital representation of a real-world public infrastructure project on the Stellar blockchain. Think of it as a "programmable government project."
 
 Every PVO stores:
-- **Title** — e.g., "C-5 Road Extension Phase II"
-- **Department** — e.g., "DPWH" (Department of Public Works and Highways)
-- **Municipality** — where the project is physically located
-- **Total Budget** — locked in pPHP SAC atomic units (pesos × 10⁷)
-- **Contractor** — the company doing the work
-- **Funding Agency** — the entity providing the budget
-- **Fund Source** — GAA (General Appropriations Act), ODA (Official Development Assistance), etc.
-- **Status** — Proposed → InProgress → Completed → Suspended / Terminated
-- **Public Value Score** — a 0-100 rating computed from milestones, community reports, and compliance
-- **Milestones** — the list of project phases that must be completed before full payment
+- **Title**  -  e.g., "C-5 Road Extension Phase II"
+- **Department**  -  e.g., "DPWH" (Department of Public Works and Highways)
+- **Municipality**  -  where the project is physically located
+- **Total Budget**  -  locked in pPHP SAC atomic units (pesos × 10⁷)
+- **Contractor**  -  the company doing the work
+- **Funding Agency**  -  the entity providing the budget
+- **Fund Source**  -  GAA (General Appropriations Act), ODA (Official Development Assistance), etc.
+- **Status**  -  Proposed → InProgress → Completed → Suspended / Terminated
+- **Public Value Score**  -  a 0-100 rating computed from milestones, community reports, and compliance
+- **Milestones**  -  the list of project phases that must be completed before full payment
 
 **In one sentence:** A PVO is a government project turned into a smart contract that cannot be paid until proven complete.
 
@@ -28,21 +28,21 @@ Every PVO stores:
 
 ### Milestone
 
-A **Milestone** is a single phase or deliverable within a PVO. Instead of paying the entire project budget upfront (the root cause of corruption), the project is broken into milestones — each one independently verified before any money is released.
+A **Milestone** is a single phase or deliverable within a PVO. Instead of paying the entire project budget upfront (the root cause of corruption), the project is broken into milestones  -  each one independently verified before any money is released.
 
 Each milestone has:
-- **Title** — e.g., "Foundation and Piling", "Bridge Deck Installation"
-- **Description** — what work this phase covers
-- **Budget** — how much of the total PVO budget this phase is worth
-- **Status** — Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
-- **Required Evidence** — what the contractor must submit (e.g., drone imagery, GPS coordinates, engineering reports, photos)
-- **Community Required** — how many verified citizen field reports are needed just for this milestone
-- **Community Confirmations** — how many verified reports have been submitted so far
-- **Engineer Approved** — has a licensed engineer signed off?
-- **AI Validated** — has the AI oracle run fraud/anomaly detection?
-- **Compliance Passed** — has procurement/safety compliance been checked?
+- **Title**  -  e.g., "Foundation and Piling", "Bridge Deck Installation"
+- **Description**  -  what work this phase covers
+- **Budget**  -  how much of the total PVO budget this phase is worth
+- **Status**  -  Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
+- **Required Evidence**  -  what the contractor must submit (e.g., drone imagery, GPS coordinates, engineering reports, photos)
+- **Community Required**  -  how many verified citizen field reports are needed just for this milestone
+- **Community Confirmations**  -  how many verified reports have been submitted so far
+- **Engineer Approved**  -  has a licensed engineer signed off?
+- **AI Validated**  -  has the AI oracle run fraud/anomaly detection?
+- **Compliance Passed**  -  has procurement/safety compliance been checked?
 
-**Each milestone has its own escrow** — money for each phase is locked independently and can only be released when that specific phase passes all gates.
+**Each milestone has its own escrow**  -  money for each phase is locked independently and can only be released when that specific phase passes all gates.
 
 ---
 
@@ -50,21 +50,21 @@ Each milestone has:
 
 ### Escrow
 
-An **Escrow** is a smart contract lockbox that holds funds (pPHP tokens) and releases them **only when 5 independent conditions are met**. No single person — not the contractor, not the funding agency, not the administrator — can release funds alone.
+An **Escrow** is a smart contract lockbox that holds funds (pPHP tokens) and releases them **only when 5 independent conditions are met**. No single person  -  not the contractor, not the funding agency, not the administrator  -  can release funds alone.
 
 **Properties:**
-- **Asset-agnostic** — can hold pPHP (testnet), USDC (mainnet), or any Stellar token
-- **5-gate conditional release** — all gates must pass before any peso moves
-- **Independent per milestone** — each milestone gets its own escrow, so if one phase fails, the rest remain unaffected
-- **Auto-completes PVO** — when the last escrow is released, the PVO automatically transitions to "Completed"
-- **Dispute window** — anyone can dispute before release, pausing all escrows under that PVO
+- **Asset-agnostic**  -  can hold pPHP (testnet), USDC (mainnet), or any Stellar token
+- **5-gate conditional release**  -  all gates must pass before any peso moves
+- **Independent per milestone**  -  each milestone gets its own escrow, so if one phase fails, the rest remain unaffected
+- **Auto-completes PVO**  -  when the last escrow is released, the PVO automatically transitions to "Completed"
+- **Dispute window**  -  anyone can dispute before release, pausing all escrows under that PVO
 
 **Lifecycle:**
-1. **Created** — funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
-2. **Funded** — funding agency deposits the exact milestone amount (in pPHP SAC units)
-3. **Gates Progress** — engineer approves → AI validates → compliance checks → community oracle → community confirmations
-4. **Ready** — all 5 gates passed; anyone can trigger release
-5. **Released** — funds transferred to contractor; PVO auto-completes if this was the last milestone
+1. **Created**  -  funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
+2. **Funded**  -  funding agency deposits the exact milestone amount (in pPHP SAC units)
+3. **Gates Progress**  -  engineer approves → AI validates → compliance checks → community oracle → community confirmations
+4. **Ready**  -  all 5 gates passed; anyone can trigger release
+5. **Released**  -  funds transferred to contractor; PVO auto-completes if this was the last milestone
 
 ---
 
@@ -78,7 +78,7 @@ An **Escrow** is a smart contract lockbox that holds funds (pPHP tokens) and rel
 | **4. Community Oracle** | Citizens (via reports) | The Community Oracle contract checks whether verified citizen reports exist for the project. Reports must pass verification. |
 | **5. Community Confirmations** | Citizens (GPS field reports) | Citizens visit the site, submit GPS-tagged evidence. The counter must reach the threshold set when the escrow was created. |
 
-**Key insight:** Gates 4 and 5 are different. Gate 4 checks if the **oracle** has verified reports on file. Gate 5 counts how many **unique verified reports** exist — this is the threshold you set.
+**Key insight:** Gates 4 and 5 are different. Gate 4 checks if the **oracle** has verified reports on file. Gate 5 counts how many **unique verified reports** exist  -  this is the threshold you set.
 
 ---
 
@@ -97,7 +97,7 @@ When creating an escrow, the funding agency sets **how many verified citizen GPS
 - **Low-risk projects** (visible infrastructure in urban areas): set to 1-3
 - **Medium-risk projects** (rural bridges, school buildings): set to 3-5
 - **High-risk projects** (mountain roads, flood control, areas with corruption history): set to 5-10
-- **Maximum transparency**: set higher — forces multiple independent on-the-ground verifications
+- **Maximum transparency**: set higher  -  forces multiple independent on-the-ground verifications
 
 ---
 
@@ -107,12 +107,12 @@ When creating an escrow, the funding agency sets **how many verified citizen GPS
 
 A **Soroban SAC token** (Stellar Asset Contract) on testnet that simulates the Philippine Peso. Properties:
 
-- **SAC (Stellar Asset Contract)** — a native Stellar token standard with 7 decimals
-- **Unlimited mintable supply** — admin can mint any amount for testing
-- **Testnet only** — has no real-world value, no peg, no liquidity
-- **Purpose** — allows testing with realistic peso amounts (millions, billions) that would be impossible with Friendbot's 10K XLM limit
+- **SAC (Stellar Asset Contract)**  -  a native Stellar token standard with 7 decimals
+- **Unlimited mintable supply**  -  admin can mint any amount for testing
+- **Testnet only**  -  has no real-world value, no peg, no liquidity
+- **Purpose**  -  allows testing with realistic peso amounts (millions, billions) that would be impossible with Friendbot's 10K XLM limit
 
-**On mainnet**, pPHP is replaced by a real backed asset (USDC, EURC, or a peso-backed stablecoin). The escrow contract code is identical — only the token address changes.
+**On mainnet**, pPHP is replaced by a real backed asset (USDC, EURC, or a peso-backed stablecoin). The escrow contract code is identical  -  only the token address changes.
 
 ---
 
@@ -135,13 +135,13 @@ All on-chain amounts in PoPV are stored in **SAC atomic units**: pesos × 10⁷ 
 
 A **soulbound reputation token** that tracks citizen trustworthiness. Properties:
 
-- **Required for reporting** — citizens must hold at least 1 RPT to submit field reports (anti-spam gate)
-- **Minimum balance gate** — `set_citizen_credential(min_balance: 1)` on the reputation contract
-- **Soulbound** — cannot be transferred between wallets
-- **Minted by admin** — only the administrator can issue RPT tokens
-- **Scoring** — reputation score is computed from report accuracy, verification rate, and community endorsements
+- **Required for reporting**  -  citizens must hold at least 1 RPT to submit field reports (anti-spam gate)
+- **Minimum balance gate**  -  `set_citizen_credential(min_balance: 1)` on the reputation contract
+- **Soulbound**  -  cannot be transferred between wallets
+- **Minted by admin**  -  only the administrator can issue RPT tokens
+- **Scoring**  -  reputation score is computed from report accuracy, verification rate, and community endorsements
 
-**This is NOT bypassed** — it's a real security gate. Without RPT, a wallet cannot submit reports. This prevents Sybil attacks (one person creating thousands of fake wallets to fake community confirmations).
+**This is NOT bypassed**  -  it's a real security gate. Without RPT, a wallet cannot submit reports. This prevents Sybil attacks (one person creating thousands of fake wallets to fake community confirmations).
 
 ---
 
@@ -167,7 +167,7 @@ The **role-based permission system**. Every action in PoPV checks the caller's r
 | Administrator | System management, role assignment |
 | AIAuditor | Run AI validation on evidence |
 
-The access control contract is the **first contract deployed** — all other contracts depend on it for role verification.
+The access control contract is the **first contract deployed**  -  all other contracts depend on it for role verification.
 
 ---
 
@@ -175,9 +175,9 @@ The access control contract is the **first contract deployed** — all other con
 
 The **international donor pledge system**. Models real-world development finance:
 
-1. **Commit** — Donor records a pledge specifying PVO, amount, and org name. The pledge must **exactly match** the PVO's remaining budget (prevents over/under-pledging).
-2. **Disburse** — Admin mints pPHP to the funding agency and marks the grant as disbursed.
-3. **Complete** — After escrow release, the grant is marked completed.
+1. **Commit**  -  Donor records a pledge specifying PVO, amount, and org name. The pledge must **exactly match** the PVO's remaining budget (prevents over/under-pledging).
+2. **Disburse**  -  Admin mints pPHP to the funding agency and marks the grant as disbursed.
+3. **Complete**  -  After escrow release, the grant is marked completed.
 
 **Exact-amount enforcement**: the contract cross-calls `pvo_core.get_pvo_budget()` and sums existing grants. If the pledge doesn't equal the remaining budget, the transaction is rejected on-chain.
 
@@ -192,7 +192,7 @@ The **citizen report verification engine**. Handles:
 - Submission tracking per PVO/milestone
 - Verified report counting for escrow gate satisfaction
 
-Works in tandem with the **reputation contract** — only citizens with RPT tokens can submit.
+Works in tandem with the **reputation contract**  -  only citizens with RPT tokens can submit.
 
 ---
 
@@ -419,13 +419,13 @@ This enables real-time indexing and public auditability.
 ## FAQ
 
 **Q: Why "PVO" and not just "Project"?**
-A: A PVO is more than a project — it's a programmable on-chain entity with enforced rules. It has an identity, a budget lock, verification gates, and an immutable audit trail. "Project" is just a label; a PVO is the enforcement mechanism.
+A: A PVO is more than a project  -  it's a programmable on-chain entity with enforced rules. It has an identity, a budget lock, verification gates, and an immutable audit trail. "Project" is just a label; a PVO is the enforcement mechanism.
 
 **Q: What happens if a contractor submits fake evidence?**
-A: The AI oracle scans for anomalies. If detected, the gate fails. The dispute mechanism also allows anyone to flag suspicious evidence. On-chain, the evidence hash is immutable — tampering is cryptographically detectable.
+A: The AI oracle scans for anomalies. If detected, the gate fails. The dispute mechanism also allows anyone to flag suspicious evidence. On-chain, the evidence hash is immutable  -  tampering is cryptographically detectable.
 
 **Q: Can the admin bypass the gates?**
-A: No. The escrow contract logic is on-chain and immutable. No role — not even Administrator — has a "skip gate" function. The only admin powers are role assignment and token minting, both auditable.
+A: No. The escrow contract logic is on-chain and immutable. No role  -  not even Administrator  -  has a "skip gate" function. The only admin powers are role assignment and token minting, both auditable.
 
 **Q: Why 5 gates instead of 3 or 7?**
 A: 5 gates balance independence (no single role controls release) with practicality (not too slow). Each gate covers a distinct failure mode: physical quality (engineer), fraud detection (AI), regulatory compliance (COA), community oracle (citizen reports), and community threshold (multiple independent verifications).
@@ -434,4 +434,4 @@ A: 5 gates balance independence (no single role controls release) with practical
 A: The oracle gate (gate 4) checks that the **oracle contract itself** has verified reports on file. The confirmations gate (gate 5) checks that the **number of verified reports** meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.
 
 **Q: How is this different from a traditional escrow?**
-A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on **cryptographic proof of work completed** — not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.
+A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on **cryptographic proof of work completed**  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.

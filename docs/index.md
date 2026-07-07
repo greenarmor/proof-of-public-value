@@ -1,60 +1,64 @@
-# Proof of Public Value — User Manual
+# Proof of Public Value  -  User Manual
 
-> **Track:** Local Finance & Real World Access — Stellar Build Better Hackathon
-> **Serverless dApp** on Stellar Soroban testnet. No backend, no database — the blockchain is the infrastructure.
+> **Category:** DeFi & Ecosystem Composability  -  APAC Stellar Hackathon
+> **Serverless dApp** on Stellar Soroban testnet. Stablecoins + payment rails + smart contract enforcement. No backend, no database  -  the blockchain is the infrastructure.
 
 ---
 
 ## 🏆 Why This Hackathon Project Exists
 
-The **Stellar Build Better Hackathon** challenges builders to create real-world solutions using Stellar's blockchain infrastructure. The **Local Finance & Real World Access** track asks: how can blockchain make government spending transparent, verifiable, and accessible to ordinary citizens?
+The **APAC Stellar Hackathon** challenges builders to create financial infrastructure powered by Stellar's payment rails. The **DeFi & Ecosystem Composability** category asks: how can stablecoins and Soroban smart contracts be combined to build real-world financial systems that don't just move money  -  but enforce accountability?
 
-**PoPV answers that question directly.**
+**PoPV answers that question with a system that uses Stellar as the backbone of government transparency.**
 
-Government corruption is not a technology problem — it's a trust problem. Public funds flow based on signatures and paperwork, not on proof of work completed. Auditors arrive years late. Citizens have no voice. The system trusts officials to be honest, and when they're not, nobody finds out until the money is gone.
+Stablecoins like USDC are the settlement layer  -  real value locked in escrow, released only when work is proven. Soroban smart contracts are the enforcement layer  -  13 contracts that verify, validate, and gatekeep every peso before it moves. The result is composable infrastructure: any government can plug in their own stablecoin, their own validators, their own citizens, and the system works the same way.
+
+This is not just a hackathon entry. It is a statement: **the technology to end government corruption already exists.** Stellar provides the rails. Soroban provides the logic. PoPV provides the proof.
+
+Government corruption is not a technology problem  -  it's a trust problem. Public funds flow based on signatures and paperwork, not on proof of work completed. Auditors arrive years late. Citizens have no voice. The system trusts officials to be honest, and when they're not, nobody finds out until the money is gone.
 
 **This hackathon project proves that it doesn't have to be this way.**
 
-By combining Stellar Soroban smart contracts with a serverless frontend, PoPV creates a system where:
+By combining Stellar Soroban smart contracts with a serverless frontend and real stablecoin settlement, PoPV creates a system where:
 
-- **Every project** is a programmable PVO on-chain — immutable, auditable, public
-- **Every peso** is locked behind 5 independent verification gates — no single person controls release
-- **Every citizen** becomes a verifier — GPS field reports are the final gate
-- **Every decision** is recorded forever on Stellar — who approved, when, and why
+- **Every project** is a programmable PVO on-chain  -  immutable, auditable, public
+- **Every unit of currency** is locked behind 5 independent verification gates  -  no single person controls release
+- **Every citizen** becomes a verifier  -  GPS field reports are the final gate
+- **Every decision** is recorded forever on Stellar  -  who approved, when, and why
 
-No backend. No database. No centralized server. Just Stellar contracts and a static frontend. Anyone can deploy it. Everyone can audit it. No one can cheat it.
+No backend. No database. No centralized server. Just Stellar contracts, a stablecoin, and a static frontend. Anyone can deploy it. Everyone can audit it. No one can cheat it.
 
 **This is what the Build Better Hackathon is about: building technology that makes the world better.** And there is no better place to start than the billions of pesos lost to corruption every year.
 
 ---
 
-## ⛓️ Serverless by Design — Stellar Soroban as the Backend
+## ⛓️ Serverless by Design  -  Stellar Soroban as the Backend
 
 PoPV has **no backend server, no database, no API layer.** The Stellar blockchain is the entire infrastructure.
 
 | Traditional App | PoPV |
 |-----------------|------|
-| Node.js / Python backend | ❌ None — Stellar Soroban contracts handle all logic |
-| PostgreSQL / MongoDB | ❌ None — Soroban persistent storage |
-| REST API endpoints | ❌ None — RPC calls to `soroban-testnet.stellar.org:443` |
-| Auth server (JWT/OAuth) | ❌ None — Freighter wallet signs transactions |
-| File storage (S3) | ❌ None — IPFS for evidence, Soroban events for audit trail |
-| Deployment server (EC2/VPS) | ❌ None — Static HTML/CSS/JS on Vercel (free) |
+| Node.js / Python backend | ❌ None  -  Stellar Soroban contracts handle all logic |
+| PostgreSQL / MongoDB | ❌ None  -  Soroban persistent storage |
+| REST API endpoints | ❌ None  -  RPC calls to `soroban-testnet.stellar.org:443` |
+| Auth server (JWT/OAuth) | ❌ None  -  Freighter wallet signs transactions |
+| File storage (S3) | ❌ None  -  IPFS for evidence, Soroban events for audit trail |
+| Deployment server (EC2/VPS) | ❌ None  -  Static HTML/CSS/JS on Vercel (free) |
 
 **13 Soroban smart contracts** execute every business rule on-chain:
-- `access_control` — 13 role-based permissions
-- `pvo_core` — PVO lifecycle, milestones, evidence, budget validation
-- `escrow` — 5-gate conditional fund lock + InProgress auto-transition
-- `grant_commitment` — Donor pledges with exact-budget enforcement
-- `community_oracle` — Citizen report verification
-- `reputation` — RPT soulbound token gatekeeper (anti-Sybil)
-- `ai_oracle` — Fraud detection engine
-- `compliance_engine` — Regulatory validation
-- `audit_trail` — Immutable decision log
-- `value_score` — 0-100 public value rating
-- `public_index` — National department rankings
-- `procurement_market` — Supplier pre-qualification
-- `pphp_sac` — Stellar Asset Contract settlement token (SAC, 7 decimals)
+- `access_control`  -  13 role-based permissions
+- `pvo_core`  -  PVO lifecycle, milestones, evidence, budget validation
+- `escrow`  -  5-gate conditional fund lock + InProgress auto-transition
+- `grant_commitment`  -  Donor pledges with exact-budget enforcement
+- `community_oracle`  -  Citizen report verification
+- `reputation`  -  RPT soulbound token gatekeeper (anti-Sybil)
+- `ai_oracle`  -  Fraud detection engine
+- `compliance_engine`  -  Regulatory validation
+- `audit_trail`  -  Immutable decision log
+- `value_score`  -  0-100 public value rating
+- `public_index`  -  National department rankings
+- `procurement_market`  -  Supplier pre-qualification
+- `pphp_sac`  -  Stellar Asset Contract settlement token (SAC, 7 decimals)
 
 **Cross-contract calls** enable complex workflows without centralized orchestration:
 ```
@@ -65,7 +69,7 @@ community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
 
 **Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.
 
-### AI Oracle — One Service, Every Frontend
+### AI Oracle  -  One Service, Every Frontend
 
 The AI Oracle is the **only off-chain component**. It's a standalone TypeScript service (`ai-oracle/service.ts`) that:
 
@@ -86,19 +90,19 @@ npx tsx ai-oracle/service.ts --once
 
 ---
 
-## 🇵🇭 Philippines as Case Study — Open to Every Government
+## 🇵🇭 Philippines as Case Study  -  Open to Every Government
 
 **Proof of Public Value is not built for one country. It is built for any government that wants to prove its integrity.**
 
 The Philippines serves as our primary case study because the pattern of corruption here is well-documented and devastatingly familiar:
 
-- **₱10 Billion PDAF pork barrel scam** — lawmakers funneled public funds to ghost NGOs
-- **Billions in DPWH ghost infrastructure** — projects paid for but never built
-- **Funds released upfront** — contractors paid before a brick was laid
-- **Projects never verified** — no citizen oversight, no independent audit
-- **Accountability delayed for years** — by the time auditors arrive, evidence is gone
+- **₱10 Billion PDAF pork barrel scam**  -  lawmakers funneled public funds to ghost NGOs
+- **Billions in DPWH ghost infrastructure**  -  projects paid for but never built
+- **Funds released upfront**  -  contractors paid before a brick was laid
+- **Projects never verified**  -  no citizen oversight, no independent audit
+- **Accountability delayed for years**  -  by the time auditors arrive, evidence is gone
 
-But this pattern is not unique to the Philippines. It happens in Indonesia, Brazil, Kenya, India, Mexico, Nigeria — anywhere public funds flow without verification, corruption follows.
+But this pattern is not unique to the Philippines. It happens in Indonesia, Brazil, Kenya, India, Mexico, Nigeria  -  anywhere public funds flow without verification, corruption follows.
 
 **PoPV is open-source, serverless, and nationality-agnostic.** The Stellar blockchain doesn't care which country deploys it. The 5-gate verification works the same whether you're building roads in Manila, bridges in Nairobi, or schools in São Paulo. Any government can clone the repo, deploy the contracts, and start proving value to its citizens.
 
@@ -106,33 +110,33 @@ But this pattern is not unique to the Philippines. It happens in Indonesia, Braz
 
 ## 🏛️ Our Mission: Step Up, or Be Watched
 
-**To every government official in every country:** You were given a sacred trust — to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or shilling of the public budget belongs to the people. Your job is to protect it, allocate it wisely, and spend it transparently. If you have been doing that — this system proves your integrity. If you haven't — this system exposes you.
+**To every government official in every country:** You were given a sacred trust  -  to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or shilling of the public budget belongs to the people. Your job is to protect it, allocate it wisely, and spend it transparently. If you have been doing that  -  this system proves your integrity. If you haven't  -  this system exposes you.
 
-**PoPV exists to digitalize accountability.** We are not here to replace government. We are here to give government the tools to prove they are doing their job — and to give citizens the power to verify it themselves.
+**PoPV exists to digitalize accountability.** We are not here to replace government. We are here to give government the tools to prove they are doing their job  -  and to give citizens the power to verify it themselves.
 
 **To the honest public servant:** This platform protects you. Every decision you make is recorded on an immutable blockchain. Your approvals are timestamped. Your compliance checks are auditable. When accusations fly, you have cryptographic proof that you did the right thing.
 
 **To the corrupt:** Your time is up. There are no more paper trails to tamper with. No more signatures to forge. No more "lost documents." Every citizen with a phone is now an auditor. Every GPS-tagged report is a permanent record. Every peso is tracked from budget to contractor to ground.
 
-**To every citizen, in every nation:** You are no longer a bystander. Your GPS report is the final gate. Without citizen verification, not a single unit of currency is released from escrow. You don't need to be an auditor. You don't need to work for a government agency. You just need to visit a project site and report what you see — or don't see.
+**To every citizen, in every nation:** You are no longer a bystander. Your GPS report is the final gate. Without citizen verification, not a single unit of currency is released from escrow. You don't need to be an auditor. You don't need to work for a government agency. You just need to visit a project site and report what you see  -  or don't see.
 
-**We built this system to help fix what's broken.** Digitalization is not just about efficiency. It's about transparency that cannot be undone. It's about accountability that cannot be dodged. It's about giving the people the tools to demand proof — and giving honest officials the tools to provide it.
+**We built this system to help fix what's broken.** Digitalization is not just about efficiency. It's about transparency that cannot be undone. It's about accountability that cannot be dodged. It's about giving the people the tools to demand proof  -  and giving honest officials the tools to provide it.
 
 **Government officials: step up. Citizens: watch. The system: prove it.**
 
-➡️ **[🎭 Start Role-Playing Now](https://greenarmor.github.io/proof-of-public-value/onboarding)** — Pick any role and walk through the system.
+➡️ **[🎭 Start Role-Playing Now](https://greenarmor.github.io/proof-of-public-value/onboarding)**  -  Pick any role and walk through the system.
 
 ---
 
-➡️ **Reference: [Appendix A — Glossary of Terms](appendices.md)** — Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC units, and more.
+➡️ **Reference: [Appendix A  -  Glossary of Terms](appendices.md)**  -  Every term explained: PVOs, Milestones, Escrows, Gates, Roles, RPT, pPHP, SAC units, and more.
 
-➡️ **Read: [Why PoPV Exists — The Philippine Corruption Crisis](philippines-corruption.md)**
+➡️ **Read: [Why PoPV Exists  -  The Philippine Corruption Crisis](philippines-corruption.md)**
 
 ---
 
 ## The Problem
 
-Every year, governments lose **$2.6 trillion to corruption** — ghost projects, inflated budgets, substandard infrastructure, and untraceable fund flows.
+Every year, governments lose **$2.6 trillion to corruption**  -  ghost projects, inflated budgets, substandard infrastructure, and untraceable fund flows.
 
 The root cause: **public money is released based on signatures and paperwork, not on proof of value created.** Funds flow to contractors before a brick is laid. Evidence is paper-based and easily tampered with. Auditors arrive years after money is spent.
 
@@ -142,7 +146,7 @@ The root cause: **public money is released based on signatures and paperwork, no
 
 Proof of Public Value enforces one rule: **No Proof. No Payment.**
 
-Every public project becomes a **Public Value Object (PVO)** — a programmable digital entity on Stellar. Funds are locked in escrow smart contracts and released **only after passing 5 independent verification gates:**
+Every public project becomes a **Public Value Object (PVO)**  -  a programmable digital entity on Stellar. Funds are locked in escrow smart contracts and released **only after passing 5 independent verification gates:**
 
 | Gate | Who | What |
 |------|-----|------|
@@ -150,13 +154,13 @@ Every public project becomes a **Public Value Object (PVO)** — a programmable 
 | 2. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification |
 | 3. Compliance | Auditor / COA | Procurement law, budget rules, safety regulations |
 | 4. Community Oracle | Citizens | Verified GPS field reports confirm project exists on the ground |
-| 5. Community Confirmations | Citizens | Must reach the threshold set at escrow creation — multiple independent witnesses |
+| 5. Community Confirmations | Citizens | Must reach the threshold set at escrow creation  -  multiple independent witnesses |
 
 If any gate fails, funds remain locked. No single person can release money.
 
 ---
 
-## How It Works — Full Lifecycle
+## How It Works  -  Full Lifecycle
 
 ### 1. Government Agency Creates a PVO
 
@@ -166,14 +170,14 @@ The PVO starts as **Proposed**.
 
 ### 2. Government Agency Defines Milestones
 
-Instead of paying the entire budget upfront, the project is broken into milestones — individual phases each with their own budget, evidence requirements, and community confirmation threshold. For example:
+Instead of paying the entire budget upfront, the project is broken into milestones  -  individual phases each with their own budget, evidence requirements, and community confirmation threshold. For example:
 
-- **Milestone 1:** Site Preparation — ₱50M
-- **Milestone 2:** Foundation — ₱150M
-- **Milestone 3:** Structure — ₱200M
-- **Milestone 4:** Finishing — ₱100M
+- **Milestone 1:** Site Preparation  -  ₱50M
+- **Milestone 2:** Foundation  -  ₱150M
+- **Milestone 3:** Structure  -  ₱200M
+- **Milestone 4:** Finishing  -  ₱100M
 
-Budget input is in **pesos** — the contract auto-converts to SAC atomic units (pesos × 10,000,000).
+Budget input is in **pesos**  -  the contract auto-converts to SAC atomic units (pesos × 10,000,000).
 
 ### 3. International Donor Pledges Exact PVO Budget
 
@@ -194,13 +198,13 @@ These are two separate transactions because Freighter only supports one operatio
 
 From the **Funding Agency Dashboard → Donor Commitments tab**, each Disbursed grant shows a **"Create Escrow"** button. Clicking it opens a form with:
 
-- **Recipient (Contractor)** — autocomplete dropdown of all Contractor-role wallet addresses
-- **PVO ID** — pre-filled from the grant, non-editable
-- **Milestone ID** — autocomplete showing all milestones under that PVO; selecting one auto-fills the amount
-- **Amount** — in pPHP SAC units (with peso conversion shown below)
-- **Community Confirmations Required** — how many verified citizen GPS field reports must confirm this milestone
+- **Recipient (Contractor)**  -  autocomplete dropdown of all Contractor-role wallet addresses
+- **PVO ID**  -  pre-filled from the grant, non-editable
+- **Milestone ID**  -  autocomplete showing all milestones under that PVO; selecting one auto-fills the amount
+- **Amount**  -  in pPHP SAC units (with peso conversion shown below)
+- **Community Confirmations Required**  -  how many verified citizen GPS field reports must confirm this milestone
 
-The funding agency can create **multiple escrows** against a single grant — one per milestone. The button stays visible until all funds are escrowed.
+The funding agency can create **multiple escrows** against a single grant  -  one per milestone. The button stays visible until all funds are escrowed.
 
 ### 6. Escrow is Funded
 
@@ -210,22 +214,22 @@ The funding agency deposits the milestone amount into the escrow contract. The e
 
 Each gate is an independent on-chain verification:
 
-**Gate 1 — Engineer:** Licensed engineer signs off that physical work meets specifications.
+**Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications.
 
-**Gate 2 — AI Oracle:** AI scans evidence for anomalies — duplicate GPS, metadata tampering, suspicious patterns.
+**Gate 2  -  AI Oracle:** AI scans evidence for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns.
 
-**Gate 3 — Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
+**Gate 3  -  Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
 
-**Gate 4 — Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
+**Gate 4  -  Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
 
-**Gate 5 — Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
+**Gate 5  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
 
-### 8. Escrow Releases — PVO Goes InProgress
+### 8. Escrow Releases  -  PVO Goes InProgress
 
 Once all 5 gates pass, anyone can trigger release. The escrow contract:
 
 1. Transfers the pPHP tokens to the contractor
-2. Cross-calls `pvo_core.update_pvo_status(InProgress)` — auto-transitioning the PVO from Proposed to **InProgress**
+2. Cross-calls `pvo_core.update_pvo_status(InProgress)`  -  auto-transitioning the PVO from Proposed to **InProgress**
 
 The PVO stays InProgress until **all milestones are Released AND the total Released milestone budgets equal or exceed the PVO budget**. Only then can it become **Completed**.
 
@@ -263,8 +267,8 @@ Committed → Disbursed → Escrows Created → Escrows Released → PVO InProgr
 |--------|---------|---------------|
 | **Committed** | Donor pledged exact PVO budget on-chain. pPHP transferred to funding agency. | Admin: Mint & Disburse |
 | **Disbursed** | pPHP minted and sent to funding agency wallet. Funds ready for escrowing. | Funding Agency: Create Escrow |
-| **Completed** | All escrows for this PVO released through 5 gates. Grant fully settled. | — |
-| **Cancelled** | Donor revoked pledge before disbursement. Budget slot freed. | — |
+| **Completed** | All escrows for this PVO released through 5 gates. Grant fully settled. |  -  |
+| **Cancelled** | Donor revoked pledge before disbursement. Budget slot freed. |  -  |
 
 ---
 
@@ -272,10 +276,10 @@ Committed → Disbursed → Escrows Created → Escrows Released → PVO InProgr
 
 The Donor Commitments tab shows all grants with real-time status:
 
-- **Committed** — "Donor pledged — awaiting admin mint" + Create Escrow button
-- **Disbursed** — "pPHP minted to funding agency — ready for escrow" + Create Escrow button
-- **Completed** — "All gates passed, payment released" (no button)
-- **Cancelled** — "Grant revoked before disbursement"
+- **Committed**  -  "Donor pledged  -  awaiting admin mint" + Create Escrow button
+- **Disbursed**  -  "pPHP minted to funding agency  -  ready for escrow" + Create Escrow button
+- **Completed**  -  "All gates passed, payment released" (no button)
+- **Cancelled**  -  "Grant revoked before disbursement"
 
 Grants are sorted: Committed first, then Disbursed, then others. A **↻ Refresh** button re-reads the chain.
 
@@ -283,13 +287,13 @@ The summary card shows **Total Donor Pledges** (sum of all grant amounts) in pes
 
 ---
 
-## Budget Tracking — Funded vs Escrowed
+## Budget Tracking  -  Funded vs Escrowed
 
 Every PVO card (Transparency Portal and Agency Dashboard) shows a visual budget allocation bar:
 
-- **Green bar** — amount already locked in escrow
-- **Amber bar** — amount committed by donors but not yet escrowed
-- **Gray background** — total PVO budget
+- **Green bar**  -  amount already locked in escrow
+- **Amber bar**  -  amount committed by donors but not yet escrowed
+- **Gray background**  -  total PVO budget
 
 The bar lets you see at a glance: "₱50M escrowed, ₱800M committed but still available."
 
@@ -306,7 +310,7 @@ The bar lets you see at a glance: "₱50M escrowed, ₱800M committed but still 
 | ⚪ Gray | Unknown / Under Review |
 | 🟣 Purple | GPS Evidence (citizen field reports) |
 
-Pins are custom SVG `divIcon` markers with drop shadows — no external image dependencies.
+Pins are custom SVG `divIcon` markers with drop shadows  -  no external image dependencies.
 
 ---
 
@@ -327,21 +331,21 @@ The **Milestone Budget** form accepts input in pesos and shows the SAC unit equi
 
 ---
 
-## Create Escrow Form — Autocomplete
+## Create Escrow Form  -  Autocomplete
 
 The Create Escrow form has intelligent autocomplete on all fields:
 
-- **Recipient (Contractor)** — dropdown of all addresses with the Contractor role from `access_control`
-- **PVO ID** — when opened from a grant row, pre-filled and locked. Manual entry shows search by title or ID
-- **Milestone ID** — loaded when PVO is selected. Shows milestone title, budget. Selecting a milestone auto-fills the Amount field
+- **Recipient (Contractor)**  -  dropdown of all addresses with the Contractor role from `access_control`
+- **PVO ID**  -  when opened from a grant row, pre-filled and locked. Manual entry shows search by title or ID
+- **Milestone ID**  -  loaded when PVO is selected. Shows milestone title, budget. Selecting a milestone auto-fills the Amount field
 
 ---
 
 ## RPT Reputation Token Gate
 
-Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a **real security gate** — it prevents Sybil attacks (one person creating thousands of fake wallets).
+Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a **real security gate**  -  it prevents Sybil attacks (one person creating thousands of fake wallets).
 
-- RPT is soulbound — cannot be transferred between wallets
+- RPT is soulbound  -  cannot be transferred between wallets
 - Only admin can mint RPT
 - Citizens get 100 RPT on initial setup
 
@@ -419,11 +423,11 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-rese
 **Live Demo:** [greenarmor.github.io/proof-of-public-value](https://greenarmor.github.io/proof-of-public-value/)
 
 **Quick Start:**
-1. **Public pages** — Browse projects, national index, map, search — no wallet needed
-2. **Role-Play** — Go to `/onboarding` → pick any role → get a demo wallet → walk through the system
-3. **Connect Freighter** — Install [Freighter](https://freighter.app), import a demo wallet from `.dev-logs/newrolecreden.md`
-4. **15 PVOs per page** — Scroll, paginate, or filter by name/department/municipality
-5. **Mobile-friendly** — Sticky map + sticky search, scrollable card list
+1. **Public pages**  -  Browse projects, national index, map, search  -  no wallet needed
+2. **Role-Play**  -  Go to `/onboarding` → pick any role → get a demo wallet → walk through the system
+3. **Connect Freighter**  -  Install [Freighter](https://freighter.app), import a demo wallet from `.dev-logs/newrolecreden.md`
+4. **15 PVOs per page**  -  Scroll, paginate, or filter by name/department/municipality
+5. **Mobile-friendly**  -  Sticky map + sticky search, scrollable card list
 
 ### Demo Wallets (Testnet)
 
@@ -470,7 +474,7 @@ node .dev-logs/master-reset.js     # ~8 min
 
 ## Roles & Responsibilities
 
-PoPV uses 13 on-chain roles managed by the `access_control` contract. Every action requires the correct role — no role can bypass another's gate.
+PoPV uses 13 on-chain roles managed by the `access_control` contract. Every action requires the correct role  -  no role can bypass another's gate.
 
 | Role | Dashboard | Core Actions | Purpose |
 |------|-----------|-------------|---------|
@@ -488,7 +492,7 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 | **Supplier** | Procurement Market | Register in pre-qualification registry | Supply chain transparency |
 | **AntiCorruptionAgency** | Anti-Corruption Dashboard | Raise disputes, investigate flagged projects, review audit trails | Corruption investigation |
 
-### Role Interactions — The 5-Gate Trust Model
+### Role Interactions  -  The 5-Gate Trust Model
 
 No single role can release funds. Each gate is held by a different role:
 
@@ -497,8 +501,8 @@ Contractor → submits evidence
 Engineer → approves physical work       [Gate 1]
 AI Auditor → validates for fraud        [Gate 2]
 Auditor/COA → compliance check          [Gate 3]
-Citizens → submit GPS field reports     [Gate 4 — Oracle]
-Citizens → reach confirmation threshold [Gate 5 — Threshold]
+Citizens → submit GPS field reports     [Gate 4  -  Oracle]
+Citizens → reach confirmation threshold [Gate 5  -  Threshold]
 → Funding Agency creates escrow         [Funds locked]
 → Anyone triggers release               [All gates must pass]
 ```
@@ -512,15 +516,15 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 **Goal:** Browse the public-facing project registry.
 
 1. Open `http://localhost:5174`
-2. Browse the **Transparency Portal** — 20 PVOs with budgets, status, value scores
+2. Browse the **Transparency Portal**  -  20 PVOs with budgets, status, value scores
 3. Click any PVO to see detail panel: milestones, escrows, gates progress
-4. Observe the **funded vs escrowed** bar — green = locked in escrow, amber = committed but available
-5. View the **Project Map** — color-coded pins per status
-6. Note PVO #1 is **InProgress** (blue pin) — one milestone escrow was released
+4. Observe the **funded vs escrowed** bar  -  green = locked in escrow, amber = committed but available
+5. View the **Project Map**  -  color-coded pins per status
+6. Note PVO #1 is **InProgress** (blue pin)  -  one milestone escrow was released
 
 ---
 
-### Exercise 2: Administrator — System Governance
+### Exercise 2: Administrator  -  System Governance
 
 **Role:** Administrator  
 **Wallet:** alice (`GBDNQE...ACMSV`)  
@@ -528,11 +532,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 | Step | Action | Tab | Notes |
 |------|--------|-----|-------|
-| 1 | Connect alice wallet | — | |
+| 1 | Connect alice wallet |  -  | |
 | 2 | Go to System Panel → **Roles** | Roles | See all 13 roles with assigned wallets |
 | 3 | Assign a new role | Click "Assign Role" | Enter wallet + select role |
 | 4 | Go to **Pledges** | Pledges | See Committed donor grants |
-| 5 | Click **"Mint & Disburse"** on a grant | — | Sign 2 Freighter popups: mint pPHP + mark disbursed |
+| 5 | Click **"Mint & Disburse"** on a grant |  -  | Sign 2 Freighter popups: mint pPHP + mark disbursed |
 | 6 | Go to **Health** | Health | System health dashboard |
 | 7 | Go to **Settings** | Settings | Change currency symbol |
 
@@ -540,7 +544,7 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 ---
 
-### Exercise 3: Government Agency — Create PVO & Milestones
+### Exercise 3: Government Agency  -  Create PVO & Milestones
 
 **Role:** GovernmentAgency  
 **Wallet:** gov_agency_role (`GDLLO...Y5X2`)  
@@ -558,11 +562,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 8 | Set **Community Confirmations Required** | e.g., 3 citizens must verify |
 | 9 | Submit → signed in Freighter | Milestone created on-chain |
 
-**What happens:** The PVO defines what needs to be built. Milestones define how payment is released in phases — each phase has its own budget, evidence requirements, and citizen verification threshold.
+**What happens:** The PVO defines what needs to be built. Milestones define how payment is released in phases  -  each phase has its own budget, evidence requirements, and citizen verification threshold.
 
 ---
 
-### Exercise 4: International Donor — Pledge Funds
+### Exercise 4: International Donor  -  Pledge Funds
 
 **Role:** InternationalDonor  
 **Wallet:** international_donor (`GBUI4...EV44`)  
@@ -577,11 +581,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 5 | Enter org name (e.g., "World Bank") | |
 | 6 | Submit → signed in Freighter | Grant appears as Committed in Admin Panel |
 
-**What happens:** The donor's pPHP is transferred atomically to the Funding Agency. The pledge must exactly equal the PVO's remaining budget — the contract rejects mismatches on-chain. The grant waits for admin to mint and disburse.
+**What happens:** The donor's pPHP is transferred atomically to the Funding Agency. The pledge must exactly equal the PVO's remaining budget  -  the contract rejects mismatches on-chain. The grant waits for admin to mint and disburse.
 
 ---
 
-### Exercise 5: Funding Agency — Create & Fund Escrows
+### Exercise 5: Funding Agency  -  Create & Fund Escrows
 
 **Role:** FundingAgency  
 **Wallet:** funding_agency (`GBM5Y...5PBO`)  
@@ -589,26 +593,26 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 | Step | Action | Tab | Details |
 |------|--------|-----|---------|
-| 1 | Connect funding_agency wallet | — | |
+| 1 | Connect funding_agency wallet |  -  | |
 | 2 | Go to **Donor Commitments** | Commitments | See all grants sorted: Committed first, then Disbursed |
-| 3 | Click **↻ Refresh** | — | Re-reads from chain |
-| 4 | Find a **Disbursed** grant | — | Shows pPHP amount + "ready for escrow" |
-| 5 | Click **"Create Escrow"** | — | Opens modal |
-| 6 | Type in **Recipient** field | — | Autocomplete shows all Contractor wallet addresses |
-| 7 | **PVO ID** is pre-filled (read-only) | — | Locked to the grant's PVO |
-| 8 | Click **Milestone ID** field | — | Autocomplete shows all milestones for this PVO |
-| 9 | Select a milestone | — | Auto-fills the Amount field with milestone budget |
-| 10 | Set **Community Confirmations Required** | — | How many citizen GPS reports needed |
-| 11 | Submit → signed in Freighter | — | Escrow created |
+| 3 | Click **↻ Refresh** |  -  | Re-reads from chain |
+| 4 | Find a **Disbursed** grant |  -  | Shows pPHP amount + "ready for escrow" |
+| 5 | Click **"Create Escrow"** |  -  | Opens modal |
+| 6 | Type in **Recipient** field |  -  | Autocomplete shows all Contractor wallet addresses |
+| 7 | **PVO ID** is pre-filled (read-only) |  -  | Locked to the grant's PVO |
+| 8 | Click **Milestone ID** field |  -  | Autocomplete shows all milestones for this PVO |
+| 9 | Select a milestone |  -  | Auto-fills the Amount field with milestone budget |
+| 10 | Set **Community Confirmations Required** |  -  | How many citizen GPS reports needed |
+| 11 | Submit → signed in Freighter |  -  | Escrow created |
 | 12 | Go to **Escrows** tab | Escrows | See the new escrow |
-| 13 | Click **"Fund Escrow"** | — | Deposits pPHP from your wallet into escrow |
+| 13 | Click **"Fund Escrow"** |  -  | Deposits pPHP from your wallet into escrow |
 | 14 | Go to **How It Works** tab | Guide | Read full 5-gate explanation |
 
-**What happens:** The Funding Agency locks funds behind verification gates. The escrow is now Funded — payment can only be released after all 5 gates pass. Create multiple escrows against the same grant for each milestone. The button stays visible until all funds are escrowed.
+**What happens:** The Funding Agency locks funds behind verification gates. The escrow is now Funded  -  payment can only be released after all 5 gates pass. Create multiple escrows against the same grant for each milestone. The button stays visible until all funds are escrowed.
 
 ---
 
-### Exercise 6: Contractor — Submit Evidence
+### Exercise 6: Contractor  -  Submit Evidence
 
 **Role:** Contractor  
 **Wallet:** contractor (`GDH34...VDRF`)  
@@ -625,7 +629,7 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 ---
 
-### Exercise 7: Engineer — Technical Approval
+### Exercise 7: Engineer  -  Technical Approval
 
 **Role:** Engineer  
 **Wallet:** engineer (`GCSAB...72CZ`)  
@@ -638,11 +642,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 3 | Approve a milestone | Signs off that physical work meets specifications |
 | 4 | Escrow gate 1 passes | Engineer Approved ✓ |
 
-**What happens:** Gate 1 — the licensed engineer's sign-off is the first of five independent verifications required before any peso is released.
+**What happens:** Gate 1  -  the licensed engineer's sign-off is the first of five independent verifications required before any peso is released.
 
 ---
 
-### Exercise 8: AI Auditor — Fraud Detection
+### Exercise 8: AI Auditor  -  Fraud Detection
 
 **Role:** AIAuditor  
 **Wallet:** ai_auditor (`GATLF...AWW`)  
@@ -655,11 +659,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 3 | AI assigns risk score | Green = low risk, Red = flagged |
 | 4 | If passed, escrow gate 2 unlocks | AI Validated ✓ |
 
-**What happens:** Gate 2 — AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.
+**What happens:** Gate 2  -  AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.
 
 ---
 
-### Exercise 9: Auditor / COA — Compliance Check
+### Exercise 9: Auditor / COA  -  Compliance Check
 
 **Role:** Auditor + CommissionOnAudit  
 **Wallets:** auditor (`GAAL2...IAYN`), coa (`GCDE4...FJB`)  
@@ -669,16 +673,16 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 |------|--------|---------|
 | 1 | Connect auditor wallet | |
 | 2 | Run compliance validation | Checks procurement law, budget rules, safety regulations |
-| 3 | Pass the check | Escrow gate 3 unlocks — Compliance Passed ✓ |
+| 3 | Pass the check | Escrow gate 3 unlocks  -  Compliance Passed ✓ |
 | 4 | Connect coa wallet | |
 | 5 | Review audit trail | Full history of who approved what and when |
 | 6 | Final compliance sign-off | Regulatory oversight complete |
 
-**What happens:** Gate 3 — legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.
+**What happens:** Gate 3  -  legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.
 
 ---
 
-### Exercise 10: Citizen — Community Verification
+### Exercise 10: Citizen  -  Community Verification
 
 **Role:** Citizen  
 **Wallets:** citizen_1 through citizen_4 (see credentials file)  
@@ -696,11 +700,11 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 8 | When counter ≥ threshold | Community Oracle gate + Community Confirmations gate pass ✓ |
 | 9 | Repeat with citizen_2, citizen_3 to reach threshold | |
 
-**What happens:** Gates 4 & 5 — real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.
+**What happens:** Gates 4 & 5  -  real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.
 
 ---
 
-### Exercise 11: Inspector — Evidence Quality
+### Exercise 11: Inspector  -  Evidence Quality
 
 **Role:** Inspector  
 **Wallet:** inspector (`GAPFY...NGV`)  
@@ -714,7 +718,7 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 ---
 
-### Exercise 12: Anti-Corruption Agency — Disputes
+### Exercise 12: Anti-Corruption Agency  -  Disputes
 
 **Role:** AntiCorruptionAgency  
 **Wallet:** anti_corruption (`GBU4S...E7`)  
@@ -733,7 +737,7 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 ### Exercise 13: Full End-to-End Walkthrough
 
-**Goal:** Complete the entire lifecycle — PVO creation through payment release.
+**Goal:** Complete the entire lifecycle  -  PVO creation through payment release.
 
 **Roles needed:** GovernmentAgency, Administrator, InternationalDonor, FundingAgency, Contractor, Engineer, AIAuditor, Auditor, 3 Citizens
 
@@ -756,7 +760,7 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 | 15 | Continue creating escrows until full budget covered | |
 | 16 | PVO becomes **Completed** | All milestones Released + total ≥ budget |
 
-**Key verification:** After step 12, the PVO status is **InProgress** — NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
+**Key verification:** After step 12, the PVO status is **InProgress**  -  NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
 
 ---
 
@@ -778,12 +782,12 @@ Citizens → reach confirmation threshold [Gate 5 — Threshold]
 
 ## Security Features
 
-- **RPT Gatekeeper** — Citizens need reputation tokens to report (anti-Sybil)
-- **Exact-amount pledges** — Donors cannot over/under-commit; contract panics on mismatch
-- **5-gate consensus** — No single role can release funds
-- **Immutable audit trail** — Every decision recorded on Stellar
-- **Freighter retry logic** — Production builds include retry for Freighter content script race condition
-- **Cross-contract validation** — Escrow checks PVO integrity, grant commitment checks PVO budget
+- **RPT Gatekeeper**  -  Citizens need reputation tokens to report (anti-Sybil)
+- **Exact-amount pledges**  -  Donors cannot over/under-commit; contract panics on mismatch
+- **5-gate consensus**  -  No single role can release funds
+- **Immutable audit trail**  -  Every decision recorded on Stellar
+- **Freighter retry logic**  -  Production builds include retry for Freighter content script race condition
+- **Cross-contract validation**  -  Escrow checks PVO integrity, grant commitment checks PVO budget
 
 ---
 
