@@ -1356,48 +1356,48 @@
 <h3 id="pvo-public-value-object">PVO (Public Value Object)<a class="headerlink" href="#pvo-public-value-object" title="Permanent link">&para;</a></h3>
 <p>A <strong>Public Value Object</strong> is the digital representation of a real-world public infrastructure project on the Stellar blockchain. Think of it as a "programmable government project."</p>
 <p>Every PVO stores:
-- <strong>Title</strong> — e.g., "C-5 Road Extension Phase II"
-- <strong>Department</strong> — e.g., "DPWH" (Department of Public Works and Highways)
-- <strong>Municipality</strong> — where the project is physically located
-- <strong>Total Budget</strong> — locked in pPHP SAC atomic units (pesos × 10⁷)
-- <strong>Contractor</strong> — the company doing the work
-- <strong>Funding Agency</strong> — the entity providing the budget
-- <strong>Fund Source</strong> — GAA (General Appropriations Act), ODA (Official Development Assistance), etc.
-- <strong>Status</strong> — Proposed → InProgress → Completed → Suspended / Terminated
-- <strong>Public Value Score</strong> — a 0-100 rating computed from milestones, community reports, and compliance
-- <strong>Milestones</strong> — the list of project phases that must be completed before full payment</p>
+- <strong>Title</strong>  -  e.g., "C-5 Road Extension Phase II"
+- <strong>Department</strong>  -  e.g., "DPWH" (Department of Public Works and Highways)
+- <strong>Municipality</strong>  -  where the project is physically located
+- <strong>Total Budget</strong>  -  locked in pPHP SAC atomic units (pesos × 10⁷)
+- <strong>Contractor</strong>  -  the company doing the work
+- <strong>Funding Agency</strong>  -  the entity providing the budget
+- <strong>Fund Source</strong>  -  GAA (General Appropriations Act), ODA (Official Development Assistance), etc.
+- <strong>Status</strong>  -  Proposed → InProgress → Completed → Suspended / Terminated
+- <strong>Public Value Score</strong>  -  a 0-100 rating computed from milestones, community reports, and compliance
+- <strong>Milestones</strong>  -  the list of project phases that must be completed before full payment</p>
 <p><strong>In one sentence:</strong> A PVO is a government project turned into a smart contract that cannot be paid until proven complete.</p>
 <hr />
 <h3 id="milestone">Milestone<a class="headerlink" href="#milestone" title="Permanent link">&para;</a></h3>
-<p>A <strong>Milestone</strong> is a single phase or deliverable within a PVO. Instead of paying the entire project budget upfront (the root cause of corruption), the project is broken into milestones — each one independently verified before any money is released.</p>
+<p>A <strong>Milestone</strong> is a single phase or deliverable within a PVO. Instead of paying the entire project budget upfront (the root cause of corruption), the project is broken into milestones  -  each one independently verified before any money is released.</p>
 <p>Each milestone has:
-- <strong>Title</strong> — e.g., "Foundation and Piling", "Bridge Deck Installation"
-- <strong>Description</strong> — what work this phase covers
-- <strong>Budget</strong> — how much of the total PVO budget this phase is worth
-- <strong>Status</strong> — Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
-- <strong>Required Evidence</strong> — what the contractor must submit (e.g., drone imagery, GPS coordinates, engineering reports, photos)
-- <strong>Community Required</strong> — how many verified citizen field reports are needed just for this milestone
-- <strong>Community Confirmations</strong> — how many verified reports have been submitted so far
-- <strong>Engineer Approved</strong> — has a licensed engineer signed off?
-- <strong>AI Validated</strong> — has the AI oracle run fraud/anomaly detection?
-- <strong>Compliance Passed</strong> — has procurement/safety compliance been checked?</p>
-<p><strong>Each milestone has its own escrow</strong> — money for each phase is locked independently and can only be released when that specific phase passes all gates.</p>
+- <strong>Title</strong>  -  e.g., "Foundation and Piling", "Bridge Deck Installation"
+- <strong>Description</strong>  -  what work this phase covers
+- <strong>Budget</strong>  -  how much of the total PVO budget this phase is worth
+- <strong>Status</strong>  -  Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
+- <strong>Required Evidence</strong>  -  what the contractor must submit (e.g., drone imagery, GPS coordinates, engineering reports, photos)
+- <strong>Community Required</strong>  -  how many verified citizen field reports are needed just for this milestone
+- <strong>Community Confirmations</strong>  -  how many verified reports have been submitted so far
+- <strong>Engineer Approved</strong>  -  has a licensed engineer signed off?
+- <strong>AI Validated</strong>  -  has the AI oracle run fraud/anomaly detection?
+- <strong>Compliance Passed</strong>  -  has procurement/safety compliance been checked?</p>
+<p><strong>Each milestone has its own escrow</strong>  -  money for each phase is locked independently and can only be released when that specific phase passes all gates.</p>
 <hr />
 <h2 id="escrow-system">Escrow System<a class="headerlink" href="#escrow-system" title="Permanent link">&para;</a></h2>
 <h3 id="escrow">Escrow<a class="headerlink" href="#escrow" title="Permanent link">&para;</a></h3>
-<p>An <strong>Escrow</strong> is a smart contract lockbox that holds funds (pPHP tokens) and releases them <strong>only when 5 independent conditions are met</strong>. No single person — not the contractor, not the funding agency, not the administrator — can release funds alone.</p>
+<p>An <strong>Escrow</strong> is a smart contract lockbox that holds funds (pPHP tokens) and releases them <strong>only when 5 independent conditions are met</strong>. No single person  -  not the contractor, not the funding agency, not the administrator  -  can release funds alone.</p>
 <p><strong>Properties:</strong>
-- <strong>Asset-agnostic</strong> — can hold pPHP (testnet), USDC (mainnet), or any Stellar token
-- <strong>5-gate conditional release</strong> — all gates must pass before any peso moves
-- <strong>Independent per milestone</strong> — each milestone gets its own escrow, so if one phase fails, the rest remain unaffected
-- <strong>Auto-completes PVO</strong> — when the last escrow is released, the PVO automatically transitions to "Completed"
-- <strong>Dispute window</strong> — anyone can dispute before release, pausing all escrows under that PVO</p>
+- <strong>Asset-agnostic</strong>  -  can hold pPHP (testnet), USDC (mainnet), or any Stellar token
+- <strong>5-gate conditional release</strong>  -  all gates must pass before any peso moves
+- <strong>Independent per milestone</strong>  -  each milestone gets its own escrow, so if one phase fails, the rest remain unaffected
+- <strong>Auto-completes PVO</strong>  -  when the last escrow is released, the PVO automatically transitions to "Completed"
+- <strong>Dispute window</strong>  -  anyone can dispute before release, pausing all escrows under that PVO</p>
 <p><strong>Lifecycle:</strong>
-1. <strong>Created</strong> — funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
-2. <strong>Funded</strong> — funding agency deposits the exact milestone amount (in pPHP SAC units)
-3. <strong>Gates Progress</strong> — engineer approves → AI validates → compliance checks → community oracle → community confirmations
-4. <strong>Ready</strong> — all 5 gates passed; anyone can trigger release
-5. <strong>Released</strong> — funds transferred to contractor; PVO auto-completes if this was the last milestone</p>
+1. <strong>Created</strong>  -  funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
+2. <strong>Funded</strong>  -  funding agency deposits the exact milestone amount (in pPHP SAC units)
+3. <strong>Gates Progress</strong>  -  engineer approves → AI validates → compliance checks → community oracle → community confirmations
+4. <strong>Ready</strong>  -  all 5 gates passed; anyone can trigger release
+5. <strong>Released</strong>  -  funds transferred to contractor; PVO auto-completes if this was the last milestone</p>
 <hr />
 <h3 id="the-5-gates-why-no-proof-no-payment-works">The 5 Gates (Why "No Proof. No Payment." Works)<a class="headerlink" href="#the-5-gates-why-no-proof-no-payment-works" title="Permanent link">&para;</a></h3>
 <table>
@@ -1436,7 +1436,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Key insight:</strong> Gates 4 and 5 are different. Gate 4 checks if the <strong>oracle</strong> has verified reports on file. Gate 5 counts how many <strong>unique verified reports</strong> exist — this is the threshold you set.</p>
+<p><strong>Key insight:</strong> Gates 4 and 5 are different. Gate 4 checks if the <strong>oracle</strong> has verified reports on file. Gate 5 counts how many <strong>unique verified reports</strong> exist  -  this is the threshold you set.</p>
 <hr />
 <h3 id="community-confirmations-threshold">Community Confirmations Threshold<a class="headerlink" href="#community-confirmations-threshold" title="Permanent link">&para;</a></h3>
 <p>When creating an escrow, the funding agency sets <strong>how many verified citizen GPS field reports are required</strong> to unlock the final gate. This is the <strong>community proof-of-life</strong> for the project.</p>
@@ -1450,18 +1450,18 @@
 - <strong>Low-risk projects</strong> (visible infrastructure in urban areas): set to 1-3
 - <strong>Medium-risk projects</strong> (rural bridges, school buildings): set to 3-5
 - <strong>High-risk projects</strong> (mountain roads, flood control, areas with corruption history): set to 5-10
-- <strong>Maximum transparency</strong>: set higher — forces multiple independent on-the-ground verifications</p>
+- <strong>Maximum transparency</strong>: set higher  -  forces multiple independent on-the-ground verifications</p>
 <hr />
 <h2 id="token-system">Token System<a class="headerlink" href="#token-system" title="Permanent link">&para;</a></h2>
 <h3 id="pphp-philippine-peso-testnet-token">pPHP (Philippine Peso Testnet Token)<a class="headerlink" href="#pphp-philippine-peso-testnet-token" title="Permanent link">&para;</a></h3>
 <p>A <strong>Soroban SAC token</strong> (Stellar Asset Contract) on testnet that simulates the Philippine Peso. Properties:</p>
 <ul>
-<li><strong>SAC (Stellar Asset Contract)</strong> — a native Stellar token standard with 7 decimals</li>
-<li><strong>Unlimited mintable supply</strong> — admin can mint any amount for testing</li>
-<li><strong>Testnet only</strong> — has no real-world value, no peg, no liquidity</li>
-<li><strong>Purpose</strong> — allows testing with realistic peso amounts (millions, billions) that would be impossible with Friendbot's 10K XLM limit</li>
+<li><strong>SAC (Stellar Asset Contract)</strong>  -  a native Stellar token standard with 7 decimals</li>
+<li><strong>Unlimited mintable supply</strong>  -  admin can mint any amount for testing</li>
+<li><strong>Testnet only</strong>  -  has no real-world value, no peg, no liquidity</li>
+<li><strong>Purpose</strong>  -  allows testing with realistic peso amounts (millions, billions) that would be impossible with Friendbot's 10K XLM limit</li>
 </ul>
-<p><strong>On mainnet</strong>, pPHP is replaced by a real backed asset (USDC, EURC, or a peso-backed stablecoin). The escrow contract code is identical — only the token address changes.</p>
+<p><strong>On mainnet</strong>, pPHP is replaced by a real backed asset (USDC, EURC, or a peso-backed stablecoin). The escrow contract code is identical  -  only the token address changes.</p>
 <hr />
 <h3 id="sac-atomic-units">SAC Atomic Units<a class="headerlink" href="#sac-atomic-units" title="Permanent link">&para;</a></h3>
 <p>All on-chain amounts in PoPV are stored in <strong>SAC atomic units</strong>: pesos × 10⁷ (10,000,000).</p>
@@ -1496,13 +1496,13 @@
 <h3 id="rpt-reputation-token">RPT (Reputation Token)<a class="headerlink" href="#rpt-reputation-token" title="Permanent link">&para;</a></h3>
 <p>A <strong>soulbound reputation token</strong> that tracks citizen trustworthiness. Properties:</p>
 <ul>
-<li><strong>Required for reporting</strong> — citizens must hold at least 1 RPT to submit field reports (anti-spam gate)</li>
-<li><strong>Minimum balance gate</strong> — <code>set_citizen_credential(min_balance: 1)</code> on the reputation contract</li>
-<li><strong>Soulbound</strong> — cannot be transferred between wallets</li>
-<li><strong>Minted by admin</strong> — only the administrator can issue RPT tokens</li>
-<li><strong>Scoring</strong> — reputation score is computed from report accuracy, verification rate, and community endorsements</li>
+<li><strong>Required for reporting</strong>  -  citizens must hold at least 1 RPT to submit field reports (anti-spam gate)</li>
+<li><strong>Minimum balance gate</strong>  -  <code>set_citizen_credential(min_balance: 1)</code> on the reputation contract</li>
+<li><strong>Soulbound</strong>  -  cannot be transferred between wallets</li>
+<li><strong>Minted by admin</strong>  -  only the administrator can issue RPT tokens</li>
+<li><strong>Scoring</strong>  -  reputation score is computed from report accuracy, verification rate, and community endorsements</li>
 </ul>
-<p><strong>This is NOT bypassed</strong> — it's a real security gate. Without RPT, a wallet cannot submit reports. This prevents Sybil attacks (one person creating thousands of fake wallets to fake community confirmations).</p>
+<p><strong>This is NOT bypassed</strong>  -  it's a real security gate. Without RPT, a wallet cannot submit reports. This prevents Sybil attacks (one person creating thousands of fake wallets to fake community confirmations).</p>
 <hr />
 <h2 id="contracts">Contracts<a class="headerlink" href="#contracts" title="Permanent link">&para;</a></h2>
 <h3 id="access-control-access_control">Access Control (access_control)<a class="headerlink" href="#access-control-access_control" title="Permanent link">&para;</a></h3>
@@ -1569,14 +1569,14 @@
 </tr>
 </tbody>
 </table>
-<p>The access control contract is the <strong>first contract deployed</strong> — all other contracts depend on it for role verification.</p>
+<p>The access control contract is the <strong>first contract deployed</strong>  -  all other contracts depend on it for role verification.</p>
 <hr />
 <h3 id="grant-commitment-grant_commitment">Grant Commitment (grant_commitment)<a class="headerlink" href="#grant-commitment-grant_commitment" title="Permanent link">&para;</a></h3>
 <p>The <strong>international donor pledge system</strong>. Models real-world development finance:</p>
 <ol>
-<li><strong>Commit</strong> — Donor records a pledge specifying PVO, amount, and org name. The pledge must <strong>exactly match</strong> the PVO's remaining budget (prevents over/under-pledging).</li>
-<li><strong>Disburse</strong> — Admin mints pPHP to the funding agency and marks the grant as disbursed.</li>
-<li><strong>Complete</strong> — After escrow release, the grant is marked completed.</li>
+<li><strong>Commit</strong>  -  Donor records a pledge specifying PVO, amount, and org name. The pledge must <strong>exactly match</strong> the PVO's remaining budget (prevents over/under-pledging).</li>
+<li><strong>Disburse</strong>  -  Admin mints pPHP to the funding agency and marks the grant as disbursed.</li>
+<li><strong>Complete</strong>  -  After escrow release, the grant is marked completed.</li>
 </ol>
 <p><strong>Exact-amount enforcement</strong>: the contract cross-calls <code>pvo_core.get_pvo_budget()</code> and sums existing grants. If the pledge doesn't equal the remaining budget, the transaction is rejected on-chain.</p>
 <hr />
@@ -1588,7 +1588,7 @@
 <li>Submission tracking per PVO/milestone</li>
 <li>Verified report counting for escrow gate satisfaction</li>
 </ul>
-<p>Works in tandem with the <strong>reputation contract</strong> — only citizens with RPT tokens can submit.</p>
+<p>Works in tandem with the <strong>reputation contract</strong>  -  only citizens with RPT tokens can submit.</p>
 <hr />
 <h3 id="compliance-engine-compliance_engine">Compliance Engine (compliance_engine)<a class="headerlink" href="#compliance-engine-compliance_engine" title="Permanent link">&para;</a></h3>
 <p>Validates that each milestone meets:
@@ -1774,17 +1774,17 @@
 <hr />
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
 <p><strong>Q: Why "PVO" and not just "Project"?</strong>
-A: A PVO is more than a project — it's a programmable on-chain entity with enforced rules. It has an identity, a budget lock, verification gates, and an immutable audit trail. "Project" is just a label; a PVO is the enforcement mechanism.</p>
+A: A PVO is more than a project  -  it's a programmable on-chain entity with enforced rules. It has an identity, a budget lock, verification gates, and an immutable audit trail. "Project" is just a label; a PVO is the enforcement mechanism.</p>
 <p><strong>Q: What happens if a contractor submits fake evidence?</strong>
-A: The AI oracle scans for anomalies. If detected, the gate fails. The dispute mechanism also allows anyone to flag suspicious evidence. On-chain, the evidence hash is immutable — tampering is cryptographically detectable.</p>
+A: The AI oracle scans for anomalies. If detected, the gate fails. The dispute mechanism also allows anyone to flag suspicious evidence. On-chain, the evidence hash is immutable  -  tampering is cryptographically detectable.</p>
 <p><strong>Q: Can the admin bypass the gates?</strong>
-A: No. The escrow contract logic is on-chain and immutable. No role — not even Administrator — has a "skip gate" function. The only admin powers are role assignment and token minting, both auditable.</p>
+A: No. The escrow contract logic is on-chain and immutable. No role  -  not even Administrator  -  has a "skip gate" function. The only admin powers are role assignment and token minting, both auditable.</p>
 <p><strong>Q: Why 5 gates instead of 3 or 7?</strong>
 A: 5 gates balance independence (no single role controls release) with practicality (not too slow). Each gate covers a distinct failure mode: physical quality (engineer), fraud detection (AI), regulatory compliance (COA), community oracle (citizen reports), and community threshold (multiple independent verifications).</p>
 <p><strong>Q: What's the difference between the Community Oracle gate and Community Confirmations?</strong>
 A: The oracle gate (gate 4) checks that the <strong>oracle contract itself</strong> has verified reports on file. The confirmations gate (gate 5) checks that the <strong>number of verified reports</strong> meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.</p>
 <p><strong>Q: How is this different from a traditional escrow?</strong>
-A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong> — not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
+A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong>  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
 
 
 
