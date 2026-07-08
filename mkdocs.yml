@@ -60,6 +60,7 @@ nav:
   - Audit Trail: audit-trail.md
   - Role Guide: role-guide.md
   - Appendices:
+      - Glossary: appendices.md
       - Escrow Deep Dive: escrow-deep-dive.md
       - pPHP Token: pphp-token.md
       - AI Oracle: ai-oracle.md
