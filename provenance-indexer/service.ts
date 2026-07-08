@@ -717,6 +717,23 @@ async function buildProvenance(
     const gatesTotal = milestones.reduce((s, m) => s + m.gates.length, 0);
     const evidenceCount = milestones.reduce((s, m) => s + m.evidence_count, 0);
 
+    // Compute public value score from escrow gate progress
+    let computedScore = 0;
+    if (milestones.length > 0) {
+      let totalPct = 0;
+      for (const m of milestones) {
+        if (m.escrow) {
+          let passed = 0;
+          for (const g of m.gates) {
+            if (g.status === "passed") passed++;
+          }
+          totalPct += (passed / 5) * 100;
+        }
+        // milestones without escrows contribute 0
+      }
+      computedScore = Math.round(totalPct / milestones.length);
+    }
+
     pvOs.push({
       pvo_id: Number(pvo.id ?? i),
       title: pvo.title ?? `PVO #${i}`,
@@ -731,7 +748,7 @@ async function buildProvenance(
       fund_source: typeof pvo.fund_source === "object"
         ? extractStatus(pvo.fund_source)
         : pvo.fund_source ?? "Unknown",
-      public_value_score: Number(pvo.public_value_score ?? 0),
+      public_value_score: computedScore,
       contractor_assigned: pvo.contractor_assigned ?? false,
       milestones,
       timeline,
@@ -829,6 +846,13 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  if (url.pathname === "/api/rebuild" || url.pathname === "/api/rebuild/") {
+    console.log("  🔄 Manual rebuild triggered");
+    buildProvenance(null).then(s => { currentStore = s; });
+    sendJSON(res, { status: "rebuilding", message: "Full rebuild triggered. Check /api/health for progress." });
+    return;
+  }
+
   if (url.pathname === "/api/health") {
     sendJSON(res, {
       status: "healthy",
@@ -904,6 +928,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 <li>GET /api/provenance/:pvoId/timeline — event timeline</li>
 <li><a href="/api/events">GET /api/events</a> — all captured events with tx hashes</li>
 <li>GET /api/events/:contractName — events by contract</li>
+<li><a href="/api/rebuild">GET /api/rebuild</a> — force full rebuild (use after new transactions)</li>
 </ul>
 </body></html>`);
     return;

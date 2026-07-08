@@ -22,7 +22,7 @@ interface MilestoneData {
   status: string; submitted_evidence: any[];
   engineer_approved: boolean; ai_validated: boolean;
   compliance_passed: boolean; community_confirmations: number;
-  community_required: number;
+  community_required: number; released?: boolean;
 }
 
 interface EscrowData {
@@ -30,6 +30,7 @@ interface EscrowData {
   funder: string; recipient: string; amount: number;
   status: string; engineerApproval: boolean;
   aiRiskCheck: boolean; complianceValidation: boolean;
+  oracleValidation: boolean;
   communityConfirmation: number; communityRequired: number;
 }
 
@@ -139,19 +140,30 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
       const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const result = await client.get_pvo_milestones({ pvo_id: pvoId });
       const chainM = (result.result || []) as any[];
-      setMilestones(chainM.map((m: any) => ({
-        id: Number(m.id),
-        title: m.title,
-        description: m.description,
-        budget: String(m.budget),
-        status: statusToString(m.status),
-        submitted_evidence: m.submitted_evidence || [],
-        engineer_approved: m.engineer_approved,
-        ai_validated: m.ai_validated,
-        compliance_passed: m.compliance_passed,
-        community_confirmations: Number(m.community_confirmations),
-        community_required: Number(m.community_required),
-      })));
+      // Load escrows to check release status
+      let escList: any[] = [];
+      try {
+        const escClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        escList = ((await escClient.get_escrows_by_pvo({ pvo_id: pvoId })).result || []) as any[];
+      } catch {}
+      setMilestones(chainM.map((m: any) => {
+        const esc = escList.find((e: any) => Number(e.milestone_id) === Number(m.id));
+        const released = esc && (esc.status?.tag === "Released" || esc.status === "Released");
+        return {
+          id: Number(m.id),
+          title: m.title,
+          description: m.description,
+          budget: String(m.budget),
+          status: released ? "Completed" : statusToString(m.status),
+          submitted_evidence: m.submitted_evidence || [],
+          engineer_approved: m.engineer_approved,
+          ai_validated: m.ai_validated,
+          compliance_passed: m.compliance_passed,
+          community_confirmations: Number(m.community_confirmations),
+          community_required: Number(m.community_required),
+          released,
+        };
+      }));
     } catch (e) {
       console.error("Failed to load milestones:", e);
     }
@@ -187,13 +199,16 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
       <div>
         <button onClick={() => setSelected(null)} className="btn-ghost mb-4 text-sm">← Back to projects</button>
         <div className="card p-6 mb-6">
+          {(() => {
+            const allReleased = milestones.length > 0 && milestones.every((m: any) => m.released);
+            return (<>
           <div className="flex items-start justify-between mb-4">
             <div>
               <span className="text-xs text-slate-400 font-mono">PVO #{selected.id}</span>
               <h2 className="text-xl font-bold text-gray-900 mt-1">{selected.title}</h2>
               <p className="text-sm text-gray-500">{selected.description}</p>
             </div>
-            <span className={`badge ${sColors[selected.status] || "badge-blue"}`}>{selected.status}</span>
+            <span className={`badge ${sColors[allReleased ? "Completed" : selected.status] || "badge-blue"}`}>{allReleased ? "Completed" : selected.status}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div><p className="stat-label">Department</p><p className="text-sm font-medium">{selected.department}</p></div>
@@ -201,18 +216,14 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
             <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(selected.total_budget)}</p></div>
             <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{selected.milestones.length}</p></div>
           </div>
+          </>
+          );
+          })()}
         </div>
 
         <h3 className="font-semibold text-gray-900 mb-4">Milestones</h3>
         <div className="space-y-3">
           {milestones.map(m => {
-            const gates = [
-              { label: "Engineer", done: m.engineer_approved },
-              { label: "Compliance", done: m.compliance_passed },
-              { label: "Community", done: m.community_confirmations >= m.community_required },
-              { label: "AI", done: m.ai_validated },
-            ];
-            const passed = gates.filter(g => g.done).length;
             return (
               <div key={m.id} className="card p-4">
                 <div className="flex items-start justify-between mb-3">
@@ -227,22 +238,14 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
                   <span>·</span>
                   <span>{m.submitted_evidence.length} evidence items</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {gates.map((gate, i) => (
-                    <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${
-                      gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"
-                    }`}>
-                      <div className="text-sm mb-0.5">{gate.done ? "✓" : "○"}</div>
-                      {gate.label}
-                    </div>
-                  ))}
-                </div>
                 <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400">{passed}/4 gates passed</span>
-                  {m.status !== "Released" && (
+                  <span className="text-[11px] text-slate-400">Payments: check Payments tab for gate status</span>
+                  {!m.released ? (
                     <button onClick={() => onSubmitEvidence(selected.id, m.id)} className="btn-primary text-xs px-3 py-1">
                       📎 Submit Evidence
                     </button>
+                  ) : (
+                    <span className="text-xs text-slate-300 cursor-not-allowed">✅ Completed</span>
                   )}
                 </div>
               </div>
@@ -547,6 +550,7 @@ function PaymentsTab({ address }: { address: string }) {
                   engineerApproval: e.conditions.engineer_approval,
                   aiRiskCheck: e.conditions.ai_risk_check,
                   complianceValidation: e.conditions.compliance_validation,
+                  oracleValidation: (e.conditions as any).community_oracle_validation || false,
                   communityConfirmation: Number(e.conditions.community_confirmation),
                   communityRequired: Number(e.conditions.community_required),
                 });
@@ -608,7 +612,7 @@ function PaymentsTab({ address }: { address: string }) {
           const gates = [
             { label: "Engineer", done: e.engineerApproval },
             { label: "Compliance", done: e.complianceValidation },
-            { label: "Oracle", done: (e as any).oracleApproval },
+            { label: "Oracle", done: e.oracleValidation },
             { label: `Community (${e.communityConfirmation}/${e.communityRequired})`, done: e.communityConfirmation >= e.communityRequired },
             { label: "AI Risk", done: e.aiRiskCheck },
           ];

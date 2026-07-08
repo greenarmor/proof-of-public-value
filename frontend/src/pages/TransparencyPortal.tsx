@@ -75,10 +75,14 @@ export function TransparencyPortal() {
               const coords: PVOData["gpsCoordinates"] = [];
               let releasedCount = 0;
               let budgetReleased = 0;
+              // Check escrow status to count released milestones
+              const escCli = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+              let escList: any[] = [];
+              try { escList = ((await escCli.get_escrows_by_pvo({ pvo_id: i })).result || []) as any[]; } catch {}
               for (const m of milestones) {
-                // Count Released milestones + sum budgets
-                const mStatus = statusToString(m.status);
-                if (mStatus === "Released") {
+                const esc = escList.find((e: any) => Number(e.milestone_id) === Number(m.id));
+                const escReleased = esc && (esc.status?.tag === "Released" || esc.status === "Released");
+                if (escReleased) {
                   releasedCount++;
                   budgetReleased += Number(m.budget || 0);
                 }
@@ -105,6 +109,26 @@ export function TransparencyPortal() {
               pvo.gpsCoordinates = coords;
               pvo.milestonesReleased = releasedCount;
               pvo.budgetReleased = budgetReleased;
+              if (releasedCount > 0 && releasedCount === pvo.milestonesTotal && budgetReleased >= Number(pvo.total_budget) / PPHP_SCALE) {
+                pvo.status = "Completed";
+              }
+              // Compute value score: average gate completion across all milestones
+              let totalScore = 0;
+              for (const e of escList) {
+                const c = e.conditions || {};
+                let passed = 0;
+                if (c.engineer_approval) passed++;
+                if (c.compliance_validation) passed++;
+                if (c.community_oracle_validation) passed++;
+                if ((c.community_confirmation || 0) >= (c.community_required || 1)) passed++;
+                if (c.ai_risk_check) passed++;
+                totalScore += (passed / 5) * 100;
+              }
+              // Milestones without escrows count as 0
+              const score = pvo.milestonesTotal > 0
+                ? Math.round(totalScore / pvo.milestonesTotal)
+                : 0;
+              pvo.public_value_score = Math.min(100, score);
             } catch {}
 
             list.push(pvo);
