@@ -917,6 +917,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-inspector-role-independent-evidence-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Inspector Role — Independent Evidence Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#role-interactions-the-5-gate-trust-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1964,6 +1975,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-inspector-role-independent-evidence-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Inspector Role — Independent Evidence Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#role-interactions-the-5-gate-trust-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2485,8 +2507,10 @@
 <h3 id="8-escrow-is-funded">8. Escrow is Funded<a class="headerlink" href="#8-escrow-is-funded" title="Permanent link">&para;</a></h3>
 <p>The funding agency deposits the milestone amount into the escrow contract. The escrow status becomes <strong>Funded</strong>.</p>
 <h3 id="9-five-gates-verify-the-work">9. Five Gates Verify the Work<a class="headerlink" href="#9-five-gates-verify-the-work" title="Permanent link">&para;</a></h3>
-<p>Each gate is an independent on-chain verification:</p>
-<p><strong>Gate 1  -  Engineer:</strong> Licensed engineer signs off that physical work meets specifications.</p>
+<p>Each gate is an independent on-chain verification.</p>
+<p><strong>Before the gates — Evidence + Inspector:</strong>
+The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The <strong>Inspector</strong> independently reviews this evidence for quality, clarity, and completeness — submitting an <code>InspectionReport</code> on-chain. This report strengthens the Engineer's decision at Gate 1.</p>
+<p><strong>Gate 1  -  Engineer:</strong> Licensed engineer signs off that physical work meets specifications. References contractor evidence AND the Inspector's independent quality report.</p>
 <p><strong>Gate 2  -  Compliance:</strong> Auditor or COA validates procurement law, budget rules, safety regulations.</p>
 <p><strong>Gate 3  -  Community Oracle:</strong> Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.</p>
 <p><strong>Gate 4  -  Community Confirmations:</strong> Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
@@ -2736,67 +2760,67 @@
 <tbody>
 <tr>
 <td><code>access_control</code></td>
-<td><code>CBDWH...3746</code></td>
+<td>See config.ts</td>
 <td>9</td>
 <td>11</td>
 </tr>
 <tr>
 <td><code>pvo_core</code></td>
-<td><code>CBMPR...4XYK</code></td>
+<td>See config.ts</td>
 <td>18</td>
 <td>18</td>
 </tr>
 <tr>
 <td><code>escrow</code></td>
-<td><code>CCPFT...3DFA</code></td>
+<td>See config.ts</td>
 <td>15</td>
 <td>15</td>
 </tr>
 <tr>
 <td><code>community_oracle</code></td>
-<td><code>CCDHO...5T3H</code></td>
+<td>See config.ts</td>
 <td>8</td>
 <td>12</td>
 </tr>
 <tr>
 <td><code>reputation</code></td>
-<td><code>CCHXN...WWIB</code></td>
+<td>See config.ts</td>
 <td>12</td>
 <td>19</td>
 </tr>
 <tr>
 <td><code>audit_trail</code></td>
-<td><code>CCFCR...5C6YZ</code></td>
+<td>See config.ts</td>
 <td>10</td>
 <td>12</td>
 </tr>
 <tr>
 <td><code>value_score</code></td>
-<td><code>CBR3T...Q5BD</code></td>
+<td>See config.ts</td>
 <td>11</td>
 <td>20</td>
 </tr>
 <tr>
 <td><code>ai_oracle</code></td>
-<td><code>CBCL4...ECSQ</code></td>
+<td>See config.ts</td>
 <td>13</td>
 <td>17</td>
 </tr>
 <tr>
 <td><code>public_index</code></td>
-<td><code>CCHK2...XYZT</code></td>
+<td>See config.ts</td>
 <td>7</td>
 <td>7</td>
 </tr>
 <tr>
 <td><code>compliance_engine</code></td>
-<td><code>CD5ZA...E7FQ</code></td>
+<td>See config.ts</td>
 <td>8</td>
 <td>8</td>
 </tr>
 <tr>
 <td><code>procurement_market</code></td>
-<td><code>CCEBA...FCXP</code></td>
+<td>See config.ts</td>
 <td>7</td>
 <td>7</td>
 </tr>
@@ -2808,7 +2832,7 @@
 </tr>
 <tr>
 <td><code>grant_commitment</code></td>
-<td><code>CC5BH...6CJZ</code></td>
+<td>See config.ts</td>
 <td>7</td>
 <td>13</td>
 </tr>
@@ -3016,37 +3040,46 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <tr>
 <td><strong>Inspector</strong></td>
 <td>Inspector Panel</td>
-<td>Verify evidence quality, validate reports</td>
-<td>Evidence quality assurance</td>
-</tr>
-<tr>
-<td><strong>Supplier</strong></td>
-<td>Procurement Market</td>
-<td>Register in pre-qualification registry</td>
-<td>Supply chain transparency</td>
-</tr>
-<tr>
-<td><strong>AntiCorruptionAgency</strong></td>
-<td>Anti-Corruption Dashboard</td>
-<td>Raise disputes, investigate flagged projects, review audit trails</td>
-<td>Corruption investigation</td>
+<td>Submit independent InspectionReports, verify drone/GPS/photo quality, flag substandard evidence</td>
+<td>Independent evidence quality — strengthens Engineer's Gate 1 decision</td>
 </tr>
 </tbody>
 </table>
+<h3 id="the-inspector-role-independent-evidence-verification">The Inspector Role — Independent Evidence Verification<a class="headerlink" href="#the-inspector-role-independent-evidence-verification" title="Permanent link">&para;</a></h3>
+<p>The <strong>Inspector</strong> is a unique role: they are part of the verification system but do <strong>not</strong> hold a dedicated escrow gate. Instead, they provide <strong>independent evidence quality assurance</strong> that strengthens the Engineer's decision at Gate 1.</p>
+<p><strong>What the Inspector does:</strong>
+- Reviews contractor-submitted evidence (drone imagery, GPS coordinates, timestamped photos, engineering reports)
+- Validates evidence quality: image clarity, GPS precision, report completeness
+- Submits <code>InspectionReport</code> evidence to the <code>pvo_core</code> contract — an independent, timestamped, on-chain record
+- Flags substandard or suspicious evidence for further investigation</p>
+<p><strong>Why no dedicated gate?</strong>
+The Inspector's reports are <strong>advisory</strong> — they inform the Engineer's decision but don't independently lock/unlock funds. This is by design:
+- <strong>Engineer (Gate 1)</strong>: has the authority to approve/reject based on physical inspection PLUS Inspector reports
+- <strong>Inspector</strong>: provides the evidence baseline the Engineer needs to make an informed decision</p>
+<p>If an Inspector flags poor quality drone imagery, the Engineer sees this when reviewing the milestone and can reject with documented cause. If the Inspector's report is positive, the Engineer gains additional confidence to approve.</p>
+<p><strong>Where Inspector fits in the flow:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Step 9:  Contractor submits evidence (drone, GPS, photos, reports)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Step 9b: Inspector reviews and submits InspectionReport        ← independent assessment
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Step 10: Engineer reviews contractor evidence + Inspector&#39;s report → Approves or Rejects (Gate 1)
+</code></pre></div></p>
+<p>This creates a <strong>two-layer technical verification</strong>: the Inspector provides the objective evidence assessment, and the Engineer provides the professional judgment. Together they prevent rubber-stamping — the Engineer can't just "approve everything" when there's an independent Inspector report on file showing quality issues.
+| <strong>Supplier</strong> | Procurement Market | Register in pre-qualification registry | Supply chain transparency |
+| <strong>AntiCorruptionAgency</strong> | Anti-Corruption Dashboard | Raise disputes, investigate flagged projects, review audit trails | Corruption investigation |</p>
 <h3 id="role-interactions-the-5-gate-trust-model">Role Interactions  -  The 5-Gate Trust Model<a class="headerlink" href="#role-interactions-the-5-gate-trust-model" title="Permanent link">&para;</a></h3>
 <p>No single role can release funds. Each gate is held by a different role:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>GovernmentAgency → creates PVO, defines milestones, opens tender
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>Contractor → submits bid at /procurement (price, quality, timeline)
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>GovernmentAgency → awards tender (auto-picks highest score)
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>FundingAgency → creates escrow per milestone (Awarded PVOs tab)
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>FundingAgency → funds escrow                           [Funds locked]
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Contractor → submits evidence
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Engineer → approves physical work                       [Gate 1]
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Auditor/COA → compliance check                          [Gate 2]
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>Citizens → submit GPS field reports                     [Gate 3 - Oracle]
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>Citizens → reach confirmation threshold                 [Gate 4 - Threshold]
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>AI Auditor → validates for fraud                        [Gate 5 - Final]
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>→ Anyone triggers release                               [All gates must pass]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>GovernmentAgency → creates PVO, defines milestones, opens tender
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Contractor → submits bid at /procurement (price, quality, timeline)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>GovernmentAgency → awards tender (auto-picks highest score)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>FundingAgency → creates escrow per milestone (Awarded PVOs tab)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>FundingAgency → funds escrow                           [Funds locked]
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>Contractor → submits evidence
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Inspector → reviews evidence, submits InspectionReport  [Quality check]
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Engineer → reviews evidence + Inspector report → approves [Gate 1]
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>Auditor/COA → compliance check                          [Gate 2]
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>Citizens → submit GPS field reports                     [Gate 3 - Oracle]
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>Citizens → reach confirmation threshold                 [Gate 4 - Threshold]
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>AI Auditor → validates for fraud                        [Gate 5 - Final]
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>→ Anyone triggers release                               [All gates must pass]
 </code></pre></div>
 <hr />
 <h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
@@ -3729,32 +3762,37 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 <tr>
 <td>10</td>
+<td>Inspector</td>
+<td>Review evidence quality, submit InspectionReport</td>
+</tr>
+<tr>
+<td>11</td>
 <td>Engineer</td>
 <td>Approve milestone 1 (Gate 1)</td>
 </tr>
 <tr>
-<td>11</td>
+<td>12</td>
 <td>Auditor</td>
 <td>Compliance check (Gate 2)</td>
 </tr>
 <tr>
-<td>12</td>
+<td>13</td>
 <td>3 Citizens</td>
 <td>Submit and verify GPS reports (Gates 3 &amp; 4)</td>
 </tr>
 <tr>
-<td>13</td>
+<td>14</td>
 <td>AI Auditor</td>
 <td>Run AI fraud check (Gate 5 - final gate)</td>
 </tr>
 <tr>
-<td>14</td>
+<td>15</td>
 <td>Anyone</td>
 <td>Release escrow -&gt; PVO goes InProgress</td>
 </tr>
 <tr>
-<td>15</td>
-<td>Repeat steps 7-14</td>
+<td>16</td>
+<td>Repeat steps 7-15</td>
 <td>For each remaining milestone</td>
 </tr>
 <tr>
@@ -3879,23 +3917,23 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tbody>
 </table>
 <p><strong>Provenance tree structure:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO (parent)
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── Milestone 1 (child)
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── Escrow #1  —  ₱50M (CompliancePassed)
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed  tx=f64a0a72...  🔗 View on Stellar Expert
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed  tx=8d38e2b0...  🔗 View on Stellar Expert
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>├── Milestone 2 (child)
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│   └── Escrow #2  —  ₱50M (Created)
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│       └── ... 5 gates (all pending)
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>└── Timeline
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    ├── PVO created                    tx=3d54e07b...  🔗
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    └── Escrow #1 → EngineerApproved   tx=f64a0a72...  🔗
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PVO (parent)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── Milestone 1 (child)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>│   ├── Escrow #1  —  ₱50M (CompliancePassed)
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed  tx=f64a0a72...  🔗 View on Stellar Expert
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed  tx=8d38e2b0...  🔗 View on Stellar Expert
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>├── Milestone 2 (child)
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>│   └── Escrow #2  —  ₱50M (Created)
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>│       └── ... 5 gates (all pending)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>└── Timeline
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    ├── PVO created                    tx=3d54e07b...  🔗
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    └── Escrow #1 → EngineerApproved   tx=f64a0a72...  🔗
 </code></pre></div>
 <p><strong>What happens:</strong> Every decision in the system is recorded on-chain with a Stellar transaction hash. The Provenance Indexer builds the complete audit trail independently  —  no backend, no database, just Stellar events and contract state. COA auditors, funding agencies, and administrators can trace every peso from budget allocation through all 5 gates to final release, with immutable tx hash proof.</p>
 <p><strong>If the service is offline:</strong> A yellow warning box shows the exact command to start it. The Provenance Explorer respects the "no backend, no database" philosophy  —  the indexer just reads from the blockchain, which is always available.</p>
