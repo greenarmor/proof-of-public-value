@@ -1395,7 +1395,7 @@
 <p><strong>Lifecycle:</strong>
 1. <strong>Created</strong>  -  funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
 2. <strong>Funded</strong>  -  funding agency deposits the exact milestone amount (in pPHP SAC units)
-3. <strong>Gates Progress</strong>  -  engineer approves → AI validates → compliance checks → community oracle → community confirmations
+3. <strong>Gates Progress</strong>  -  engineer approves → compliance → community oracle → community confirmations → AI validates
 4. <strong>Ready</strong>  -  all 5 gates passed; anyone can trigger release
 5. <strong>Released</strong>  -  funds transferred to contractor; PVO auto-completes if this was the last milestone</p>
 <hr />
@@ -1415,28 +1415,28 @@
 <td>Physically inspects the work. Signs off that the milestone meets structural specifications.</td>
 </tr>
 <tr>
-<td><strong>2. AI Risk Check</strong></td>
-<td>AI Oracle</td>
-<td>Scans evidence for anomalies: duplicate GPS coordinates, metadata tampering, suspicious patterns. Assigns a risk score.</td>
-</tr>
-<tr>
-<td><strong>3. Compliance Validation</strong></td>
+<td><strong>2. Compliance Validation</strong></td>
 <td>Auditor / COA</td>
 <td>Checks procurement law compliance, budget rules, safety regulations, anti-corruption requirements.</td>
 </tr>
 <tr>
-<td><strong>4. Community Oracle</strong></td>
+<td><strong>3. Community Oracle</strong></td>
 <td>Citizens (via reports)</td>
 <td>The Community Oracle contract checks whether verified citizen reports exist for the project. Reports must pass verification.</td>
 </tr>
 <tr>
-<td><strong>5. Community Confirmations</strong></td>
+<td><strong>4. Community Confirmations</strong></td>
 <td>Citizens (GPS field reports)</td>
 <td>Citizens visit the site, submit GPS-tagged evidence. The counter must reach the threshold set when the escrow was created.</td>
 </tr>
+<tr>
+<td><strong>5. AI Risk Check</strong></td>
+<td>AI Oracle</td>
+<td>Scans ALL evidence collected through gates 1-4 for anomalies: duplicate GPS, metadata tampering, suspicious patterns. Runs last for maximum data.</td>
+</tr>
 </tbody>
 </table>
-<p><strong>Key insight:</strong> Gates 4 and 5 are different. Gate 4 checks if the <strong>oracle</strong> has verified reports on file. Gate 5 counts how many <strong>unique verified reports</strong> exist  -  this is the threshold you set.</p>
+<p><strong>Key insight:</strong> Gates 3 and 4 are different. Gate 3 checks if the <strong>oracle</strong> has verified reports on file. Gate 4 counts how many <strong>unique verified reports</strong> exist  -  this is the threshold you set.</p>
 <hr />
 <h3 id="community-confirmations-threshold">Community Confirmations Threshold<a class="headerlink" href="#community-confirmations-threshold" title="Permanent link">&para;</a></h3>
 <p>When creating an escrow, the funding agency sets <strong>how many verified citizen GPS field reports are required</strong> to unlock the final gate. This is the <strong>community proof-of-life</strong> for the project.</p>
@@ -1782,7 +1782,7 @@ A: No. The escrow contract logic is on-chain and immutable. No role  -  not even
 <p><strong>Q: Why 5 gates instead of 3 or 7?</strong>
 A: 5 gates balance independence (no single role controls release) with practicality (not too slow). Each gate covers a distinct failure mode: physical quality (engineer), fraud detection (AI), regulatory compliance (COA), community oracle (citizen reports), and community threshold (multiple independent verifications).</p>
 <p><strong>Q: What's the difference between the Community Oracle gate and Community Confirmations?</strong>
-A: The oracle gate (gate 4) checks that the <strong>oracle contract itself</strong> has verified reports on file. The confirmations gate (gate 5) checks that the <strong>number of verified reports</strong> meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.</p>
+A: The oracle gate (gate 3) checks that the <strong>oracle contract itself</strong> has verified reports on file. The confirmations gate (gate 4) checks that the <strong>number of verified reports</strong> meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.</p>
 <p><strong>Q: How is this different from a traditional escrow?</strong>
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong>  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
 

@@ -991,10 +991,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gate-3-decision-matrix" class="md-nav__link">
+  <a href="#gate-5-decision-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gate 3 Decision Matrix
+        Gate 5 Decision Matrix
       
     </span>
   </a>
@@ -1216,10 +1216,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gate-3-decision-matrix" class="md-nav__link">
+  <a href="#gate-5-decision-matrix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gate 3 Decision Matrix
+        Gate 5 Decision Matrix
       
     </span>
   </a>
@@ -1403,7 +1403,7 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Risk Level 3 (High):   delay &gt; 60%
 </code></pre></div>
 <p>The reputation score comes from the <code>reputation</code> contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.</p>
-<p><strong>Gate 3 impact:</strong> Risk Category 3 (High) triggers a Gate 3 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.</p>
+<p><strong>Gate 5 impact:</strong> Risk Category 3 (High) triggers a Gate 5 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.</p>
 <h3 id="3-gps-validation">3. GPS Validation<a class="headerlink" href="#3-gps-validation" title="Permanent link">&para;</a></h3>
 <p>Compares GPS coordinates submitted by contractors/inspectors against the project's expected location. Uses the <strong>Haversine formula</strong> to compute great-circle distance.</p>
 <p><strong>Contract struct:</strong></p>
@@ -1423,7 +1423,7 @@
 <tr>
 <th>Distance</th>
 <th>Interpretation</th>
-<th>Gate 3 effect</th>
+<th>Gate 5 effect</th>
 </tr>
 </thead>
 <tbody>
@@ -1450,7 +1450,7 @@
 <li><strong>Fallback</strong>: Municipality geocoding lookup (if no PVO coordinates were entered)</li>
 <li><strong>Reported</strong>: GPS evidence submitted by contractor/inspector via <code>submit_evidence</code> with <code>GpsCoordinates</code> type</li>
 </ol>
-<p><strong>Gate 3 impact:</strong> Multiple GPS validation failures (&gt;50km from expected) trigger a Gate 3 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.</p>
+<p><strong>Gate 5 impact:</strong> Multiple GPS validation failures (&gt;50km from expected) trigger a Gate 5 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.</p>
 <h3 id="4-digital-twin-cost-simulation">4. Digital Twin (Cost Simulation)<a class="headerlink" href="#4-digital-twin-cost-simulation" title="Permanent link">&para;</a></h3>
 <p>A real-time cost simulation that tracks whether actual spending matches the budgeted amount. Think of it as a <strong>shadow ledger</strong> that runs alongside the real escrow system.</p>
 <p><strong>Contract struct:</strong></p>
@@ -1500,7 +1500,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Gate 3 impact:</strong> A deviation alert (actual &gt; 120% of expected) triggers a Gate 3 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.</p>
+<p><strong>Gate 5 impact:</strong> A deviation alert (actual &gt; 120% of expected) triggers a Gate 5 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.</p>
 <p><strong>Example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO #3 Budget:    ₱8,000,000
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Escrows Created:  ₱6,500,000
@@ -1511,7 +1511,7 @@
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>Material Index:   95% (on track)
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>Labor Index:      93% (on track)
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>Deviation Alert:  false
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>→ ✅ Pass Gate 3
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>→ ✅ Pass Gate 5
 </code></pre></div>
 <h3 id="5-image-evidence-verification">5. Image / Evidence Verification<a class="headerlink" href="#5-image-evidence-verification" title="Permanent link">&para;</a></h3>
 <p>Verifies that evidence files submitted by contractors actually exist on IPFS. Pings the IPFS gateway to confirm the hash is accessible and records content metadata.</p>
@@ -1530,7 +1530,7 @@
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  └── Timeout    → Gateway unreachable → authenticity: 50% (exists on-chain, can&#39;t verify)
 </code></pre></div>
 <p><strong>What it does NOT do:</strong> No computer vision. No image recognition. No AI-powered content analysis. It only verifies that the file the contractor claimed to upload actually exists on IPFS and is accessible.</p>
-<p><strong>Gate 3 impact:</strong> Low authenticity scores (&lt; 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 3 rejection.</p>
+<p><strong>Gate 5 impact:</strong> Low authenticity scores (&lt; 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 5 rejection.</p>
 <h3 id="6-geo-risk-assessment">6. Geo Risk Assessment<a class="headerlink" href="#6-geo-risk-assessment" title="Permanent link">&para;</a></h3>
 <p>Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards — flooding, landslides, and seismic activity.</p>
 <p><strong>Contract struct:</strong></p>
@@ -1549,7 +1549,7 @@
 <tr>
 <th>Risk Level</th>
 <th>Meaning</th>
-<th>Gate 3 effect</th>
+<th>Gate 5 effect</th>
 </tr>
 </thead>
 <tbody>
@@ -1570,16 +1570,16 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Gate 3 impact:</strong> Geo risk level 4+ triggers a Gate 3 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.</p>
-<h2 id="gate-3-decision-matrix">Gate 3 Decision Matrix<a class="headerlink" href="#gate-3-decision-matrix" title="Permanent link">&para;</a></h2>
-<p>The AI Auditor's Gate 3 verdict is a <strong>composite</strong> of all five analysis types. A single high-risk finding in ANY category can trigger rejection:</p>
+<p><strong>Gate 5 impact:</strong> Geo risk level 4+ triggers a Gate 5 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.</p>
+<h2 id="gate-5-decision-matrix">Gate 5 Decision Matrix<a class="headerlink" href="#gate-5-decision-matrix" title="Permanent link">&para;</a></h2>
+<p>The AI Auditor's Gate 5 verdict is a <strong>composite</strong> of all five analysis types. A single high-risk finding in ANY category can trigger rejection:</p>
 <table>
 <thead>
 <tr>
 <th>Analysis</th>
 <th>Check</th>
 <th>Threshold</th>
-<th>Rejects Gate 3?</th>
+<th>Rejects Gate 5?</th>
 </tr>
 </thead>
 <tbody>
@@ -1621,7 +1621,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Only if ALL categories pass does the AI recommend Gate 3 approval.</strong> This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.</p>
+<p><strong>Only if ALL categories pass does the AI recommend Gate 5 approval.</strong> This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>.aim/ai-service.ts (off-chain, runs on demand)
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    │

@@ -1271,21 +1271,21 @@
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span>--engineer<span class="w"> </span>engineer<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Gate 2: AI validation</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Gate 5: AI validation</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span>--source<span class="w"> </span>ai_auditor<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--<span class="w"> </span>ai_validate<span class="w"> </span>--auditor<span class="w"> </span>ai_auditor<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Gate 3: Compliance</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Gate 2: Compliance</span>
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span>--source<span class="w"> </span>auditor<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">  </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">  </span>--<span class="w"> </span>compliance_validate<span class="w"> </span>--compliance_officer<span class="w"> </span>auditor<span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">1</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="c1"># Gate 4: Community (need 2)</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="c1"># Gate 3: Community Oracle (need 2)</span>
 <a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="k">for</span><span class="w"> </span>ALIAS<span class="w"> </span><span class="k">in</span><span class="w"> </span>citizen<span class="w"> </span>alice<span class="p">;</span><span class="w"> </span><span class="k">do</span>
 <a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">  </span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>

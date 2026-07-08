@@ -547,10 +547,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ai-oracle-one-service-every-frontend" class="md-nav__link">
+  <a href="#ai-oracle-provenance-indexer-independent-services-every-frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AI Oracle - One Service, Every Frontend
+        AI Oracle &amp; Provenance Indexer — Independent Services, Every Frontend
       
     </span>
   </a>
@@ -1092,6 +1092,17 @@
     <span class="md-ellipsis">
       
         Exercise 13: Full End-to-End Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-14-provenance-explorer-complete-audit-trail-with-tx-hashes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 14: Provenance Explorer — Complete Audit Trail with TX Hashes
       
     </span>
   </a>
@@ -1555,10 +1566,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ai-oracle-one-service-every-frontend" class="md-nav__link">
+  <a href="#ai-oracle-provenance-indexer-independent-services-every-frontend" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AI Oracle - One Service, Every Frontend
+        AI Oracle &amp; Provenance Indexer — Independent Services, Every Frontend
       
     </span>
   </a>
@@ -2106,6 +2117,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exercise-14-provenance-explorer-complete-audit-trail-with-tx-hashes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise 14: Provenance Explorer — Complete Audit Trail with TX Hashes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2221,6 +2243,10 @@
 <td>Deployment server (EC2/VPS)</td>
 <td>❌ None  -  Static HTML/CSS/JS on Vercel (free)</td>
 </tr>
+<tr>
+<td>Off-chain services</td>
+<td>Provenance Indexer + AI Oracle  —  standalone TS services, run anywhere</td>
+</tr>
 </tbody>
 </table>
 <p><strong>13 Soroban smart contracts</strong> execute every business rule on-chain:
@@ -2243,21 +2269,70 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
 </code></pre></div></p>
 <p><strong>Result:</strong> Anyone can clone the repo, run <code>npm run build &amp;&amp; npm start</code>, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.</p>
-<h3 id="ai-oracle-one-service-every-frontend">AI Oracle  -  One Service, Every Frontend<a class="headerlink" href="#ai-oracle-one-service-every-frontend" title="Permanent link">&para;</a></h3>
-<p>The AI Oracle is the <strong>only off-chain component</strong>. It's a standalone TypeScript service (<code>ai-oracle/service.ts</code>) that:</p>
+<h3 id="ai-oracle-provenance-indexer-independent-services-every-frontend">AI Oracle &amp; Provenance Indexer — Independent Services, Every Frontend<a class="headerlink" href="#ai-oracle-provenance-indexer-independent-services-every-frontend" title="Permanent link">&para;</a></h3>
+<p>The AI Oracle and Provenance Indexer are the <strong>only off-chain components</strong>. These standalone TypeScript services run independently:</p>
+<p><strong>AI Oracle</strong> (<code>ai-oracle/service.ts</code>):</p>
 <ul>
 <li>Polls testnet for EngineerApproved milestones</li>
 <li>Runs local fraud detection (GPS bounding box, metadata scanning, description analysis)</li>
 <li>Submits <code>ai_validate(passed, risk_score)</code> on-chain</li>
 <li><strong>One instance serves all frontend deployments</strong></li>
 </ul>
-<p>Deploy it anywhere: VPS, Raspberry Pi, cron job, or Vercel serverless function. No cloud dependencies. No API keys. No GPU. Pure rule-based fraud detection.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Manual run:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Cron (every 5 min):</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>*/5<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/path/to/popv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once
+<p><strong>Provenance Indexer</strong> (<code>provenance-indexer/service.ts</code>):</p>
+<ul>
+<li>Polls Stellar testnet for contract events via SDK <code>getEvents()</code></li>
+<li>Reads contract state (PVOs, milestones, escrows, audit entries) to build full provenance trees</li>
+<li>Builds hierarchical audit chain: <strong>PVO (parent) → Milestone (child) → Gate records (sub-records)</strong></li>
+<li>Each gate record links to its <strong>Stellar transaction hash</strong> for immutable audit trackback</li>
+<li>Serves a JSON API on <code>http://127.0.0.1:3111</code> for the <strong>Provenance Explorer</strong> frontend</li>
+<li>Accessible by: Funding Agency, COA, Auditor, Administrator</li>
+<li>Polls every 30s, currently tracking 3 PVOs, 4 escrows, 19 events, 2/20 gates passed</li>
+</ul>
+<p>Deploy anywhere: VPS, Raspberry Pi, cron job, or serverless function. No cloud dependencies. No API keys. No GPU.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># AI Oracle:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once<span class="w">           </span><span class="c1"># Manual run</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>*/5<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/path/to/popv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once<span class="w">  </span><span class="c1"># Cron</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Provenance Indexer:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w">         </span><span class="c1"># Continuous (30s poll, serves API on :3111)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--once<span class="w">  </span><span class="c1"># Build once, serve for 10s</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--build<span class="w"> </span><span class="c1"># Build only, no server</span>
 </code></pre></div>
+<p><strong>Provenance API Endpoints:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/health</code></td>
+<td>Service status, uptime, event count, ledger position</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance</code></td>
+<td>All PVO provenance trees (PVO → Milestones → Gates)</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance/:pvoId</code></td>
+<td>Single PVO provenance chain with timeline</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance/:pvoId/timeline</code></td>
+<td>Chronological event timeline per PVO</td>
+</tr>
+<tr>
+<td><code>GET /api/events</code></td>
+<td>All captured contract events with tx hashes</td>
+</tr>
+<tr>
+<td><code>GET /api/events/:contractName</code></td>
+<td>Events filtered by contract</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="philippines-as-case-study-open-to-every-government">🇵🇭 Philippines as Case Study  -  Open to Every Government<a class="headerlink" href="#philippines-as-case-study-open-to-every-government" title="Permanent link">&para;</a></h2>
 <p><strong>Proof of Public Value is not built for one country. It is built for any government that wants to prove its integrity.</strong></p>
@@ -2307,24 +2382,24 @@
 <td>Physical work meets specifications</td>
 </tr>
 <tr>
-<td>2. AI Risk</td>
-<td>AI Oracle</td>
-<td>Fraud detection, anomaly scanning, metadata verification</td>
-</tr>
-<tr>
-<td>3. Compliance</td>
+<td>2. Compliance</td>
 <td>Auditor / COA</td>
 <td>Procurement law, budget rules, safety regulations</td>
 </tr>
 <tr>
-<td>4. Community Oracle</td>
+<td>3. Community Oracle</td>
 <td>Citizens</td>
 <td>Verified GPS field reports confirm project exists on the ground</td>
 </tr>
 <tr>
-<td>5. Community Confirmations</td>
+<td>4. Community Confirmations</td>
 <td>Citizens</td>
 <td>Must reach the threshold set at escrow creation  -  multiple independent witnesses</td>
+</tr>
+<tr>
+<td>5. AI Risk</td>
+<td>AI Oracle</td>
+<td>Fraud detection, anomaly scanning, metadata verification  —  runs last for maximum data</td>
 </tr>
 </tbody>
 </table>
@@ -2384,10 +2459,10 @@
 <h3 id="9-five-gates-verify-the-work">9. Five Gates Verify the Work<a class="headerlink" href="#9-five-gates-verify-the-work" title="Permanent link">&para;</a></h3>
 <p>Each gate is an independent on-chain verification:</p>
 <p><strong>Gate 1  -  Engineer:</strong> Licensed engineer signs off that physical work meets specifications.</p>
-<p><strong>Gate 2  -  AI Oracle:</strong> AI scans evidence for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns.</p>
-<p><strong>Gate 3  -  Compliance:</strong> Auditor or COA validates procurement law, budget rules, safety regulations.</p>
-<p><strong>Gate 4  -  Community Oracle:</strong> Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.</p>
-<p><strong>Gate 5  -  Community Confirmations:</strong> Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
+<p><strong>Gate 2  -  Compliance:</strong> Auditor or COA validates procurement law, budget rules, safety regulations.</p>
+<p><strong>Gate 3  -  Community Oracle:</strong> Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.</p>
+<p><strong>Gate 4  -  Community Confirmations:</strong> Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
+<p><strong>Gate 5  -  AI Fraud Detection:</strong> AI scans ALL evidence submitted across all prior gates for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns, description completeness. Runs last so it has maximum data to analyze.</p>
 <h3 id="10-escrow-releases-pvo-goes-inprogress">10. Escrow Releases  -  PVO Goes InProgress<a class="headerlink" href="#10-escrow-releases-pvo-goes-inprogress" title="Permanent link">&para;</a></h3>
 <p>Once all 5 gates pass, anyone can trigger release. The escrow contract:</p>
 <ol>
@@ -2721,8 +2796,9 @@
 1. <strong>Public pages</strong>  -  Browse projects, national index, map, search  -  no wallet needed
 2. <strong>Role-Play</strong>  -  Go to <code>/onboarding</code> → pick any role → get a demo wallet → walk through the system
 3. <strong>Connect Freighter</strong>  -  Install <a href="https://freighter.app">Freighter</a>, import a demo wallet from <code>.dev-logs/newrolecreden.md</code>
-4. <strong>15 PVOs per page</strong>  -  Scroll, paginate, or filter by name/department/municipality
-5. <strong>Mobile-friendly</strong>  -  Sticky map + sticky search, scrollable card list</p>
+4. <strong>Provenance</strong>  -  Go to <code>/provenance</code> (Funding Agency/COA/Auditor) → full audit trail with tx hash links
+5. <strong>15 PVOs per page</strong>  -  Scroll, paginate, or filter by name/department/municipality
+6. <strong>Mobile-friendly</strong>  -  Sticky map + sticky search, scrollable card list</p>
 <h3 id="demo-wallets-testnet">Demo Wallets (Testnet)<a class="headerlink" href="#demo-wallets-testnet" title="Permanent link">&para;</a></h3>
 <blockquote>
 <p>⚠️ <strong>Testnet only.</strong> Secret keys in <code>.dev-logs/newrolecreden.md</code> (gitignored).
@@ -2824,14 +2900,17 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Build &amp; serve frontend (production)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>start<span class="w">   </span><span class="c1"># → http://localhost:5174</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Build contracts</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>stellar<span class="w"> </span>contract<span class="w"> </span>build
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Start provenance indexer (separate terminal)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w">   </span><span class="c1"># → API on http://127.0.0.1:3111</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Run all tests</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-p<span class="w"> </span>pvo_core<span class="w"> </span>-p<span class="w"> </span>escrow<span class="w"> </span>-p<span class="w"> </span>procurement_market<span class="w">   </span><span class="c1"># 40 tests</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Build contracts</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>build
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Full system reset</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>node<span class="w"> </span>.dev-logs/master-reset.js<span class="w">     </span><span class="c1"># ~8 min</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Run all tests</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-p<span class="w"> </span>pvo_core<span class="w"> </span>-p<span class="w"> </span>escrow<span class="w"> </span>-p<span class="w"> </span>procurement_market<span class="w">   </span><span class="c1"># 40 tests</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># Full system reset</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>node<span class="w"> </span>.dev-logs/master-reset.js<span class="w">     </span><span class="c1"># ~8 min</span>
 </code></pre></div>
 <hr />
 <h2 id="roles-responsibilities">Roles &amp; Responsibilities<a class="headerlink" href="#roles-responsibilities" title="Permanent link">&para;</a></h2>
@@ -2861,7 +2940,7 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <tr>
 <td><strong>FundingAgency</strong></td>
 <td>Funding Agency Dashboard</td>
-<td>Create escrows, fund escrows, view donor commitments</td>
+<td>Create escrows, fund escrows, view donor commitments, provenance explorer</td>
 <td>Lock funds behind 5-gate verification</td>
 </tr>
 <tr>
@@ -2885,13 +2964,13 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <tr>
 <td><strong>Auditor</strong></td>
 <td>Auditor Dashboard</td>
-<td>Compliance validation, procurement law checks</td>
+<td>Compliance validation, procurement law checks, provenance explorer</td>
 <td>Regulatory compliance gate</td>
 </tr>
 <tr>
 <td><strong>CommissionOnAudit</strong></td>
 <td>COA Dashboard</td>
-<td>Final compliance sign-off, audit trail review</td>
+<td>Final compliance sign-off, audit trail review, provenance explorer</td>
 <td>Government audit oversight</td>
 </tr>
 <tr>
@@ -2935,10 +3014,10 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>FundingAgency → funds escrow                           [Funds locked]
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Contractor → submits evidence
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Engineer → approves physical work                       [Gate 1]
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>AI Auditor → validates for fraud                        [Gate 2]
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>Auditor/COA → compliance check                          [Gate 3]
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>Citizens → submit GPS field reports                     [Gate 4 - Oracle]
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>Auditor/COA → compliance check                          [Gate 2]
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>Citizens → submit GPS field reports                     [Gate 3 - Oracle]
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>Citizens → reach confirmation threshold                 [Gate 4 - Threshold]
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>AI Auditor → validates for fraud                        [Gate 5 - Final]
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>→ Anyone triggers release                               [All gates must pass]
 </code></pre></div>
 <hr />
@@ -3378,12 +3457,12 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 <tr>
 <td>4</td>
-<td>If passed, escrow gate 2 unlocks</td>
+<td>If passed, escrow gate 5 unlocks</td>
 <td>AI Validated ✓</td>
 </tr>
 </tbody>
 </table>
-<p><strong>What happens:</strong> Gate 2  -  AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.</p>
+<p><strong>What happens:</strong> Gate 5  -  AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.</p>
 <hr />
 <h3 id="exercise-9-auditor-coa-compliance-check">Exercise 9: Auditor / COA  -  Compliance Check<a class="headerlink" href="#exercise-9-auditor-coa-compliance-check" title="Permanent link">&para;</a></h3>
 <p><strong>Role:</strong> Auditor + CommissionOnAudit<br />
@@ -3411,7 +3490,7 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <tr>
 <td>3</td>
 <td>Pass the check</td>
-<td>Escrow gate 3 unlocks  -  Compliance Passed ✓</td>
+<td>Escrow gate 2 unlocks  -  Compliance Passed ✓</td>
 </tr>
 <tr>
 <td>4</td>
@@ -3430,7 +3509,7 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>What happens:</strong> Gate 3  -  legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.</p>
+<p><strong>What happens:</strong> Gate 2  -  legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.</p>
 <hr />
 <h3 id="exercise-10-citizen-community-verification">Exercise 10: Citizen  -  Community Verification<a class="headerlink" href="#exercise-10-citizen-community-verification" title="Permanent link">&para;</a></h3>
 <p><strong>Role:</strong> Citizen<br />
@@ -3492,7 +3571,7 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>What happens:</strong> Gates 4 &amp; 5  -  real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
+<p><strong>What happens:</strong> Gates 3 &amp; 4  -  real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
 <hr />
 <h3 id="exercise-11-inspector-evidence-quality">Exercise 11: Inspector  -  Evidence Quality<a class="headerlink" href="#exercise-11-inspector-evidence-quality" title="Permanent link">&para;</a></h3>
 <p><strong>Role:</strong> Inspector<br />
@@ -3627,18 +3706,28 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </tr>
 <tr>
 <td>11</td>
-<td>AI Auditor</td>
-<td>Validate for fraud (Gate 2)</td>
+<td>Auditor</td>
+<td>Compliance check (Gate 2)</td>
 </tr>
 <tr>
 <td>12</td>
-<td>Auditor</td>
-<td>Compliance check (Gate 3)</td>
+<td>3 Citizens</td>
+<td>Submit and verify GPS reports (Gates 3 &amp; 4)</td>
 </tr>
 <tr>
 <td>13</td>
-<td>3 Citizens</td>
-<td>Submit and verify GPS reports (Gates 4 &amp; 5)</td>
+<td>AI Auditor</td>
+<td>Run AI fraud check (Gate 5 - final gate)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Anyone</td>
+<td>Release escrow -&gt; PVO goes InProgress</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Repeat steps 7-14</td>
+<td>For each remaining milestone</td>
 </tr>
 <tr>
 <td>14</td>
@@ -3691,6 +3780,98 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 </table>
 <p><strong>Key verification:</strong> After step 14, the PVO status is <strong>InProgress</strong>  -  NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.</p>
 <hr />
+<h3 id="exercise-14-provenance-explorer-complete-audit-trail-with-tx-hashes">Exercise 14: Provenance Explorer  —  Complete Audit Trail with TX Hashes<a class="headerlink" href="#exercise-14-provenance-explorer-complete-audit-trail-with-tx-hashes" title="Permanent link">&para;</a></h3>
+<p><strong>Roles:</strong> FundingAgency, CommissionOnAudit, Auditor, Administrator<br />
+<strong>Dashboards:</strong> Provenance Explorer (<code>/provenance</code>)<br />
+<strong>Prerequisite:</strong> Start the provenance indexer: <code>npx tsx provenance-indexer/service.ts</code></p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Start the provenance indexer</td>
+<td><code>npx tsx provenance-indexer/service.ts</code>  -  runs on port 3111, polls every 30s</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Connect a FundingAgency, COA, Auditor, or Administrator wallet</td>
+<td>Role-gated: only these roles can access</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Navigate to <strong>/provenance</strong></td>
+<td>Nav item under "Oversight &amp; Audit" group</td>
+</tr>
+<tr>
+<td>4</td>
+<td>View <strong>Summary Stats</strong> bar</td>
+<td>Total PVOs, total escrowed/released, gates passed/pending, events indexed, tx-linked count</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Expand a <strong>PVO card</strong></td>
+<td>See per-milestone escrow breakdown, stats (escrowed/released/evidence/value score)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Switch to <strong>Milestones &amp; Gates</strong> tab</td>
+<td>Expand individual milestone  →  see all 5 gates with status, actor, timestamp</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Click a <strong>🔗 tx hash link</strong></td>
+<td>Opens Stellar Expert testnet explorer showing the on-chain transaction proof</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Switch to <strong>Full Timeline</strong> tab</td>
+<td>Chronological list: PVO created, milestones, evidence, escrows, gate transitions</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Use <strong>Search</strong> and <strong>Status Filter</strong></td>
+<td>Filter PVOs by title, department, municipality, contractor, or status</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Check <strong>Service Status</strong> indicator</td>
+<td>Green dot = indexer active, red = start the service</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Click <strong>↻ Refresh</strong> to pull latest data</td>
+<td>Live refresh from the provenance API</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Provenance tree structure:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO (parent)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── Milestone 1 (child)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── Escrow #1  —  ₱50M (CompliancePassed)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed  tx=f64a0a72...  🔗 View on Stellar Expert
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed  tx=8d38e2b0...  🔗 View on Stellar Expert
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>├── Milestone 2 (child)
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>│   └── Escrow #2  —  ₱50M (Created)
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│       └── ... 5 gates (all pending)
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>└── Timeline
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    ├── PVO created                    tx=3d54e07b...  🔗
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    └── Escrow #1 → EngineerApproved   tx=f64a0a72...  🔗
+</code></pre></div>
+<p><strong>What happens:</strong> Every decision in the system is recorded on-chain with a Stellar transaction hash. The Provenance Indexer builds the complete audit trail independently  —  no backend, no database, just Stellar events and contract state. COA auditors, funding agencies, and administrators can trace every peso from budget allocation through all 5 gates to final release, with immutable tx hash proof.</p>
+<p><strong>If the service is offline:</strong> A yellow warning box shows the exact command to start it. The Provenance Explorer respects the "no backend, no database" philosophy  —  the indexer just reads from the blockchain, which is always available.</p>
+<hr />
 <h2 id="tech-stack">Tech Stack<a class="headerlink" href="#tech-stack" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -3727,6 +3908,10 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <tr>
 <td>Events</td>
 <td>Soroban contract events</td>
+</tr>
+<tr>
+<td>Off-Chain Services</td>
+<td>AI Oracle (<code>ai-oracle/service.ts</code>), Provenance Indexer (<code>provenance-indexer/service.ts</code>)</td>
 </tr>
 <tr>
 <td>Token Standard</td>

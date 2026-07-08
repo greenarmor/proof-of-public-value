@@ -1792,11 +1792,11 @@
 </tr>
 <tr>
 <td>Contracts</td>
-<td><code>escrow</code> (Gate 2: engineer_approval), <code>pvo_core</code> (read milestones)</td>
+<td><code>escrow</code> (Gate 1: engineer_approval), <code>pvo_core</code> (read milestones)</td>
 </tr>
 </tbody>
 </table>
-<p>Licensed professional who verifies that physical work meets specifications. This is <strong>Gate 2</strong> in the 5-gate escrow system.</p>
+<p>Licensed professional who verifies that physical work meets specifications. This is <strong>Gate 1</strong> in the 5-gate escrow system.</p>
 <p><strong>Dashboard tabs:</strong></p>
 <table>
 <thead>
@@ -1831,11 +1831,11 @@
 <p><strong>What they do:</strong></p>
 <ol>
 <li>Review submitted evidence (photos, drone imagery, specs) with full details</li>
-<li>Approve milestones on the escrow contract to pass Gate 2</li>
+<li>Approve milestones on the escrow contract to pass Gate 1</li>
 <li>View all approved milestones and their payment status</li>
 <li>Browse all PVOs for project context</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Gate 2: Engineer approval</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Gate 1: Engineer approval</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>engineer<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--id<span class="w"> </span>CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--<span class="w"> </span>engineer_approve<span class="w"> </span><span class="se">\</span>
@@ -1870,7 +1870,7 @@
 </tr>
 </tbody>
 </table>
-<p>Conducts field inspections independently from the engineer. While the engineer checks technical specifications and signs off Gate 2 on the escrow, the inspector provides independent verification by submitting <code>InspectionReport</code> evidence to the pvo_core contract.</p>
+<p>Conducts field inspections independently from the engineer. While the engineer checks technical specifications and signs off Gate 1 on the escrow, the inspector provides independent verification by submitting <code>InspectionReport</code> evidence to the pvo_core contract.</p>
 <p><strong>Dashboard tabs:</strong></p>
 <table>
 <thead>
@@ -1917,7 +1917,7 @@
 </ol>
 <div class="admonition note">
 <p class="admonition-title">No escrow gate</p>
-<p>The inspector does not have a dedicated gate in the escrow contract. They submit <code>InspectionReport</code> evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 2 on the escrow.</p>
+<p>The inspector does not have a dedicated gate in the escrow contract. They submit <code>InspectionReport</code> evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 1 on the escrow.</p>
 </div>
 <h3 id="engineer-vs-inspector-the-check-and-balance-pair">Engineer vs Inspector: The Check-and-Balance Pair<a class="headerlink" href="#engineer-vs-inspector-the-check-and-balance-pair" title="Permanent link">&para;</a></h3>
 <p>In Philippine public works, these are two separate people from two separate organizations:</p>
@@ -1952,7 +1952,7 @@
 </tr>
 <tr>
 <td><strong>Escrow gate</strong></td>
-<td>✅ Gate 2 — <strong>required for payment</strong></td>
+<td>✅ Gate 1 — <strong>required for payment</strong></td>
 <td>❌ No gate — supporting evidence</td>
 </tr>
 <tr>
@@ -1976,7 +1976,7 @@
 <p><strong>In the escrow flow:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Contractor submits evidence
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    │
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Engineer reviews → approves Gate 2 → FUNDS CAN BE RELEASED
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>Engineer reviews → approves Gate 1 → FUNDS CAN BE RELEASED
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    │                    │
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Inspector visits site → submits InspectionReport → AUDIT TRAIL EXISTS
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>                         (doesn&#39;t block or release funds)
@@ -1987,24 +1987,26 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Contractor pays Engineer → Engineer reviews Contractor&#39;s work → CONFLICT
 </code></pre></div>
 <p>PoPV does not try to prevent this conflict. Instead, it <strong>assumes it exists</strong> and layers independent verification on top:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Gate 2: Engineer approves  ← weakest, single source, potential bias
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Gate 1: Engineer approves  ← weakest, single source, potential bias
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    ↓
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Gate 3: AI Oracle validates ← cross-references patterns from ALL contracts
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Gate 2: Compliance checks   ← independent constitutional authority (COA)
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    ↓
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Gate 4: Compliance checks   ← independent constitutional authority (COA)
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>Gate 3: Community oracle    ← verified GPS field reports from citizens
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    ↓
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Gate 5: Community confirms  ← citizens verify on the ground with GPS
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>Gate 4: Community confirms  ← threshold of independent witnesses met
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    ↓
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>AntiCorruption can dispute ANY escrow at ANY time
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>Gate 5: AI Oracle validates ← cross-references patterns from ALL contracts
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    ↓
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>Reputation ledger tracks EVERY decision permanently
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>AntiCorruption can dispute ANY escrow at ANY time
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    ↓
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>Reputation ledger tracks EVERY decision permanently
 </code></pre></div>
 <p>A single compromised gate cannot release money. Even if the engineer colludes with the contractor, four other independent verifiers must also say yes. And if any one of them says no, the funds stay locked.</p>
 <p>The system's security comes from <strong>distribution of trust</strong>, not from perfect individuals. Every gate is designed to be checkable by the others.</p>
 <h3 id="engineer-reputation-accountability">Engineer Reputation &amp; Accountability<a class="headerlink" href="#engineer-reputation-accountability" title="Permanent link">&para;</a></h3>
 <p>The engineer's <strong>reputation score</strong> is visible on their dashboard. It tracks their professional integrity on-chain:</p>
 <p>The engineer's <strong>reputation score</strong> is visible on their dashboard. It tracks their professional integrity on-chain:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Engineer approves Gate 2 → escrow proceeds
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Engineer approves Gate 1 → escrow proceeds
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    │
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Inspector submits contradicting report → Audit trail created
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    │
@@ -2064,7 +2066,7 @@
 <tr>
 <td><strong>Escrow gate</strong></td>
 <td>❌ No gate — supporting evidence</td>
-<td>✅ Gate 4 — <strong>required for payment</strong></td>
+<td>✅ Gate 2 — <strong>required for payment</strong></td>
 </tr>
 <tr>
 <td><strong>Effect on money</strong></td>
@@ -2079,19 +2081,19 @@
 <tr>
 <td><strong>How they override engineer</strong></td>
 <td>Submit photos proving poor quality → audit trail</td>
-<td>Reject compliance → Gate 4 fails → funds stay locked</td>
+<td>Reject compliance → Gate 2 fails → funds stay locked</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Why both?</strong> The inspector catches what's <strong>wrong on the ground</strong> (cracked concrete, uneven asphalt). The auditor catches what's <strong>wrong on paper</strong> (inflated prices, skipped bidding, regulatory violations). An inspector's photo of bad concrete is evidence. An auditor's rejection of compliance stops payment.</p>
 <p><strong>In the escrow flow:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Engineer approves Gate 2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Engineer approves Gate 1
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    │
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>Inspector visits → submits InspectionReport → &quot;Foundation has cracks&quot;
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    │                                            (doesn&#39;t block funds)
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>Auditor reviews → sees inspector&#39;s photos + engineer&#39;s approval
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    │
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Auditor rejects Gate 4 → FUNDS STAY LOCKED
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Auditor rejects Gate 2 → FUNDS STAY LOCKED
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    │            (COA has constitutional override authority)
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>AntiCorruption sees pattern → disputes escrow → funds frozen
 </code></pre></div>
@@ -2120,11 +2122,11 @@
 </tr>
 <tr>
 <td>Contracts</td>
-<td><code>audit_trail</code>, <code>escrow</code> (Gate 4: compliance_validate), <code>compliance_engine</code></td>
+<td><code>audit_trail</code>, <code>escrow</code> (Gate 2: compliance_validate), <code>compliance_engine</code></td>
 </tr>
 </tbody>
 </table>
-<p>Audits financial records and checks regulatory compliance. This is <strong>Gate 4</strong> in the 5-gate escrow system. The Auditor and CommissionOnAudit share the same dashboards.</p>
+<p>Audits financial records and checks regulatory compliance. This is <strong>Gate 2</strong> in the 5-gate escrow system. The Auditor and CommissionOnAudit share the same dashboards.</p>
 <p><strong>Dashboard tabs:</strong></p>
 <table>
 <thead>
@@ -2145,8 +2147,8 @@
 <tr>
 <td>Compliance Gate</td>
 <td>Escrows needing compliance validation</td>
-<td><code>escrow.get_escrow</code> filtered for AI-validated, not yet compliance-passed</td>
-<td><code>escrow.compliance_validate</code> (Pass/Reject Gate 4) via TransactionBuilder + Freighter</td>
+<td><code>escrow.get_escrow</code> filtered for engineer-approved, not yet compliance-passed</td>
+<td><code>escrow.compliance_validate</code> (Pass/Reject Gate 2) via TransactionBuilder + Freighter</td>
 </tr>
 <tr>
 <td>Violations</td>
@@ -2159,7 +2161,7 @@
 <p><strong>What they do:</strong></p>
 <ol>
 <li>Review all audit entries across all PVOs (approvals, payments, evidence, compliance, disputes)</li>
-<li>Pass or reject compliance validation on escrows at Gate 4</li>
+<li>Pass or reject compliance validation on escrows at Gate 2</li>
 <li>View active regulatory violations from the compliance engine</li>
 <li>Share dashboard access with CommissionOnAudit (COA)</li>
 </ol>
@@ -2431,7 +2433,7 @@
 </tr>
 </tbody>
 </table>
-<p>The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is <strong>Gate 3</strong> in the 5-gate escrow system.</p>
+<p>The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is <strong>Gate 5</strong> in the 5-gate escrow system.</p>
 <p>The dashboard is <strong>public</strong> — anyone can view AI findings at <code>/ai</code> without a wallet. See <strong><a href="../ai-oracle/">Appendix C: How the AI Oracle Works</a></strong> for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.</p>
 <p><strong>Dashboard tabs:</strong></p>
 <table>
@@ -2552,18 +2554,19 @@
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
 <a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>Step 4: 5 GATES PASS
 <a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>    Gate 1: Contractor submits evidence
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    Gate 2: Engineer approves
-<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    Gate 3: AI validates
-<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    Gate 4: Compliance passes
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    Gate 5: Community confirms
-<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>
-<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>Step 5: RELEASE (tokens move)
-<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    escrow.release()
-<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>    pPHP tokens transfer from escrow to contractor
-<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>
-<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a>Step 6: DONOR UPDATES STATUS
-<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>    InternationalDonor → grant_commitment.update_status(Disbursed)
-<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>    InternationalDonor → grant_commitment.update_status(Completed)
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>    Gate 1: Engineer approves
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>    Gate 2: Compliance passes
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    Gate 3: Community oracle verifies
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    Gate 4: Community confirms (threshold)
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>    Gate 5: AI validates
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>Step 5: RELEASE (tokens move)
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>    escrow.release()
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>    pPHP tokens transfer from escrow to contractor
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a>
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>Step 6: DONOR UPDATES STATUS
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>    InternationalDonor → grant_commitment.update_status(Disbursed)
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a>    InternationalDonor → grant_commitment.update_status(Completed)
 </code></pre></div>
 <hr />
 <h2 id="dashboard-access-control-matrix">Dashboard Access Control Matrix<a class="headerlink" href="#dashboard-access-control-matrix" title="Permanent link">&para;</a></h2>
