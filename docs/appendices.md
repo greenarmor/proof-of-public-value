@@ -435,3 +435,132 @@ A: The oracle gate (gate 3) checks that the **oracle contract itself** has verif
 
 **Q: How is this different from a traditional escrow?**
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on **cryptographic proof of work completed**  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.
+
+---
+
+## Provenance Chain — Immutable Audit Trail
+
+### What It Is
+
+The **Provenance Chain** is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its **Stellar transaction hash** — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.
+
+**Think of it as a blockchain-powered paper trail.** Every peso's journey from budget allocation to contractor payment is recorded, timestamped, and linked to a permanent on-chain receipt that can never be altered or deleted.
+
+### Why It Matters
+
+For **COA auditors**: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction — who approved, when, on which ledger.
+
+For **Funding Agencies**: They can verify that escrows they funded actually went through proper verification. No more "trust us, we checked." The proof is on-chain.
+
+For **Citizens**: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public — no wallet, no login needed.
+
+For **Anti-Corruption Agencies**: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer — all linked to tx hashes.
+
+### Architecture
+
+The provenance system has two components that run independently:
+
+**1. Provenance Indexer** (`provenance-indexer/service.ts`)
+
+A standalone TypeScript service that:
+- Polls the Stellar testnet every 30 seconds for new contract events
+- Uses the SDK `getEvents()` API to capture all events from all contracts
+- Reads contract state (PVOs, milestones, escrows) via CLI invocations
+- Decodes Soroban ScVal event data into plain JavaScript objects
+- Builds hierarchical provenance trees: **PVO → Milestones → Gates**
+- Matches each gate transition to its Stellar transaction hash
+- Stores results in `.dev-logs/provenance-store.json` (gitignored)
+- Serves a JSON API on `http://127.0.0.1:3111` for frontend consumption
+
+**2. Provenance Explorer** (`frontend/src/pages/ProvenanceExplorer.tsx`)
+
+A public React page accessible at `/provenance` that:
+- Fetches provenance data from the indexer API
+- Shows expandable PVO cards with per-milestone gate records
+- Each passed gate displays a clickable 🔗 tx hash link to Stellar Expert
+- Timeline tab shows all events in chronological order
+- Summary stats bar: total escrowed, released, gates passed, events indexed
+- Search and filter by PVO title, department, municipality, status
+
+### Provenance Tree Structure
+
+The data model is hierarchical, matching exactly how public works projects are structured in the real world:
+
+```
+PVO #3: Davao Coastal Road (parent)
+├── Milestone #4: Engineering & Mobilization (child)
+│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
+│   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
+│   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
+│   ├── Gate 3: Community Oracle       ⬜ pending
+│   ├── Gate 4: Community Confirm      ⬜ pending
+│   └── Gate 5: AI Risk Check          ⬜ pending
+│
+├── Milestone #5: Structural Base (child)
+│   └── Escrow #2  —  ₱50,000,000 (Created)
+│       └── ... 5 gates (all pending, no escrow funded yet)
+│
+└── Timeline (chronological events with tx hashes)
+    ├── PVO created                    tx=3d54e07b...  🔗
+    ├── Milestone #4 created           tx=fe9bb155...  🔗
+    ├── Milestone #5 created           tx=bf550c7a...  🔗
+    ├── Contractor assigned            tx=bab8c00d...  🔗
+    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+    └── Escrow #1 status→EngineerApproved   tx=f64a0a72...  🔗
+```
+
+### How Events Are Captured
+
+The indexer calls `server.getEvents()` against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects — the indexer decodes these to extract:
+
+| Event | Source Contract | Key Data Extracted |
+|-------|----------------|-------------------|
+| `escrow_created_event` | escrow | `id`, `pvo_id`, `milestone_id`, `amount`, `recipient` |
+| `escrow_condition_updated_event` | escrow | `id`, `status` (maps to gate passed) |
+| `escrow_funded_event` | escrow | `id`, `amount` |
+| `escrow_released_event` | escrow | `id`, `amount`, `recipient` |
+| `pvo_created_event` | pvo_core | `id`, `title`, `total_budget` |
+| `milestone_created_event` | pvo_core | `pvo_id`, `milestone_id`, `budget` |
+| `evidence_submitted_event` | pvo_core | `pvo_id`, `milestone_id`, `evidence_id`, `evidence_type` |
+| `contractor_assigned_event` | pvo_core | `pvo_id`, `contractor` |
+
+Events are limited to the last ~10,000 ledgers (~19 hours on testnet). For historical data beyond this window, the indexer relies on direct contract state reads.
+
+### API Endpoints
+
+| Endpoint | Response | Use Case |
+|----------|----------|----------|
+| `GET /api/health` | `{ status, pvoCount, eventCount, lastLedger }` | Monitoring |
+| `GET /api/provenance` | `PVOProvenance[]` — all PVOs | Full overview |
+| `GET /api/provenance/:pvoId` | Single `PVOProvenance` with milestones + timeline | Detail view |
+| `GET /api/provenance/:pvoId/timeline` | `TimelineEntry[]` — chronological events | Event log |
+| `GET /api/events` | `CapturedEvent[]` — all raw events | Debugging |
+| `GET /api/events/:contractName` | Events filtered by contract | Targeted audit |
+
+### Running the Provenance System
+
+```bash
+# Start the indexer (continuous mode, polls every 30s):
+npx tsx provenance-indexer/service.ts
+
+# Build once and serve for 10 seconds:
+npx tsx provenance-indexer/service.ts --once
+
+# Build only, no HTTP server:
+npx tsx provenance-indexer/service.ts --build
+
+# Combined with frontend (production):
+npm run prod   # builds frontend + serves on :5174 + provenance on :3111
+```
+
+The indexer must be running for the Provenance Explorer to display data. If the service is offline, the Explorer page shows a clear error message with the exact command to start it.
+
+### Design Philosophy
+
+The Provenance Indexer follows the same principles as the AI Oracle: **no backend, no database, runs anywhere.**
+
+- **No backend** — it's a standalone script that reads from the Stellar blockchain
+- **No database** — stores to a local JSON file that can be wiped and rebuilt
+- **Runs anywhere** — VPS, Raspberry Pi, cron job, or alongside `npm run prod`
+- **Public by default** — the Explorer page has no wallet requirement
+- **Immutable proof** — every tx hash link opens Stellar Expert showing the permanent on-chain record
