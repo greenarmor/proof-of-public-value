@@ -9,6 +9,7 @@
     "provenance": "npx tsx provenance-indexer/service.ts",
     "provenance:build": "npx tsx provenance-indexer/service.ts --build",
     "build": "cd frontend && npm run build",
+    "postinstall": "cd frontend && npm install --include=dev",
     "start": "cd frontend && npm start",
     "prod": "npm run build && concurrently \"npm run dev:provenance\" \"npm start\"",
     "test": "cd frontend && npx tsx e2e-test.ts",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@stellar/stellar-sdk": "^16.0.1",
     "@types/node": "^26.1.0",
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "typescript": "~6.0.2"
   }
 }

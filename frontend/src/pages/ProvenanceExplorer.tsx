@@ -90,8 +90,8 @@ interface HealthInfo {
 
 // ── Config ──────────────────────────────────────────────
 const API_BASE =
-  (typeof window !== "undefined" &&
-    (window as any).__PROVENANCE_API__) ||
+  (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   "http://127.0.0.1:3111";
 
 const STELLAR_EXPERT_TX = "https://stellar.expert/explorer/testnet/tx/";

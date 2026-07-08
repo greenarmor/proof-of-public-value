@@ -7,6 +7,10 @@ import { WalletAddress } from "../components/WalletAddress";
 import { useWallet } from "../wallet";
 
 const PROVENANCE_API = "http://127.0.0.1:3111";
+const PROVENANCE_API_BASE =
+  (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
+  PROVENANCE_API;
 
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
@@ -218,7 +222,7 @@ export function TransparencyPortal() {
     (async () => {
       setProvenanceLoading(true);
       try {
-        const res = await fetch(`${PROVENANCE_API}/api/provenance/${selected.id}`);
+        const res = await fetch(`${PROVENANCE_API_BASE}/api/provenance/${selected.id}`);
         if (res.ok) setProvenanceData(await res.json());
       } catch {} finally { setProvenanceLoading(false); }
     })();
