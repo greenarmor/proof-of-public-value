@@ -4,6 +4,7 @@ import { Client as AccessControlClient } from "./contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "./config";
 import { SignClient } from "@walletconnect/sign-client";
 import type { SessionTypes } from "@walletconnect/types";
+import { WalletConnectModal } from "@walletconnect/modal";
 
 export type Role = string;
 export type WalletType = "freighter" | "walletconnect" | null;
@@ -145,7 +146,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const connectMobile = useCallback(async () => {
     try {
-      const { WalletConnectModal } = await import("@walletconnect/modal");
       const client = await getWcClient();
 
       const { uri, approval } = await client.connect({
@@ -183,7 +183,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     } catch (e: any) {
       if (e?.message !== "User rejected") {
-        console.error("WalletConnect failed:", e);
+        console.error("WalletConnect failed:", e?.message || e);
+        alert("Mobile connect failed: " + (e?.message || "Unknown error").slice(0, 100));
       }
     }
   }, []);
