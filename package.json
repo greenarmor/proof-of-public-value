@@ -21,5 +21,10 @@
     "@types/node": "^26.1.0",
     "concurrently": "^9.0.0",
     "typescript": "~6.0.2"
+  },
+  "dependencies": {
+    "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/sign-client": "^2.23.10",
+    "@walletconnect/types": "^2.23.10"
   }
 }

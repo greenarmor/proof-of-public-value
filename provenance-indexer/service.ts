@@ -939,6 +939,13 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 
 function startHTTPServer(): void {
   const server = createServer(handleRequest);
+  server.on("error", (e: any) => {
+    if (e.code === "EADDRINUSE") {
+      console.error(`  ⚠️ Port ${HTTP_PORT} in use. Kill the old process first: kill $(lsof -ti:${HTTP_PORT})`);
+    } else {
+      console.error(`  ⚠️ Server error: ${e.message}`);
+    }
+  });
   server.listen(HTTP_PORT, () => {
     console.log(`\n🌐 Provenance API: http://localhost:${HTTP_PORT}`);
     console.log(`   Endpoints: /api/provenance, /api/events, /api/health\n`);

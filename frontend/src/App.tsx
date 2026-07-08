@@ -188,7 +188,7 @@ function AccessDenied() {
 }
 
 function Header() {
-  const { address, connected, connect, disconnect, roles, hasRole } = useWallet();
+  const { address, connected, connect, disconnect, roles, hasRole, connectMobile } = useWallet();
   const [dashboardsOpen, setDashboardsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -368,9 +368,12 @@ function Header() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <button onClick={connect} className="btn-primary text-xs px-4 py-2">
-                Connect Wallet
+            <div className="flex items-center gap-2">
+              <button onClick={connect} className="btn-primary text-xs px-3 py-2">
+                🦊 Freighter
+              </button>
+              <button onClick={connectMobile} className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700">
+                📱 Mobile
               </button>
               <a
                 href="https://freighter.app"

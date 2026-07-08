@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useWallet } from "../wallet";
 
 export function LandingPage() {
-  const { connect } = useWallet();
+  const { connect, connectMobile } = useWallet();
   const location = useLocation();
   const heroRef = useRef<HTMLDivElement>(null);
   const [offsets, setOffsets] = useState({ hero: 0, stats: 0, features: 0, grid: 0, cta: 0 });
@@ -73,7 +73,11 @@ export function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button onClick={connect}
               className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
-              Connect Freighter
+              🦊 Connect Freighter
+            </button>
+            <button onClick={connectMobile}
+              className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-indigo-200">
+              📱 Connect Mobile
             </button>
             <a href="#features"
               className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-600 font-medium text-lg hover:bg-slate-200 transition-all">
