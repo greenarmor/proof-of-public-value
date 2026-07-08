@@ -1,9 +1,19 @@
 import { useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+
+function useIsMobile() {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    setM(/Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || 
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 768));
+  }, []);
+  return m;
+}
 import { useWallet } from "../wallet";
 
 export function LandingPage() {
   const { connect, connectMobile } = useWallet();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const heroRef = useRef<HTMLDivElement>(null);
   const [offsets, setOffsets] = useState({ hero: 0, stats: 0, features: 0, grid: 0, cta: 0 });
@@ -71,14 +81,17 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={connect}
-              className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
-              🦊 Connect Freighter
-            </button>
-            <button onClick={connectMobile}
-              className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-indigo-200">
-              📱 Connect Mobile
-            </button>
+            {isMobile ? (
+              <button onClick={connectMobile}
+                className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
+                📱 Connect Wallet
+              </button>
+            ) : (
+              <button onClick={connect}
+                className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
+                🦊 Connect Freighter
+              </button>
+            )}
             <a href="#features"
               className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-600 font-medium text-lg hover:bg-slate-200 transition-all">
               See How It Works ↓

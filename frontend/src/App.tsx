@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
@@ -187,8 +187,18 @@ function AccessDenied() {
   );
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    setMobile(/Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || 
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 768));
+  }, []);
+  return mobile;
+}
+
 function Header() {
   const { address, connected, connect, disconnect, roles, hasRole, connectMobile } = useWallet();
+  const isMobile = useIsMobile();
   const [dashboardsOpen, setDashboardsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
@@ -369,12 +379,15 @@ function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button onClick={connect} className="btn-primary text-xs px-3 py-2">
-                🦊 Freighter
-              </button>
-              <button onClick={connectMobile} className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700">
-                📱 Mobile
-              </button>
+              {isMobile ? (
+                <button onClick={connectMobile} className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700">
+                  📱 Connect Wallet
+                </button>
+              ) : (
+                <button onClick={connect} className="btn-primary text-xs px-3 py-2">
+                  🦊 Connect Freighter
+                </button>
+              )}
               <a
                 href="https://freighter.app"
                 target="_blank"
