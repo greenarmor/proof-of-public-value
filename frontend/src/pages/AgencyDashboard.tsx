@@ -629,6 +629,37 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget (in Pesos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="e.g. 5000000 = ₱5,000,000" required min="1" step="0.01" />
             <p className="text-xs text-slate-400 mt-1">{budget && Number(budget) > 0 ? `= ${(Number(budget) * PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 0})} SAC units (₱${Number(budget).toLocaleString()})` : "1 peso = 10,000,000 SAC units"}</p>
+            {pvoId && (() => {
+              const selectedPVO = pvos.find((p: any) => Number(p.id) === Number(pvoId));
+              if (!selectedPVO) return null;
+              const totalBudget = Number(selectedPVO.total_budget) / PPHP_SCALE;
+              const milestoneAmount = Number(budget) || 0;
+              const pct = totalBudget > 0 ? Math.min(100, Math.round((milestoneAmount / totalBudget) * 100)) : 0;
+              const overBudget = milestoneAmount > totalBudget;
+              return (
+                <div className={`mt-2 p-3 rounded-lg border text-xs ${overBudget ? "bg-red-50 border-red-200 text-red-700" : "bg-blue-50 border-blue-200 text-blue-700"}`}>
+                  <div className="flex justify-between mb-1"><span>PVO Total Budget:</span><span className="font-semibold">₱{totalBudget.toLocaleString()}</span></div>
+                  {milestoneAmount > 0 && (
+                    <>
+                      <div className="flex justify-between mb-1"><span>This Milestone:</span><span>₱{milestoneAmount.toLocaleString()} ({pct}%)</span></div>
+                      {overBudget ? (
+                        <div className="pt-1 border-t border-red-200 text-red-700 font-semibold">⚠️ Milestone exceeds total PVO budget by ₱{(milestoneAmount - totalBudget).toLocaleString()}</div>
+                      ) : (
+                        <div className="flex justify-between pt-1 border-t border-blue-200">
+                          <span>Remaining for other milestones:</span>
+                          <span className="font-bold">{totalBudget === milestoneAmount ? "₱0 (fully allocated)" : `₱${(totalBudget - milestoneAmount).toLocaleString()}`}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {milestoneAmount > 0 && !overBudget && (
+                    <div className="mt-2 w-full bg-slate-200 rounded-full h-1.5">
+                      <div className="bg-brand-500 rounded-full h-1.5 transition-all" style={{width: `${pct}%`}} />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
         <div>

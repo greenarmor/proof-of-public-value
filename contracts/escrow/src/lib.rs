@@ -198,11 +198,26 @@ impl DynamicEscrow {
         token_client.transfer(&funder, &env.current_contract_address(), &amount);
 
         escrow.status = EscrowStatus::Funded;
+        let pvo_id = escrow.pvo_id;
         escrows.set(escrow_id, escrow);
 
         storage.set(&ESCROWS, &escrows);
 
         EscrowFundedEvent { id: escrow_id, amount }.publish(&env);
+
+        // Transition PVO to InProgress when first escrow is funded
+        if let Some(pvo_core_addr) = storage.get::<Symbol, Address>(&PVO_CORE) {
+            let _: () = env.invoke_contract(
+                &pvo_core_addr,
+                &Symbol::new(&env, "update_pvo_status"),
+                soroban_sdk::vec![
+                    &env,
+                    env.current_contract_address().into_val(&env),
+                    pvo_id.into(),
+                    PvoStatus::InProgress.into_val(&env),
+                ],
+            );
+        }
     }
 
     pub fn engineer_approve(env: Env, engineer: Address, escrow_id: u32) {
@@ -313,6 +328,19 @@ impl DynamicEscrow {
     pub fn add_community_confirmation(env: Env, citizen: Address, escrow_id: u32) {
         citizen.require_auth();
         let storage = env.storage().persistent();
+        
+        // Deduplication: track unique confirmers per escrow
+        let key = Symbol::new(&env, "confirmers");
+        let mut confirmers: Map<u32, Vec<Address>> = storage.get(&key).unwrap_or_else(|| Map::new(&env));
+        let mut list = confirmers.get(escrow_id).unwrap_or_else(|| Vec::new(&env));
+        for addr in list.iter() {
+            if addr == citizen {
+                panic!("this citizen has already confirmed");
+            }
+        }
+        list.push_back(citizen.clone());
+        confirmers.set(escrow_id, list);
+        storage.set(&key, &confirmers);
         
         // Cross-contract: require verified community reports for this PVO
         let escrows_init: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));

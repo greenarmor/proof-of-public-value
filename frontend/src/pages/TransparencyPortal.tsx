@@ -4,6 +4,7 @@ import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { useWallet } from "../wallet";
 
 const PROVENANCE_API = "http://127.0.0.1:3111";
 
@@ -13,6 +14,7 @@ interface PVOData {
   id: number; title: string; description: string; department: string;
   municipality: string; total_budget: string; status: string;
   contractor: string; public_value_score: number; milestones: number[]; created_at: number;
+  contractor_assigned: boolean;
   gpsCoordinates?: Array<{ lat: number; lng: number; milestoneId: number; evidenceId: number }>;
   latitude?: number; longitude?: number;
   milestonesReleased: number;
@@ -40,6 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function TransparencyPortal() {
   const currency = getCurrency();
+  const { address, connected, hasRole } = useWallet();
   const [pvos, setPvos] = useState<PVOData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PVOData | null>(null);
@@ -63,7 +66,7 @@ export function TransparencyPortal() {
           const r = await client.get_pvo({ pvo_id: i });
           if (r.result) {
             const { lat, lng, clean } = parseCoords(r.result.description || "");
-            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: clean, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [], latitude: lat, longitude: lng, milestonesReleased: 0, milestonesTotal: (r.result.milestones as any[] || []).length, budgetReleased: 0 };
+            const pvo: PVOData = { id: r.result.id, title: r.result.title, description: clean, department: r.result.department, municipality: r.result.municipality, total_budget: String(r.result.total_budget), status: statusToString(r.result.status), contractor: r.result.contractor, public_value_score: r.result.public_value_score, milestones: r.result.milestones as any, created_at: Number(r.result.created_at), gpsCoordinates: [], latitude: lat, longitude: lng, milestonesReleased: 0, milestonesTotal: (r.result.milestones as any[] || []).length, budgetReleased: 0, contractor_assigned: (r.result as any).contractor_assigned ?? false };
 
             // Fetch milestone evidence to extract GPS coordinates + count Released
             try {
@@ -156,32 +159,34 @@ export function TransparencyPortal() {
   useEffect(() => { loadPVOs(); }, [loadPVOs]);
 
   // Load escrows when a PVO is selected
+  const loadEscrows = useCallback(async (pvoId: number) => {
+    setEscrowsLoading(true);
+    try {
+      const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const result = await client.get_escrows_by_pvo({ pvo_id: pvoId });
+      const raw = (result.result || []) as ChainEscrow[];
+      const mapped = raw.map(e => ({
+        id: Number(e.id),
+        milestoneId: Number(e.milestone_id),
+        funder: e.funder,
+        recipient: e.recipient,
+        amount: Number(e.amount),
+        status: statusToString(e.status),
+        engineer: e.conditions.engineer_approval,
+        ai: e.conditions.ai_risk_check,
+        compliance: e.conditions.compliance_validation,
+        oracle: (e.conditions as any).community_oracle_validation || false,
+        community: Number(e.conditions.community_confirmation),
+        communityRequired: Number(e.conditions.community_required),
+      }));
+      setEscrows(mapped);
+    } catch {} finally { setEscrowsLoading(false); }
+  }, []);
+
   useEffect(() => {
     if (!selected) { setEscrows([]); return; }
-    (async () => {
-      setEscrowsLoading(true);
-      try {
-        const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const result = await client.get_escrows_by_pvo({ pvo_id: selected.id });
-        const raw = (result.result || []) as ChainEscrow[];
-        const mapped = raw.map(e => ({
-          id: Number(e.id),
-          milestoneId: Number(e.milestone_id),
-          funder: e.funder,
-          recipient: e.recipient,
-          amount: Number(e.amount),
-          status: statusToString(e.status),
-          engineer: e.conditions.engineer_approval,
-          ai: e.conditions.ai_risk_check,
-          compliance: e.conditions.compliance_validation,
-          oracle: (e.conditions as any).community_oracle_validation || false,
-          community: Number(e.conditions.community_confirmation),
-          communityRequired: Number(e.conditions.community_required),
-        }));
-        setEscrows(mapped);
-      } catch {} finally { setEscrowsLoading(false); }
-    })();
-  }, [selected]);
+    loadEscrows(selected.id);
+  }, [selected, loadEscrows]);
 
   // Load provenance when a PVO is selected
   useEffect(() => {
@@ -257,11 +262,12 @@ export function TransparencyPortal() {
                   <div><dt className="stat-label">Location</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.municipality}</dd></div>
                   <div><dt className="stat-label">Budget</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatBudget(selected.total_budget)}</dd></div>
                   <div><dt className="stat-label">Contractor</dt><dd className="text-sm font-medium mt-1">
-                    {selected.status === "Proposed" && selected.milestones.length === 0
-                      ? <span className="text-amber-600">TBD — assigned after bidding</span>
-                      : (selected.contractor && selected.contractor !== "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-                        ? <WalletAddress addr={selected.contractor}/>
-                        : <span className="text-amber-600">TBD — assigned after bidding</span>)}
+                    {(() => {
+                      if (!selected.contractor_assigned) {
+                        return <span className="text-amber-600">TBD — assigned after bidding</span>;
+                      }
+                      return <WalletAddress addr={selected.contractor}/>;
+                    })()}
                   </dd></div>
                   <div><dt className="stat-label">Created</dt><dd className="text-sm font-medium text-slate-900 mt-1">{formatTimestamp(selected.created_at)}</dd></div>
                   <div><dt className="stat-label">Score</dt><dd className="text-sm font-medium text-slate-900 mt-1">{selected.public_value_score}/100</dd></div>
@@ -315,7 +321,9 @@ export function TransparencyPortal() {
                 <div className="card p-4 mt-4 text-center text-sm text-slate-400">Loading escrows...</div>
               ) : escrows.length > 0 ? (
                 <div className="mt-4 space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-700">🔒 Escrows ({escrows.length})</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">🔒 Escrows ({escrows.length})
+                    <button onClick={() => selected && loadEscrows(selected.id)} className="ml-2 text-xs text-slate-400 hover:text-indigo-500 font-normal">↻ Refresh</button>
+                  </h3>
                   {escrows.map(e => {
                     const gates = [
                       { label: "Engineer", done: e.engineer },
@@ -373,8 +381,22 @@ export function TransparencyPortal() {
                           })}
                         </div>
                         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-                          <span className="text-[10px] text-slate-400">{passed}/5 gates · Funder: <WalletAddress addr={e.funder} chars={4} /></span>
-                          <span className="text-[10px] text-slate-400">Recipient: <WalletAddress addr={e.recipient} chars={4} /></span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-slate-400">{passed}/5 gates · Funder: <WalletAddress addr={e.funder} chars={4} /></span>
+                            {connected && e.status === "Ready" && (
+                              <ReleaseButton escrowId={e.id} />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {connected && hasRole("Citizen") && e.status !== "Released" ? (
+                              e.compliance
+                                ? <CitizenReportBadge pvoId={Number(selected.id)} milestoneId={e.milestoneId} escrowId={e.id} />
+                                : <span className="text-[10px] text-slate-300 cursor-not-allowed" title="Available after Compliance (Gate 2)">📸 Report (locked)</span>
+                            ) : (connected && hasRole("Citizen") && e.status === "Released" ? (
+                              <span className="text-[10px] text-slate-300 cursor-not-allowed" title="Funds already released">📸 Released</span>
+                            ) : null)}
+                            <span className="text-[10px] text-slate-400">Recipient: <WalletAddress addr={e.recipient} chars={4} /></span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -480,5 +502,231 @@ export function TransparencyPortal() {
         </div>
       </div>
     </div>
+  );
+}
+
+function CitizenReportBadge({ pvoId, milestoneId, escrowId }: { pvoId: number; milestoneId: number; escrowId: number }) {
+  const { address } = useWallet();
+  const [open, setOpen] = useState(false);
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+  const [gate3Done, setGate3Done] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const useGps = () => {
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(7));
+        setLng(pos.coords.longitude.toFixed(7));
+        setGpsLoading(false);
+      },
+      () => { setGpsLoading(false); setMessage({ text: "GPS unavailable. Enter manually.", ok: false }); },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.community_oracle);
+      const op = contract.call("submit_report",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(pvoId),
+        xdr.ScVal.scvU32(milestoneId),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
+        xdr.ScVal.scvString(JSON.stringify({ lat, lng, notes }).slice(0, 64)),
+        nativeToScVal(Math.round(Number(lat || 0) * 1_000_000), { type: "i128" } as any),
+        nativeToScVal(Math.round(Number(lng || 0) * 1_000_000), { type: "i128" } as any),
+      );
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setMessage({ text: "✅ Report submitted! Now validate the gate below.", ok: true });
+      setReportDone(true);
+    } catch (er: any) {
+      const msg = String(er?.message || er);
+      if (msg.includes("insufficient")) setMessage({ text: "❌ Need at least 1 RPT.", ok: false });
+      else if (msg.includes("rejected")) setMessage({ text: "Cancelled.", ok: false });
+      else setMessage({ text: `❌ ${msg.slice(0, 120)}`, ok: false });
+    } finally { setSubmitting(false); }
+  };
+
+  const addConfirmation = async () => {
+    if (!address) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.escrow);
+      const op = contract.call("add_community_confirmation",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(escrowId),
+      );
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setMessage({ text: "✅ Gate 4 (Community Confirmation) added!", ok: true });
+      setTimeout(() => setOpen(false), 2500);
+    } catch (er: any) {
+      setMessage({ text: `❌ ${String(er?.message).slice(0, 120)}`, ok: false });
+    } finally { setSubmitting(false); }
+  };
+
+  const validateOracle = async () => {
+    if (!address) return;
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.escrow);
+      const op = contract.call("community_oracle_validate",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(escrowId),
+      );
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setMessage({ text: "✅ Gate 3 (Community Oracle) validated!", ok: true });
+      setGate3Done(true);
+    } catch (er: any) {
+      setMessage({ text: `❌ ${String(er?.message).slice(0, 120)}`, ok: false });
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <div>
+      <button onClick={() => setOpen(!open)}
+        className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+        📸 Report
+      </button>
+      {open && (
+        <div className="absolute z-30 mt-2 right-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4" style={{minWidth:320}}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-emerald-700">📸 Citizen Report</span>
+            <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 text-sm">✕</button>
+          </div>
+          {message && (
+            <div className={`mb-2 p-2 rounded text-xs ${message.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message.text}</div>
+          )}
+          {!reportDone ? (
+            <form onSubmit={handleSubmit} className="space-y-2">
+            <div>
+              <label className="text-[10px] text-slate-500">Milestone #</label>
+              <input type="text" value={`Milestone #${milestoneId}`} readOnly className="input text-xs bg-gray-50 text-gray-500 cursor-not-allowed" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-500">Latitude</label>
+                <input type="text" value={lat} onChange={e => setLat(e.target.value)} className="input text-xs" placeholder="6.9217" required />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500">Longitude</label>
+                <input type="text" value={lng} onChange={e => setLng(e.target.value)} className="input text-xs" placeholder="122.0789" required />
+              </div>
+            </div>
+            <button type="button" onClick={useGps} disabled={gpsLoading}
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+              {gpsLoading ? "📍 Locating..." : "📍 Use my current location"}
+            </button>
+            <div>
+              <label className="text-[10px] text-slate-500">What did you observe?</label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} className="input text-xs" rows={2} placeholder="Workers on site? Road visible? Equipment present?" required />
+            </div>
+            <button type="submit" disabled={submitting} className="btn-primary w-full text-xs py-2">
+              {submitting ? "Signing..." : "📤 Submit On-Chain"}
+            </button>
+          </form>
+          ) : (
+            <div className="space-y-2">
+              {!gate3Done ? (
+                <>
+                  <p className="text-xs text-emerald-600">✅ Report submitted. Now validate the oracle gate:</p>
+                  <button onClick={validateOracle} disabled={submitting}
+                    className="btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700">
+                    {submitting ? "Signing..." : "🔓 Validate Gate 3 (Oracle)"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-emerald-600">✅ Gate 3 passed! Add your confirmation for Gate 4:</p>
+                  <button onClick={addConfirmation} disabled={submitting || message?.ok}
+                    className="btn-primary w-full text-xs py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+                    {message?.ok ? "✅ Confirmed" : submitting ? "Signing..." : "✅ Confirm Gate 4 (Community)"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReleaseButton({ escrowId }: { escrowId: number }) {
+  const { address } = useWallet();
+  const [releasing, setReleasing] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleRelease = async () => {
+    if (!address) return;
+    setReleasing(true);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.escrow);
+      const op = contract.call("release",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(escrowId),
+      );
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setDone(true);
+    } catch {} finally { setReleasing(false); }
+  };
+
+  if (done) return <span className="badge-green text-xs px-2 py-1">✅ Released</span>;
+  return (
+    <button onClick={handleRelease} disabled={releasing}
+      className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 font-semibold">
+      {releasing ? "..." : "💸 Release"}
+    </button>
   );
 }

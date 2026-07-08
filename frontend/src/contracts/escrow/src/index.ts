@@ -31,12 +31,7 @@ if (typeof window !== "undefined") {
 }
 
 
-export const networks = {
-  testnet: {
-    networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCPFTZZBYWEP2LMQR5I2LT46NSPQ6WHLR4N4MP6JN66GUH2KKYD23DFA",
-  }
-} as const
+
 
 
 export interface Escrow {

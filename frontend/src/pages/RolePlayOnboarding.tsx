@@ -142,15 +142,39 @@ const ROLES = [
 ];
 
 const DEMO_WALLETS: Record<string, { public: string; label: string }> = {
-  citizen: { public: "GAHHOHGH3RKN3OAQ7TPLAELV35HRRXFESAPY5XWNZZWHSDKFNB2B57ST", label: "Citizen 1" },
-  engineer: { public: "GCSABAMCW3TBATE43TQWCH3YKSHPHCIGCKL44DWSJHKFOLDSZGWA72CZ", label: "Engineer" },
-  ai_auditor: { public: "GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW", label: "AI Auditor" },
+  citizen: {
+    public: "GAHHOHGH3RKN3OAQ7TPLAELV35HRRXFESAPY5XWNZZWHSDKFNB2B57ST",
+    label: "Citizen 1",
+  },
+  engineer: {
+    public: "GCSABAMCW3TBATE43TQWCH3YKSHPHCIGCKL44DWSJHKFOLDSZGWA72CZ",
+    label: "Engineer",
+  },
+  ai_auditor: {
+    public: "GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW",
+    label: "AI Auditor",
+  },
   auditor: { public: "GAAL24R63KQJADAOLLMC6PLK7VZW2VCYBDLJYHT6X73NY73W7R4XIAYN", label: "Auditor" },
-  funding_agency: { public: "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO", label: "Funding Agency" },
-  donor: { public: "GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44", label: "International Donor" },
-  contractor: { public: "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF", label: "Contractor" },
-  agency: { public: "GDLLOPL2UMTGK2QW62IIJTEANBO4NX5QP4TEJAOP67SCDVG2D5AIY5X2", label: "Government Agency" },
-  admin: { public: "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV", label: "Administrator (alice)" },
+  funding_agency: {
+    public: "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
+    label: "Funding Agency",
+  },
+  donor: {
+    public: "GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44",
+    label: "International Donor",
+  },
+  contractor: {
+    public: "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
+    label: "Contractor",
+  },
+  agency: {
+    public: "GDLLOPL2UMTGK2QW62IIJTEANBO4NX5QP4TEJAOP67SCDVG2D5AIY5X2",
+    label: "Government Agency",
+  },
+  admin: {
+    public: "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
+    label: "Administrator (alice)",
+  },
 };
 
 export function RolePlayOnboarding() {
@@ -164,22 +188,27 @@ export function RolePlayOnboarding() {
     <div className="max-w-5xl mx-auto py-6 px-4">
       {/* Hero */}
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold text-slate-900 mb-3">
-          🏛️ Role-Play PoPV
-        </h1>
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-3">🏛️ Role-Play PoPV</h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-          Governments are custodians of public wealth — not owners.
-          Proof of Public Value proves that with the right tools,
-          accountability becomes the default, not the exception. Built on Stellar.
-          The Philippines is our case study. Any government can use it.
+          Governments are custodians of public wealth - not owners. Proof of Public Value proves
+          that with the right tools, accountability becomes the default, not the exception. Built on
+          Stellar. The Philippines is our case study. Any government can use it.
         </p>
         <div className="flex items-center justify-center gap-3 mt-6">
-          <a href="https://freighter.app" target="_blank" rel="noopener"
-            className="btn-primary px-5 py-2.5 text-sm font-medium">
+          <a
+            href="https://freighter.app"
+            target="_blank"
+            rel="noopener"
+            className="btn-primary px-5 py-2.5 text-sm font-medium"
+          >
             ⬇️ Install Freighter Wallet
           </a>
-          <a href="https://greenarmor.github.io/proof-of-public-value/" target="_blank" rel="noopener"
-            className="btn-secondary px-5 py-2.5 text-sm">
+          <a
+            href="https://greenarmor.github.io/proof-of-public-value/"
+            target="_blank"
+            rel="noopener"
+            className="btn-secondary px-5 py-2.5 text-sm"
+          >
             📖 Read the Manual
           </a>
         </div>
@@ -187,22 +216,36 @@ export function RolePlayOnboarding() {
 
       {/* Mission Statement */}
       <div className="card p-6 mb-8 bg-gradient-to-r from-brand-50 to-purple-50 border-brand-100">
-        <h2 className="text-xl font-bold text-slate-900 mb-2">🌏 Our Mission: Step Up, or Be Watched</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">
+          🌏 Our Mission: Step Up, or Be Watched
+        </h2>
         <p className="text-slate-600 leading-relaxed">
-          <strong>To every government official in every country:</strong> you were given a sacred trust — to be the custodian
-          of public wealth, not its owner. Every peso, dollar, rupee, or shilling belongs to the people. Your job is to protect
-          it, allocate it wisely, and spend it transparently.<br /><br />
-          <strong>If you are honest, this system proves your integrity.</strong> Every decision is recorded
-          on an immutable blockchain. Your approvals are timestamped. Your compliance checks are auditable.
-          When accusations fly, you have cryptographic proof that you did the right thing.<br /><br />
-          <strong>If you are corrupt, your time is up.</strong> There are no more paper trails to tamper with.
-          No more signatures to forge. No more "lost documents." Every citizen with a phone is now an auditor.
-          Every GPS-tagged report is a permanent record. Every peso is tracked from budget to tender to contractor to ground.<br /><br />
-          <strong>To every citizen, in every nation:</strong> you are no longer a bystander. Your GPS report is the
-          final gate. Without citizen verification, not a single peso is released from escrow. You don't
-          need to be an auditor. You just need to visit a project site and report what you see — or don't see.<br /><br />
-          <strong>We built this to digitalize accountability.</strong> This is not just software. It's a tool
-          to help fix a broken system. Step into any role below and see how it works —
+          <strong>To every government official in every country:</strong> you were given a sacred
+          trust — to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or
+          shilling belongs to the people. Your job is to protect it, allocate it wisely, and spend
+          it transparently.
+          <br />
+          <br />
+          <strong>If you are honest, this system proves your integrity.</strong> Every decision is
+          recorded on an immutable blockchain. Your approvals are timestamped. Your compliance
+          checks are auditable. When accusations fly, you have cryptographic proof that you did the
+          right thing.
+          <br />
+          <br />
+          <strong>If you are corrupt, your time is up.</strong> There are no more paper trails to
+          tamper with. No more signatures to forge. No more "lost documents." Every citizen with a
+          phone is now an auditor. Every GPS-tagged report is a permanent record. Every peso is
+          tracked from budget to tender to contractor to ground.
+          <br />
+          <br />
+          <strong>To every citizen, in every nation:</strong> you are no longer a bystander. Your
+          GPS report is the final gate. Without citizen verification, not a single peso is released
+          from escrow. You don't need to be an auditor. You just need to visit a project site and
+          report what you see — or don't see.
+          <br />
+          <br />
+          <strong>We built this to digitalize accountability.</strong> This is not just software.
+          It's a tool to help fix a broken system. Step into any role below and see how it works —
           then show your government what's possible.
         </p>
       </div>
@@ -211,33 +254,47 @@ export function RolePlayOnboarding() {
       <div className="card p-5 mb-8 bg-slate-800 text-white">
         <h2 className="text-lg font-bold mb-2">🚀 Deploy Your Own PoPV System</h2>
         <p className="text-slate-300 text-sm mb-4">
-          Want to run PoPV for your own government, city, or community? Everything you
-          need is open-source and serverless. No backend. No database. Just deploy to Vercel.
+          Want to run PoPV for your own government, city, or community? Everything you need is
+          open-source and serverless. No backend. No database. Just deploy to Vercel.
         </p>
         <div className="flex flex-wrap gap-3">
-          <a href="https://github.com/greenarmor/proof-of-public-value" target="_blank" rel="noopener"
-            className="px-4 py-2 bg-white text-slate-800 rounded-lg text-sm font-medium hover:bg-slate-100 transition">
+          <a
+            href="https://github.com/greenarmor/proof-of-public-value"
+            target="_blank"
+            rel="noopener"
+            className="px-4 py-2 bg-white text-slate-800 rounded-lg text-sm font-medium hover:bg-slate-100 transition"
+          >
             📦 Clone the Repo
           </a>
-          <button onClick={() => window.open("https://greenarmor.github.io/proof-of-public-value/", "_blank")}
-            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition">
+          <button
+            onClick={() =>
+              window.open("https://greenarmor.github.io/proof-of-public-value/", "_blank")
+            }
+            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition"
+          >
             📖 Deployment Guide
           </button>
-          <button onClick={() => window.open("https://github.com/greenarmor/proof-of-public-value", "_blank")}
-            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition">
+          <button
+            onClick={() =>
+              window.open("https://github.com/greenarmor/proof-of-public-value", "_blank")
+            }
+            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition"
+          >
             🖥️ Source Code
           </button>
-          <button onClick={() => window.open("https://greenarmor.github.io/proof-of-public-value/", "_blank")}
-            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition">
+          <button
+            onClick={() =>
+              window.open("https://greenarmor.github.io/proof-of-public-value/", "_blank")
+            }
+            className="px-4 py-2 border border-slate-500 text-slate-200 rounded-lg text-sm hover:bg-slate-700 transition"
+          >
             ☁️ Full Documentation
           </button>
         </div>
       </div>
 
       {/* Role Selection */}
-      <h2 className="text-2xl font-bold text-slate-900 mb-4">
-        Choose Your Role
-      </h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-4">Choose Your Role</h2>
       <p className="text-sm text-slate-500 mb-6">
         Each role has pre-configured demo wallets with testnet funds and on-chain permissions.
         Import the wallet into Freighter and start role-playing immediately.
@@ -247,49 +304,63 @@ export function RolePlayOnboarding() {
       <div className="card p-5 mb-8 bg-gradient-to-r from-purple-50 to-brand-50 border-purple-100">
         <h3 className="font-semibold text-slate-900 mb-2">🎫 Want Your Own Testnet Role?</h3>
         <p className="text-sm text-slate-600 mb-4">
-          You don't have to use our demo wallets. Generate your own Stellar testnet keypair,
-          send it to us with your desired role, and we'll assign it on-chain — your wallet,
-          your identity, your role in the system.
+          You don't have to use our demo wallets. Generate your own Stellar testnet keypair, send it
+          to us with your desired role, and we'll assign it on-chain — your wallet, your identity,
+          your role in the system.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-slate-500 mb-2"><strong>Step 1:</strong> Generate a keypair:</p>
+            <p className="text-xs text-slate-500 mb-2">
+              <strong>Step 1:</strong> Generate a keypair:
+            </p>
             <code className="block bg-slate-800 text-green-400 text-xs p-2 rounded-lg mb-2">
               stellar keys generate --global my-popv-role
             </code>
             <p className="text-xs text-slate-500 mb-2">
-              Or use the <strong>Freighter extension</strong> → Create Wallet → copy the public key (starts with G...)
+              Or use the <strong>Freighter extension</strong> → Create Wallet → copy the public key
+              (starts with G...)
             </p>
-            <p className="text-xs text-slate-500 mb-2"><strong>Step 2:</strong> Fund it via Friendbot:</p>
+            <p className="text-xs text-slate-500 mb-2">
+              <strong>Step 2:</strong> Fund it via Friendbot:
+            </p>
             <code className="block bg-slate-800 text-green-400 text-xs p-2 rounded-lg mb-2">
               curl "https://friendbot.stellar.org?addr=G..."
             </code>
           </div>
           <div>
-            <p className="text-xs text-slate-500 mb-2"><strong>Step 3:</strong> Contact the developer:</p>
+            <p className="text-xs text-slate-500 mb-2">
+              <strong>Step 3:</strong> Contact the developer:
+            </p>
             <div className="bg-white rounded-lg p-3 border border-slate-200">
               <p className="text-sm font-medium text-slate-900 mb-2">📬 Send your details:</p>
               <div className="space-y-2 text-sm">
                 <p>
-                  <strong>GitHub:</strong>{' '}
-                  <a href="https://github.com/greenarmor" target="_blank" rel="noopener"
-                    className="text-brand-600 hover:underline">
+                  <strong>GitHub:</strong>{" "}
+                  <a
+                    href="https://github.com/greenarmor"
+                    target="_blank"
+                    rel="noopener"
+                    className="text-brand-600 hover:underline"
+                  >
                     @greenarmor
                   </a>
                 </p>
-                <p className="text-slate-600">
-                  Include in your message:
-                </p>
+                <p className="text-slate-600">Include in your message:</p>
                 <ul className="list-disc list-inside text-xs text-slate-500 space-y-1">
-                  <li>Your <strong>public key</strong> (starts with G...)</li>
-                  <li>Desired <strong>role</strong> (Citizen, Engineer, Auditor, etc.)</li>
+                  <li>
+                    Your <strong>public key</strong> (starts with G...)
+                  </li>
+                  <li>
+                    Desired <strong>role</strong> (Citizen, Engineer, Auditor, etc.)
+                  </li>
                   <li>Brief reason — what you want to test</li>
                 </ul>
               </div>
             </div>
             <p className="text-xs text-slate-400 mt-3">
-              <strong>What happens next:</strong> The developer assigns your role on-chain using the admin wallet.
-              You'll get a confirmation. Then import your key into Freighter, connect, and start role-playing.
+              <strong>What happens next:</strong> The developer assigns your role on-chain using the
+              admin wallet. You'll get a confirmation. Then import your key into Freighter, connect,
+              and start role-playing.
             </p>
           </div>
         </div>
@@ -304,7 +375,9 @@ export function RolePlayOnboarding() {
                 onClick={() => setSelected(r.id)}
                 className="card-interactive p-4 text-center group"
               >
-                <div className={`w-12 h-12 ${r.color} rounded-xl mx-auto mb-3 flex items-center justify-center text-2xl shadow-lg`}>
+                <div
+                  className={`w-12 h-12 ${r.color} rounded-xl mx-auto mb-3 flex items-center justify-center text-2xl shadow-lg`}
+                >
                   {r.icon}
                 </div>
                 <h3 className="font-semibold text-slate-900 text-sm mb-1 group-hover:text-brand-700 transition">
@@ -316,8 +389,10 @@ export function RolePlayOnboarding() {
           </div>
           {ROLES.length > 5 && (
             <div className="text-center mb-8">
-              <button onClick={() => setShowAll(!showAll)}
-                className="text-sm text-brand-600 hover:underline">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="text-sm text-brand-600 hover:underline"
+              >
                 {showAll ? "Show less ▲" : `Show all ${ROLES.length} roles ▼`}
               </button>
             </div>
@@ -325,23 +400,30 @@ export function RolePlayOnboarding() {
         </>
       ) : (
         <>
-          <button onClick={() => setSelected(null)}
-            className="btn-ghost text-sm mb-6">← Back to all roles</button>
+          <button onClick={() => setSelected(null)} className="btn-ghost text-sm mb-6">
+            ← Back to all roles
+          </button>
 
           {role && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left: Role Info */}
               <div className="lg:col-span-1">
                 <div className="card p-5 sticky top-24">
-                  <div className={`w-16 h-16 ${role.color} rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl shadow-lg`}>
+                  <div
+                    className={`w-16 h-16 ${role.color} rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl shadow-lg`}
+                  >
                     {role.icon}
                   </div>
-                  <h2 className="text-xl font-bold text-slate-900 text-center mb-2">{role.title}</h2>
+                  <h2 className="text-xl font-bold text-slate-900 text-center mb-2">
+                    {role.title}
+                  </h2>
                   <p className="text-sm text-slate-500 text-center mb-4">{role.desc}</p>
 
                   {DEMO_WALLETS[role.id] && (
                     <div className="bg-slate-50 rounded-xl p-3 mb-4">
-                      <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">Demo Wallet</p>
+                      <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">
+                        Demo Wallet
+                      </p>
                       <p className="text-xs font-mono text-slate-700 break-all mb-2">
                         {DEMO_WALLETS[role.id].public}
                       </p>
@@ -355,15 +437,17 @@ export function RolePlayOnboarding() {
                         📋 Copy Public Key
                       </button>
                       <p className="text-[10px] text-slate-400 mt-2 text-center">
-                        Secret key: <code className="text-brand-600">.dev-logs/newrolecreden.md</code> (gitignored)
+                        Secret key:{" "}
+                        <code className="text-brand-600">.dev-logs/newrolecreden.md</code>{" "}
+                        (gitignored)
                       </p>
                     </div>
                   )}
 
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                     <p className="text-xs text-amber-700">
-                      <strong>⚠️ Testnet only.</strong> These wallets have no real value.
-                      All funds are simulated pPHP for testing the verification gates.
+                      <strong>⚠️ Testnet only.</strong> These wallets have no real value. All funds
+                      are simulated pPHP for testing the verification gates.
                     </p>
                   </div>
                 </div>
@@ -389,28 +473,52 @@ export function RolePlayOnboarding() {
                 <div className="card p-5">
                   <h3 className="font-semibold text-slate-900 mb-3">🔗 Quick Links</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <a href="/" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       🔍 Transparency Portal
                     </a>
-                    <a href="/map" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/map"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       🗺️ Project Map
                     </a>
-                    <a href="/agency" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/agency"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       🏛️ Agency Dashboard
                     </a>
-                    <a href="/funding" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/funding"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       💰 Funding Agency
                     </a>
-                    <a href="/engineer" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/engineer"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       🔧 Engineer Panel
                     </a>
-                    <a href="/auditor" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/auditor"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       ⚖️ Auditor Dashboard
                     </a>
-                    <a href="/citizen" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/citizen"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       📸 Citizen Report
                     </a>
-                    <a href="/admin" className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2">
+                    <a
+                      href="/admin"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
                       👑 System Panel
                     </a>
                   </div>
@@ -420,39 +528,55 @@ export function RolePlayOnboarding() {
                 <div className="card p-5 bg-gradient-to-br from-purple-50 to-brand-50 border-purple-100">
                   <h3 className="font-semibold text-slate-900 mb-2">🌏 The Bigger Picture</h3>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    This isn't just a demo. It's a working prototype of how government spending
-                    can be made transparent, verifiable, and accountable through blockchain technology —
+                    This isn't just a demo. It's a working prototype of how government spending can
+                    be made transparent, verifiable, and accountable through blockchain technology —
                     in any country, with any currency.
-                    <br /><br />
+                    <br />
+                    <br />
                     Every role you play shows how the 5-gate system prevents any single person from
-                    releasing funds alone. Engineers verify. AI detects fraud. Auditors check compliance.
-                    Citizens confirm on the ground. Only when EVERYONE agrees do funds flow.
-                    <br /><br />
-                    <strong>This is what accountability looks like. Share it with your government.</strong>
+                    releasing funds alone. Engineers verify. AI detects fraud. Auditors check
+                    compliance. Citizens confirm on the ground. Only when EVERYONE agrees do funds
+                    flow.
+                    <br />
+                    <br />
+                    <strong>
+                      This is what accountability looks like. Share it with your government.
+                    </strong>
                   </p>
                 </div>
 
                 {/* Get Your Own Role */}
                 <div className="card p-5 bg-gradient-to-r from-purple-50 to-brand-50 border-purple-100">
-                  <h3 className="font-semibold text-slate-900 mb-2">🎫 Want Your Own Testnet Role?</h3>
+                  <h3 className="font-semibold text-slate-900 mb-2">
+                    🎫 Want Your Own Testnet Role?
+                  </h3>
                   <p className="text-sm text-slate-600 mb-3">
-                    Generate your own Stellar keypair and send it to the developer to be assigned this role on-chain.
+                    Generate your own Stellar keypair and send it to the developer to be assigned
+                    this role on-chain.
                   </p>
                   <div className="bg-white rounded-lg p-3 border border-slate-200">
-                    <p className="text-sm font-medium text-slate-900 mb-2">📬 Contact the developer:</p>
+                    <p className="text-sm font-medium text-slate-900 mb-2">
+                      📬 Contact the developer:
+                    </p>
                     <p>
-                      <strong>GitHub:</strong>{' '}
-                      <a href="https://github.com/greenarmor" target="_blank" rel="noopener"
-                        className="text-brand-600 hover:underline">
+                      <strong>GitHub:</strong>{" "}
+                      <a
+                        href="https://github.com/greenarmor"
+                        target="_blank"
+                        rel="noopener"
+                        className="text-brand-600 hover:underline"
+                      >
                         @greenarmor
                       </a>
                     </p>
                     <p className="text-xs text-slate-500 mt-2">
-                      Send your <strong>public key</strong> (G...), desired role, and a brief message.
+                      Send your <strong>public key</strong> (G...), desired role, and a brief
+                      message.
                     </p>
                   </div>
                   <div className="bg-slate-800 text-green-400 text-xs p-2 rounded-lg mt-3">
-                    <code>stellar keys generate --global my-popv-role</code><br />
+                    <code>stellar keys generate --global my-popv-role</code>
+                    <br />
                     <code>curl "https://friendbot.stellar.org?addr=G..."</code>
                   </div>
                 </div>

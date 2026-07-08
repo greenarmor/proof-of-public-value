@@ -177,6 +177,12 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
         setTxMsg("No escrow found for this milestone. Create one first.");
         return;
       }
+      const escrowStatus = escrow.status?.tag || escrow.status || "";
+      if (escrowStatus === "Created") {
+        setTxState("error");
+        setTxMsg("⚠️ Escrow not yet funded. The Funding Agency must fund it in the Escrows tab before Gate 1 can proceed.");
+        return;
+      }
 
       const escrowId = Number(escrow.id);
       const server = new rpc.Server(RPC_URL);
@@ -238,20 +244,94 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
         <span>{milestone.submitted_evidence.length} evidence items</span>
       </div>
 
+      {/* Inspector Reports — dedicated section for pre-visit briefing */}
+      {(() => {
+        const inspectionReports = milestone.submitted_evidence.filter((ev: any) => {
+          const t = statusToString(ev.evidence_type);
+          return t === "Inspection Report" || t === "InspectionReport";
+        });
+        if (inspectionReports.length === 0) return null;
+        return (
+          <div className="mb-4 p-4 rounded-lg bg-purple-50 border border-purple-200">
+            <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-2">
+              🔍 Inspector Reports ({inspectionReports.length}) — Pre-Visit Briefing
+            </p>
+            {inspectionReports.map((ev: any, i: number) => {
+              let data: any = null;
+              try { if (ev.metadata) data = JSON.parse(ev.metadata); } catch {}
+              return (
+                <div key={i} className="bg-white rounded-lg p-3 mb-2 last:mb-0 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                      data?.rating === "Pass" ? "bg-green-100 text-green-700" :
+                      data?.rating === "Fail" ? "bg-red-100 text-red-700" :
+                      "bg-amber-100 text-amber-700"
+                    }`}>
+                      {data?.rating === "Pass" ? "✅" : data?.rating === "Fail" ? "❌" : "⚠️"} {data?.rating || "N/A"}
+                    </span>
+                    {data?.inspector && <span className="text-xs text-purple-500 font-mono">Inspector: {formatAddress(data.inspector, 6)}</span>}
+                    {data?.inspected_at && <span className="text-xs text-gray-400">{new Date(data.inspected_at).toLocaleString()}</span>}
+                  </div>
+                  {data?.notes ? (
+                    <p className="text-xs text-purple-700 leading-relaxed">{data.notes}</p>
+                  ) : (
+                    <p className="text-xs text-purple-400 italic">No notes provided.</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {/* Evidence previews */}
       {milestone.submitted_evidence.length > 0 && (
         <div className="mb-4 space-y-2">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted Evidence</p>
-          {milestone.submitted_evidence.slice(0, 3).map((ev: any, i: number) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3 text-sm">
+          {milestone.submitted_evidence.slice(0, 3).map((ev: any, i: number) => {
+            const typeName = statusToString(ev.evidence_type);
+            const isInspection = typeName === "Inspection Report" || typeName === "InspectionReport";
+            let inspectionData: any = null;
+            if (isInspection && ev.metadata) {
+              try { inspectionData = JSON.parse(ev.metadata); } catch {}
+            }
+            return (
+            <div key={i} className={`rounded-lg p-3 text-sm ${isInspection ? "bg-purple-50 border border-purple-200" : "bg-gray-50"}`}>
               <div className="flex items-center justify-between">
-                <span className="font-medium text-gray-700">{statusToString(ev.evidence_type)}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium ${isInspection ? "text-purple-700" : "text-gray-700"}`}>
+                    {isInspection ? "🔍 " : ""}{typeName}
+                  </span>
+                  {isInspection && <span className="badge bg-purple-100 text-purple-700 text-[10px]">Inspector</span>}
+                </div>
                 <span className={`badge ${ev.verified ? "badge-green" : "badge-amber"} text-[10px]`}>{ev.verified ? "Verified" : "Pending"}</span>
               </div>
-              <p className="text-xs text-gray-500 font-mono mt-1">{ev.data_hash ? ev.data_hash.slice(0, 30) + "..." : "No IPFS hash"}</p>
-              {ev.metadata && <p className="text-xs text-gray-400 mt-0.5">{ev.metadata}</p>}
+              {isInspection && inspectionData ? (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                      inspectionData.rating === "Pass" ? "bg-green-100 text-green-700" :
+                      inspectionData.rating === "Fail" ? "bg-red-100 text-red-700" :
+                      "bg-amber-100 text-amber-700"
+                    }`}>
+                      {inspectionData.rating === "Pass" ? "✅" : inspectionData.rating === "Fail" ? "❌" : "⚠️"} {inspectionData.rating}
+                    </span>
+                    {inspectionData.inspector && (
+                      <span className="text-xs text-purple-500 font-mono">by {formatAddress(inspectionData.inspector, 6)}</span>
+                    )}
+                  </div>
+                  {inspectionData.notes && (
+                    <p className="text-xs text-purple-600">{inspectionData.notes}</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500 font-mono mt-1">{ev.data_hash ? ev.data_hash.slice(0, 30) + "..." : "No IPFS hash"}</p>
+                  {ev.metadata && <p className="text-xs text-gray-400 mt-0.5 truncate">{String(ev.metadata).slice(0, 100)}</p>}
+                </>
+              )}
             </div>
-          ))}
+          )})}
           {milestone.submitted_evidence.length > 3 && (
             <p className="text-xs text-gray-400">+ {milestone.submitted_evidence.length - 3} more items</p>
           )}

@@ -29,11 +29,12 @@ const POLL_INTERVAL_MS = 60_000;
 
 // Contract IDs — synced with frontend/src/config.ts
 const CONTRACT_IDS: Record<string, string> = {
-  pvo_core: "CCLENIHPLMZ7XD3PWPEPBOH77OPXWMY4XIFE57F6KENSWU5VW4LWY7WE",
-  escrow: "CBWM2ZB7XHIHJ5NWVZXCTDHJZYRL7HWMK3WEK4OYLJNIX65FJOQCIFPE",
-  ai_oracle: "CAYVXA3MY6F7ZPXI3VGUANIFYORZTU2QUXFWSLIHWEOGHCXPH4V63NHV",
+  pvo_core: "CBZMGTVCGWA4XQWGXYHYP42YRM5VSCMC7UL5ASIFDBKIYRZRBJ2BJXTU",
+  escrow: "CCA3TW7ZBOD6EYOFVDS3OLWILBAD4GJT2MHDKA62WAX4NSUNIOQGPCYD",
+  ai_oracle: "CAVOYO6RPO3P6WRTD73Y4EQCWZVSCY6JCWELG3MFKNIIQ7IJCGNRWR7G",
 };
 
+const READ_SOURCE = process.env.AI_AUDITOR_SOURCE ?? "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
 const CREDS_PATH = join(__dirname, "..", ".dev-logs", "newrolecreden.md");
 
 // ── Types ───────────────────────────────────────────────
@@ -182,11 +183,10 @@ async function poll(): Promise<void> {
 
   try {
     const escCountRaw = cli(
-      `contract invoke --id ${CONTRACT_IDS.escrow} --network testnet -- get_escrow_count`
+      `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${READ_SOURCE} --network testnet -- get_escrow_count`
     );
-    const escCount = parseInt(
-      escCountRaw.match(/"result":"?(\d+)"?/)?.[1] ?? "0"
-    );
+    let escCount = parseInt(escCountRaw.match(/"result":"?(\d+)"?/)?.[1] ?? "0");
+    if (isNaN(escCount) || escCount === 0) escCount = parseInt(escCountRaw) || 0;
 
     if (escCount === 0) {
       console.log("  No escrows yet.");
@@ -195,7 +195,7 @@ async function poll(): Promise<void> {
 
     for (let escrowId = 1; escrowId <= escCount; escrowId++) {
       const raw = cli(
-        `contract invoke --id ${CONTRACT_IDS.escrow} --network testnet -- get_escrow --escrow_id ${escrowId}`
+        `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${READ_SOURCE} --network testnet -- get_escrow --escrow_id ${escrowId}`
       );
       if (!raw) continue;
 
@@ -215,7 +215,7 @@ async function poll(): Promise<void> {
         );
 
         const milestonesRaw = cli(
-          `contract invoke --id ${CONTRACT_IDS.pvo_core} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${READ_SOURCE} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
         );
         if (!milestonesRaw) continue;
         const mParsed = JSON.parse(milestonesRaw);

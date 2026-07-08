@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE, RPT_ASSET } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
@@ -383,7 +383,7 @@ function AssignRoleForm({ onDone }: { onDone: () => void }) {
 function MintRPTForm({ onDone }: { onDone: () => void }) {
   const { address } = useWallet();
   const [wallet, setWallet] = useState("");
-  const [amount, setAmount] = useState("10");
+  const [amount, setAmount] = useState("10000000");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [recentMints, setRecentMints] = useState<{ to: string; amount: string }[]>([]);
@@ -481,14 +481,12 @@ function MintRPTForm({ onDone }: { onDone: () => void }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Amount (1 RPT = 10,000,000 stroops, soulbound)</label>
           <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            min="1"
-            required
+            type="text"
+            value="1 RPT"
+            readOnly
+            className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg cursor-not-allowed"
           />
         </div>
         <button

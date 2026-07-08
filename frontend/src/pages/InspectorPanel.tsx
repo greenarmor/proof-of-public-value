@@ -44,7 +44,7 @@ export function InspectorPanel() {
         ))}
       </div>
 
-      {activeTab === "pvos" && <AllProjects />}
+      {activeTab === "pvos" && <AllProjects address={address!} />}
       {activeTab === "reports" && <MyReports address={address!} />}
       {activeTab === "history" && <EvidenceHistory address={address!} />}
 
@@ -55,11 +55,12 @@ export function InspectorPanel() {
   );
 }
 
-function AllProjects() {
+function AllProjects({ address }: { address: string }) {
   const [pvos, setPvos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
+  const [inspectMilestone, setInspectMilestone] = useState<any>(null);
   const currency = getCurrency();
 
   useEffect(() => {
@@ -118,7 +119,14 @@ function AllProjects() {
                     Status: {statusToString(m.status)} · Budget: {currency}{(Number(m.budget) / PPHP_SCALE).toLocaleString()}
                   </p>
                 </div>
-                <span className="badge badge-purple">{statusToString(m.status)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="badge badge-purple">{statusToString(m.status)}</span>
+                  <button
+                    onClick={() => setInspectMilestone(inspectMilestone?.id === m.id ? null : { id: Number(m.id), pvoId: Number(selected.id), title: m.title })}
+                    className="btn-primary text-xs px-3 py-1.5">
+                    🔍 {inspectMilestone?.id === m.id ? "Cancel" : "Submit Inspection"}
+                  </button>
+                </div>
               </div>
               {m.submitted_evidence && m.submitted_evidence.length > 0 && (
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -129,6 +137,15 @@ function AllProjects() {
                     </div>
                   ))}
                 </div>
+              )}
+              {inspectMilestone?.id === m.id && (
+                <InspectionForm
+                  address={address}
+                  pvoId={Number(selected.id)}
+                  milestoneId={Number(m.id)}
+                  milestoneTitle={m.title}
+                  onDone={() => { setInspectMilestone(null); loadMilestones(Number(selected.id)); }}
+                />
               )}
             </div>
           ))}
@@ -512,5 +529,101 @@ function EvidenceHistory({ address }: { address: string }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function InspectionForm({ address, pvoId, milestoneId, milestoneTitle, onDone }: {
+  address: string; pvoId: number; milestoneId: number; milestoneTitle: string; onDone: () => void;
+}) {
+  const [rating, setRating] = useState("Pass");
+  const [notes, setNotes] = useState("");
+  const [txState, setTxState] = useState<TxState>("idle");
+  const [txMsg, setTxMsg] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTxState("preparing");
+    setTxMsg("");
+
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(CONTRACT_IDS.pvo_core);
+
+      const metadata = JSON.stringify({
+        rating,
+        notes,
+        inspector: address,
+        inspected_at: new Date().toISOString(),
+      });
+
+      const hash = metadata.slice(0, 64);
+
+      const op = contract.call("submit_evidence",
+        new Address(address).toScVal(),
+        xdr.ScVal.scvU32(pvoId),
+        xdr.ScVal.scvU32(milestoneId),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("InspectionReport")]),
+        xdr.ScVal.scvString(hash),
+        xdr.ScVal.scvString(metadata),
+      );
+
+      const sourceAccount = await server.getAccount(address);
+      const tx = new TransactionBuilder(sourceAccount, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op).setTimeout(30).build();
+
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+
+      setTxState("done");
+      setTxMsg(`Inspection report submitted for ${milestoneTitle}!`);
+      setTimeout(onDone, 1500);
+    } catch (err: any) {
+      setTxState("error");
+      setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
+    }
+  };
+
+  const busy = txState === "preparing" || txState === "signing" || txState === "sending";
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+      {txMsg && (
+        <div className={`p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          {txState === "done" ? "✅ " : "❌ "}{txMsg}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-slate-700 mb-1">Inspection Rating</label>
+          <select value={rating} onChange={(e) => setRating(e.target.value)} className="input text-sm">
+            <option value="Pass">✅ Pass — Evidence quality acceptable</option>
+            <option value="Fail">❌ Fail — Evidence quality unacceptable</option>
+            <option value="Flagged">⚠️ Flagged — Requires further review</option>
+          </select>
+        </div>
+        <div className="text-xs text-slate-400 pt-5">
+          PVO #{pvoId} · Milestone #{milestoneId}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-700 mb-1">Inspection Notes</label>
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
+          className="input text-sm" rows={3}
+          placeholder={`e.g. Drone imagery clear and timestamped. GPS coordinates within expected range.${rating === "Fail" ? " Photo metadata shows image taken before project start date — evidence may be fabricated." : " Evidence quality acceptable for Gate 1 review."}`}
+          required />
+      </div>
+      <button type="submit" disabled={busy} className="btn-primary w-full py-2 text-sm">
+        {busy ? "Submitting..." : "📋 Submit Inspection Report On-Chain"}
+      </button>
+    </form>
   );
 }

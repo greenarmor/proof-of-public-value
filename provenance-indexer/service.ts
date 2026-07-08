@@ -39,13 +39,13 @@ const HTTP_PORT = 3111;
 const MAX_LEDGER_RANGE = 9999;
 
 const CONTRACT_IDS: Record<string, string> = {
-  pvo_core: "CCLENIHPLMZ7XD3PWPEPBOH77OPXWMY4XIFE57F6KENSWU5VW4LWY7WE",
-  escrow: "CBWM2ZB7XHIHJ5NWVZXCTDHJZYRL7HWMK3WEK4OYLJNIX65FJOQCIFPE",
-  audit_trail: "CC7EOKT6BV4OUM5GB6YATZ53OT2WORBLKM6K7EXWM4JLZUD33OKJRQ5X",
-  procurement_market: "CCMC4QRDNI5B6DVDEPJXKQXWHL2OYPQUSZPQFPQUMG2EMC3K3MWYDKB7",
-  compliance_engine: "CCB3JH6UZESPH3ILTBS67HXTOVVSJQI45RPJLRXB3Z5R3NWPEW2GX2U7",
-  community_oracle: "CBCN6BNBA6553QVUFMNMOH3NMA7Q2DCDVGKOGYIEGABZG5276EUU6WBK",
-  ai_oracle: "CAYVXA3MY6F7ZPXI3VGUANIFYORZTU2QUXFWSLIHWEOGHCXPH4V63NHV",
+  pvo_core: "CBZMGTVCGWA4XQWGXYHYP42YRM5VSCMC7UL5ASIFDBKIYRZRBJ2BJXTU",
+  escrow: "CCA3TW7ZBOD6EYOFVDS3OLWILBAD4GJT2MHDKA62WAX4NSUNIOQGPCYD",
+  audit_trail: "CB6AXOUYHEOWUUSEP6543GZYHMN6D2VA5WV5LXOMPNMJFYJ3XQNPZBV6",
+  procurement_market: "CB3CQCAEDZSOPJZDOYBM2KRRWMV4KNKYPREUMLETOBE4UPBA47FRP34F",
+  compliance_engine: "CAB4BREUIZPAVZIQ7AL2YTKSXBOAL5EQUFSTDOBYMJV34BPHWGLI5SCB",
+  community_oracle: "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32",
+  ai_oracle: "CAVOYO6RPO3P6WRTD73Y4EQCWZVSCY6JCWELG3MFKNIIQ7IJCGNRWR7G",
 };
 
 const CONTRACT_NAME_BY_ID: Record<string, string> = {};
@@ -952,8 +952,17 @@ async function main(): Promise<void> {
 
   if (!runOnce) {
     startHTTPServer();
+    let pollCount = 0;
+    const FULL_REBUILD_EVERY = 10; // every 10 polls (5 minutes)
     setInterval(async () => {
-      currentStore = await buildProvenance(currentStore);
+      pollCount++;
+      const forceRebuild = pollCount % FULL_REBUILD_EVERY === 0;
+      if (forceRebuild) {
+        console.log("  🔄 Periodic full rebuild to catch any missed events...");
+        currentStore = await buildProvenance(null);
+      } else {
+        currentStore = await buildProvenance(currentStore);
+      }
     }, POLL_INTERVAL_MS);
   } else {
     startHTTPServer();

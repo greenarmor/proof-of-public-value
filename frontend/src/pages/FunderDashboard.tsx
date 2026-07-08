@@ -829,6 +829,7 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
         <div className="text-5xl mb-4">📋</div>
         <h3 className="font-semibold text-slate-700 mb-1">No donor commitments yet</h3>
         <p className="text-sm text-slate-400">When international donors commit grant funding, their pledges appear here.</p>
+        <p className="text-xs text-amber-600 mt-2">For National Budget PVOs, use the <strong>Awarded PVOs</strong> tab instead — funding comes directly from the Administrator.</p>
       </div>
     );
   }

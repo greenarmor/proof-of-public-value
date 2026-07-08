@@ -264,9 +264,12 @@ The funding agency deposits the milestone amount into the escrow contract. The e
 
 ### 9. Five Gates Verify the Work
 
-Each gate is an independent on-chain verification:
+Each gate is an independent on-chain verification.
 
-**Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications.
+**Before the gates — Evidence + Inspector:**
+The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The **Inspector** independently reviews this evidence for quality, clarity, and completeness — submitting an `InspectionReport` on-chain. This report strengthens the Engineer's decision at Gate 1.
+
+**Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications. References contractor evidence AND the Inspector's independent quality report.
 
 **Gate 2  -  Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
 
@@ -454,19 +457,19 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 
 | Contract | ID | Functions | Tests |
 |----------|----|-----------|-------|
-| `access_control` | `CBDWH...3746` | 9 | 11 |
-| `pvo_core` | `CBMPR...4XYK` | 18 | 18 |
-| `escrow` | `CCPFT...3DFA` | 15 | 15 |
-| `community_oracle` | `CCDHO...5T3H` | 8 | 12 |
-| `reputation` | `CCHXN...WWIB` | 12 | 19 |
-| `audit_trail` | `CCFCR...5C6YZ` | 10 | 12 |
-| `value_score` | `CBR3T...Q5BD` | 11 | 20 |
-| `ai_oracle` | `CBCL4...ECSQ` | 13 | 17 |
-| `public_index` | `CCHK2...XYZT` | 7 | 7 |
-| `compliance_engine` | `CD5ZA...E7FQ` | 8 | 8 |
-| `procurement_market` | `CCEBA...FCXP` | 7 | 7 |
+| `access_control` | See config.ts | 9 | 11 |
+| `pvo_core` | See config.ts | 18 | 18 |
+| `escrow` | See config.ts | 15 | 15 |
+| `community_oracle` | See config.ts | 8 | 12 |
+| `reputation` | See config.ts | 12 | 19 |
+| `audit_trail` | See config.ts | 10 | 12 |
+| `value_score` | See config.ts | 11 | 20 |
+| `ai_oracle` | See config.ts | 13 | 17 |
+| `public_index` | See config.ts | 7 | 7 |
+| `compliance_engine` | See config.ts | 8 | 8 |
+| `procurement_market` | See config.ts | 7 | 7 |
 | `pPHP SAC` | `CCJRB...A32X` | 8 | 8 |
-| `grant_commitment` | `CC5BH...6CJZ` | 7 | 13 |
+| `grant_commitment` | See config.ts | 7 | 13 |
 
 **40 tests (pvo_core + escrow + procurement_market) all passing.**
 
@@ -550,7 +553,33 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 | **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review, provenance explorer | Government audit oversight |
 | **AIAuditor** | AI Dashboard | Run AI validation on evidence, assign risk scores | Fraud/anomaly detection gate |
 | **Citizen** | Citizen Report Form | Submit GPS-tagged field reports, verify others' reports | Community verification gate |
-| **Inspector** | Inspector Panel | Verify evidence quality, validate reports | Evidence quality assurance |
+| **Inspector** | Inspector Panel | Submit independent InspectionReports, verify drone/GPS/photo quality, flag substandard evidence | Independent evidence quality — strengthens Engineer's Gate 1 decision |
+
+### The Inspector Role — Independent Evidence Verification
+
+The **Inspector** is a unique role: they are part of the verification system but do **not** hold a dedicated escrow gate. Instead, they provide **independent evidence quality assurance** that strengthens the Engineer's decision at Gate 1.
+
+**What the Inspector does:**
+- Reviews contractor-submitted evidence (drone imagery, GPS coordinates, timestamped photos, engineering reports)
+- Validates evidence quality: image clarity, GPS precision, report completeness
+- Submits `InspectionReport` evidence to the `pvo_core` contract — an independent, timestamped, on-chain record
+- Flags substandard or suspicious evidence for further investigation
+
+**Why no dedicated gate?**
+The Inspector's reports are **advisory** — they inform the Engineer's decision but don't independently lock/unlock funds. This is by design:
+- **Engineer (Gate 1)**: has the authority to approve/reject based on physical inspection PLUS Inspector reports
+- **Inspector**: provides the evidence baseline the Engineer needs to make an informed decision
+
+If an Inspector flags poor quality drone imagery, the Engineer sees this when reviewing the milestone and can reject with documented cause. If the Inspector's report is positive, the Engineer gains additional confidence to approve.
+
+**Where Inspector fits in the flow:**
+```
+Step 9:  Contractor submits evidence (drone, GPS, photos, reports)
+Step 9b: Inspector reviews and submits InspectionReport        ← independent assessment
+Step 10: Engineer reviews contractor evidence + Inspector's report → Approves or Rejects (Gate 1)
+```
+
+This creates a **two-layer technical verification**: the Inspector provides the objective evidence assessment, and the Engineer provides the professional judgment. Together they prevent rubber-stamping — the Engineer can't just "approve everything" when there's an independent Inspector report on file showing quality issues.
 | **Supplier** | Procurement Market | Register in pre-qualification registry | Supply chain transparency |
 | **AntiCorruptionAgency** | Anti-Corruption Dashboard | Raise disputes, investigate flagged projects, review audit trails | Corruption investigation |
 
@@ -565,7 +594,8 @@ GovernmentAgency → awards tender (auto-picks highest score)
 FundingAgency → creates escrow per milestone (Awarded PVOs tab)
 FundingAgency → funds escrow                           [Funds locked]
 Contractor → submits evidence
-Engineer → approves physical work                       [Gate 1]
+Inspector → reviews evidence, submits InspectionReport  [Quality check]
+Engineer → reviews evidence + Inspector report → approves [Gate 1]
 Auditor/COA → compliance check                          [Gate 2]
 Citizens → submit GPS field reports                     [Gate 3 - Oracle]
 Citizens → reach confirmation threshold                 [Gate 4 - Threshold]
@@ -840,12 +870,13 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 | 7 | FundingAgency | Go to "Awarded PVOs" tab, expand the PVO, click "Escrow" on milestone 1 |
 | 8 | FundingAgency | Fund the escrow (Escrows tab, "Fund Escrow" button) |
 | 9 | Contractor | Submit evidence for milestone 1 |
-| 10 | Engineer | Approve milestone 1 (Gate 1) |
-| 11 | Auditor | Compliance check (Gate 2) |
-| 12 | 3 Citizens | Submit and verify GPS reports (Gates 3 & 4) |
-| 13 | AI Auditor | Run AI fraud check (Gate 5 - final gate) |
-| 14 | Anyone | Release escrow -> PVO goes InProgress |
-| 15 | Repeat steps 7-14 | For each remaining milestone |
+| 10 | Inspector | Review evidence quality, submit InspectionReport |
+| 11 | Engineer | Approve milestone 1 (Gate 1) |
+| 12 | Auditor | Compliance check (Gate 2) |
+| 13 | 3 Citizens | Submit and verify GPS reports (Gates 3 & 4) |
+| 14 | AI Auditor | Run AI fraud check (Gate 5 - final gate) |
+| 15 | Anyone | Release escrow -> PVO goes InProgress |
+| 16 | Repeat steps 7-15 | For each remaining milestone |
 | 14 | Anyone | Release escrow -> PVO goes InProgress |
 | 15 | Repeat steps 7-14 | For each remaining milestone |
 | 16 | PVO becomes **Completed** | All milestones Released + total >= budget |

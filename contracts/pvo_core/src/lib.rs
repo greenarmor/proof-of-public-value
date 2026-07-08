@@ -260,13 +260,21 @@ impl PVOCore {
         let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
         let mut pvo = pvos.get(pvo_id).expect("PVO not found");
 
+        let old_status = pvo.status.clone();
         pvo.contractor = contractor.clone();
         pvo.contractor_assigned = true;
+        if pvo.status == PVOStatus::Proposed {
+            pvo.status = PVOStatus::Approved;
+        }
         pvo.updated_at = env.ledger().timestamp();
+        let new_status = pvo.status.clone();
         pvos.set(pvo_id, pvo);
         storage.set(&PVOS, &pvos);
 
         ContractorAssignedEvent { pvo_id, contractor }.publish(&env);
+        if old_status != new_status {
+            PVOStatusChangedEvent { id: pvo_id, old_status, new_status }.publish(&env);
+        }
     }
 
     pub fn update_value_score(env: Env, updater: Address, pvo_id: u32, score: u32) {
