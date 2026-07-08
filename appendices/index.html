@@ -1327,6 +1327,111 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#provenance-chain-immutable-audit-trail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance Chain — Immutable Audit Trail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provenance Chain — Immutable Audit Trail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-it-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why It Matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provenance-tree-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance Tree Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-events-are-captured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Events Are Captured
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-provenance-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the Provenance System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1785,6 +1890,178 @@ A: 5 gates balance independence (no single role controls release) with practical
 A: The oracle gate (gate 3) checks that the <strong>oracle contract itself</strong> has verified reports on file. The confirmations gate (gate 4) checks that the <strong>number of verified reports</strong> meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.</p>
 <p><strong>Q: How is this different from a traditional escrow?</strong>
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong>  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
+<hr />
+<h2 id="provenance-chain-immutable-audit-trail">Provenance Chain — Immutable Audit Trail<a class="headerlink" href="#provenance-chain-immutable-audit-trail" title="Permanent link">&para;</a></h2>
+<h3 id="what-it-is">What It Is<a class="headerlink" href="#what-it-is" title="Permanent link">&para;</a></h3>
+<p>The <strong>Provenance Chain</strong> is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its <strong>Stellar transaction hash</strong> — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.</p>
+<p><strong>Think of it as a blockchain-powered paper trail.</strong> Every peso's journey from budget allocation to contractor payment is recorded, timestamped, and linked to a permanent on-chain receipt that can never be altered or deleted.</p>
+<h3 id="why-it-matters">Why It Matters<a class="headerlink" href="#why-it-matters" title="Permanent link">&para;</a></h3>
+<p>For <strong>COA auditors</strong>: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction — who approved, when, on which ledger.</p>
+<p>For <strong>Funding Agencies</strong>: They can verify that escrows they funded actually went through proper verification. No more "trust us, we checked." The proof is on-chain.</p>
+<p>For <strong>Citizens</strong>: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public — no wallet, no login needed.</p>
+<p>For <strong>Anti-Corruption Agencies</strong>: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer — all linked to tx hashes.</p>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
+<p>The provenance system has two components that run independently:</p>
+<p><strong>1. Provenance Indexer</strong> (<code>provenance-indexer/service.ts</code>)</p>
+<p>A standalone TypeScript service that:
+- Polls the Stellar testnet every 30 seconds for new contract events
+- Uses the SDK <code>getEvents()</code> API to capture all events from all contracts
+- Reads contract state (PVOs, milestones, escrows) via CLI invocations
+- Decodes Soroban ScVal event data into plain JavaScript objects
+- Builds hierarchical provenance trees: <strong>PVO → Milestones → Gates</strong>
+- Matches each gate transition to its Stellar transaction hash
+- Stores results in <code>.dev-logs/provenance-store.json</code> (gitignored)
+- Serves a JSON API on <code>http://127.0.0.1:3111</code> for frontend consumption</p>
+<p><strong>2. Provenance Explorer</strong> (<code>frontend/src/pages/ProvenanceExplorer.tsx</code>)</p>
+<p>A public React page accessible at <code>/provenance</code> that:
+- Fetches provenance data from the indexer API
+- Shows expandable PVO cards with per-milestone gate records
+- Each passed gate displays a clickable 🔗 tx hash link to Stellar Expert
+- Timeline tab shows all events in chronological order
+- Summary stats bar: total escrowed, released, gates passed, events indexed
+- Search and filter by PVO title, department, municipality, status</p>
+<h3 id="provenance-tree-structure">Provenance Tree Structure<a class="headerlink" href="#provenance-tree-structure" title="Permanent link">&para;</a></h3>
+<p>The data model is hierarchical, matching exactly how public works projects are structured in the real world:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO #3: Davao Coastal Road (parent)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── Milestone #4: Engineering &amp; Mobilization (child)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>├── Milestone #5: Structural Base (child)
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│   └── Escrow #2  —  ₱50,000,000 (Created)
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│       └── ... 5 gates (all pending, no escrow funded yet)
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>└── Timeline (chronological events with tx hashes)
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    ├── PVO created                    tx=3d54e07b...  🔗
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    ├── Milestone #5 created           tx=bf550c7a...  🔗
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    └── Escrow #1 status→EngineerApproved   tx=f64a0a72...  🔗
+</code></pre></div>
+<h3 id="how-events-are-captured">How Events Are Captured<a class="headerlink" href="#how-events-are-captured" title="Permanent link">&para;</a></h3>
+<p>The indexer calls <code>server.getEvents()</code> against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects — the indexer decodes these to extract:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Source Contract</th>
+<th>Key Data Extracted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>escrow_created_event</code></td>
+<td>escrow</td>
+<td><code>id</code>, <code>pvo_id</code>, <code>milestone_id</code>, <code>amount</code>, <code>recipient</code></td>
+</tr>
+<tr>
+<td><code>escrow_condition_updated_event</code></td>
+<td>escrow</td>
+<td><code>id</code>, <code>status</code> (maps to gate passed)</td>
+</tr>
+<tr>
+<td><code>escrow_funded_event</code></td>
+<td>escrow</td>
+<td><code>id</code>, <code>amount</code></td>
+</tr>
+<tr>
+<td><code>escrow_released_event</code></td>
+<td>escrow</td>
+<td><code>id</code>, <code>amount</code>, <code>recipient</code></td>
+</tr>
+<tr>
+<td><code>pvo_created_event</code></td>
+<td>pvo_core</td>
+<td><code>id</code>, <code>title</code>, <code>total_budget</code></td>
+</tr>
+<tr>
+<td><code>milestone_created_event</code></td>
+<td>pvo_core</td>
+<td><code>pvo_id</code>, <code>milestone_id</code>, <code>budget</code></td>
+</tr>
+<tr>
+<td><code>evidence_submitted_event</code></td>
+<td>pvo_core</td>
+<td><code>pvo_id</code>, <code>milestone_id</code>, <code>evidence_id</code>, <code>evidence_type</code></td>
+</tr>
+<tr>
+<td><code>contractor_assigned_event</code></td>
+<td>pvo_core</td>
+<td><code>pvo_id</code>, <code>contractor</code></td>
+</tr>
+</tbody>
+</table>
+<p>Events are limited to the last ~10,000 ledgers (~19 hours on testnet). For historical data beyond this window, the indexer relies on direct contract state reads.</p>
+<h3 id="api-endpoints">API Endpoints<a class="headerlink" href="#api-endpoints" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Response</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /api/health</code></td>
+<td><code>{ status, pvoCount, eventCount, lastLedger }</code></td>
+<td>Monitoring</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance</code></td>
+<td><code>PVOProvenance[]</code> — all PVOs</td>
+<td>Full overview</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance/:pvoId</code></td>
+<td>Single <code>PVOProvenance</code> with milestones + timeline</td>
+<td>Detail view</td>
+</tr>
+<tr>
+<td><code>GET /api/provenance/:pvoId/timeline</code></td>
+<td><code>TimelineEntry[]</code> — chronological events</td>
+<td>Event log</td>
+</tr>
+<tr>
+<td><code>GET /api/events</code></td>
+<td><code>CapturedEvent[]</code> — all raw events</td>
+<td>Debugging</td>
+</tr>
+<tr>
+<td><code>GET /api/events/:contractName</code></td>
+<td>Events filtered by contract</td>
+<td>Targeted audit</td>
+</tr>
+</tbody>
+</table>
+<h3 id="running-the-provenance-system">Running the Provenance System<a class="headerlink" href="#running-the-provenance-system" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Start the indexer (continuous mode, polls every 30s):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Build once and serve for 10 seconds:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--once
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Build only, no HTTP server:</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--build
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Combined with frontend (production):</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>npm<span class="w"> </span>run<span class="w"> </span>prod<span class="w">   </span><span class="c1"># builds frontend + serves on :5174 + provenance on :3111</span>
+</code></pre></div>
+<p>The indexer must be running for the Provenance Explorer to display data. If the service is offline, the Explorer page shows a clear error message with the exact command to start it.</p>
+<h3 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h3>
+<p>The Provenance Indexer follows the same principles as the AI Oracle: <strong>no backend, no database, runs anywhere.</strong></p>
+<ul>
+<li><strong>No backend</strong> — it's a standalone script that reads from the Stellar blockchain</li>
+<li><strong>No database</strong> — stores to a local JSON file that can be wiped and rebuilt</li>
+<li><strong>Runs anywhere</strong> — VPS, Raspberry Pi, cron job, or alongside <code>npm run prod</code></li>
+<li><strong>Public by default</strong> — the Explorer page has no wallet requirement</li>
+<li><strong>Immutable proof</strong> — every tx hash link opens Stellar Expert showing the permanent on-chain record</li>
+</ul>
 
 
 
