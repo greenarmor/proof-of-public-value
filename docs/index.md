@@ -44,6 +44,7 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 | Auth server (JWT/OAuth) | ❌ None  -  Freighter wallet signs transactions |
 | File storage (S3) | ❌ None  -  IPFS for evidence, Soroban events for audit trail |
 | Deployment server (EC2/VPS) | ❌ None  -  Static HTML/CSS/JS on Vercel (free) |
+| Off-chain services | Provenance Indexer + AI Oracle  —  standalone TS services, run anywhere |
 
 **13 Soroban smart contracts** execute every business rule on-chain:
 - `access_control`  -  13 role-based permissions
@@ -69,24 +70,50 @@ community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
 
 **Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.
 
-### AI Oracle  -  One Service, Every Frontend
+### AI Oracle & Provenance Indexer — Independent Services, Every Frontend
 
-The AI Oracle is the **only off-chain component**. It's a standalone TypeScript service (`ai-oracle/service.ts`) that:
+The AI Oracle and Provenance Indexer are the **only off-chain components**. These standalone TypeScript services run independently:
+
+**AI Oracle** (`ai-oracle/service.ts`):
 
 - Polls testnet for EngineerApproved milestones
 - Runs local fraud detection (GPS bounding box, metadata scanning, description analysis)
 - Submits `ai_validate(passed, risk_score)` on-chain
 - **One instance serves all frontend deployments**
 
-Deploy it anywhere: VPS, Raspberry Pi, cron job, or Vercel serverless function. No cloud dependencies. No API keys. No GPU. Pure rule-based fraud detection.
+**Provenance Indexer** (`provenance-indexer/service.ts`):
+
+- Polls Stellar testnet for contract events via SDK `getEvents()`
+- Reads contract state (PVOs, milestones, escrows, audit entries) to build full provenance trees
+- Builds hierarchical audit chain: **PVO (parent) → Milestone (child) → Gate records (sub-records)**
+- Each gate record links to its **Stellar transaction hash** for immutable audit trackback
+- Serves a JSON API on `http://127.0.0.1:3111` for the **Provenance Explorer** frontend
+- Accessible by: Funding Agency, COA, Auditor, Administrator
+- Polls every 30s, currently tracking 3 PVOs, 4 escrows, 19 events, 2/20 gates passed
+
+Deploy anywhere: VPS, Raspberry Pi, cron job, or serverless function. No cloud dependencies. No API keys. No GPU.
 
 ```bash
-# Manual run:
-npx tsx ai-oracle/service.ts --once
+# AI Oracle:
+npx tsx ai-oracle/service.ts --once           # Manual run
+*/5 * * * * cd /path/to/popv && npx tsx ai-oracle/service.ts --once  # Cron
 
-# Cron (every 5 min):
-*/5 * * * * cd /path/to/popv && npx tsx ai-oracle/service.ts --once
+# Provenance Indexer:
+npx tsx provenance-indexer/service.ts         # Continuous (30s poll, serves API on :3111)
+npx tsx provenance-indexer/service.ts --once  # Build once, serve for 10s
+npx tsx provenance-indexer/service.ts --build # Build only, no server
 ```
+
+**Provenance API Endpoints:**
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/health` | Service status, uptime, event count, ledger position |
+| `GET /api/provenance` | All PVO provenance trees (PVO → Milestones → Gates) |
+| `GET /api/provenance/:pvoId` | Single PVO provenance chain with timeline |
+| `GET /api/provenance/:pvoId/timeline` | Chronological event timeline per PVO |
+| `GET /api/events` | All captured contract events with tx hashes |
+| `GET /api/events/:contractName` | Events filtered by contract |
 
 ---
 
@@ -151,10 +178,10 @@ Every public project becomes a **Public Value Object (PVO)**  -  a programmable 
 | Gate | Who | What |
 |------|-----|------|
 | 1. Engineer | Licensed Professional | Physical work meets specifications |
-| 2. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification |
-| 3. Compliance | Auditor / COA | Procurement law, budget rules, safety regulations |
-| 4. Community Oracle | Citizens | Verified GPS field reports confirm project exists on the ground |
-| 5. Community Confirmations | Citizens | Must reach the threshold set at escrow creation  -  multiple independent witnesses |
+| 2. Compliance | Auditor / COA | Procurement law, budget rules, safety regulations |
+| 3. Community Oracle | Citizens | Verified GPS field reports confirm project exists on the ground |
+| 4. Community Confirmations | Citizens | Must reach the threshold set at escrow creation  -  multiple independent witnesses |
+| 5. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification  —  runs last for maximum data |
 
 If any gate fails, funds remain locked. No single person can release money.
 
@@ -241,13 +268,13 @@ Each gate is an independent on-chain verification:
 
 **Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications.
 
-**Gate 2  -  AI Oracle:** AI scans evidence for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns.
+**Gate 2  -  Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
 
-**Gate 3  -  Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
+**Gate 3  -  Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
 
-**Gate 4  -  Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
+**Gate 4  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
 
-**Gate 5  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
+**Gate 5  -  AI Fraud Detection:** AI scans ALL evidence submitted across all prior gates for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns, description completeness. Runs last so it has maximum data to analyze.
 
 ### 10. Escrow Releases  -  PVO Goes InProgress
 
@@ -457,8 +484,9 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-rese
 1. **Public pages**  -  Browse projects, national index, map, search  -  no wallet needed
 2. **Role-Play**  -  Go to `/onboarding` → pick any role → get a demo wallet → walk through the system
 3. **Connect Freighter**  -  Install [Freighter](https://freighter.app), import a demo wallet from `.dev-logs/newrolecreden.md`
-4. **15 PVOs per page**  -  Scroll, paginate, or filter by name/department/municipality
-5. **Mobile-friendly**  -  Sticky map + sticky search, scrollable card list
+4. **Provenance**  -  Go to `/provenance` (Funding Agency/COA/Auditor) → full audit trail with tx hash links
+5. **15 PVOs per page**  -  Scroll, paginate, or filter by name/department/municipality
+6. **Mobile-friendly**  -  Sticky map + sticky search, scrollable card list
 
 ### Demo Wallets (Testnet)
 
@@ -491,6 +519,9 @@ All wallets funded via Friendbot. Roles assigned on-chain via `access_control`. 
 # Build & serve frontend (production)
 npm run build && npm start   # → http://localhost:5174
 
+# Start provenance indexer (separate terminal)
+npx tsx provenance-indexer/service.ts   # → API on http://127.0.0.1:3111
+
 # Build contracts
 stellar contract build
 
@@ -511,12 +542,12 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 |------|-----------|-------------|---------|
 | **Administrator** | System Panel | Assign roles, mint RPT, mint pPHP, mark grants disbursed | System governance, token issuance |
 | **GovernmentAgency** | Agency Dashboard | Create PVOs, define milestones with budgets + evidence types | Project definition, budget planning |
-| **FundingAgency** | Funding Agency Dashboard | Create escrows, fund escrows, view donor commitments | Lock funds behind 5-gate verification |
+| **FundingAgency** | Funding Agency Dashboard | Create escrows, fund escrows, view donor commitments, provenance explorer | Lock funds behind 5-gate verification |
 | **InternationalDonor** | Donor Dashboard | Pledge grants (exact-match PVO budget), commit pPHP | Fund projects conditionally |
 | **Contractor** | Contractor Portal | Browse tenders at `/procurement`, submit bids, view won projects, submit milestone evidence | Prove work completed |
 | **Engineer** | Engineer Panel | Approve milestones after physical inspection | Technical quality gate |
-| **Auditor** | Auditor Dashboard | Compliance validation, procurement law checks | Regulatory compliance gate |
-| **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review | Government audit oversight |
+| **Auditor** | Auditor Dashboard | Compliance validation, procurement law checks, provenance explorer | Regulatory compliance gate |
+| **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review, provenance explorer | Government audit oversight |
 | **AIAuditor** | AI Dashboard | Run AI validation on evidence, assign risk scores | Fraud/anomaly detection gate |
 | **Citizen** | Citizen Report Form | Submit GPS-tagged field reports, verify others' reports | Community verification gate |
 | **Inspector** | Inspector Panel | Verify evidence quality, validate reports | Evidence quality assurance |
@@ -535,10 +566,10 @@ FundingAgency → creates escrow per milestone (Awarded PVOs tab)
 FundingAgency → funds escrow                           [Funds locked]
 Contractor → submits evidence
 Engineer → approves physical work                       [Gate 1]
-AI Auditor → validates for fraud                        [Gate 2]
-Auditor/COA → compliance check                          [Gate 3]
-Citizens → submit GPS field reports                     [Gate 4 - Oracle]
-Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
+Auditor/COA → compliance check                          [Gate 2]
+Citizens → submit GPS field reports                     [Gate 3 - Oracle]
+Citizens → reach confirmation threshold                 [Gate 4 - Threshold]
+AI Auditor → validates for fraud                        [Gate 5 - Final]
 → Anyone triggers release                               [All gates must pass]
 ```
 
@@ -712,9 +743,9 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 | 1 | Connect ai_auditor wallet | |
 | 2 | Run AI validation on evidence | Scans for duplicate GPS, metadata tampering, anomalies |
 | 3 | AI assigns risk score | Green = low risk, Red = flagged |
-| 4 | If passed, escrow gate 2 unlocks | AI Validated ✓ |
+| 4 | If passed, escrow gate 5 unlocks | AI Validated ✓ |
 
-**What happens:** Gate 2  -  AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.
+**What happens:** Gate 5  -  AI detects fraud patterns humans miss. Same GPS coordinate submitted twice? Metadata shows photo taken before project started? AI catches it.
 
 ---
 
@@ -728,12 +759,12 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 |------|--------|---------|
 | 1 | Connect auditor wallet | |
 | 2 | Run compliance validation | Checks procurement law, budget rules, safety regulations |
-| 3 | Pass the check | Escrow gate 3 unlocks  -  Compliance Passed ✓ |
+| 3 | Pass the check | Escrow gate 2 unlocks  -  Compliance Passed ✓ |
 | 4 | Connect coa wallet | |
 | 5 | Review audit trail | Full history of who approved what and when |
 | 6 | Final compliance sign-off | Regulatory oversight complete |
 
-**What happens:** Gate 3  -  legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.
+**What happens:** Gate 2  -  legal and regulatory verification. Ensures the project follows procurement laws, not just physical completion.
 
 ---
 
@@ -755,7 +786,7 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 | 8 | When counter ≥ threshold | Community Oracle gate + Community Confirmations gate pass ✓ |
 | 9 | Repeat with citizen_2, citizen_3 to reach threshold | |
 
-**What happens:** Gates 4 & 5  -  real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.
+**What happens:** Gates 3 & 4  -  real citizens visit the site, submit GPS-tagged evidence. The RPT token gate prevents fake accounts. Higher thresholds = stronger anti-corruption for high-risk projects.
 
 ---
 
@@ -810,9 +841,11 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 | 8 | FundingAgency | Fund the escrow (Escrows tab, "Fund Escrow" button) |
 | 9 | Contractor | Submit evidence for milestone 1 |
 | 10 | Engineer | Approve milestone 1 (Gate 1) |
-| 11 | AI Auditor | Validate for fraud (Gate 2) |
-| 12 | Auditor | Compliance check (Gate 3) |
-| 13 | 3 Citizens | Submit and verify GPS reports (Gates 4 & 5) |
+| 11 | Auditor | Compliance check (Gate 2) |
+| 12 | 3 Citizens | Submit and verify GPS reports (Gates 3 & 4) |
+| 13 | AI Auditor | Run AI fraud check (Gate 5 - final gate) |
+| 14 | Anyone | Release escrow -> PVO goes InProgress |
+| 15 | Repeat steps 7-14 | For each remaining milestone |
 | 14 | Anyone | Release escrow -> PVO goes InProgress |
 | 15 | Repeat steps 7-14 | For each remaining milestone |
 | 16 | PVO becomes **Completed** | All milestones Released + total >= budget |
@@ -830,6 +863,54 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 
 ---
 
+### Exercise 14: Provenance Explorer  —  Complete Audit Trail with TX Hashes
+
+**Roles:** FundingAgency, CommissionOnAudit, Auditor, Administrator  
+**Dashboards:** Provenance Explorer (`/provenance`)  
+**Prerequisite:** Start the provenance indexer: `npx tsx provenance-indexer/service.ts`
+
+| Step | Action | Details |
+|------|--------|---------|
+| 1 | Start the provenance indexer | `npx tsx provenance-indexer/service.ts`  -  runs on port 3111, polls every 30s |
+| 2 | Connect a FundingAgency, COA, Auditor, or Administrator wallet | Role-gated: only these roles can access |
+| 3 | Navigate to **/provenance** | Nav item under "Oversight & Audit" group |
+| 4 | View **Summary Stats** bar | Total PVOs, total escrowed/released, gates passed/pending, events indexed, tx-linked count |
+| 5 | Expand a **PVO card** | See per-milestone escrow breakdown, stats (escrowed/released/evidence/value score) |
+| 6 | Switch to **Milestones & Gates** tab | Expand individual milestone  →  see all 5 gates with status, actor, timestamp |
+| 7 | Click a **🔗 tx hash link** | Opens Stellar Expert testnet explorer showing the on-chain transaction proof |
+| 8 | Switch to **Full Timeline** tab | Chronological list: PVO created, milestones, evidence, escrows, gate transitions |
+| 9 | Use **Search** and **Status Filter** | Filter PVOs by title, department, municipality, contractor, or status |
+| 10 | Check **Service Status** indicator | Green dot = indexer active, red = start the service |
+| 11 | Click **↻ Refresh** to pull latest data | Live refresh from the provenance API |
+
+**Provenance tree structure:**
+
+```
+PVO (parent)
+├── Milestone 1 (child)
+│   ├── Escrow #1  —  ₱50M (CompliancePassed)
+│   ├── Gate 1: Engineer Approval      ✅ passed  tx=f64a0a72...  🔗 View on Stellar Expert
+│   ├── Gate 2: Compliance Check       ✅ passed  tx=8d38e2b0...  🔗 View on Stellar Expert
+│   ├── Gate 3: Community Oracle       ⬜ pending
+│   ├── Gate 4: Community Confirm      ⬜ pending
+│   └── Gate 5: AI Risk Check          ⬜ pending
+├── Milestone 2 (child)
+│   └── Escrow #2  —  ₱50M (Created)
+│       └── ... 5 gates (all pending)
+└── Timeline
+    ├── PVO created                    tx=3d54e07b...  🔗
+    ├── Milestone #4 created           tx=fe9bb155...  🔗
+    ├── Contractor assigned            tx=bab8c00d...  🔗
+    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+    └── Escrow #1 → EngineerApproved   tx=f64a0a72...  🔗
+```
+
+**What happens:** Every decision in the system is recorded on-chain with a Stellar transaction hash. The Provenance Indexer builds the complete audit trail independently  —  no backend, no database, just Stellar events and contract state. COA auditors, funding agencies, and administrators can trace every peso from budget allocation through all 5 gates to final release, with immutable tx hash proof.
+
+**If the service is offline:** A yellow warning box shows the exact command to start it. The Provenance Explorer respects the "no backend, no database" philosophy  —  the indexer just reads from the blockchain, which is always available.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -841,6 +922,7 @@ Citizens → reach confirmation threshold                 [Gate 5 - Threshold]
 | Wallet | Freighter browser extension |
 | Storage | Soroban persistent storage + IPFS for evidence |
 | Events | Soroban contract events |
+| Off-Chain Services | AI Oracle (`ai-oracle/service.ts`), Provenance Indexer (`provenance-indexer/service.ts`) |
 | Token Standard | Stellar Asset Contract (SAC), 7 decimals |
 | RPC | `soroban-testnet.stellar.org:443` |
 

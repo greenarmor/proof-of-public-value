@@ -27,7 +27,7 @@ export function AuditorDashboard() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Auditor Dashboard</h1>
-      <p className="text-slate-500 mb-6">Audit financial records, verify compliance, and approve escrow Gate 4.</p>
+      <p className="text-slate-500 mb-6">Audit financial records, verify compliance, and approve escrow Gate 2.</p>
 
       <div className="flex gap-1 mb-6 border-b border-slate-200">
         {(["trail", "approve", "compliance"] as const).map((tab) => (
@@ -142,8 +142,8 @@ function ComplianceGateTab({ address }: { address: string }) {
           const r = await client.get_escrow({ escrow_id: i });
           if (r.result) {
             const e = r.result as any;
-            // Show escrows that are funded and AI-validated but not yet compliance-passed
-            if (e.conditions.ai_risk_check && !e.conditions.compliance_validation && e.status.tag !== "Created") {
+            // Show escrows that are funded and engineer-approved but not yet compliance-passed
+            if (e.conditions.engineer_approval && !e.conditions.compliance_validation && e.status.tag !== "Created") {
               list.push(e);
             }
           }
@@ -213,10 +213,10 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
-      setTxMsg(passed ? "Compliance approved! Gate 4 passed." : "Compliance rejected.");
+      setTxMsg(passed ? "Compliance approved! Gate 2 passed." : "Compliance rejected.");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) {
       setTxState("error");
@@ -228,10 +228,10 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
 
   const gates = [
     { label: "Engineer", done: escrow.conditions.engineer_approval },
-    { label: "AI", done: escrow.conditions.ai_risk_check },
     { label: "Compliance", done: escrow.conditions.compliance_validation },
     { label: "Oracle", done: (escrow.conditions as any).community_oracle_validation || false },
     { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
+    { label: "AI Risk", done: escrow.conditions.ai_risk_check },
   ];
   const passed = gates.filter(g => g.done).length;
 
@@ -271,17 +271,21 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-100">
         <span className="text-[11px] text-slate-400">{passed}/5 gates passed</span>
-        <div className="flex gap-2">
-          <button onClick={() => handleApprove(true)} disabled={busy}
-            className="btn-primary text-xs px-4 py-2">
-            {busy ? "Signing..." : "✓ Pass Compliance (Gate 4)"}
-          </button>
-          <button onClick={() => handleApprove(false)} disabled={busy}
-            className="btn-danger text-xs px-4 py-2">
-            ✗ Reject
-          </button>
-          {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
-        </div>
+        {txState === "done" ? (
+          <span className="badge-green text-xs px-4 py-2">✓ Compliance Passed - Gate 2</span>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={() => handleApprove(true)} disabled={busy}
+              className="btn-primary text-xs px-4 py-2">
+              {busy ? "Signing..." : "✓ Pass Compliance (Gate 2)"}
+            </button>
+            <button onClick={() => handleApprove(false)} disabled={busy}
+              className="btn-danger text-xs px-4 py-2">
+              ✗ Reject
+            </button>
+            {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
+          </div>
+        )}
       </div>
     </div>
   );

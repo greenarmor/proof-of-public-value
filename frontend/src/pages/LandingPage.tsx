@@ -142,22 +142,31 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-20">
-            {[
-              { step: "01", title: "Evidence", icon: "📎", desc: "Contractor submits GPS, drone, engineering reports" },
-              { step: "02", title: "Engineer", icon: "🔧", desc: "Licensed professional verifies structural integrity" },
-              { step: "03", title: "AI Oracle", icon: "🤖", desc: "Automated fraud detection, risk scoring, validation" },
-              { step: "04", title: "Compliance", icon: "⚖️", desc: "Auditor checks procurement law and budget rules" },
-              { step: "05", title: "Community", icon: "📸", desc: "Citizens submit GPS-tagged field reports" },
-            ].map((gate, i) => (
-              <div key={i} className="group p-6 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mb-20">
+            <div className="md:col-span-3 p-4 rounded-2xl bg-brand-50 text-center flex flex-col items-center justify-center">
+              <div className="text-2xl mb-2">📎</div>
+              <p className="text-sm font-semibold text-brand-700">Evidence First</p>
+              <p className="text-xs text-brand-500 mt-1">Contractor submits proof</p>
+            </div>
+            <div className="md:col-span-9">
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  { title: "Engineer", icon: "🔧", desc: "Technical sign-off" },
+                  { title: "Compliance", icon: "⚖️", desc: "Legal check" },
+                  { title: "Community", icon: "📸", desc: "GPS reports" },
+                  { title: "Confirmations", icon: "👥", desc: "Threshold met" },
+                  { title: "AI Risk", icon: "🤖", desc: "Runs last" },
+                ].map((gate, i) => (
+              <div key={i} className="group p-4 rounded-2xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 80}ms` }}>
-                <div className="text-brand-500 font-mono text-xs mb-3 font-semibold">{gate.step}</div>
-                <div className="text-3xl mb-3 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-50">{gate.icon}</div>
-                <h3 className="font-semibold text-slate-900 mb-2">{gate.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{gate.desc}</p>
+                <div className="text-brand-500 font-mono text-xs mb-2 font-semibold">{String(i + 1).padStart(2, "0")}</div>
+                <div className="text-2xl mb-2 inline-flex items-center justify-center w-10 h-10 rounded-xl bg-brand-50">{gate.icon}</div>
+                <h3 className="font-semibold text-sm text-slate-900 mb-1">{gate.title}</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{gate.desc}</p>
               </div>
             ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -180,12 +189,13 @@ export function LandingPage() {
               { icon: "🔗", title: "Serverless", desc: "No backend. No database. Stellar is the infrastructure." },
               { icon: "🤖", title: "AI-Powered", desc: "Automated fraud detection, risk prediction, and verification." },
               { icon: "📡", title: "IPFS Evidence", desc: "Photos, drone imagery, documents stored immutably on IPFS." },
-              { icon: "🔐", title: "Multi-Gate", desc: "No single party can release funds. Four verifications required." },
+              { icon: "🔐", title: "Multi-Gate", desc: "No single party can release funds. Five independent verifications required." },
               { icon: "💰", title: "Real Tokens", desc: "Escrow holds actual on-chain assets via pPHP, USDC, or GovPHP." },
               { icon: "📊", title: "Public Index", desc: "Department rankings measuring value per peso spent." },
               { icon: "🏗️", title: "Integrity Bidding", desc: "Contractors scored on reputation, not just lowest price." },
               { icon: "🌍", title: "Cross-Border", desc: "International donors commit on-chain with full traceability." },
-              { icon: "📋", title: "Immutable Audit", desc: "Every decision recorded permanently on Stellar." },
+              { icon: "📋", title: "Immutable Audit", desc: "Every decision recorded permanently on Stellar with tx hash links." },
+              { icon: "🔍", title: "Provenance Explorer", desc: "Full audit trail: PVO → Milestone → Gates → TX hashes. Public access." },
             ].map((feature, i) => (
               <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 60}ms` }}>
@@ -222,7 +232,7 @@ export function LandingPage() {
             </span>
           </button>
           <p className="mt-6 text-sm text-slate-400">
-            Available on Stellar Testnet · Open source · Serverless · 24 E2E tests passing
+            Available on Stellar Testnet · Open source · Serverless · 40 contract tests passing
           </p>
         </div>
       </section>
@@ -241,7 +251,7 @@ export function LandingPage() {
             <span>·</span>
             <span>13 Roles</span>
             <span>·</span>
-            <span>24 E2E Tests</span>
+            <span>40 Contract Tests</span>
           </div>
         </div>
       </footer>

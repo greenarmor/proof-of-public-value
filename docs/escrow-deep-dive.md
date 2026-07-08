@@ -114,21 +114,21 @@ stellar contract invoke \
   --network testnet --send=yes \
   -- engineer_approve --engineer engineer --escrow_id 1
 
-# Gate 2: AI validation
+# Gate 5: AI validation
 stellar contract invoke \
   --id $ESCROW \
   --source ai_auditor \
   --network testnet --send=yes \
   -- ai_validate --auditor ai_auditor --escrow_id 1 --passed true
 
-# Gate 3: Compliance
+# Gate 2: Compliance
 stellar contract invoke \
   --id $ESCROW \
   --source auditor \
   --network testnet --send=yes \
   -- compliance_validate --compliance_officer auditor --escrow_id 1 --passed true
 
-# Gate 4: Community (need 2)
+# Gate 3: Community Oracle (need 2)
 for ALIAS in citizen alice; do
   stellar contract invoke \
     --id $ESCROW \

@@ -62,7 +62,7 @@ An **Escrow** is a smart contract lockbox that holds funds (pPHP tokens) and rel
 **Lifecycle:**
 1. **Created**  -  funding agency creates the escrow, specifying recipient, PVO, milestone, and community threshold
 2. **Funded**  -  funding agency deposits the exact milestone amount (in pPHP SAC units)
-3. **Gates Progress**  -  engineer approves → AI validates → compliance checks → community oracle → community confirmations
+3. **Gates Progress**  -  engineer approves → compliance → community oracle → community confirmations → AI validates
 4. **Ready**  -  all 5 gates passed; anyone can trigger release
 5. **Released**  -  funds transferred to contractor; PVO auto-completes if this was the last milestone
 
@@ -73,12 +73,12 @@ An **Escrow** is a smart contract lockbox that holds funds (pPHP tokens) and rel
 | Gate | Who | What Happens |
 |------|-----|-------------|
 | **1. Engineer Approval** | Licensed Engineer | Physically inspects the work. Signs off that the milestone meets structural specifications. |
-| **2. AI Risk Check** | AI Oracle | Scans evidence for anomalies: duplicate GPS coordinates, metadata tampering, suspicious patterns. Assigns a risk score. |
-| **3. Compliance Validation** | Auditor / COA | Checks procurement law compliance, budget rules, safety regulations, anti-corruption requirements. |
-| **4. Community Oracle** | Citizens (via reports) | The Community Oracle contract checks whether verified citizen reports exist for the project. Reports must pass verification. |
-| **5. Community Confirmations** | Citizens (GPS field reports) | Citizens visit the site, submit GPS-tagged evidence. The counter must reach the threshold set when the escrow was created. |
+| **2. Compliance Validation** | Auditor / COA | Checks procurement law compliance, budget rules, safety regulations, anti-corruption requirements. |
+| **3. Community Oracle** | Citizens (via reports) | The Community Oracle contract checks whether verified citizen reports exist for the project. Reports must pass verification. |
+| **4. Community Confirmations** | Citizens (GPS field reports) | Citizens visit the site, submit GPS-tagged evidence. The counter must reach the threshold set when the escrow was created. |
+| **5. AI Risk Check** | AI Oracle | Scans ALL evidence collected through gates 1-4 for anomalies: duplicate GPS, metadata tampering, suspicious patterns. Runs last for maximum data. |
 
-**Key insight:** Gates 4 and 5 are different. Gate 4 checks if the **oracle** has verified reports on file. Gate 5 counts how many **unique verified reports** exist  -  this is the threshold you set.
+**Key insight:** Gates 3 and 4 are different. Gate 3 checks if the **oracle** has verified reports on file. Gate 4 counts how many **unique verified reports** exist  -  this is the threshold you set.
 
 ---
 
@@ -431,7 +431,7 @@ A: No. The escrow contract logic is on-chain and immutable. No role  -  not even
 A: 5 gates balance independence (no single role controls release) with practicality (not too slow). Each gate covers a distinct failure mode: physical quality (engineer), fraud detection (AI), regulatory compliance (COA), community oracle (citizen reports), and community threshold (multiple independent verifications).
 
 **Q: What's the difference between the Community Oracle gate and Community Confirmations?**
-A: The oracle gate (gate 4) checks that the **oracle contract itself** has verified reports on file. The confirmations gate (gate 5) checks that the **number of verified reports** meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.
+A: The oracle gate (gate 3) checks that the **oracle contract itself** has verified reports on file. The confirmations gate (gate 4) checks that the **number of verified reports** meets the threshold. You need both: the oracle must exist and be functional, AND enough citizens must have actually shown up.
 
 **Q: How is this different from a traditional escrow?**
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on **cryptographic proof of work completed**  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.

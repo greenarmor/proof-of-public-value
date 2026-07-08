@@ -211,6 +211,10 @@ impl DynamicEscrow {
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
+        if escrow.status == EscrowStatus::Created {
+            panic!("escrow must be funded before gate approval");
+        }
+
         escrow.conditions.engineer_approval = true;
         escrow.status = EscrowStatus::EngineerApproved;
         Self::advance_if_ready(&env, &mut escrow);
@@ -226,6 +230,10 @@ impl DynamicEscrow {
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
+
+        if escrow.status == EscrowStatus::Created {
+            panic!("escrow must be funded before gate approval");
+        }
 
         let mut status_changed = false;
         if passed {
@@ -249,6 +257,10 @@ impl DynamicEscrow {
         let storage = env.storage().persistent();
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
+
+        if escrow.status == EscrowStatus::Created {
+            panic!("escrow must be funded before gate approval");
+        }
 
         let mut status_changed = false;
         if passed {
@@ -283,6 +295,10 @@ impl DynamicEscrow {
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
 
+        if escrow.status == EscrowStatus::Created {
+            panic!("escrow must be funded before gate approval");
+        }
+
         escrow.conditions.community_oracle_validation = true;
         escrow.status = EscrowStatus::OracleValidated;
 
@@ -309,6 +325,10 @@ impl DynamicEscrow {
 
         let mut escrows: Map<u32, Escrow> = storage.get(&ESCROWS).unwrap_or_else(|| Map::new(&env));
         let mut escrow = escrows.get(escrow_id).expect("escrow not found");
+
+        if escrow.status == EscrowStatus::Created {
+            panic!("escrow must be funded before gate approval");
+        }
 
         escrow.conditions.community_confirmation = escrow.conditions.community_confirmation.saturating_add(1);
 

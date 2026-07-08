@@ -198,10 +198,10 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
-      setTxMsg("Engineer approved on escrow. Gate 2 passed!");
+      setTxMsg("Engineer approved on escrow. Gate 1 passed!");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) {
       setTxState("error");
@@ -233,7 +233,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
       </div>
 
       <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
-        <span>Budget: {currency}{(Number(milestone.budget) / 100).toLocaleString()}</span>
+        <span>Budget: {currency}{(Number(milestone.budget) / PPHP_SCALE).toLocaleString()}</span>
         <span>·</span>
         <span>{milestone.submitted_evidence.length} evidence items</span>
       </div>
@@ -259,10 +259,14 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
       )}
 
       <div className="flex gap-3 pt-3 border-t border-gray-100">
-        <button onClick={handleApprove} disabled={busy}
-          className="btn-primary text-sm px-4 py-2">
-          {busy ? "Signing..." : "✓ Engineer Approve (Gate 2)"}
-        </button>
+        {txState === "done" ? (
+          <span className="badge-green text-sm px-4 py-2">✓ Approved - Gate 1 Passed</span>
+        ) : (
+          <button onClick={handleApprove} disabled={busy}
+            className="btn-primary text-sm px-4 py-2">
+            {busy ? "Signing..." : "✓ Engineer Approve (Gate 1)"}
+          </button>
+        )}
         {busy && <span className="text-xs text-purple-600 self-center animate-pulse">Check Freighter...</span>}
       </div>
     </div>

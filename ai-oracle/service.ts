@@ -29,8 +29,9 @@ const POLL_INTERVAL_MS = 60_000;
 
 // Contract IDs — synced with frontend/src/config.ts
 const CONTRACT_IDS: Record<string, string> = {
-  pvo_core: "CCFBBSDV2KEVO4EIEFL5QNS3QZP4VH24RSBWLKANWBC5SYRVCCWM4AVR",
-  ai_oracle: "CDWZ7HQZ5IIFHCOB3HLYTDNA4MGKYWHZ6VWI2GR7TGZEFGMLJBWBQG7C",
+  pvo_core: "CCLENIHPLMZ7XD3PWPEPBOH77OPXWMY4XIFE57F6KENSWU5VW4LWY7WE",
+  escrow: "CBWM2ZB7XHIHJ5NWVZXCTDHJZYRL7HWMK3WEK4OYLJNIX65FJOQCIFPE",
+  ai_oracle: "CAYVXA3MY6F7ZPXI3VGUANIFYORZTU2QUXFWSLIHWEOGHCXPH4V63NHV",
 };
 
 const CREDS_PATH = join(__dirname, "..", ".dev-logs", "newrolecreden.md");
@@ -146,6 +147,7 @@ function analyzeEvidence(evidence: Evidence): AnalysisResult {
 function submitValidation(
   pvoId: number,
   milestoneId: number,
+  escrowId: number,
   passed: boolean,
   riskScore: number
 ): void {
@@ -154,22 +156,23 @@ function submitValidation(
     "--source-account",
     AI_AUDITOR_PUBLIC,
     "--network testnet",
-    `--id ${CONTRACT_IDS.pvo_core}`,
+    `--id ${CONTRACT_IDS.escrow}`,
+    "--send=yes",
     "--",
     "ai_validate",
     `--auditor ${AI_AUDITOR_PUBLIC}`,
-    `--milestone_id ${milestoneId}`,
+    `--escrow_id ${escrowId}`,
     `--passed ${passed}`,
   ].join(" ");
 
   console.log(
-    `  📤 pvo=${pvoId} m#=${milestoneId} passed=${passed} risk=${riskScore}`
+    `  📤 pvo=${pvoId} m#=${milestoneId} escrow=${escrowId} passed=${passed} risk=${riskScore}`
   );
   const result = cli(cmd);
   if (result.includes("error")) {
     console.error(`  ❌ Failed: ${result.slice(0, 200)}`);
   } else {
-    console.log(`  ✅ Validated on-chain`);
+    console.log(`  ✅ AI validation submitted on-chain`);
   }
 }
 
@@ -178,69 +181,83 @@ async function poll(): Promise<void> {
   console.log(`\n🔍 [${new Date().toISOString()}] Scanning...`);
 
   try {
-    const pvoCountRaw = cli(
-      `contract invoke --id ${CONTRACT_IDS.pvo_core} --network testnet -- get_pvo_count`
+    const escCountRaw = cli(
+      `contract invoke --id ${CONTRACT_IDS.escrow} --network testnet -- get_escrow_count`
     );
-    const pvoCount = parseInt(
-      pvoCountRaw.match(/"result":"(\d+)"/)?.[1] ?? "0"
+    const escCount = parseInt(
+      escCountRaw.match(/"result":"?(\d+)"?/)?.[1] ?? "0"
     );
 
-    if (pvoCount === 0) {
-      console.log("  No PVOs yet.");
+    if (escCount === 0) {
+      console.log("  No escrows yet.");
       return;
     }
 
-    for (let pvoId = 1; pvoId <= Math.min(pvoCount, 20); pvoId++) {
+    for (let escrowId = 1; escrowId <= escCount; escrowId++) {
       const raw = cli(
-        `contract invoke --id ${CONTRACT_IDS.pvo_core} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
+        `contract invoke --id ${CONTRACT_IDS.escrow} --network testnet -- get_escrow --escrow_id ${escrowId}`
       );
       if (!raw) continue;
 
       try {
         const parsed = JSON.parse(raw);
-        const milestones: Milestone[] = parsed.result || [];
+        const escrow = parsed.result || parsed;
+        if (!escrow) continue;
 
-        for (const m of milestones) {
-          const status =
-            typeof m.status === "string" ? m.status : m.status?.tag ?? "";
-          if (status !== "EngineerApproved") continue;
+        const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
+        if (status !== "EngineerApproved" && status !== "Funded") continue;
+        if (escrow.conditions?.ai_risk_check === true) continue;
 
-          console.log(
-            `  🎯 PVO #${pvoId} M#${m.id} — Engineer Approved`
-          );
-          console.log(
-            `     ${m.title} · ${(m.budget / 10_000_000).toLocaleString()} PHP`
-          );
+        const pvoId = Number(escrow.pvo_id);
+        const milestoneId = Number(escrow.milestone_id);
+        console.log(
+          `  🎯 Escrow #${escrowId} — PVO #${pvoId} M#${milestoneId} (${status})`
+        );
 
-          const evidence: Evidence = {
-            gps_lat: null,
-            gps_lng: null,
-            description: m.description ?? "",
-            metadata: JSON.stringify(m.submitted_evidence ?? []),
-          };
+        const milestonesRaw = cli(
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
+        );
+        if (!milestonesRaw) continue;
+        const mParsed = JSON.parse(milestonesRaw);
+        const milestones: Milestone[] = mParsed.result || [];
+        const m = milestones.find((x) => Number(x.id) === milestoneId);
+        if (!m) {
+          console.log(`     ⚠️ Milestone not found, skipping`);
+          continue;
+        }
 
-          for (const ev of m.submitted_evidence ?? []) {
-            const evType =
-              typeof ev.evidence_type === "string"
-                ? ev.evidence_type
-                : ev.evidence_type?.tag ?? "";
-            if (evType === "GpsCoordinates" && ev.metadata) {
-              const parts = String(ev.metadata).split(",");
-              if (parts.length === 2) {
-                evidence.gps_lat = parseFloat(parts[0]);
-                evidence.gps_lng = parseFloat(parts[1]);
-              }
+        console.log(
+          `     ${m.title} · ${(Number(m.budget) / 10_000_000).toLocaleString()} PHP`
+        );
+
+        const evidence: Evidence = {
+          gps_lat: null,
+          gps_lng: null,
+          description: m.description ?? "",
+          metadata: JSON.stringify(m.submitted_evidence ?? []),
+        };
+
+        for (const ev of m.submitted_evidence ?? []) {
+          const evType =
+            typeof ev.evidence_type === "string"
+              ? ev.evidence_type
+              : ev.evidence_type?.tag ?? "";
+          if (evType === "GpsCoordinates" && ev.metadata) {
+            const parts = String(ev.metadata).split(",");
+            if (parts.length === 2) {
+              evidence.gps_lat = parseFloat(parts[0]);
+              evidence.gps_lng = parseFloat(parts[1]);
             }
           }
-
-          const { passed, riskScore, flags } = analyzeEvidence(evidence);
-          console.log(
-            `  🤖 risk=${riskScore} flags=${flags.length ? flags.join(",") : "none"}`
-          );
-          submitValidation(pvoId, m.id, passed, riskScore);
         }
+
+        const { passed, riskScore, flags } = analyzeEvidence(evidence);
+        console.log(
+          `  🤖 risk=${riskScore} flags=${flags.length ? flags.join(",") : "none"}`
+        );
+        submitValidation(pvoId, milestoneId, escrowId, passed, riskScore);
       } catch {
-        // Malformed milestone data — skip
+        // Malformed escrow data — skip
       }
     }
   } catch (e: unknown) {

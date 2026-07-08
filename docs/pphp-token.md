@@ -195,15 +195,15 @@ ESCROW_ID=1
 stellar contract invoke --source engineer --network testnet --send=yes \
   --id $ESCROW -- engineer_approve --engineer $(stellar keys address engineer) --escrow_id "$ESCROW_ID"
 
-# Gate 2: AI
+# Gate 5: AI
 stellar contract invoke --source ai_auditor --network testnet --send=yes \
   --id $ESCROW -- ai_validate --auditor $(stellar keys address ai_auditor) --escrow_id "$ESCROW_ID" --passed true
 
-# Gate 3: Compliance
+# Gate 2: Compliance
 stellar contract invoke --source auditor --network testnet --send=yes \
   --id $ESCROW -- compliance_validate --compliance_officer $(stellar keys address auditor) --escrow_id "$ESCROW_ID" --passed true
 
-# Gate 4: Community (3 confirmations needed)
+# Gate 3: Community (3 confirmations needed)
 for ALIAS in citizen alice agency; do
   stellar contract invoke --source $ALIAS --network testnet --send=yes \
     --id $ESCROW -- add_community_confirmation --citizen $(stellar keys address $ALIAS) --escrow_id "$ESCROW_ID"

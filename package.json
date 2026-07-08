@@ -2,11 +2,15 @@
   "name": "popv-workspace",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:indexer\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:indexer\" \"npm run dev:provenance\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:indexer": "cd services/event-indexer && npm start",
+    "dev:provenance": "npx tsx provenance-indexer/service.ts",
+    "provenance": "npx tsx provenance-indexer/service.ts",
+    "provenance:build": "npx tsx provenance-indexer/service.ts --build",
     "build": "cd frontend && npm run build",
     "start": "cd frontend && npm start",
+    "prod": "npm run build && concurrently \"npm run dev:provenance\" \"npm start\"",
     "test": "cd frontend && npx tsx e2e-test.ts",
     "build:contracts": "stellar contract build",
     "deploy": "./scripts/deploy.sh"

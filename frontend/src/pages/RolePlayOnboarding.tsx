@@ -15,7 +15,7 @@ const ROLES = [
       "Enter GPS coordinates + description + photos",
       "Submit your report on-chain",
       "Another citizen verifies your report",
-      "Your report helps unlock Gates 4 & 5",
+      "Your report helps unlock Gates 3 & 4",
     ],
   },
   {
@@ -30,7 +30,7 @@ const ROLES = [
       "Review submitted evidence for a milestone",
       "Physically verify the work (roleplay: review drone imagery, GPS)",
       "Approve the milestone if it meets specifications",
-      "Gate 1 passes — escrow advances to AI validation",
+      "Gate 1 passes — escrow advances to compliance",
     ],
   },
   {
@@ -38,14 +38,14 @@ const ROLES = [
     title: "AI Auditor",
     icon: "🤖",
     color: "bg-purple-500",
-    desc: "Run fraud detection on evidence. Scan for GPS anomalies, metadata tampering, and suspicious patterns. Gate 2.",
+    desc: "Run fraud detection on evidence. Scan for GPS anomalies, metadata tampering, and suspicious patterns. Gate 5 — runs last for maximum data.",
     steps: [
       "Connect the AI Auditor wallet in Freighter",
       "Go to AI Dashboard",
-      "Run AI validation on Engineer-Approved milestones",
+      "Run AI validation on milestones with gates 1-4 passed",
       "AI analyzes GPS coordinates, metadata, description quality",
       "Assigns risk score: <50 = PASS, ≥50 = FAIL",
-      "Gate 2 passes — escrow advances to compliance check",
+      "Gate 5 passes — all gates complete, escrow ready for release",
     ],
   },
   {
@@ -53,14 +53,14 @@ const ROLES = [
     title: "Auditor / COA",
     icon: "⚖️",
     color: "bg-amber-500",
-    desc: "Validate procurement law compliance, budget rules, and safety regulations. Gate 3 — the legal gatekeeper.",
+    desc: "Validate procurement law compliance, budget rules, and safety regulations. Gate 2 — the legal gatekeeper.",
     steps: [
       "Connect the Auditor wallet in Freighter",
       "Go to Auditor Dashboard",
       "Review milestone compliance",
       "Check procurement law, budget allocation, safety rules",
       "Pass the compliance check",
-      "Gate 3 passes — escrow advances to community verification",
+      "Gate 2 passes — escrow advances to community verification",
     ],
   },
   {

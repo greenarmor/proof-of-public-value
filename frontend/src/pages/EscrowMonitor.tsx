@@ -121,10 +121,10 @@ export function EscrowMonitor() {
           {escrows.map(e => {
             const gates = [
               { label: "Engineer", done: e.engineer },
-              { label: "AI", done: e.ai },
               { label: "Compliance", done: e.compliance },
               { label: "Oracle", done: (e as any).oracle },
               { label: "Community", done: e.community >= e.communityRequired },
+              { label: "AI Risk", done: e.ai },
             ];
             const passed = gates.filter(g => g.done).length;
 

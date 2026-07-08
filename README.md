@@ -2,16 +2,17 @@
 
 > **"No Proof. No Payment."** — Public money must prove measurable value before it's released.
 
-PoPV is a serverless blockchain application on **Stellar Soroban** that makes government spending accountable. Every budget allocation becomes a programmable **Public Value Object (PVO)** with 5-gate conditional payments — engineer approval, AI validation, compliance check, community verification, and evidence immutability.
+PoPV is a serverless blockchain application on **Stellar Soroban** that makes government spending accountable. Every budget allocation becomes a programmable **Public Value Object (PVO)** with 5-gate conditional payments: engineer approval, compliance check, community verification, community confirmations, and AI fraud detection — with every decision linked to an immutable Stellar transaction hash.
 
 ---
 
 ## Architecture
 
 ```
-National Budget → PVO → Milestones → Evidence Collection
-→ Engineer Approval → AI Validation → Compliance Check → Community Verification
-→ Escrow Release → Payment Settlement → Permanent Audit Trail
+PVO → Milestones → Tender → Bids → Award → Escrow → Fund →
+  Gate 1: Engineer → Gate 2: Compliance → Gate 3: Community Oracle →
+  Gate 4: Community Confirmations → Gate 5: AI Fraud Detection →
+  Release → Provenance Audit Trail (tx hash linked)
 ```
 
 ---

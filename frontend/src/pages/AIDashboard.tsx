@@ -424,17 +424,6 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
   const [escrows, setEscrows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  if (!connected) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="text-5xl mb-4">🔓</div>
-        <h3 className="font-semibold text-slate-700 mb-2">Wallet Connection Required</h3>
-        <p className="text-sm text-slate-400 mb-4">Connect your AI Auditor wallet to pass Gate 3 on escrows.</p>
-        <button onClick={onConnect} className="btn-primary px-6 py-3">Connect Wallet</button>
-      </div>
-    );
-  }
-
   const load = async () => {
     setLoading(true);
     try {
@@ -446,7 +435,9 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
           const r = await client.get_escrow({ escrow_id: i });
           if (r.result) {
             const e = r.result as any;
-            if (!e.conditions.ai_risk_check && e.status.tag === "Funded") {
+            const c = e.conditions;
+            if (!c.ai_risk_check && c.engineer_approval && c.compliance_validation && c.community_oracle_validation
+              && Number(c.community_confirmation) >= Number(c.community_required)) {
               list.push(e);
             }
           }
@@ -457,7 +448,18 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (connected) load(); }, [connected]);
+
+  if (!connected) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="text-5xl mb-4">🔓</div>
+        <h3 className="font-semibold text-slate-700 mb-2">Wallet Connection Required</h3>
+        <p className="text-sm text-slate-400 mb-4">Connect your AI Auditor wallet to pass Gate 2 on escrows.</p>
+        <button onClick={onConnect} className="btn-primary px-6 py-3">Connect Wallet</button>
+      </div>
+    );
+  }
 
   if (loading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-32" />)}</div>;
 
@@ -466,7 +468,8 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
       <div className="card p-12 text-center">
         <div className="text-5xl mb-4">🤖</div>
         <h3 className="font-semibold text-slate-700 mb-1">No escrows awaiting AI validation</h3>
-        <p className="text-sm text-slate-400">Funded escrows that need AI risk check will appear here.</p>
+        <p className="text-sm text-slate-400 mb-4">Escrows that passed Gates 1-4 (Engineer, Compliance, Community Oracle, Community) will appear here for final AI fraud check (Gate 5).</p>
+        <button onClick={load} className="btn-secondary text-xs px-4 py-2">↻ Refresh</button>
       </div>
     );
   }
@@ -483,53 +486,82 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
 function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; currency: string; address: string; onAction: () => void }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [analysis, setAnalysis] = useState<{ fraud: any[]; risk: any; twin: any; geo: any; gps: any[] } | null>(null);
+  const [scanResult, setScanResult] = useState<{ flags: string[]; riskScore: number; passed: boolean } | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [milestoneData, setMilestoneData] = useState<any>(null);
   const escrowId = Number(escrow.id);
   const pvoId = Number(escrow.pvo_id);
+  const milestoneId = Number(escrow.milestone_id);
 
   useEffect(() => {
     (async () => {
       try {
-        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const [fraud, twin, geo, gpsList] = await Promise.all([
-          client.get_fraud_by_pvo({ pvo_id: pvoId }).then(r => (r.result || []) as any[]),
-          client.get_digital_twin({ pvo_id: pvoId }).then(r => r.result),
-          client.get_geo_risk({ pvo_id: pvoId }).then(r => r.result),
-          (async () => {
-            const items: any[] = [];
-            for (let i = 1; i <= 10; i++) {
-              try { const r = await client.get_gps_validation({ id: i }); if (r.result) items.push(r.result); } catch { break; }
-            }
-            return items;
-          })(),
-        ]);
-        // Risk prediction by contractor
-        let risk = null;
-        try { const rr = await client.get_latest_risk_prediction({ contractor: escrow.recipient }); risk = rr.result; } catch {}
-        setAnalysis({ fraud, risk, twin, geo, gps: gpsList });
+        const { Client: PC } = await import("../contracts/pvo_core/src");
+        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await pc.get_pvo_milestones({ pvo_id: pvoId });
+        const ms = (result.result || []) as any[];
+        const m = ms.find((x: any) => Number(x.id) === milestoneId);
+        setMilestoneData(m || null);
       } catch {}
     })();
-  }, [pvoId]);
+  }, [pvoId, milestoneId]);
 
-  if (!analysis) return <div className="card p-5 skeleton h-48" />;
+  const runFraudDetection = () => {
+    setScanning(true);
+    setScanResult(null);
+    const flags: string[] = [];
+    let riskScore = 0;
 
-  // Evaluate all analysis types
-  const fraudHigh = analysis.fraud.filter((f: any) => Number(f.risk_score) >= 50);
-  const riskHigh = analysis.risk && Number(analysis.risk.risk_category) >= 3;
-  const twinDeviation = analysis.twin && (analysis.twin as any).deviation_alert === true;
-  const geoHigh = analysis.geo && Number(analysis.geo.overall_risk) >= 3;
-  const gpsFail = analysis.gps.filter((g: any) => g.valid === false);
+    const evidence = milestoneData?.submitted_evidence || [];
 
-  const issues: string[] = [];
-  if (fraudHigh.length > 0) issues.push(`${fraudHigh.length} fraud detections`);
-  if (riskHigh) issues.push("High risk prediction");
-  if (twinDeviation) issues.push("Cost deviation alert");
-  if (geoHigh) issues.push("Geo-risk elevated");
-  if (gpsFail.length > 0) issues.push(`${gpsFail.length} GPS validation failures`);
+    if (evidence.length === 0) {
+      flags.push("NO_EVIDENCE_SUBMITTED");
+      riskScore += 60;
+    }
 
-  const aiVerdict = issues.length === 0;
+    for (const ev of evidence) {
+      const evType = typeof ev.evidence_type === "object" ? ev.evidence_type?.tag : ev.evidence_type;
+      const meta = String(ev.metadata || "").toLowerCase();
 
-  const handleGate = async () => {
+      if (evType === "GpsCoordinates" && ev.metadata) {
+        const parts = String(ev.metadata).split(",").map(s => parseFloat(s.trim()));
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          const [lat, lng] = parts;
+          if (lat < 4 || lat > 21 || lng < 116 || lng > 127) {
+            flags.push("GPS_OUTSIDE_PHILIPPINES");
+            riskScore += 40;
+          }
+          if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+            flags.push("GPS_NEAR_ZERO");
+            riskScore += 50;
+          }
+        }
+      }
+
+      if (/test|demo|fake|sample|placeholder/.test(meta)) {
+        flags.push(`SUSPICIOUS_METADATA (evidence #${ev.id})`);
+        riskScore += 20;
+      }
+
+      if (!ev.metadata || ev.metadata.length < 5) {
+        flags.push(`INSUFFICIENT_DETAIL (evidence #${ev.id})`);
+        riskScore += 10;
+      }
+    }
+
+    if (!milestoneData?.description || milestoneData.description.length < 10) {
+      flags.push("MILESTONE_DESCRIPTION_TOO_SHORT");
+      riskScore += 10;
+    }
+
+    setTimeout(() => {
+      setScanning(false);
+      setScanResult({ flags, riskScore, passed: riskScore < 50 });
+    }, 1500);
+  };
+
+  const submitVerdict = async () => {
+    if (!scanResult) return;
     setTxState("preparing"); setTxMsg("");
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
@@ -537,14 +569,17 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
-      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(aiVerdict));
+      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(scanResult.passed));
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
-      setTxState("signing"); const prepared = await server.prepareTransaction(tx);
+      setTxState("signing");
+      const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
-      setTxState("sending"); const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg(aiVerdict ? "AI verdict: Pass Gate 3" : `AI verdict: REJECT — ${issues.join(", ")}`);
+      setTxState("sending");
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setTxState("done");
+      setTxMsg(scanResult.passed ? "AI fraud check PASSED. Gate 5 submitted on-chain." : "AI fraud check FAILED. Rejection submitted on-chain.");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
   };
@@ -552,10 +587,10 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
   const gates = [
     { label: "Engineer", done: escrow.conditions.engineer_approval },
-    { label: "AI", done: escrow.conditions.ai_risk_check },
     { label: "Compliance", done: escrow.conditions.compliance_validation },
     { label: "Oracle", done: (escrow.conditions as any).community_oracle_validation || false },
     { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
+    { label: "AI Risk", done: escrow.conditions.ai_risk_check },
   ];
 
   return (
@@ -567,41 +602,13 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       )}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{Number(escrow.pvo_id)}</span></div>
-          <p className="font-semibold text-slate-900">{currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Recipient: {formatAddress(escrow.recipient, 4)} · Funder: {formatAddress(escrow.funder, 4)}</p>
+          <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{pvoId} · MS #{milestoneId}</span></div>
+          {milestoneData && <p className="font-semibold text-slate-900">{milestoneData.title}</p>}
+          <p className="text-xs text-slate-400 mt-0.5">{currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()} · {(milestoneData?.submitted_evidence || []).length} evidence items</p>
         </div>
         <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>
       </div>
-      {/* AI Full Analysis — reads all oracle categories */}
-      <div className={`mb-4 p-3 rounded-lg text-sm ${aiVerdict ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-        <p className="font-medium mb-2">🤖 AI Verdict for PVO #{pvoId}</p>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs">
-            <span>{analysis.fraud.length > 0 ? (fraudHigh.length > 0 ? "🚨" : "✅") : "—"}</span>
-            <span>Fraud: {analysis.fraud.length} detections{fraudHigh.length > 0 ? ` (${fraudHigh.length} high-risk)` : ""}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span>{analysis.risk ? (riskHigh ? "🚨" : "✅") : "—"}</span>
-            <span>Risk: {analysis.risk ? `Category ${analysis.risk.risk_category}/3` : "none"}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span>{analysis.twin ? (twinDeviation ? "🚨" : "✅") : "—"}</span>
-            <span>Cost: {analysis.twin ? (twinDeviation ? "Deviation alert" : "On track") : "none"}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span>{analysis.geo ? (geoHigh ? "🚨" : "✅") : "—"}</span>
-            <span>Geo: {analysis.geo ? `Risk ${analysis.geo.overall_risk}/5` : "none"}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span>{analysis.gps.length > 0 ? (gpsFail.length > 0 ? "🚨" : "✅") : "—"}</span>
-            <span>GPS: {analysis.gps.length} checks{gpsFail.length > 0 ? ` (${gpsFail.length} fail)` : ""}</span>
-          </div>
-        </div>
-        <p className={`text-xs mt-2 font-bold ${aiVerdict ? "text-emerald-700" : "text-red-700"}`}>
-          {aiVerdict ? "✅ Pass Gate 3" : `❌ Reject Gate 3 — ${issues.join(", ")}`}
-        </p>
-      </div>
+
       <div className="grid grid-cols-5 gap-2 mb-4">
         {gates.map((gate, i) => (
           <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
@@ -609,14 +616,56 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-        <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/5 gates passed</span>
-        <button onClick={() => handleGate()} disabled={busy}
-          className="btn-primary text-xs px-4 py-2">
-          {busy ? "Signing..." : aiVerdict ? "🤖 Submit AI Verdict (Pass Gate 3)" : "🚨 Reject Gate 3 — Fraud Detected"}
-        </button>
-        {busy && <span className="text-xs text-brand-600 self-center animate-pulse">Check Freighter...</span>}
-      </div>
+
+      {txState === "done" ? (
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+          <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/5 gates passed</span>
+          <span className="badge-green text-xs px-4 py-2">{scanResult?.passed ? "✓ AI Passed - Gate 5" : "✗ AI Rejected - Gate 5"}</span>
+        </div>
+      ) : !scanResult ? (
+        <div className="pt-3 border-t border-slate-100">
+          <p className="text-xs text-slate-500 mb-3">Run the AI fraud detection engine to scan evidence for anomalies. The verdict is determined by the AI, not by human judgment.</p>
+          <button onClick={runFraudDetection} disabled={scanning}
+            className="btn-primary text-sm px-4 py-2 w-full">
+            {scanning ? "🤖 Scanning evidence..." : "🤖 Run AI Fraud Check"}
+          </button>
+          {scanning && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Analyzing GPS coordinates, metadata patterns, description completeness...</p>}
+        </div>
+      ) : (
+        <div className="pt-3 border-t border-slate-100">
+          <div className={`mb-3 p-3 rounded-lg text-sm ${scanResult.passed ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+            <p className="font-medium mb-2">🤖 AI Fraud Detection Results</p>
+            <p className="text-xs mb-2">Risk Score: <strong>{scanResult.riskScore}/100</strong> (threshold: 50)</p>
+            {scanResult.flags.length > 0 ? (
+              <div className="space-y-1">
+                {scanResult.flags.map((f, i) => (
+                  <div key={i} className="text-xs flex items-center gap-2">
+                    <span>🚨</span><span>{f}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs">No anomalies detected. All checks passed.</p>
+            )}
+            <p className={`text-xs mt-2 font-bold ${scanResult.passed ? "text-emerald-700" : "text-red-700"}`}>
+              {scanResult.passed ? "✅ AI VERDICT: PASS - No fraud detected" : "❌ AI VERDICT: REJECT - Fraud indicators found"}
+            </p>
+          </div>
+          <p className="text-xs text-slate-400 mb-3">The AI has determined the verdict above. Submit to record it on-chain as Gate 5 (final gate).</p>
+          <div className="flex gap-2">
+            <button onClick={submitVerdict} disabled={busy}
+              className={`btn-primary text-sm px-4 py-2 flex-1 ${!scanResult.passed ? "btn-danger" : ""}`}>
+              {busy ? "Signing..." : scanResult.passed ? "✅ Submit PASS Verdict On-Chain" : "🚨 Submit REJECT Verdict On-Chain"}
+            </button>
+            <button onClick={() => setScanResult(null)} disabled={busy}
+              className="btn-secondary text-sm px-4 py-2">
+              Re-run
+            </button>
+          </div>
+          {busy && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Check Freighter for signing prompt...</p>}
+        </div>
+      )}
+
     </div>
   );
 }

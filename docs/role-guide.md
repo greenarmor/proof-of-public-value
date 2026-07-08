@@ -184,9 +184,9 @@ Executes projects and submits evidence for each milestone. The contractor is the
 | Alias | `engineer` |
 | Route | `/engineer` |
 | Dashboard | Engineer Panel |
-| Contracts | `escrow` (Gate 2: engineer_approval), `pvo_core` (read milestones) |
+| Contracts | `escrow` (Gate 1: engineer_approval), `pvo_core` (read milestones) |
 
-Licensed professional who verifies that physical work meets specifications. This is **Gate 2** in the 5-gate escrow system.
+Licensed professional who verifies that physical work meets specifications. This is **Gate 1** in the 5-gate escrow system.
 
 **Dashboard tabs:**
 
@@ -199,12 +199,12 @@ Licensed professional who verifies that physical work meets specifications. This
 **What they do:**
 
 1. Review submitted evidence (photos, drone imagery, specs) with full details
-2. Approve milestones on the escrow contract to pass Gate 2
+2. Approve milestones on the escrow contract to pass Gate 1
 3. View all approved milestones and their payment status
 4. Browse all PVOs for project context
 
 ```bash
-# Gate 2: Engineer approval
+# Gate 1: Engineer approval
 stellar contract invoke --source engineer --network testnet --send=yes \
   --id CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X \
   -- engineer_approve \
@@ -223,7 +223,7 @@ stellar contract invoke --source engineer --network testnet --send=yes \
 | Dashboard | Inspector Panel |
 | Contracts | `pvo_core` (submit InspectionReport evidence) |
 
-Conducts field inspections independently from the engineer. While the engineer checks technical specifications and signs off Gate 2 on the escrow, the inspector provides independent verification by submitting `InspectionReport` evidence to the pvo_core contract.
+Conducts field inspections independently from the engineer. While the engineer checks technical specifications and signs off Gate 1 on the escrow, the inspector provides independent verification by submitting `InspectionReport` evidence to the pvo_core contract.
 
 **Dashboard tabs:**
 
@@ -242,7 +242,7 @@ Conducts field inspections independently from the engineer. While the engineer c
 4. Track all inspection reports submitted with verification status
 
 !!! note "No escrow gate"
-    The inspector does not have a dedicated gate in the escrow contract. They submit `InspectionReport` evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 2 on the escrow.
+    The inspector does not have a dedicated gate in the escrow contract. They submit `InspectionReport` evidence to pvo_core as supporting documentation. The engineer references this when approving Gate 1 on the escrow.
 
 ### Engineer vs Inspector: The Check-and-Balance Pair
 
@@ -254,7 +254,7 @@ In Philippine public works, these are two separate people from two separate orga
 | **Sector** | Private | Public |
 | **What they verify** | Structural integrity, spec compliance | Physical conditions on site |
 | **Contract function** | `escrow.engineer_approve()` | `pvo_core.submit_evidence(InspectionReport)` |
-| **Escrow gate** | ✅ Gate 2 — **required for payment** | ❌ No gate — supporting evidence |
+| **Escrow gate** | ✅ Gate 1 — **required for payment** | ❌ No gate — supporting evidence |
 | **Effect on money** | Blocks or releases funds | Documents conditions, no financial impact |
 | **Dashboard** | `/engineer` | `/inspector` |
 | **Conflict check** | Engineer is paid by contractor → potential bias | Inspector is independent → accountability layer |
@@ -266,7 +266,7 @@ In Philippine public works, these are two separate people from two separate orga
 ```
 Contractor submits evidence
     │
-Engineer reviews → approves Gate 2 → FUNDS CAN BE RELEASED
+Engineer reviews → approves Gate 1 → FUNDS CAN BE RELEASED
     │                    │
 Inspector visits site → submits InspectionReport → AUDIT TRAIL EXISTS
                          (doesn't block or release funds)
@@ -285,13 +285,15 @@ Contractor pays Engineer → Engineer reviews Contractor's work → CONFLICT
 PoPV does not try to prevent this conflict. Instead, it **assumes it exists** and layers independent verification on top:
 
 ```
-Gate 2: Engineer approves  ← weakest, single source, potential bias
+Gate 1: Engineer approves  ← weakest, single source, potential bias
     ↓
-Gate 3: AI Oracle validates ← cross-references patterns from ALL contracts
+Gate 2: Compliance checks   ← independent constitutional authority (COA)
     ↓
-Gate 4: Compliance checks   ← independent constitutional authority (COA)
+Gate 3: Community oracle    ← verified GPS field reports from citizens
     ↓
-Gate 5: Community confirms  ← citizens verify on the ground with GPS
+Gate 4: Community confirms  ← threshold of independent witnesses met
+    ↓
+Gate 5: AI Oracle validates ← cross-references patterns from ALL contracts
     ↓
 AntiCorruption can dispute ANY escrow at ANY time
     ↓
@@ -309,7 +311,7 @@ The engineer's **reputation score** is visible on their dashboard. It tracks the
 The engineer's **reputation score** is visible on their dashboard. It tracks their professional integrity on-chain:
 
 ```
-Engineer approves Gate 2 → escrow proceeds
+Engineer approves Gate 1 → escrow proceeds
     │
 Inspector submits contradicting report → Audit trail created
     │
@@ -347,23 +349,23 @@ These are two independent government roles checking different things at differen
 | **What they check** | Concrete thickness, asphalt quality, drainage | Receipts, bidding process, budget allocation, safety regs |
 | **Evidence type** | Photos, GPS coordinates, inspection notes | Audit entries, compliance reports, violation records |
 | **Contract function** | `pvo_core.submit_evidence(InspectionReport)` | `escrow.compliance_validate()` + `audit_trail` |
-| **Escrow gate** | ❌ No gate — supporting evidence | ✅ Gate 4 — **required for payment** |
+| **Escrow gate** | ❌ No gate — supporting evidence | ✅ Gate 2 — **required for payment** |
 | **Effect on money** | Documents conditions, no financial impact | Blocks or releases funds |
 | **Dashboard** | `/inspector` | `/auditor`, `/compliance` |
-| **How they override engineer** | Submit photos proving poor quality → audit trail | Reject compliance → Gate 4 fails → funds stay locked |
+| **How they override engineer** | Submit photos proving poor quality → audit trail | Reject compliance → Gate 2 fails → funds stay locked |
 
 **Why both?** The inspector catches what's **wrong on the ground** (cracked concrete, uneven asphalt). The auditor catches what's **wrong on paper** (inflated prices, skipped bidding, regulatory violations). An inspector's photo of bad concrete is evidence. An auditor's rejection of compliance stops payment.
 
 **In the escrow flow:**
 
 ```
-Engineer approves Gate 2
+Engineer approves Gate 1
     │
 Inspector visits → submits InspectionReport → "Foundation has cracks"
     │                                            (doesn't block funds)
 Auditor reviews → sees inspector's photos + engineer's approval
     │
-Auditor rejects Gate 4 → FUNDS STAY LOCKED
+Auditor rejects Gate 2 → FUNDS STAY LOCKED
     │            (COA has constitutional override authority)
 AntiCorruption sees pattern → disputes escrow → funds frozen
 ```
@@ -379,22 +381,22 @@ The inspector documents. The auditor acts.
 | Alias | `auditor` |
 | Routes | `/auditor`, `/compliance` |
 | Dashboards | Auditor Dashboard, Compliance Dashboard |
-| Contracts | `audit_trail`, `escrow` (Gate 4: compliance_validate), `compliance_engine` |
+| Contracts | `audit_trail`, `escrow` (Gate 2: compliance_validate), `compliance_engine` |
 
-Audits financial records and checks regulatory compliance. This is **Gate 4** in the 5-gate escrow system. The Auditor and CommissionOnAudit share the same dashboards.
+Audits financial records and checks regulatory compliance. This is **Gate 2** in the 5-gate escrow system. The Auditor and CommissionOnAudit share the same dashboards.
 
 **Dashboard tabs:**
 
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
 | Audit Trail | Every audit entry with category, actor, rationale | `audit_trail.get_entry` looped | None (read-only) |
-| Compliance Gate | Escrows needing compliance validation | `escrow.get_escrow` filtered for AI-validated, not yet compliance-passed | `escrow.compliance_validate` (Pass/Reject Gate 4) via TransactionBuilder + Freighter |
+| Compliance Gate | Escrows needing compliance validation | `escrow.get_escrow` filtered for engineer-approved, not yet compliance-passed | `escrow.compliance_validate` (Pass/Reject Gate 2) via TransactionBuilder + Freighter |
 | Violations | Active compliance violations | `compliance_engine.get_violation` looped | None (read-only) |
 
 **What they do:**
 
 1. Review all audit entries across all PVOs (approvals, payments, evidence, compliance, disputes)
-2. Pass or reject compliance validation on escrows at Gate 4
+2. Pass or reject compliance validation on escrows at Gate 2
 3. View active regulatory violations from the compliance engine
 4. Share dashboard access with CommissionOnAudit (COA)
 
@@ -546,7 +548,7 @@ Suppliers browse procurement tenders and submit bids on-chain. They participate 
 | Dashboard | AI Monitor (public) |
 | Contracts | `ai_oracle` |
 
-The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is **Gate 3** in the 5-gate escrow system.
+The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is **Gate 5** in the 5-gate escrow system.
 
 The dashboard is **public** — anyone can view AI findings at `/ai` without a wallet. See **[Appendix C: How the AI Oracle Works](ai-oracle.md)** for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.
 
@@ -617,10 +619,11 @@ Step 3: ESCROW CREATED AND FUNDED (tokens move)
 
 Step 4: 5 GATES PASS
     Gate 1: Contractor submits evidence
-    Gate 2: Engineer approves
-    Gate 3: AI validates
-    Gate 4: Compliance passes
-    Gate 5: Community confirms
+    Gate 1: Engineer approves
+    Gate 2: Compliance passes
+    Gate 3: Community oracle verifies
+    Gate 4: Community confirms (threshold)
+    Gate 5: AI validates
 
 Step 5: RELEASE (tokens move)
     escrow.release()

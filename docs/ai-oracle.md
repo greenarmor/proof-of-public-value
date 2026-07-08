@@ -77,7 +77,7 @@ Risk Level 3 (High):   delay > 60%
 
 The reputation score comes from the `reputation` contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.
 
-**Gate 3 impact:** Risk Category 3 (High) triggers a Gate 3 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.
+**Gate 5 impact:** Risk Category 3 (High) triggers a Gate 5 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.
 
 ### 3. GPS Validation
 
@@ -101,7 +101,7 @@ pub struct GpsValidation {
 d = 2r × arcsin(√(sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)))
 ```
 
-| Distance | Interpretation | Gate 3 effect |
+| Distance | Interpretation | Gate 5 effect |
 |----------|---------------|---------------|
 | < 5 km | Within municipality — likely valid | ✅ Pass |
 | 5-50 km | Nearby — needs review | ⚠️ Warning |
@@ -113,7 +113,7 @@ d = 2r × arcsin(√(sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)))
 2. **Fallback**: Municipality geocoding lookup (if no PVO coordinates were entered)
 3. **Reported**: GPS evidence submitted by contractor/inspector via `submit_evidence` with `GpsCoordinates` type
 
-**Gate 3 impact:** Multiple GPS validation failures (>50km from expected) trigger a Gate 3 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.
+**Gate 5 impact:** Multiple GPS validation failures (>50km from expected) trigger a Gate 5 rejection. The AI won't approve an escrow when evidence coordinates don't match the project location.
 
 ### 4. Digital Twin (Cost Simulation)
 
@@ -148,7 +148,7 @@ Deviation Alert = actual > expected × 1.2
 | > 120 | Cost inflation | Significantly over budget — red flag |
 | > 130 | Severe | Material cost index triggers `MaterialCostInflation` fraud flag |
 
-**Gate 3 impact:** A deviation alert (actual > 120% of expected) triggers a Gate 3 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.
+**Gate 5 impact:** A deviation alert (actual > 120% of expected) triggers a Gate 5 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.
 
 **Example:**
 
@@ -162,7 +162,7 @@ Actual Cost:      ₱4,200,000
 Material Index:   95% (on track)
 Labor Index:      93% (on track)
 Deviation Alert:  false
-→ ✅ Pass Gate 3
+→ ✅ Pass Gate 5
 ```
 
 ### 5. Image / Evidence Verification
@@ -191,7 +191,7 @@ Fetch HEAD request → https://gateway.pinata.cloud/ipfs/{hash}
 
 **What it does NOT do:** No computer vision. No image recognition. No AI-powered content analysis. It only verifies that the file the contractor claimed to upload actually exists on IPFS and is accessible.
 
-**Gate 3 impact:** Low authenticity scores (< 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 3 rejection.
+**Gate 5 impact:** Low authenticity scores (< 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 5 rejection.
 
 ### 6. Geo Risk Assessment
 
@@ -213,19 +213,19 @@ pub struct GeoRiskAssessment {
 
 The risk scores are submitted by the AI analysis service after cross-referencing the PVO's municipality against Philippine hazard maps. The overall risk is the maximum of the three categories.
 
-| Risk Level | Meaning | Gate 3 effect |
+| Risk Level | Meaning | Gate 5 effect |
 |------------|---------|---------------|
 | 0-2 | Low risk | ✅ Pass |
 | 3 | Moderate risk | ⚠️ Warning |
 | 4-5 | High risk | ❌ Reject |
 
-**Gate 3 impact:** Geo risk level 4+ triggers a Gate 3 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.
+**Gate 5 impact:** Geo risk level 4+ triggers a Gate 5 rejection. The AI won't approve an escrow for projects in high-risk hazard zones without additional verification of mitigation measures.
 
-## Gate 3 Decision Matrix
+## Gate 5 Decision Matrix
 
-The AI Auditor's Gate 3 verdict is a **composite** of all five analysis types. A single high-risk finding in ANY category can trigger rejection:
+The AI Auditor's Gate 5 verdict is a **composite** of all five analysis types. A single high-risk finding in ANY category can trigger rejection:
 
-| Analysis | Check | Threshold | Rejects Gate 3? |
+| Analysis | Check | Threshold | Rejects Gate 5? |
 |----------|-------|-----------|-----------------|
 | Fraud | Any high-risk indicator (≥50) | Collusion, ghost project, etc. | ✅ Yes |
 | Risk | Contractor risk category | Level 3 (High) | ✅ Yes |
@@ -234,7 +234,7 @@ The AI Auditor's Gate 3 verdict is a **composite** of all five analysis types. A
 | GPS | Validation failures | Any failed (>50km) | ✅ Yes |
 | Image | Inaccessible evidence | Authenticity < 30% | ⚠️ Contributes |
 
-**Only if ALL categories pass does the AI recommend Gate 3 approval.** This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.
+**Only if ALL categories pass does the AI recommend Gate 5 approval.** This is displayed on the AI Dashboard's Escrow Gate tab where the human AI Auditor reviews the verdict and executes the transaction.
 
 ## Architecture
 

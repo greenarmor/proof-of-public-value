@@ -41,6 +41,14 @@ export function ContractorPortal() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"projects" | "payments" | "history">("projects");
   const [evidenceModal, setEvidenceModal] = useState(false);
+  const [prefillPvoId, setPrefillPvoId] = useState(0);
+  const [prefillMilestoneId, setPrefillMilestoneId] = useState(0);
+
+  const openEvidence = (pvoId: number, milestoneId: number) => {
+    setPrefillPvoId(pvoId);
+    setPrefillMilestoneId(milestoneId);
+    setEvidenceModal(true);
+  };
 
   if (!connected) {
     return (
@@ -64,33 +72,30 @@ export function ContractorPortal() {
       </div>
       <CreatePphpTrustline address={address!} />
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-1 border-b border-gray-200">
-          {(["projects", "payments", "history"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-                activeTab === tab
-                  ? "border-purple-600 text-purple-700"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab === "projects" && "📋 My Projects"}
-              {tab === "payments" && "💳 Payments"}
-              {tab === "history" && "📄 History"}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => setEvidenceModal(true)} className="btn-primary text-xs px-4 py-2">📎 Submit Evidence</button>
+      <div className="flex gap-1 border-b border-gray-200 mb-6">
+        {(["projects", "payments", "history"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              activeTab === tab
+                ? "border-purple-600 text-purple-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab === "projects" && "📋 My Projects"}
+            {tab === "payments" && "💳 Payments"}
+            {tab === "history" && "📄 History"}
+          </button>
+        ))}
       </div>
 
-      {activeTab === "projects" && <ProjectsTab address={address!} />}
+      {activeTab === "projects" && <ProjectsTab address={address!} onSubmitEvidence={openEvidence} />}
       {activeTab === "payments" && <PaymentsTab address={address!} />}
       {activeTab === "history" && <HistoryTab address={address!} />}
 
       <Modal open={evidenceModal} onClose={() => setEvidenceModal(false)} title="Submit Evidence">
-        <EvidenceTab address={address!} onDone={() => setEvidenceModal(false)} />
+        <EvidenceTab key={`${prefillPvoId}-${prefillMilestoneId}`} address={address!} prefillPvoId={prefillPvoId} prefillMilestoneId={prefillMilestoneId} onDone={() => setEvidenceModal(false)} />
       </Modal>
     </div>
   );
@@ -98,7 +103,7 @@ export function ContractorPortal() {
 
 // --- Projects Tab ---
 
-function ProjectsTab({ address }: { address: string }) {
+function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitEvidence: (pvoId: number, milestoneId: number) => void }) {
   const [pvos, setPvos] = useState<PVOData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PVOData | null>(null);
@@ -203,9 +208,9 @@ function ProjectsTab({ address }: { address: string }) {
           {milestones.map(m => {
             const gates = [
               { label: "Engineer", done: m.engineer_approved },
-              { label: "AI", done: m.ai_validated },
               { label: "Compliance", done: m.compliance_passed },
-              { label: `Community (${m.community_confirmations}/${m.community_required})`, done: m.community_confirmations >= m.community_required },
+              { label: "Community", done: m.community_confirmations >= m.community_required },
+              { label: "AI", done: m.ai_validated },
             ];
             const passed = gates.filter(g => g.done).length;
             return (
@@ -232,8 +237,13 @@ function ProjectsTab({ address }: { address: string }) {
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 pt-2 border-t border-slate-100">
-                  <p className="text-[11px] text-slate-400">{passed}/4 gates passed</p>
+                <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400">{passed}/4 gates passed</span>
+                  {m.status !== "Released" && (
+                    <button onClick={() => onSubmitEvidence(selected.id, m.id)} className="btn-primary text-xs px-3 py-1">
+                      📎 Submit Evidence
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -283,19 +293,20 @@ function ProjectsTab({ address }: { address: string }) {
 
 // --- Evidence Tab ---
 
-function EvidenceTab({ address, onDone }: { address: string; onDone: () => void }) {
+function EvidenceTab({ address, prefillPvoId, prefillMilestoneId, onDone }: { address: string; prefillPvoId: number; prefillMilestoneId: number; onDone: () => void }) {
   const [pvos, setPvos] = useState<{ id: number; title: string }[]>([]);
-  const [selectedPvoId, setSelectedPvoId] = useState("");
-  const [milestoneId, setMilestoneId] = useState("");
-  const [evidenceType, setEvidenceType] = useState("EngineeringReport");
+  const [selectedPvoId, setSelectedPvoId] = useState(String(prefillPvoId || ""));
+  const [milestoneId, setMilestoneId] = useState(String(prefillMilestoneId || ""));
+  const [evidenceType, setEvidenceType] = useState("");
+  const [requiredTypes, setRequiredTypes] = useState<string[]>([]);
+  const [typesLoaded, setTypesLoaded] = useState(false);
+  const [milestoneTitle, setMilestoneTitle] = useState("");
   const [dataHash, setDataHash] = useState("");
   const [metadata, setMetadata] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-
-  const types = ["DroneImagery", "SatelliteImagery", "GpsCoordinates", "TimestampedPhoto", "TimestampedVideo", "IoTSensor", "EngineeringReport", "LabResult", "InspectionReport", "CommunityVerification"];
 
   // Load contractor's PVOs for the selection dropdown
   useEffect(() => {
@@ -310,6 +321,41 @@ function EvidenceTab({ address, onDone }: { address: string; onDone: () => void 
       }
     })();
   }, [address]);
+
+  // Load milestone required evidence types when PVO + milestone are selected
+  useEffect(() => {
+    if (!selectedPvoId || !milestoneId) { setRequiredTypes([]); setTypesLoaded(false); return; }
+    (async () => {
+      try {
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await client.get_pvo_milestones({ pvo_id: Number(selectedPvoId) });
+        const ms = (result.result || []) as any[];
+        const m = ms.find((x: any) => Number(x.id) === Number(milestoneId));
+        if (m) {
+          setMilestoneTitle(m.title || "");
+          const reqRaw = m.required_evidence || [];
+          const reqTypes = reqRaw.map((e: any) => {
+            if (typeof e === "object" && e.tag) return e.tag;
+            if (typeof e === "string") return e;
+            return String(e);
+          });
+          if (reqTypes.length > 0) {
+            setRequiredTypes(reqTypes);
+            if (!evidenceType) setEvidenceType(reqTypes[0]);
+          } else {
+            const fallback = ["TimestampedPhoto", "DroneImagery", "GpsCoordinates", "EngineeringReport"];
+            setRequiredTypes(fallback);
+            if (!evidenceType) setEvidenceType(fallback[0]);
+          }
+        }
+      } catch {
+        const fallback = ["TimestampedPhoto", "DroneImagery", "GpsCoordinates", "EngineeringReport"];
+        setRequiredTypes(fallback);
+        if (!evidenceType) setEvidenceType(fallback[0]);
+      }
+      setTypesLoaded(true);
+    })();
+  }, [selectedPvoId, milestoneId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,7 +414,7 @@ function EvidenceTab({ address, onDone }: { address: string; onDone: () => void 
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
+      await server.sendTransaction(signedTx);
 
       setTxState("done");
       setTxMsg("Evidence submitted on-chain! ID will be visible in milestones.");
@@ -396,7 +442,7 @@ function EvidenceTab({ address, onDone }: { address: string; onDone: () => void 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-          <select value={selectedPvoId} onChange={(e) => setSelectedPvoId(e.target.value)} className="select" required>
+          <select value={selectedPvoId} onChange={(e) => setSelectedPvoId(e.target.value)} className="select" required disabled={!!prefillPvoId}>
             <option value="">Select a project...</option>
             {pvos.map(p => <option key={p.id} value={p.id}>PVO #{p.id} - {p.title}</option>)}
           </select>
@@ -404,13 +450,20 @@ function EvidenceTab({ address, onDone }: { address: string; onDone: () => void 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Milestone ID</label>
           <input type="number" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}
-            className="input" placeholder="e.g. 3" required />
+            className="input" placeholder="e.g. 3" readOnly={!!prefillMilestoneId} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Evidence Type</label>
-          <select value={evidenceType} onChange={(e) => setEvidenceType(e.target.value)} className="select">
-            {types.map((t) => <option key={t} value={t}>{t.replace(/([A-Z])/g, " $1").trim()}</option>)}
-          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Evidence Type {milestoneTitle && <span className="text-slate-400 font-normal">({milestoneTitle})</span>}</label>
+          {!typesLoaded ? (
+            <select className="select" disabled>
+              <option>Loading evidence types...</option>
+            </select>
+          ) : (
+            <select value={evidenceType} onChange={(e) => setEvidenceType(e.target.value)} className="select">
+              {requiredTypes.map((t) => <option key={t} value={t}>{t.replace(/([A-Z])/g, " $1").trim()}</option>)}
+            </select>
+          )}
+          <p className="text-xs text-slate-400 mt-1">Auto-assigned from milestone requirements.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Evidence File</label>
@@ -442,7 +495,8 @@ function EvidenceTab({ address, onDone }: { address: string; onDone: () => void 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Metadata / Notes</label>
           <textarea value={metadata} onChange={(e) => setMetadata(e.target.value)}
-            className="input" rows={3} placeholder="Drone flyover of site preparation..." />
+            className="input" rows={4} placeholder={`e.g. "Site visit for ${milestoneTitle || "milestone"}. Concrete pouring completed and verified on-site. GPS coordinates match project plan. Photos taken from north and south angles."`} />
+          <p className="text-xs text-slate-400 mt-1">Describe what was done, when, and how it was verified. This is recorded on-chain permanently.</p>
         </div>
 
         <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
@@ -553,10 +607,10 @@ function PaymentsTab({ address }: { address: string }) {
         {escrows.map(e => {
           const gates = [
             { label: "Engineer", done: e.engineerApproval },
-            { label: "AI", done: e.aiRiskCheck },
             { label: "Compliance", done: e.complianceValidation },
             { label: "Oracle", done: (e as any).oracleApproval },
             { label: `Community (${e.communityConfirmation}/${e.communityRequired})`, done: e.communityConfirmation >= e.communityRequired },
+            { label: "AI Risk", done: e.aiRiskCheck },
           ];
           const passed = gates.filter(g => g.done).length;
           return (

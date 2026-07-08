@@ -21,6 +21,7 @@ import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
 import { FunderDashboard } from "./pages/FunderDashboard";
 import { DonorDashboard } from "./pages/DonorDashboard";
 import { LandingPage } from "./pages/LandingPage";
+import { ProvenanceExplorer } from "./pages/ProvenanceExplorer";
 import { formatAddress } from "./helpers";
 
 interface NavItem {
@@ -33,9 +34,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/portal", label: "Public Portal", icon: "🏛️", group: "public" },
-  { to: "/onboarding", label: "Role-Play", icon: "🎭", group: "public" },
-  { to: "/index", label: "Index", icon: "🏆", group: "public" },
-  { to: "/memory", label: "Search", icon: "🔍", group: "public" },
+  { to: "/provenance", label: "Explorer", icon: "📋", group: "public" },
   { to: "/escrows", label: "Escrows", icon: "🔒", group: "public" },
   { to: "/#features", label: "How It Works", icon: "🔄", group: "landing" },
   { to: "/#capabilities", label: "Capabilities", icon: "✨", group: "landing" },
@@ -258,6 +257,16 @@ function Header() {
                 {item.label}
               </NavLink>
             ))}
+            {!connected && (
+              <NavLink
+                to="/onboarding"
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`
+                }
+              >
+                <span className="mr-1">🎭</span>Role-Play
+              </NavLink>
+            )}
 
             {/* Dashboards dropdown */}
             {visibleRoleItems.length > 0 && (
@@ -432,6 +441,17 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
+              {!connected && (
+                <NavLink
+                  to="/onboarding"
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
+                  }
+                >
+                  <span>🎭</span>Role-Play
+                </NavLink>
+              )}
             </div>
             {grouped.map(({ group, items }) => (
               <div key={group}>
@@ -556,6 +576,7 @@ function App() {
                   />
                 }
               />
+              <Route path="/provenance" element={<ProvenanceExplorer />} />
               <Route path="/ai" element={<AIDashboard />} />
               <Route
                 path="/compliance"

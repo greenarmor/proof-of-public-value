@@ -5,6 +5,8 @@ import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } fr
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 
+const PROVENANCE_API = "http://127.0.0.1:3111";
+
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
 interface PVOData {
@@ -43,6 +45,8 @@ export function TransparencyPortal() {
   const [selected, setSelected] = useState<PVOData | null>(null);
   const [escrows, setEscrows] = useState<any[]>([]);
   const [escrowsLoading, setEscrowsLoading] = useState(false);
+  const [provenanceData, setProvenanceData] = useState<any>(null);
+  const [provenanceLoading, setProvenanceLoading] = useState(false);
   const [filter, setFilter] = useState("");
   const [page, setPage] = useState(1);
   const PER_PAGE = 15;
@@ -179,6 +183,18 @@ export function TransparencyPortal() {
     })();
   }, [selected]);
 
+  // Load provenance when a PVO is selected
+  useEffect(() => {
+    if (!selected) { setProvenanceData(null); return; }
+    (async () => {
+      setProvenanceLoading(true);
+      try {
+        const res = await fetch(`${PROVENANCE_API}/api/provenance/${selected.id}`);
+        if (res.ok) setProvenanceData(await res.json());
+      } catch {} finally { setProvenanceLoading(false); }
+    })();
+  }, [selected]);
+
   const filtered = filter ? pvos.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.department.toLowerCase().includes(filter.toLowerCase()) || p.municipality.toLowerCase().includes(filter.toLowerCase())) : pvos;
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -303,12 +319,21 @@ export function TransparencyPortal() {
                   {escrows.map(e => {
                     const gates = [
                       { label: "Engineer", done: e.engineer },
-                      { label: "AI", done: e.ai },
                       { label: "Compliance", done: e.compliance },
                       { label: "Oracle", done: e.oracle },
                       { label: `Community (${e.community}/${e.communityRequired})`, done: e.community >= e.communityRequired },
+                      { label: "AI Risk", done: e.ai },
                     ];
                     const passed = gates.filter((g: any) => g.done).length;
+                    const provMilestone = provenanceData?.milestones?.find(
+                      (m: any) => m.milestone_id === e.milestoneId
+                    );
+                    const provGates = provMilestone?.gates ?? [];
+                    const gateTxHashes: Record<number, string> = {};
+                    for (const pg of provGates) {
+                      if (pg.tx_hash) gateTxHashes[pg.gate_number] = pg.tx_hash;
+                    }
+                    const hasTxLinks = Object.keys(gateTxHashes).length > 0;
                     return (
                       <div key={e.id} className="card p-4">
                         <div className="flex items-start justify-between mb-2">
@@ -316,15 +341,36 @@ export function TransparencyPortal() {
                             <span className="text-xs font-mono text-slate-400">Escrow #{e.id} · Milestone #{e.milestoneId}</span>
                             <p className="font-semibold text-slate-900 mt-0.5">{currency}{(e.amount / PPHP_SCALE).toLocaleString()}</p>
                           </div>
-                          <span className={`badge text-xs ${e.status === "Released" ? "badge-green" : e.status === "Refunded" ? "badge-red" : "badge-blue"}`}>{e.status}</span>
+                          <div className="flex items-center gap-2">
+                            {hasTxLinks && (
+                              <span className="badge text-[10px] bg-indigo-50 text-indigo-600 border-indigo-200">
+                                🔗 Auditable
+                              </span>
+                            )}
+                            <span className={`badge text-xs ${e.status === "Released" ? "badge-green" : e.status === "Refunded" ? "badge-red" : "badge-blue"}`}>{e.status}</span>
+                          </div>
                         </div>
                         <div className="grid grid-cols-5 gap-1.5 mb-2">
-                          {gates.map((gate: any, i: number) => (
-                            <div key={i} className={`rounded-md p-1 text-center text-[10px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
-                              <div className="text-xs">{gate.done ? "✓" : "○"}</div>
-                              {gate.label}
-                            </div>
-                          ))}
+                          {gates.map((gate: any, i: number) => {
+                            const txHash = gateTxHashes[i + 1];
+                            return (
+                              <div key={i} className={`rounded-md p-1 text-center text-[10px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
+                                <div className="text-xs">{gate.done ? "✓" : "○"}</div>
+                                {gate.label}
+                                {txHash && (
+                                  <a
+                                    href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-[9px] text-indigo-500 hover:text-indigo-700 mt-0.5"
+                                    title={`TX: ${txHash}`}
+                                  >
+                                    🔗 {txHash.slice(0, 6)}…
+                                  </a>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
                           <span className="text-[10px] text-slate-400">{passed}/5 gates · Funder: <WalletAddress addr={e.funder} chars={4} /></span>

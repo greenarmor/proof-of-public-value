@@ -255,10 +255,10 @@ function EscrowCard({ escrow, currency, address, onAction }: {
 
   const gates = [
     { label: "Engineer", done: escrow.engineerApproval },
-    { label: "AI Risk", done: escrow.aiRiskCheck },
     { label: "Compliance", done: escrow.complianceValidation },
     { label: "Oracle", done: (escrow as any).oracleApproval },
     { label: `Community (${escrow.communityConfirmation}/${escrow.communityRequired})`, done: escrow.communityConfirmation >= escrow.communityRequired },
+    { label: "AI Risk", done: escrow.aiRiskCheck },
   ];
   const gatesPassed = gates.filter(g => g.done).length;
 
