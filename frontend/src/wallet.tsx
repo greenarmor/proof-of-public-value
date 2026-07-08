@@ -24,7 +24,10 @@ interface WalletContextValue {
 const WalletContext = createContext<WalletContextValue | null>(null);
 
 // ── WalletConnect Setup ──────────────────────────────────
-const WC_PROJECT_ID = "9d1e5c6b8a7f4e3d2c1b0a9f8e7d6c5b"; // public, rate-limited
+const WC_PROJECT_ID = 
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_WC_PROJECT_ID) ||
+  (typeof window !== "undefined" && (window as any).__WC_PROJECT_ID__) ||
+  "";
 const STELLAR_CHAIN = "stellar:testnet";
 const STELLAR_METHODS = ["stellar_signAndSubmit", "stellar_signXdr"];
 const STELLAR_EVENTS = ["chainChanged", "accountsChanged"];
