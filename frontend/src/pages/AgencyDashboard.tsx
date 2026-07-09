@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
@@ -184,8 +184,8 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
           </thead>
           <tbody>
             {pvos.map((p: any) => (
-              <>
-              <tr key={Number(p.id)} onClick={() => togglePvo(Number(p.id))} className={`border-t border-gray-100 cursor-pointer transition-colors ${selectedPvo === Number(p.id) ? "bg-purple-50" : "hover:bg-gray-50"}`}>
+              <React.Fragment key={Number(p.id)}>
+              <tr onClick={() => togglePvo(Number(p.id))} className={`border-t border-gray-100 cursor-pointer transition-colors ${selectedPvo === Number(p.id) ? "bg-purple-50" : "hover:bg-gray-50"}`}>
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">#{Number(p.id)}</td>
                 <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">{p.title}</td>
                 <td className="px-4 py-3 text-gray-600 text-xs">{p.department}</td>
@@ -218,7 +218,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
                   </td>
                 </tr>
               )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>

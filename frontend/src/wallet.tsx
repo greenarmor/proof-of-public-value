@@ -137,6 +137,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(async () => {
     try {
+      // Check if Freighter is installed
+      const { isConnected } = await import("@stellar/freighter-api");
+      if (typeof window !== "undefined" && !(window as any).freighter) {
+        window.open("https://freighter.app", "_blank");
+        return;
+      }
       await requestAccess();
       const r = await getAddress();
       setAddress(r.address);
