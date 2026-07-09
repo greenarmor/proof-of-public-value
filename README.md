@@ -138,6 +138,8 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 
 ## Quick Start
 
+**Live version:** [www.popv.quest](https://www.popv.quest) — no setup needed. Just connect Freighter.
+
 ### Path A: Frontend Only (reuse existing testnet contracts)
 
 No Rust, no contracts, no Stellar CLI. Just the UI.

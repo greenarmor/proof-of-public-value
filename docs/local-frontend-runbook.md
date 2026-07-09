@@ -1,7 +1,8 @@
 # Run PoPV Frontend Locally (No Contract Deployment)
 
 > Connect to the existing deployed contracts on Stellar testnet.  
-> No Rust, no `stellar contract build`, no lean-reset. Just the UI.
+> No Rust, no `stellar contract build`, no lean-reset. Just the UI.  
+> **Live version:** [www.popv.quest](https://www.popv.quest) — no setup needed. Just connect Freighter.
 
 ---
 
