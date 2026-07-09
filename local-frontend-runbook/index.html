@@ -1,0 +1,2406 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Programmable public spending on Stellar Soroban. No Proof. No Payment.">
+      
+      
+        <meta name="author" content="greenarmor">
+      
+      
+        <link rel="canonical" href="https://greenarmor.github.io/proof-of-public-value/local-frontend-runbook/">
+      
+      
+        <link rel="prev" href="../philippines-corruption/">
+      
+      
+        <link rel="next" href="../getting-started/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Local Deploy - Proof of Public Value (PoPV)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#run-popv-frontend-locally-no-contract-deployment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Proof of Public Value (PoPV)" class="md-header__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Proof of Public Value (PoPV)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Local Deploy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../philippines-corruption/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Why PoPV
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Local Deploy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../creating-projects/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Creating Projects
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../submitting-evidence/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Submitting Evidence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../approving-milestones/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Approving Milestones
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../community-verification/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Community Verification
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../audit-trail/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Audit Trail
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../role-guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Role Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../appendices/" class="md-tabs__link">
+          
+  
+  
+  Appendices
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Proof of Public Value (PoPV)" class="md-nav__button md-logo" aria-label="Proof of Public Value (PoPV)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Proof of Public Value (PoPV)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/greenarmor/proof-of-public-value" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    proof-of-public-value
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../philippines-corruption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why PoPV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Deploy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Deploy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-install-nodejs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Install Node.js
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Install Node.js">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ubuntudebian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ubuntu/Debian
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-install-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Install Git
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Install Git">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ubuntu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-install-freighter-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install Freighter Wallet
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Install Freighter Wallet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-Time Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-existing-role-wallets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Existing Role Wallets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fund-new-wallets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fund New Wallets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-clone-the-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Clone the Repo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-verify-contract-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Verify Contract IDs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-start-the-dev-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Start the Dev Server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-open-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Open the App
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 8: Open the App">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#public-pages-no-wallet-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public Pages (no wallet needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-a-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connect a Wallet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role-dashboards-wallet-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Dashboards (wallet required)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-full-role-play-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Full Role-Play Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-off-chain-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional: Off-Chain Services
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Optional: Off-Chain Services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provenance-indexer-adds-tx-hash-links-to-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance Indexer (adds tx hash links to gates)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-oracle-auto-fraud-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Oracle (auto fraud detection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#module-not-found-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Module not found" errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blank-pvo-list-no-projects-showing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blank PVO list / No projects showing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freighter-wont-connect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Freighter won't connect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-denied-on-a-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Access Denied" on a dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-5174-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port 5174 already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#insufficient-balance-on-transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "insufficient balance" on transaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trustline-entry-is-missing-rpt-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "trustline entry is missing" (RPT error)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thats-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        That's It
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating-projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../submitting-evidence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submitting Evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../approving-milestones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Approving Milestones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../community-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit-trail/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Trail
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../role-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Role Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Appendices
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Appendices
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../appendices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../escrow-deep-dive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Escrow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pphp-token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    pPHP Token
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ai-oracle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Oracle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You Need
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-install-nodejs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Install Node.js
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Install Node.js">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ubuntudebian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ubuntu/Debian
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-install-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Install Git
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Install Git">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ubuntu
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#windows_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-install-freighter-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install Freighter Wallet
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Install Freighter Wallet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-time-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First-Time Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-existing-role-wallets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Existing Role Wallets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fund-new-wallets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fund New Wallets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-clone-the-repo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Clone the Repo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-install-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Install Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-verify-contract-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Verify Contract IDs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-start-the-dev-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Start the Dev Server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-open-the-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Open the App
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 8: Open the App">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#public-pages-no-wallet-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public Pages (no wallet needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connect-a-wallet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connect a Wallet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#role-dashboards-wallet-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Dashboards (wallet required)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-full-role-play-walkthrough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Full Role-Play Walkthrough
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-off-chain-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional: Off-Chain Services
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Optional: Off-Chain Services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provenance-indexer-adds-tx-hash-links-to-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provenance Indexer (adds tx hash links to gates)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-oracle-auto-fraud-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI Oracle (auto fraud detection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#module-not-found-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Module not found" errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blank-pvo-list-no-projects-showing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blank PVO list / No projects showing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freighter-wont-connect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Freighter won't connect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#access-denied-on-a-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Access Denied" on a dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-5174-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port 5174 already in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#insufficient-balance-on-transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "insufficient balance" on transaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trustline-entry-is-missing-rpt-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "trustline entry is missing" (RPT error)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thats-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        That's It
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="run-popv-frontend-locally-no-contract-deployment">Run PoPV Frontend Locally (No Contract Deployment)<a class="headerlink" href="#run-popv-frontend-locally-no-contract-deployment" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Connect to the existing deployed contracts on Stellar testnet.<br />
+No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.</p>
+</blockquote>
+<hr />
+<h2 id="what-you-need">What You Need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js</td>
+<td>22+</td>
+<td>JavaScript runtime</td>
+</tr>
+<tr>
+<td>npm</td>
+<td>10+</td>
+<td>Package manager</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>any</td>
+<td>Clone the repo</td>
+</tr>
+<tr>
+<td>Freighter</td>
+<td>latest</td>
+<td>Stellar wallet browser extension</td>
+</tr>
+<tr>
+<td>Chrome or Firefox</td>
+<td>latest</td>
+<td>Browser</td>
+</tr>
+</tbody>
+</table>
+<p><strong>You do NOT need:</strong> Rust, Stellar CLI, Docker, Soroban SDK, or any contract tools.</p>
+<hr />
+<h2 id="step-1-install-nodejs">Step 1: Install Node.js<a class="headerlink" href="#step-1-install-nodejs" title="Permanent link">&para;</a></h2>
+<h3 id="macos">macOS<a class="headerlink" href="#macos" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Option A: Direct download</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># https://nodejs.org → Download LTS (22.x) → Install</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Option B: Homebrew</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>brew<span class="w"> </span>install<span class="w"> </span>node@22
+</code></pre></div>
+<h3 id="ubuntudebian">Ubuntu/Debian<a class="headerlink" href="#ubuntudebian" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://deb.nodesource.com/setup_22.x<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>-E<span class="w"> </span>bash<span class="w"> </span>-
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>nodejs
+</code></pre></div>
+<h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
+<p>Download from https://nodejs.org → LTS 22.x → run installer.</p>
+<h3 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>node<span class="w"> </span>--version<span class="w">   </span><span class="c1"># should show v22.x</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>npm<span class="w"> </span>--version<span class="w">    </span><span class="c1"># should show 10.x</span>
+</code></pre></div>
+<hr />
+<h2 id="step-2-install-git">Step 2: Install Git<a class="headerlink" href="#step-2-install-git" title="Permanent link">&para;</a></h2>
+<h3 id="macos_1">macOS<a class="headerlink" href="#macos_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>brew<span class="w"> </span>install<span class="w"> </span>git
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># or: xcode-select --install</span>
+</code></pre></div>
+<h3 id="ubuntu">Ubuntu<a class="headerlink" href="#ubuntu" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>git
+</code></pre></div>
+<h3 id="windows_1">Windows<a class="headerlink" href="#windows_1" title="Permanent link">&para;</a></h3>
+<p>Download from https://git-scm.com → run installer.</p>
+<h3 id="verify_1">Verify<a class="headerlink" href="#verify_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>--version
+</code></pre></div>
+<hr />
+<h2 id="step-3-install-freighter-wallet">Step 3: Install Freighter Wallet<a class="headerlink" href="#step-3-install-freighter-wallet" title="Permanent link">&para;</a></h2>
+<p>Freighter is the Stellar browser extension wallet. You need it to sign transactions.</p>
+<h3 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://chromewebstore.google.com/detail/freighter/bacdhkkjdbjmnkbeaknincojmfogjimi"><strong>Chrome Web Store</strong></a> - Click "Add to Chrome"</li>
+<li><a href="https://addons.mozilla.org/en-US/firefox/addon/freighter/"><strong>Firefox Add-ons</strong></a> - Click "Add to Firefox"</li>
+</ul>
+<h3 id="first-time-setup">First-Time Setup<a class="headerlink" href="#first-time-setup" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open Freighter (click the puzzle icon in Chrome toolbar → pin Freighter)</li>
+<li>Click <strong>"Create Wallet"</strong></li>
+<li>Create a password (write it down!)</li>
+<li>Save the 12-word recovery phrase (write it down! Never share it!)</li>
+<li>Confirm the recovery phrase</li>
+</ol>
+<h3 id="import-existing-role-wallets">Import Existing Role Wallets<a class="headerlink" href="#import-existing-role-wallets" title="Permanent link">&para;</a></h3>
+<p>You'll need wallets with on-chain roles. Get the secret keys from the project maintainer or <code>.dev-logs/newrolecreden.md</code>.</p>
+<p>For each role you want to test:
+1. Freighter → settings gear → <strong>"Add Account"</strong>
+2. Select <strong>"Import Secret Key"</strong>
+3. Paste the secret key (starts with <code>S</code>, 56 characters)
+4. Name it so you remember the role (e.g. "alice-admin", "agency", "contractor")</p>
+<p>Example secret key format:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>REDACTED_SECRET_KEY
+</code></pre></div></p>
+<h3 id="fund-new-wallets">Fund New Wallets<a class="headerlink" href="#fund-new-wallets" title="Permanent link">&para;</a></h3>
+<p>If your wallet has 0 XLM, you can't pay transaction fees. Fund it:</p>
+<ol>
+<li>Copy the wallet's public key (starts with <code>G</code>, 56 characters)</li>
+<li>Go to: https://laboratory.stellar.org/#account-creator</li>
+<li>Paste the public key</li>
+<li>Click <strong>"Create Account"</strong> — funded with 10,000 testnet XLM</li>
+</ol>
+<hr />
+<h2 id="step-4-clone-the-repo">Step 4: Clone the Repo<a class="headerlink" href="#step-4-clone-the-repo" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/greenarmor/proof-of-public-value.git
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">cd</span><span class="w"> </span>proof-of-public-value
+</code></pre></div>
+<hr />
+<h2 id="step-5-install-dependencies">Step 5: Install Dependencies<a class="headerlink" href="#step-5-install-dependencies" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Install root dependencies (concurrently, typescript, stellar-sdk)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Install frontend dependencies (React, Vite, Tailwind)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</code></pre></div>
+<p>This takes 1-2 minutes depending on your internet.</p>
+<hr />
+<h2 id="step-6-verify-contract-ids">Step 6: Verify Contract IDs<a class="headerlink" href="#step-6-verify-contract-ids" title="Permanent link">&para;</a></h2>
+<p>The frontend reads from already-deployed contracts on Stellar testnet. Contract IDs are in <code>frontend/src/config.ts</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>head<span class="w"> </span>-16<span class="w"> </span>frontend/src/config.ts
+</code></pre></div>
+<p>You should see entries like:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nx">access_control</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCAL...&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCA3...&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nx">pvo_core</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CBZM...&quot;</span><span class="p">,</span>
+</code></pre></div></p>
+<p>These point to the live testnet contracts. No changes needed. If the project maintainer redeployed contracts, they updated this file. Run <code>git pull</code> to stay in sync.</p>
+<hr />
+<h2 id="step-7-start-the-dev-server">Step 7: Start the Dev Server<a class="headerlink" href="#step-7-start-the-dev-server" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+</code></pre></div>
+<p>This starts Vite on <strong>http://localhost:5174</strong> with hot reload.</p>
+<p>If port 5174 is already in use:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+</code></pre></div></p>
+<hr />
+<h2 id="step-8-open-the-app">Step 8: Open the App<a class="headerlink" href="#step-8-open-the-app" title="Permanent link">&para;</a></h2>
+<p>Go to <strong>http://localhost:5174</strong> in Chrome or Firefox (the browser where you installed Freighter).</p>
+<h3 id="public-pages-no-wallet-needed">Public Pages (no wallet needed)<a class="headerlink" href="#public-pages-no-wallet-needed" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code></td>
+<td>Landing page</td>
+</tr>
+<tr>
+<td><code>/portal</code></td>
+<td>Transparency Portal - browse all PVOs, see gates, funding progress</td>
+</tr>
+<tr>
+<td><code>/provenance</code></td>
+<td>Provenance Explorer - audit trail with tx hash links</td>
+</tr>
+<tr>
+<td><code>/escrows</code></td>
+<td>Escrow Monitor</td>
+</tr>
+<tr>
+<td><code>/onboarding</code></td>
+<td>Role-Play guide</td>
+</tr>
+<tr>
+<td><code>/index</code></td>
+<td>National Index</td>
+</tr>
+<tr>
+<td><code>/ai</code></td>
+<td>AI Monitor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="connect-a-wallet">Connect a Wallet<a class="headerlink" href="#connect-a-wallet" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Click <strong>"Connect Freighter"</strong> (or the wallet icon in the top-right navbar)</li>
+<li>Freighter popup opens → enter your password → click <strong>Connect</strong></li>
+<li>The navbar changes to show your wallet address and role</li>
+<li>A <strong>"Dashboards"</strong> dropdown appears with your role pages</li>
+</ol>
+<h3 id="role-dashboards-wallet-required">Role Dashboards (wallet required)<a class="headerlink" href="#role-dashboards-wallet-required" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Dashboard URL</th>
+<th>What you can do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Administrator</td>
+<td><code>/admin</code></td>
+<td>Assign roles, mint RPT and pPHP</td>
+</tr>
+<tr>
+<td>GovernmentAgency</td>
+<td><code>/agency</code></td>
+<td>Create PVOs, define milestones, open tenders</td>
+</tr>
+<tr>
+<td>Contractor</td>
+<td><code>/contractor</code></td>
+<td>Browse tenders, submit bids, submit evidence</td>
+</tr>
+<tr>
+<td>Engineer</td>
+<td><code>/engineer</code></td>
+<td>Approve milestones (Gate 1)</td>
+</tr>
+<tr>
+<td>Auditor / COA</td>
+<td><code>/auditor</code></td>
+<td>Compliance checks (Gate 2)</td>
+</tr>
+<tr>
+<td>FundingAgency</td>
+<td><code>/funder</code></td>
+<td>Create and fund escrows</td>
+</tr>
+<tr>
+<td>Citizen</td>
+<td><code>/citizen</code></td>
+<td>Submit GPS field reports (Gate 3-4)</td>
+</tr>
+<tr>
+<td>Inspector</td>
+<td><code>/inspector</code></td>
+<td>Submit inspection reports</td>
+</tr>
+<tr>
+<td>AIAuditor</td>
+<td><code>/ai</code></td>
+<td>Run AI fraud detection (Gate 5)</td>
+</tr>
+<tr>
+<td>InternationalDonor</td>
+<td><code>/donor</code></td>
+<td>Pledge grants</td>
+</tr>
+<tr>
+<td>Supplier</td>
+<td><code>/procurement</code></td>
+<td>Register in procurement market</td>
+</tr>
+<tr>
+<td>AntiCorruptionAgency</td>
+<td><code>/anticorruption</code></td>
+<td>Raise disputes</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-9-full-role-play-walkthrough">Step 9: Full Role-Play Walkthrough<a class="headerlink" href="#step-9-full-role-play-walkthrough" title="Permanent link">&para;</a></h2>
+<p>Use the <strong>Role-Play</strong> page (<code>/onboarding</code>) or follow this manual flow:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Connect as</th>
+<th>Go to</th>
+<th>Action</th>
+<th>Freighter Sign?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>agency</code></td>
+<td>Agency Dashboard</td>
+<td>Click "Create PVO" - fill title, dept, budget, fund source</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>agency</code></td>
+<td>Agency Dashboard</td>
+<td>Click "+ Add" on the PVO - define milestones with budgets</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>agency</code></td>
+<td>Agency Dashboard</td>
+<td>Click "Tender" on the PVO - set bid deadline</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>contractor</code></td>
+<td><code>/procurement</code></td>
+<td>Browse open tenders - click "Bid" - enter price, quality</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>agency</code></td>
+<td><code>/procurement</code> → Award tab</td>
+<td>Click "Award Tender" - auto-picks highest bid</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>alice</code> (admin)</td>
+<td>Admin Panel</td>
+<td>Click "Direct Fund" - mint pPHP to Funding Agency</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>funding_agency</code></td>
+<td>Awarded PVOs tab</td>
+<td>Expand PVO - click "Escrow" on a milestone</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>funding_agency</code></td>
+<td>Escrows tab</td>
+<td>Click "Fund Escrow" on the created escrow</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>contractor</code></td>
+<td>Contractor Portal</td>
+<td>Click PVO - expand milestone - "Submit Evidence"</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>inspector</code></td>
+<td>Inspector Panel</td>
+<td>Click PVO - expand milestone - "Submit Inspection"</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>engineer</code></td>
+<td>Engineer Panel</td>
+<td>Review evidence + inspector report - click "Approve"</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>auditor</code></td>
+<td>Auditor Dashboard → Compliance</td>
+<td>Click "Pass" on the compliance check</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>citizen</code></td>
+<td><code>/portal</code> - click PVO - find escrow</td>
+<td>Click "📸 Report" - enter GPS - Submit - Validate Gate 3 - Confirm Gate 4</td>
+<td>✅ Yes (×3)</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>ai_auditor</code></td>
+<td><code>/ai</code> dashboard</td>
+<td>Click "Run AI Fraud Check" (Gate 5)</td>
+<td>✅ Yes</td>
+</tr>
+<tr>
+<td>15</td>
+<td>any wallet</td>
+<td><code>/portal</code> - click PVO - find escrow</td>
+<td>Click "💸 Release" - funds go to contractor</td>
+<td>✅ Yes</td>
+</tr>
+</tbody>
+</table>
+<p>After release: PVO shows Completed, contractor receives pPHP, all gates green.</p>
+<hr />
+<h2 id="optional-off-chain-services">Optional: Off-Chain Services<a class="headerlink" href="#optional-off-chain-services" title="Permanent link">&para;</a></h2>
+<p>These enhance the experience but are NOT required:</p>
+<h3 id="provenance-indexer-adds-tx-hash-links-to-gates">Provenance Indexer (adds tx hash links to gates)<a class="headerlink" href="#provenance-indexer-adds-tx-hash-links-to-gates" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
+</code></pre></div>
+- Runs on http://127.0.0.1:3111
+- Adds clickable Stellar transaction links to every gate
+- Shows full audit timeline per PVO</p>
+<h3 id="ai-oracle-auto-fraud-detection">AI Oracle (auto fraud detection)<a class="headerlink" href="#ai-oracle-auto-fraud-detection" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">AI_AUDITOR_SECRET</span><span class="o">=</span>&lt;secret-key&gt;<span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once
+</code></pre></div>
+- Auto-scans for PVOs needing AI validation
+- Submits Gate 5 verdict on-chain
+- One instance serves all frontends worldwide</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="module-not-found-errors">"Module not found" errors<a class="headerlink" href="#module-not-found-errors" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</code></pre></div>
+<h3 id="blank-pvo-list-no-projects-showing">Blank PVO list / No projects showing<a class="headerlink" href="#blank-pvo-list-no-projects-showing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>git<span class="w"> </span>pull<span class="w">  </span><span class="c1"># get latest contract IDs</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">  </span><span class="c1"># restart server</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># Hard refresh browser: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Win)</span>
+</code></pre></div>
+<h3 id="freighter-wont-connect">Freighter won't connect<a class="headerlink" href="#freighter-wont-connect" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Refresh the page after installing Freighter</li>
+<li>Make sure you're on <code>http://localhost:5174</code> (NOT <code>https</code>)</li>
+<li>Disable other wallet extensions (MetaMask, Coinbase, etc.)</li>
+<li>Check Freighter is unlocked (enter password first)</li>
+</ul>
+<h3 id="access-denied-on-a-dashboard">"Access Denied" on a dashboard<a class="headerlink" href="#access-denied-on-a-dashboard" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Your wallet doesn't have that role</li>
+<li>Connect as <code>alice</code> (admin) → Admin Panel → assign the role</li>
+</ul>
+<h3 id="port-5174-already-in-use">Port 5174 already in use<a class="headerlink" href="#port-5174-already-in-use" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
+</code></pre></div>
+<h3 id="insufficient-balance-on-transaction">"insufficient balance" on transaction<a class="headerlink" href="#insufficient-balance-on-transaction" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Your wallet needs testnet XLM for fees</li>
+<li>Fund it: https://laboratory.stellar.org/#account-creator</li>
+</ul>
+<h3 id="trustline-entry-is-missing-rpt-error">"trustline entry is missing" (RPT error)<a class="headerlink" href="#trustline-entry-is-missing-rpt-error" title="Permanent link">&para;</a></h3>
+<ul>
+<li>As citizen, go to Citizen Report Form first — it auto-creates the RPT trustline</li>
+</ul>
+<hr />
+<h2 id="thats-it">That's It<a class="headerlink" href="#thats-it" title="Permanent link">&para;</a></h2>
+<p>No contract deployment. No Rust. No Stellar CLI. The blockchain IS the backend.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
