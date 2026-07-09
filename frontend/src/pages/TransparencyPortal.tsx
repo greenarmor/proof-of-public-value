@@ -6,7 +6,7 @@ import { formatBudget, formatAddress, formatTimestamp, statusToString } from "..
 import { WalletAddress } from "../components/WalletAddress";
 import { useWallet } from "../wallet";
 
-const PROVENANCE_API = "http://127.0.0.1:3111";
+const PROVENANCE_API = "https://provenance.chain.popv.quest";
 const PROVENANCE_API_BASE =
   (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
