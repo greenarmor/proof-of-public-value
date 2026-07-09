@@ -2541,6 +2541,9 @@ A: The oracle gate (gate 3) checks that the <strong>oracle contract itself</stro
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong>  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
 <hr />
 <h2 id="provenance-chain-immutable-audit-trail">Provenance Chain — Immutable Audit Trail<a class="headerlink" href="#provenance-chain-immutable-audit-trail" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>⚠️ <strong>Optional — Experimental Extension.</strong> The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking — all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.</p>
+</blockquote>
 <h3 id="what-it-is">What It Is<a class="headerlink" href="#what-it-is" title="Permanent link">&para;</a></h3>
 <p>The <strong>Provenance Chain</strong> is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its <strong>Stellar transaction hash</strong> — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.</p>
 <p><strong>Think of it as a blockchain-powered paper trail.</strong> Every peso's journey from budget allocation to contractor payment is recorded, timestamped, and linked to a permanent on-chain receipt that can never be altered or deleted.</p>

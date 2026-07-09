@@ -2295,7 +2295,7 @@
 </tr>
 <tr>
 <td>Off-chain services</td>
-<td>Provenance Indexer + AI Oracle  —  standalone TS services, run anywhere</td>
+<td>Provenance Indexer (optional, experimental) + AI Oracle  -  standalone TS services</td>
 </tr>
 </tbody>
 </table>
@@ -2329,6 +2329,10 @@
 <li><strong>One instance serves all frontend deployments</strong></li>
 </ul>
 <p><strong>Provenance Indexer</strong> (<code>provenance-indexer/service.ts</code>):</p>
+<blockquote>
+<p>⚠️ <strong>Optional — Experimental Extension.</strong> The Provenance Chain is not required for core PoPV functionality. All gate verification, fund locking, and release logic runs entirely on Stellar Soroban. The provenance indexer was built as an experiment to explore how we can offload query and indexing work from the blockchain, helping Stellar's performance by handling read-heavy audit requests off-chain.  </p>
+<p><strong>Goal:</strong> Eventually run serverless via scheduled functions or edge workers. Right now it runs on a background server reading from Stellar — a stepping stone toward a fully serverless audit trail.</p>
+</blockquote>
 <ul>
 <li>Polls Stellar testnet for contract events via SDK <code>getEvents()</code></li>
 <li>Reads contract state (PVOs, milestones, escrows, audit entries) to build full provenance trees</li>
