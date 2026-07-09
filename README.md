@@ -138,27 +138,29 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 
 ## Quick Start
 
-➡️ **[Complete Local Deploy Guide](docs/local-frontend-runbook.md)** - Node.js, Freighter setup, role-play walkthrough, troubleshooting.
+### Path A: Frontend Only (reuse existing testnet contracts)
+
+No Rust, no contracts, no Stellar CLI. Just the UI.
 
 ```bash
-# Install frontend
-cd frontend && npm install
-
-# Run dev server
-npm run dev
-
-# Run e2e tests
-npx tsx e2e-test.ts
-
-# Build contracts
-stellar contract build
-
-# Deploy all
-./scripts/deploy.sh
-
-# Run all tests
-cargo test
+git clone https://github.com/greenarmor/proof-of-public-value.git
+cd proof-of-public-value
+npm install --include=dev
+cd frontend && npm install --include=dev && cd ..
+npm run dev   # -> http://localhost:5174
 ```
+
+➡️ **[Full Local Deploy Guide](docs/local-frontend-runbook.md)** — Node.js setup, Freighter wallet import, 15-step role-play walkthrough, troubleshooting.
+
+### Path B: Full System (deploy your own contracts)
+
+Requires Rust, Stellar CLI, and Soroban SDK. Deploys 13 contracts under your control.
+
+```bash
+node .dev-logs/lean-reset.js   # deploys contracts, assigns roles, mints tokens
+npm run dev                    # -> http://localhost:5174
+```
+
 
 ---
 
