@@ -138,6 +138,8 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 
 ## Quick Start
 
+➡️ **[Complete Local Deploy Guide](docs/local-frontend-runbook.md)** - Node.js, Freighter setup, role-play walkthrough, troubleshooting.
+
 ```bash
 # Install frontend
 cd frontend && npm install

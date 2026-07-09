@@ -52,6 +52,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Why PoPV: philippines-corruption.md
+  - Local Deploy: local-frontend-runbook.md
   - Getting Started: getting-started.md
   - Creating Projects: creating-projects.md
   - Submitting Evidence: submitting-evidence.md
