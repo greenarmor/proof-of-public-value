@@ -385,7 +385,7 @@ function Header() {
                 </button>
               ) : (
                 <button onClick={connect} className="btn-primary text-xs px-3 py-2">
-                  🦊 Connect Freighter
+                  👛 Connect Freighter
                 </button>
               )}
               <a

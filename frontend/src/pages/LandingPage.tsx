@@ -89,7 +89,7 @@ export function LandingPage() {
             ) : (
               <button onClick={connect}
                 className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200">
-                🦊 Connect Freighter
+                👛 Connect Freighter
               </button>
             )}
             <a href="#features"
