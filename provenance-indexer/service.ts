@@ -59,7 +59,7 @@ const READ_SOURCE = process.env.PROVENANCE_SOURCE ?? "GBDNQETDDXGJ42PTL2ODGTBSNV
 
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
-const STORE_DIR = join(__dirname_local, "..", ".dev-logs");
+const STORE_DIR = join(__dirname_local, "..");
 const STORE_PATH = join(STORE_DIR, "provenance-store.json");
 
 const opts = {
