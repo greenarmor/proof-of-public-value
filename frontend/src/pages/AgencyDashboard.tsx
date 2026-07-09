@@ -498,6 +498,7 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
   const [evidenceTypes, setEvidenceTypes] = useState<string[]>(["DroneImagery"]);
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+  const [existingMilestoneTotal, setExistingMilestoneTotal] = useState(0);
 
   // Auto-search PVOs
   const [pvos, setPvos] = useState<any[]>([]);
@@ -511,6 +512,19 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
       if (pvo) { setSearchQuery(pvo.title); setPvoId(String(prefillPvoId)); }
     }
   }, [prefillPvoId, pvos]);
+
+  // Load existing milestones for the selected PVO to calculate remaining budget
+  useEffect(() => {
+    if (!pvoId) { setExistingMilestoneTotal(0); return; }
+    (async () => {
+      try {
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ml = await client.get_pvo_milestones({ pvo_id: Number(pvoId) });
+        const total = ((ml.result || []) as any[]).reduce((sum: number, m: any) => sum + Number(m.budget || 0), 0);
+        setExistingMilestoneTotal(total / PPHP_SCALE);
+      } catch { setExistingMilestoneTotal(0); }
+    })();
+  }, [pvoId]);
 
   useEffect(() => {
     (async () => {
@@ -634,25 +648,38 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
               if (!selectedPVO) return null;
               const totalBudget = Number(selectedPVO.total_budget) / PPHP_SCALE;
               const milestoneAmount = Number(budget) || 0;
-              const pct = totalBudget > 0 ? Math.min(100, Math.round((milestoneAmount / totalBudget) * 100)) : 0;
-              const overBudget = milestoneAmount > totalBudget;
+              const alreadyAllocated = existingMilestoneTotal;
+              const remaining = totalBudget - alreadyAllocated - milestoneAmount;
+              const totalAfter = totalBudget - alreadyAllocated;
+              const pct = totalBudget > 0 ? Math.min(100, Math.round(((alreadyAllocated + milestoneAmount) / totalBudget) * 100)) : 0;
+              const overBudget = remaining < 0;
               return (
                 <div className={`mt-2 p-3 rounded-lg border text-xs ${overBudget ? "bg-red-50 border-red-200 text-red-700" : "bg-blue-50 border-blue-200 text-blue-700"}`}>
                   <div className="flex justify-between mb-1"><span>PVO Total Budget:</span><span className="font-semibold">₱{totalBudget.toLocaleString()}</span></div>
+                  {alreadyAllocated > 0 && (
+                    <div className="flex justify-between mb-1"><span>Already Allocated:</span><span>₱{alreadyAllocated.toLocaleString()}</span></div>
+                  )}
                   {milestoneAmount > 0 && (
                     <>
                       <div className="flex justify-between mb-1"><span>This Milestone:</span><span>₱{milestoneAmount.toLocaleString()} ({pct}%)</span></div>
+                      <div className="flex justify-between mb-1 font-semibold"><span>Total After:</span><span>₱{(alreadyAllocated + milestoneAmount).toLocaleString()}</span></div>
                       {overBudget ? (
-                        <div className="pt-1 border-t border-red-200 text-red-700 font-semibold">⚠️ Milestone exceeds total PVO budget by ₱{(milestoneAmount - totalBudget).toLocaleString()}</div>
+                        <div className="pt-1 border-t border-red-200 text-red-700 font-semibold">⚠️ Over budget by ₱{Math.abs(remaining).toLocaleString()}</div>
                       ) : (
                         <div className="flex justify-between pt-1 border-t border-blue-200">
-                          <span>Remaining for other milestones:</span>
-                          <span className="font-bold">{totalBudget === milestoneAmount ? "₱0 (fully allocated)" : `₱${(totalBudget - milestoneAmount).toLocaleString()}`}</span>
+                          <span>Remaining:</span>
+                          <span className="font-bold">{remaining === 0 ? "₱0 (fully allocated)" : `₱${remaining.toLocaleString()}`}</span>
                         </div>
                       )}
                     </>
                   )}
-                  {milestoneAmount > 0 && !overBudget && (
+                  {milestoneAmount === 0 && (
+                    <div className="flex justify-between pt-1 border-t border-blue-200">
+                      <span>Remaining:</span>
+                      <span className="font-bold">{totalAfter === 0 ? "₱0 (fully allocated)" : `₱${totalAfter.toLocaleString()}`}</span>
+                    </div>
+                  )}
+                  {(alreadyAllocated + milestoneAmount) > 0 && !overBudget && (
                     <div className="mt-2 w-full bg-slate-200 rounded-full h-1.5">
                       <div className="bg-brand-500 rounded-full h-1.5 transition-all" style={{width: `${pct}%`}} />
                     </div>
