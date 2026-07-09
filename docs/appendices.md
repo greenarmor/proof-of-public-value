@@ -440,6 +440,8 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 
 ## Provenance Chain — Immutable Audit Trail
 
+> ⚠️ **Optional — Experimental Extension.** The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking — all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.
+
 ### What It Is
 
 The **Provenance Chain** is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its **Stellar transaction hash** — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.

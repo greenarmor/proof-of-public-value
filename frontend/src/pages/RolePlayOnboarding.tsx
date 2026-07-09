@@ -7,7 +7,7 @@ const ROLES = [
     title: "Citizen Reporter",
     icon: "📸",
     color: "bg-emerald-500",
-    desc: "Visit project sites. Submit GPS-tagged field reports. Your evidence is the final gate — without citizens, no funds are released.",
+    desc: "Visit project sites. Submit GPS-tagged field reports. Your evidence is the final gate  -  without citizens, no funds are released.",
     steps: [
       "Connect the Citizen wallet in Freighter",
       "Go to Citizen Report Form",
@@ -23,14 +23,14 @@ const ROLES = [
     title: "Licensed Engineer",
     icon: "🔧",
     color: "bg-blue-500",
-    desc: "Inspect physical work. Sign off on structural quality. You are Gate 1 — the technical gatekeeper.",
+    desc: "Inspect physical work. Sign off on structural quality. You are Gate 1  -  the technical gatekeeper.",
     steps: [
       "Connect the Engineer wallet in Freighter",
       "Go to Engineer Panel",
       "Review submitted evidence for a milestone",
       "Physically verify the work (roleplay: review drone imagery, GPS)",
       "Approve the milestone if it meets specifications",
-      "Gate 1 passes — escrow advances to compliance",
+      "Gate 1 passes  -  escrow advances to compliance",
     ],
   },
   {
@@ -38,14 +38,14 @@ const ROLES = [
     title: "AI Auditor",
     icon: "🤖",
     color: "bg-purple-500",
-    desc: "Run fraud detection on evidence. Scan for GPS anomalies, metadata tampering, and suspicious patterns. Gate 5 — runs last for maximum data.",
+    desc: "Run fraud detection on evidence. Scan for GPS anomalies, metadata tampering, and suspicious patterns. Gate 5  -  runs last for maximum data.",
     steps: [
       "Connect the AI Auditor wallet in Freighter",
       "Go to AI Dashboard",
       "Run AI validation on milestones with gates 1-4 passed",
       "AI analyzes GPS coordinates, metadata, description quality",
       "Assigns risk score: <50 = PASS, ≥50 = FAIL",
-      "Gate 5 passes — all gates complete, escrow ready for release",
+      "Gate 5 passes  -  all gates complete, escrow ready for release",
     ],
   },
   {
@@ -53,14 +53,14 @@ const ROLES = [
     title: "Auditor / COA",
     icon: "⚖️",
     color: "bg-amber-500",
-    desc: "Validate procurement law compliance, budget rules, and safety regulations. Gate 2 — the legal gatekeeper.",
+    desc: "Validate procurement law compliance, budget rules, and safety regulations. Gate 2  -  the legal gatekeeper.",
     steps: [
       "Connect the Auditor wallet in Freighter",
       "Go to Auditor Dashboard",
       "Review milestone compliance",
       "Check procurement law, budget allocation, safety rules",
       "Pass the compliance check",
-      "Gate 2 passes — escrow advances to community verification",
+      "Gate 2 passes  -  escrow advances to community verification",
     ],
   },
   {
@@ -68,15 +68,15 @@ const ROLES = [
     title: "Funding Agency",
     icon: "💰",
     color: "bg-cyan-500",
-    desc: "Create and fund escrows. Lock funds behind 5 verification gates. You hold the purse strings — but cannot release funds alone.",
+    desc: "Create and fund escrows. Lock funds behind 5 verification gates. You hold the purse strings  -  but cannot release funds alone.",
     steps: [
       "Connect the Funding Agency wallet in Freighter",
       "Go to Funding Agency Dashboard → Donor Commitments tab",
-      "Find a Disbursed grant — click Create Escrow",
+      "Find a Disbursed grant  -  click Create Escrow",
       "Select recipient, PVO, and milestone (autocomplete)",
       "Set community confirmation threshold",
-      "Submit — escrow created on-chain",
-      "Go to Escrows tab → Fund Escrow — deposit pPHP",
+      "Submit  -  escrow created on-chain",
+      "Go to Escrows tab → Fund Escrow  -  deposit pPHP",
       "Escrow is now locked behind 5 gates",
     ],
   },
@@ -90,8 +90,8 @@ const ROLES = [
       "Connect the International Donor wallet in Freighter",
       "Go to Donor Dashboard",
       "Browse PVOs with remaining budget",
-      "Pledge to a PVO — amount must exactly match remaining budget",
-      "Submit — pPHP transferred to Funding Agency atomically",
+      "Pledge to a PVO  -  amount must exactly match remaining budget",
+      "Submit  -  pPHP transferred to Funding Agency atomically",
       "Your pledge is recorded on-chain as Committed",
     ],
   },
@@ -103,10 +103,10 @@ const ROLES = [
     desc: "Bid on government tenders. Submit competitive offers with price, quality, and timeline. Win contracts, do the work, submit evidence. Prove you built what you were paid to build.",
     steps: [
       "Connect the Contractor wallet in Freighter",
-      "Go to Procurement Marketplace — browse open tenders",
+      "Go to Procurement Marketplace  -  browse open tenders",
       "Submit a bid with price, quality score, and timeline",
       "If awarded, your PVOs appear in Contractor Portal",
-      "Each submission is recorded on-chain — immutable audit trail",
+      "Each submission is recorded on-chain  -  immutable audit trail",
     ],
   },
   {
@@ -118,10 +118,10 @@ const ROLES = [
     steps: [
       "Connect the Government Agency wallet in Freighter",
       "Go to Agency Dashboard",
-      "Click Create PVO — enter title, department, budget (contractor assigned after bidding)",
+      "Click Create PVO  -  enter title, department, budget (contractor assigned after bidding)",
       "Define milestones per PVO (1 tender covers all milestones)",
-      "Open tender via Procurement Marketplace — contractors bid",
-      "Award the winning bid — contractor auto-assigned to PVO on-chain",
+      "Open tender via Procurement Marketplace  -  contractors bid",
+      "Award the winning bid  -  contractor auto-assigned to PVO on-chain",
     ],
   },
   {
@@ -134,9 +134,9 @@ const ROLES = [
       "Connect the Administrator (alice) wallet in Freighter",
       "Go to System Panel → Roles tab",
       "Assign roles to wallet addresses",
-      "Go to Pledges tab — click Mint & Disburse on Committed grants",
+      "Go to Pledges tab  -  click Mint & Disburse on Committed grants",
       "Sign two Freighter transactions: mint pPHP + mark disbursed",
-      "Go to Health tab — monitor system status",
+      "Go to Health tab  -  monitor system status",
     ],
   },
 ];
@@ -221,7 +221,7 @@ export function RolePlayOnboarding() {
         </h2>
         <p className="text-slate-600 leading-relaxed">
           <strong>To every government official in every country:</strong> you were given a sacred
-          trust — to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or
+          trust  -  to be the custodian of public wealth, not its owner. Every peso, dollar, rupee, or
           shilling belongs to the people. Your job is to protect it, allocate it wisely, and spend
           it transparently.
           <br />
@@ -241,11 +241,11 @@ export function RolePlayOnboarding() {
           <strong>To every citizen, in every nation:</strong> you are no longer a bystander. Your
           GPS report is the final gate. Without citizen verification, not a single peso is released
           from escrow. You don't need to be an auditor. You just need to visit a project site and
-          report what you see — or don't see.
+          report what you see  -  or don't see.
           <br />
           <br />
           <strong>We built this to digitalize accountability.</strong> This is not just software.
-          It's a tool to help fix a broken system. Step into any role below and see how it works —
+          It's a tool to help fix a broken system. Step into any role below and see how it works  - 
           then show your government what's possible.
         </p>
       </div>
@@ -305,7 +305,7 @@ export function RolePlayOnboarding() {
         <h3 className="font-semibold text-slate-900 mb-2">🎫 Want Your Own Testnet Role?</h3>
         <p className="text-sm text-slate-600 mb-4">
           You don't have to use our demo wallets. Generate your own Stellar testnet keypair, send it
-          to us with your desired role, and we'll assign it on-chain — your wallet, your identity,
+          to us with your desired role, and we'll assign it on-chain  -  your wallet, your identity,
           your role in the system.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -353,7 +353,7 @@ export function RolePlayOnboarding() {
                   <li>
                     Desired <strong>role</strong> (Citizen, Engineer, Auditor, etc.)
                   </li>
-                  <li>Brief reason — what you want to test</li>
+                  <li>Brief reason  -  what you want to test</li>
                 </ul>
               </div>
             </div>
@@ -529,7 +529,7 @@ export function RolePlayOnboarding() {
                   <h3 className="font-semibold text-slate-900 mb-2">🌏 The Bigger Picture</h3>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     This isn't just a demo. It's a working prototype of how government spending can
-                    be made transparent, verifiable, and accountable through blockchain technology —
+                    be made transparent, verifiable, and accountable through blockchain technology  - 
                     in any country, with any currency.
                     <br />
                     <br />

@@ -44,7 +44,7 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 | Auth server (JWT/OAuth) | ❌ None  -  Freighter wallet signs transactions |
 | File storage (S3) | ❌ None  -  IPFS for evidence, Soroban events for audit trail |
 | Deployment server (EC2/VPS) | ❌ None  -  Static HTML/CSS/JS on Vercel (free) |
-| Off-chain services | Provenance Indexer + AI Oracle  —  standalone TS services, run anywhere |
+| Off-chain services | Provenance Indexer (optional, experimental) + AI Oracle  -  standalone TS services |
 
 **13 Soroban smart contracts** execute every business rule on-chain:
 - `access_control`  -  13 role-based permissions
@@ -82,6 +82,10 @@ The AI Oracle and Provenance Indexer are the **only off-chain components**. Thes
 - **One instance serves all frontend deployments**
 
 **Provenance Indexer** (`provenance-indexer/service.ts`):
+
+> ⚠️ **Optional — Experimental Extension.** The Provenance Chain is not required for core PoPV functionality. All gate verification, fund locking, and release logic runs entirely on Stellar Soroban. The provenance indexer was built as an experiment to explore how we can offload query and indexing work from the blockchain, helping Stellar's performance by handling read-heavy audit requests off-chain.  
+>
+> **Goal:** Eventually run serverless via scheduled functions or edge workers. Right now it runs on a background server reading from Stellar — a stepping stone toward a fully serverless audit trail.
 
 - Polls Stellar testnet for contract events via SDK `getEvents()`
 - Reads contract state (PVOs, milestones, escrows, audit entries) to build full provenance trees
