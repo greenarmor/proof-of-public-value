@@ -1,9 +1,9 @@
 {
-  "lastUpdated": 1783611423702,
-  "lastLedger": 3519098,
+  "lastUpdated": 1783613920149,
+  "lastLedger": 3519598,
   "pvoCount": 21,
   "escrowCount": 1,
-  "eventCount": 20,
+  "eventCount": 23,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -102,7 +102,38 @@
       "fund_source": "World Bank",
       "public_value_score": 0,
       "contractor_assigned": false,
-      "milestones": [],
+      "milestones": [
+        {
+          "milestone_id": 26,
+          "milestone_title": "Site Preparation",
+          "description": "Clearing and leveling the construction site",
+          "budget": 150000000,
+          "status": "Pending",
+          "evidence_count": 0,
+          "evidence_types": [],
+          "gates": []
+        },
+        {
+          "milestone_id": 27,
+          "milestone_title": "Refilling of Dolomites sand to the beach line",
+          "description": "Leveling beatification of the Dolomites beach",
+          "budget": 150000000,
+          "status": "Pending",
+          "evidence_count": 0,
+          "evidence_types": [],
+          "gates": []
+        },
+        {
+          "milestone_id": 28,
+          "milestone_title": "Concrete Seawall on the bayside",
+          "description": "a Kilometer concrete wall along baywalk",
+          "budget": 150000000,
+          "status": "Pending",
+          "evidence_count": 0,
+          "evidence_types": [],
+          "gates": []
+        }
+      ],
       "timeline": [
         {
           "order": 0,
@@ -111,6 +142,33 @@
           "description": "PVO created:  Manila Bay Coastal Rehabilitation",
           "tx_hash": "18aa946965c7b591c5c37d38b77bdef6e2c258eece51f95115f487db35ba9f40",
           "ledger": 3513430,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 1,
+          "timestamp": 1783611682000,
+          "type": "milestone_created_event",
+          "description": "Milestone #26 created (150,000,000 PHP)",
+          "tx_hash": "46cbd3350bedb2765320bfb6c25ceb5bd1a0c6ca6bffdb758a0f031dca20ea18",
+          "ledger": 3519162,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 2,
+          "timestamp": 1783612509000,
+          "type": "milestone_created_event",
+          "description": "Milestone #27 created (150,000,000 PHP)",
+          "tx_hash": "9df9d8d727552b893a8d3e04aec60a21310642f857c7fba7029289e17344a710",
+          "ledger": 3519327,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 3,
+          "timestamp": 1783612694000,
+          "type": "milestone_created_event",
+          "description": "Milestone #28 created (150,000,000 PHP)",
+          "tx_hash": "052974c2d0032dd4168755c7ffc09b75432f8498984dc9ad7c0b608e85c72d5f",
+          "ledger": 3519364,
           "contract": "pvo_core"
         }
       ],
@@ -650,6 +708,159 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3519364,
+      "ledgerClosedAt": "2026-07-09T15:58:14Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            114,
+            195,
+            78,
+            162,
+            53,
+            129,
+            203,
+            194,
+            198,
+            190,
+            15,
+            135,
+            243,
+            88,
+            139,
+            59,
+            89,
+            9,
+            130,
+            253,
+            23,
+            208,
+            73,
+            5,
+            24,
+            84,
+            140,
+            71,
+            49,
+            10,
+            116,
+            20
+          ]
+        }
+      },
+      "eventName": "milestone_created_event",
+      "txHash": "052974c2d0032dd4168755c7ffc09b75432f8498984dc9ad7c0b608e85c72d5f",
+      "data": {
+        "budget": 1500000000000000,
+        "milestone_id": 28,
+        "pvo_id": 6
+      }
+    },
+    {
+      "ledger": 3519327,
+      "ledgerClosedAt": "2026-07-09T15:55:09Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            114,
+            195,
+            78,
+            162,
+            53,
+            129,
+            203,
+            194,
+            198,
+            190,
+            15,
+            135,
+            243,
+            88,
+            139,
+            59,
+            89,
+            9,
+            130,
+            253,
+            23,
+            208,
+            73,
+            5,
+            24,
+            84,
+            140,
+            71,
+            49,
+            10,
+            116,
+            20
+          ]
+        }
+      },
+      "eventName": "milestone_created_event",
+      "txHash": "9df9d8d727552b893a8d3e04aec60a21310642f857c7fba7029289e17344a710",
+      "data": {
+        "budget": 1500000000000000,
+        "milestone_id": 27,
+        "pvo_id": 6
+      }
+    },
+    {
+      "ledger": 3519162,
+      "ledgerClosedAt": "2026-07-09T15:41:22Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            114,
+            195,
+            78,
+            162,
+            53,
+            129,
+            203,
+            194,
+            198,
+            190,
+            15,
+            135,
+            243,
+            88,
+            139,
+            59,
+            89,
+            9,
+            130,
+            253,
+            23,
+            208,
+            73,
+            5,
+            24,
+            84,
+            140,
+            71,
+            49,
+            10,
+            116,
+            20
+          ]
+        }
+      },
+      "eventName": "milestone_created_event",
+      "txHash": "46cbd3350bedb2765320bfb6c25ceb5bd1a0c6ca6bffdb758a0f031dca20ea18",
+      "data": {
+        "budget": 1500000000000000,
+        "milestone_id": 26,
+        "pvo_id": 6
+      }
+    },
     {
       "ledger": 3513872,
       "ledgerClosedAt": "2026-07-09T08:19:46Z",
