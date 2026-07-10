@@ -77,7 +77,7 @@ function DirectFundForm({ address }: { address: string }) {
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const FA = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
       const sacAmt = Math.round(Number(amount) * PPHP_SCALE);
-      const op = tokenContract.call("mint", new Address(address).toScVal(), new Address(FA).toScVal(), new ScInt(sacAmt).toI128());
+      const op = tokenContract.call("mint", new Address(FA).toScVal(), new ScInt(sacAmt).toI128());
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
@@ -151,7 +151,6 @@ function PledgeManager({ address }: { address: string }) {
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const mintOp = tokenContract.call(
         "mint",
-        new Address(address).toScVal(),
         new Address(FUNDING).toScVal(),
         new ScInt(pphpAmount).toI128(),
       );
@@ -268,7 +267,7 @@ function RedeemPanel({ address }: { address: string }) {
       const acct = await server.getAccount(address);
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const redeemAmt = Math.round(Number(amount) * PPHP_SCALE);
-      const op = tokenContract.call("redeem", new Address(address).toScVal(), new Address(contractor).toScVal(), new ScInt(redeemAmt).toI128());
+      const op = tokenContract.call("burn", new Address(contractor).toScVal(), new ScInt(redeemAmt).toI128());
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
