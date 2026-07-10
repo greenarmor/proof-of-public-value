@@ -466,13 +466,12 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
           const { Client: PM } = await import("../contracts/procurement_market/src");
           const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
           const tCount = await pm.get_tender_count();
-          const bpMap: Record<number, number> = {};
+          let totalBid = 0;
           const maxScan = Number(tCount.result) + 10;
           for (let i = 1; i <= maxScan; i++) {
             try {
               const tr = await pm.get_tender({ id: i });
               if (tr.result && tr.result.status?.tag === "Awarded" && Number(tr.result.pvo_id) === Number(pvoId)) {
-                const msId = Number(tr.result.milestone_id);
                 const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
                 const bids = bidsResult.result || [];
                 let bestBid: any = null;
@@ -482,12 +481,12 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
                   }
                 }
                 if (bestBid) {
-                  bpMap[msId] = Number(bestBid.price);
+                  totalBid += Number(bestBid.price);
                 }
               }
             } catch {}
           }
-          setMilestoneBidPrices(bpMap);
+          if (totalBid > 0) setMilestoneBidPrices({ [Number(pvoId)]: totalBid });
         } catch {}
       } catch { setMilestones([]); setMilestoneBidPrices({}); }
     })();
@@ -607,11 +606,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
               {showMilestoneDd && filteredMilestones.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => {
-                    const bidPrice = milestoneBidPrices[m.id];
-                    // Compute total bid across all milestones for the selected PVO
-                    const totalBid = milestones.reduce(
-                      (sum: number, ms: any) => sum + (milestoneBidPrices[ms.id] || 0), 0
-                    );
+                    const totalBid = milestoneBidPrices[Number(pvoId)] || 0;
                     const msCount = milestones.length || 1;
                     const hasBids = totalBid > 0;
                     const perMsAmount = hasBids ? Math.round(totalBid / msCount) : m.budget;
@@ -695,7 +690,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
   const [awardedPvos, setAwardedPvos] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [milestoneCache, setMilestoneCache] = useState<Record<number, any[]>>({});
-  const [bidPriceMap, setBidPriceMap] = useState<Record<string, number>>({});
+  const [bidPriceMap, setBidPriceMap] = useState<Record<number, number>>({});
 
   useEffect(() => {
     (async () => {
@@ -705,36 +700,41 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
         const tCount = await pm.get_tender_count();
         const awardedPvoIds = new Set<number>();
         const contractorMap: Record<number, string> = {};
-        const tenderByPvoMs: Record<string, number> = {};
+        const tenderByPvo: Record<number, number[]> = {};
         const maxScan = Number(tCount.result) + 10;
         for (let i = 1; i <= maxScan; i++) {
           try {
             const tr = await pm.get_tender({ id: i });
             if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
               const pid = Number(tr.result.pvo_id);
-              const msId = Number(tr.result.milestone_id);
               awardedPvoIds.add(pid);
               contractorMap[pid] = tr.result.winner;
-              tenderByPvoMs[`${pid}-${msId}`] = Number(tr.result.id);
+              if (!tenderByPvo[pid]) tenderByPvo[pid] = [];
+              tenderByPvo[pid].push(Number(tr.result.id));
             }
           } catch {}
         }
-        // Fetch winning bid price for each awarded tender
-        const bpMap: Record<string, number> = {};
-        for (const [key, tenderId] of Object.entries(tenderByPvoMs)) {
-          try {
-            const bidsResult = await pm.get_bids_by_tender({ tender_id: tenderId });
-            const bids = bidsResult.result || [];
-            let bestBid: any = null;
-            for (const b of bids) {
-              if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
-                bestBid = b;
+        // Sum winning bid prices per PVO
+        const bpMap: Record<number, number> = {};
+        for (const [pidStr, tenderIds] of Object.entries(tenderByPvo)) {
+          const pid = Number(pidStr);
+          let totalBid = 0;
+          for (const tenderId of tenderIds) {
+            try {
+              const bidsResult = await pm.get_bids_by_tender({ tender_id: tenderId });
+              const bids = bidsResult.result || [];
+              let bestBid: any = null;
+              for (const b of bids) {
+                if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
+                  bestBid = b;
+                }
               }
-            }
-            if (bestBid) {
-              bpMap[key] = Number(bestBid.price);
-            }
-          } catch {}
+              if (bestBid) {
+                totalBid += Number(bestBid.price);
+              }
+            } catch {}
+          }
+          if (totalBid > 0) bpMap[pid] = totalBid;
         }
         setBidPriceMap(bpMap);
         if (awardedPvoIds.size === 0) { setAwardedPvos([]); return; }
@@ -825,11 +825,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                   <div className="divide-y divide-slate-100">
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
-                      const bidPrice = bidPriceMap[`${pvoId}-${m.id}`];
-                      // Total winning bid for this PVO across all milestones
-                      const totalBid = milestones.reduce(
-                        (sum: number, ms: any) => sum + (bidPriceMap[`${pvoId}-${ms.id}`] || 0), 0
-                      );
+                      const totalBid = bidPriceMap[pvoId] || 0;
                       const msCount = milestones.length || 1;
                       const hasBids = totalBid > 0;
                       const escrowAmount = hasBids
