@@ -283,7 +283,7 @@ function Header() {
             )}
 
             {/* Dashboards dropdown */}
-            {visibleRoleItems.length > 0 && (
+            {(visibleRoleItems.length > 0 || visibleSystemItems.length > 0) && (
               <div className="relative" onMouseLeave={() => setDashboardsOpen(false)}>
                 <button
                   onClick={() => setDashboardsOpen((o) => !o)}
