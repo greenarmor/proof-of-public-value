@@ -106,6 +106,7 @@ function PledgeManager({ address }: { address: string }) {
   const [pledges, setPledges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<number | null>(null);
+  const [busyStep, setBusyStep] = useState<string>("");
   const [completed, setCompleted] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -134,6 +135,7 @@ function PledgeManager({ address }: { address: string }) {
 
   const handleConvert = async (pledge: any) => {
     setBusy(pledge.id);
+    setBusyStep("Minting pPHP...");
     let mintSucceeded = false;
     try {
       const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
@@ -169,6 +171,10 @@ function PledgeManager({ address }: { address: string }) {
       let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
       mintSucceeded = true;
+
+      // Brief delay so Freighter can process the first tx before the second popup
+      setBusyStep("Awaiting Freighter (step 2/2)...");
+      await new Promise((r) => setTimeout(r, 1500));
 
       // 2) Mark grant as Disbursed on-chain (second tx)
       const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
@@ -206,6 +212,7 @@ function PledgeManager({ address }: { address: string }) {
       }
     } finally {
       setBusy(null);
+      setBusyStep("");
     }
   };
 
@@ -233,7 +240,7 @@ function PledgeManager({ address }: { address: string }) {
                   onClick={() => handleConvert(p)}
                   disabled={busy === p.id || completed.has(p.id)}
                   className={`text-sm px-4 py-2 ${completed.has(p.id) ? "bg-emerald-100 text-emerald-700 cursor-not-allowed border border-emerald-200 rounded-lg" : busy === p.id ? "btn-primary opacity-60" : "btn-primary"}`}>
-                  {completed.has(p.id) ? "✓ Done" : busy === p.id ? "Processing..." : "Approve & Mint"}
+                  {completed.has(p.id) ? "✓ Done" : busy === p.id ? busyStep || "Processing..." : "Approve & Mint"}
                 </button>
               </div>
             );
