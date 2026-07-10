@@ -608,7 +608,9 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => {
                     const bidPrice = milestoneBidPrices[m.id];
-                    const usePrice = bidPrice != null ? bidPrice : m.budget;
+                    const msCount = milestones.length || 1;
+                    const usePrice = bidPrice != null ? Math.round(bidPrice / msCount) : m.budget;
+                    const dividedBid = bidPrice != null ? Math.round(bidPrice / msCount) : null;
                     return (
                     <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (usePrice > 0) setAmount(String(usePrice / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
@@ -618,7 +620,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
                           <>
                             <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
                             {" → "}
-                            <span className="text-emerald-600">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
+                            <span className="text-emerald-600">{currency}{(dividedBid! / PPHP_SCALE).toLocaleString()}</span>
                           </>
                         ) : (
                           <>{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</>
@@ -820,7 +822,9 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
                       const bidPrice = bidPriceMap[`${pvoId}-${m.id}`];
-                      const escrowAmount = bidPrice != null ? String(bidPrice / PPHP_SCALE) : String(m.budget / PPHP_SCALE);
+                      const milestoneCount = milestones.length || 1;
+                      const escrowAmount = bidPrice != null ? String(Math.round(bidPrice / milestoneCount / PPHP_SCALE)) : String(m.budget / PPHP_SCALE);
+                      const displayBidPrice = bidPrice != null ? Math.round(bidPrice / milestoneCount) : null;
                       return (
                         <div key={m.id} className="flex items-center justify-between p-4">
                           <div className="flex-1">
@@ -834,8 +838,8 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                                 <>
                                   <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
                                   {" → "}
-                                  <span className="text-emerald-600 font-medium">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
-                                  <span className="text-emerald-500 ml-1">(awarded bid)</span>
+                                  <span className="text-emerald-600 font-medium">{currency}{(displayBidPrice! / PPHP_SCALE).toLocaleString()}</span>
+                                  <span className="text-emerald-500 ml-1">(÷{milestoneCount} milestones)</span>
                                 </>
                               ) : (
                                 <>{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</>
