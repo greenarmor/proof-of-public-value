@@ -1008,15 +1008,16 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
 
 function EscrowGuide() {
   const steps = [
-    { n: 0, title: "Donor Commits + Transfers", icon: "🌍", desc: "International donor commits a grant, atomically transferring pPHP to the Funding Agency wallet.", actor: "InternationalDonor" },
-    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with recipient, PVO, milestone, amount, and sets the Community Confirmations Required threshold — the number of verified citizen GPS field reports needed to unlock the final gate.", actor: "FundingAgency" },
-    { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded.", actor: "FundingAgency" },
-    { n: 3, title: "Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
-    { n: 4, title: "AI Risk Check", icon: "🤖", desc: "AI oracle validates evidence and assigns a risk score. Must pass.", actor: "AIAuditor" },
-    { n: 5, title: "Compliance Validate", icon: "⚖️", desc: "Compliance officer checks regulatory adherence.", actor: "Auditor / COA" },
-    { n: 6, title: "Community Oracle", icon: "📊", desc: "Citizen reports from the community oracle verify real-world project existence.", actor: "Citizens" },
-    { n: 7, title: "Community Confirm", icon: "📸", desc: "Citizens submit GPS-tagged field reports. Each verified report increments the counter. When the counter reaches the threshold set at escrow creation, the gate passes. Higher thresholds = stronger anti-corruption, slower release.", actor: "Citizens" },
-    { n: 8, title: "Release or Dispute", icon: "🔓", desc: "Once all gates pass (Ready), anyone can trigger release. Dispute can be raised anytime before release.", actor: "Any Role" },
+    { n: 0, title: "Donor Commits Pledge", icon: "🌍", desc: "International donor commits a grant on-chain, locking the pledge amount. The donor then transfers foreign currency to the CentralBank wallet.", actor: "InternationalDonor" },
+    { n: 1, title: "CentralBank Disburses", icon: "🏦", desc: "CentralBank approves the pledge: mints pPHP to the Funding Agency wallet and marks the grant as disbursed. For National Budget PVOs, CentralBank uses Direct Fund instead.", actor: "CentralBank" },
+    { n: 2, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with the awarded contractor (read-only), PVO, milestone, amount (auto-filled from winning bid), and sets Community Confirmations threshold.", actor: "FundingAgency" },
+    { n: 3, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
+    { n: 4, title: "Gate 1 — Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
+    { n: 5, title: "Gate 2 — Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
+    { n: 6, title: "Gate 3 — Community Oracle", icon: "📊", desc: "Citizen submits GPS-tagged field report. Report must be verified through the Community Oracle to prove real-world project existence.", actor: "Citizens" },
+    { n: 7, title: "Gate 4 — Community Confirm", icon: "📸", desc: "Citizens confirm the milestone. Each verified confirmation increments the counter. Must reach the threshold set at escrow creation.", actor: "Citizens" },
+    { n: 8, title: "Gate 5 — AI Risk Check", icon: "🤖", desc: "AI oracle runs LAST for maximum data analysis. Validates evidence and assigns a risk score. Must pass for release.", actor: "AIAuditor" },
+    { n: 9, title: "Release or Dispute", icon: "🔓", desc: "Once all 5 gates pass (Ready), anyone can trigger release. Contractor receives pPHP visible in Freighter. Dispute can be raised anytime before release.", actor: "Any Role" },
   ];
 
   return (
@@ -1024,7 +1025,7 @@ function EscrowGuide() {
       <div className="card p-6 mb-4">
         <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System + Donor Funding</h2>
         <p className="text-sm text-slate-500">
-          Donors first commit and transfer pPHP to the Funding Agency. Then every escrow passes through 5 independent verification gates before funds can be released.
+          Donors commit pledges on-chain, then CentralBank mints pPHP to the Funding Agency. Every escrow passes through 5 independent verification gates (in correct order: Engineer, Compliance, Community Oracle, Community Confirmations, AI Risk) before funds can be released.
           This ensures no single party can authorize payment alone — preventing corruption and ensuring quality.
         </p>
       </div>
