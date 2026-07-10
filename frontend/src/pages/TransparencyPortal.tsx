@@ -541,12 +541,15 @@ export function TransparencyPortal() {
                   const rPct = Math.min(100, Math.round((released / budget) * 100));
                   const fundedPct = Math.min(100, (funded / budget) * 100);
                   const escrowedPct = Math.min(100, (escrowed / budget) * 100);
-                  const remaining = Math.max(0, funded - escrowed);
+                  const remaining = Math.max(0, bidAmount - escrowed);
                   return (
                     <div className="card p-4 mt-4">
                       <div className="flex justify-between text-xs mb-1">
                         <span className="font-semibold text-slate-700">
                           {formatBudget(selected.total_budget)}
+                          {bidMap[selected.id] > 0 && (
+                            <span className="text-emerald-600 ml-2">→ Winning Bid: {currency}{(bidMap[selected.id] / PPHP_SCALE / 1_000_000).toFixed(1)}M</span>
+                          )}
                         </span>
                         <span className="text-slate-400">
                           {selected.milestonesReleased}/{selected.milestonesTotal} milestones
