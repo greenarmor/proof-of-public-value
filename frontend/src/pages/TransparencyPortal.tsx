@@ -804,7 +804,7 @@ export function TransparencyPortal() {
                         const escrowed = pvoFunding[pvo.id].escrowed;
                         const fundedPct = Math.min(100, (funded / budget) * 100);
                         const escrowedPct = Math.min(100, (escrowed / budget) * 100);
-                        const remaining = Math.max(0, funded - escrowed);
+                        const remaining = Math.max(0, bidAmount - escrowed);
                         return (
                           <div className="mb-2">
                             <div className="flex items-center justify-between text-[10px] mb-0.5">
