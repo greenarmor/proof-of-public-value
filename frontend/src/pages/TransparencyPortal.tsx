@@ -529,7 +529,8 @@ export function TransparencyPortal() {
               {pvoFunding[selected.id] &&
                 Number(selected.total_budget) > 0 &&
                 (() => {
-                  const budget = Number(selected.total_budget);
+                  const bidAmount = bidMap[selected.id] || Number(selected.total_budget);
+                  const budget = bidAmount;
                   const funded = pvoFunding[selected.id].funded;
                   const escrowed = pvoFunding[selected.id].escrowed;
                   const released = pvoFunding[selected.id].released;
@@ -773,7 +774,7 @@ export function TransparencyPortal() {
                     {pvoFunding[pvo.id] &&
                       Number(pvo.total_budget) > 0 &&
                       (() => {
-                        const budget = Number(pvo.total_budget);
+                        const bidAmount = bidMap[pvo.id] || Number(pvo.total_budget); const budget = bidAmount;
                         const released = pvoFunding[pvo.id].released;
                         const pct = Math.min(100, Math.round((released / budget) * 100));
                         return (
@@ -794,7 +795,7 @@ export function TransparencyPortal() {
                     {pvoFunding[pvo.id] &&
                       Number(pvo.total_budget) > 0 &&
                       (() => {
-                        const budget = Number(pvo.total_budget);
+                        const bidAmount = bidMap[pvo.id] || Number(pvo.total_budget); const budget = bidAmount;
                         const funded = pvoFunding[pvo.id].funded;
                         const escrowed = pvoFunding[pvo.id].escrowed;
                         const fundedPct = Math.min(100, (funded / budget) * 100);
