@@ -434,25 +434,33 @@ function TenderAwardCard({ tender, currency, address, canAward, minBids }: { ten
 
       {/* Bids list */}
       <div className="border-t border-slate-100 pt-3">
-        <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Bids ({bids.length}) — highest final score wins</p>
         {bidsLoading ? (
           <div className="skeleton h-16 rounded-lg" />
         ) : bids.length === 0 ? (
           <p className="text-sm text-slate-400 py-2">No bids yet. Suppliers submit via the Supplier Portal.</p>
+        ) : canAward ? (
+          <>
+            <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Bids ({bids.length}) — highest final score wins</p>
+            <div className="space-y-2">
+              {bids.map((b: any) => (
+                <div key={Number(b.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">
+                  <div>
+                    <span className="font-mono text-xs text-slate-600"><WalletAddress addr={b.contractor} chars={6}/></span>
+                    <span className="text-xs text-slate-400 ml-2">{currency}{(Number(b.price)/PPHP_SCALE).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-slate-400">Q:{Number(b.quality_score)} T:{Number(b.timeline_days)}d R:{Number(b.reputation_score)}</span>
+                    <span className="font-bold text-brand-600">{Number(b.final_score)}/120</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <div className="space-y-2">
-            {bids.map((b: any) => (
-              <div key={Number(b.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">
-                <div>
-                  <span className="font-mono text-xs text-slate-600"><WalletAddress addr={b.contractor} chars={6}/></span>
-                  <span className="text-xs text-slate-400 ml-2">{currency}{(Number(b.price)/PPHP_SCALE).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-slate-400">Q:{Number(b.quality_score)} T:{Number(b.timeline_days)}d R:{Number(b.reputation_score)}</span>
-                  <span className="font-bold text-brand-600">{Number(b.final_score)}/120</span>
-                </div>
-              </div>
-            ))}
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+            <p className="text-sm text-amber-700">
+              🔒 {bids.length} bid{bids.length !== 1 ? "s" : ""} submitted — bid details are confidential until the tender is awarded.
+            </p>
           </div>
         )}
       </div>
