@@ -111,7 +111,7 @@ export function ProcurementMarketplace() {
           </button>
       </div>
 
-      {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} canBid={hasRole("Contractor", "Supplier")} />}
+      {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} canBid={hasRole("Contractor", "Supplier")} address={address!} />}
       
       {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} canAward={canCreateTender} minBids={minBids} />}
 
@@ -131,9 +131,31 @@ export function ProcurementMarketplace() {
   );
 }
 
-function BrowseTenders({ tenders, loading, canBid }: { tenders: Tender[]; loading: boolean; canBid: boolean }) {
+function BrowseTenders({ tenders, loading, canBid, address }: { tenders: Tender[]; loading: boolean; canBid: boolean; address: string }) {
   const currency = getCurrency();
   const [bidModal, setBidModal] = useState<Tender | null>(null);
+  const [myBids, setMyBids] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (!canBid || !address) return;
+    (async () => {
+      try {
+        const { Client: PM } = await import("../contracts/procurement_market/src");
+        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const bidSet = new Set<number>();
+        for (const t of tenders.filter(t => t.status.tag === "Open")) {
+          try {
+            const bidsResult = await pm.get_bids_by_tender({ tender_id: t.id });
+            const bids = bidsResult.result || [];
+            if (bids.some((b: any) => b.contractor === address)) {
+              bidSet.add(t.id);
+            }
+          } catch {}
+        }
+        setMyBids(bidSet);
+      } catch {}
+    })();
+  }, [canBid, address, tenders]);
   if (loading) return <div className="text-center py-10 text-gray-400">Loading tenders...</div>;
   const openTenders = tenders.filter(t => t.status.tag === "Open");
 
@@ -160,7 +182,7 @@ function BrowseTenders({ tenders, loading, canBid }: { tenders: Tender[]; loadin
           </div>
           <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
             <span className="text-xs text-gray-400">Scoring: Price (max 50) + Quality (max 30) + Timeline (max 20)</span>
-            {t.status.tag === "Open" && canBid && (
+            {t.status.tag === "Open" && canBid && !myBids.has(t.id) && (
               <button onClick={() => setBidModal(t)} className="btn-primary text-xs px-3 py-1">📤 Bid</button>
             )}
           </div>

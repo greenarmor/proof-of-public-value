@@ -222,6 +222,21 @@ impl ProcurementMarket {
         let tender = tenders.get(tender_id).expect("tender not found");
         assert!(tender.status == TenderStatus::Open, "tender is not open");
 
+        // Prevent duplicate bids: one bid per contractor per tender
+        let bids: Map<u32, Bid> = storage.get(&BIDS).unwrap_or_else(|| Map::new(&env));
+        let idx: Map<u32, Vec<u32>> = storage.get(&TENDER_BIDS).unwrap_or_else(|| Map::new(&env));
+        let existing_ids = idx.get(tender_id).unwrap_or_else(|| Vec::new(&env));
+        for i in 0..existing_ids.len() {
+            if let Some(bid_id) = existing_ids.get(i) {
+                if let Some(existing_bid) = bids.get(bid_id) {
+                    assert!(
+                        existing_bid.contractor != contractor,
+                        "contractor has already submitted a bid for this tender"
+                    );
+                }
+            }
+        }
+
         // Pull real reputation score from the reputation contract (cross-contract call)
         let reputation_address: Address = storage.get(&REPUTATION).expect("reputation not configured");
         let reputation_client = ReputationClient::new(&env, &reputation_address);

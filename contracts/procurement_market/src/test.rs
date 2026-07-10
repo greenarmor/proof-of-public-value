@@ -103,14 +103,17 @@ fn test_get_bids() {
     let (env, client, reputation_id, ac_id, admin) = setup();
     let agency = Address::generate(&env);
     let c1 = Address::generate(&env);
+    let c2 = Address::generate(&env);
 
     register_entity(&env, &reputation_id, &c1, EntityType::Contractor);
+    register_entity(&env, &reputation_id, &c2, EntityType::Contractor);
     assign_role(&env, &ac_id, &admin, &c1, &Role::Contractor);
+    assign_role(&env, &ac_id, &admin, &c2, &Role::Contractor);
 
     let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
 
     client.submit_bid(&c1, &tid, &4_500_000_i128, &85, &20);
-    client.submit_bid(&c1, &tid, &4_800_000_i128, &90, &15);
+    client.submit_bid(&c2, &tid, &4_800_000_i128, &90, &15);
 
     let bids = client.get_bids_by_tender(&tid);
     assert_eq!(bids.len(), 2);
@@ -173,6 +176,25 @@ fn test_bid_rejected_wrong_role() {
     let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
 
     client.submit_bid(&funder, &tid, &4_000_000_i128, &70, &30);
+}
+
+#[test]
+#[should_panic(expected = "contractor has already submitted a bid")]
+fn test_bid_duplicate_rejected() {
+    let (env, client, reputation_id, ac_id, admin) = setup();
+    let agency = Address::generate(&env);
+    let contractor = Address::generate(&env);
+
+    assign_role(&env, &ac_id, &admin, &contractor, &Role::Contractor);
+    register_entity(&env, &reputation_id, &contractor, EntityType::Contractor);
+
+    let tid = client.create_tender(&agency, &0u32, &0u32, &make_string(&env, "T"), &make_string(&env, "D"), &5_000_000_i128, &500);
+
+    // First bid succeeds
+    client.submit_bid(&contractor, &tid, &4_000_000_i128, &70, &30);
+
+    // Second bid from same contractor should panic
+    client.submit_bid(&contractor, &tid, &3_500_000_i128, &80, &25);
 }
 
 #[test]
