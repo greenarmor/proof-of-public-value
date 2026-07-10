@@ -655,7 +655,8 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
         const tCount = await pm.get_tender_count();
         const awardedPvoIds = new Set<number>();
         const contractorMap: Record<number, string> = {};
-        for (let i = 1; i <= Number(tCount.result); i++) {
+        const maxScan = Number(tCount.result) + 10;
+        for (let i = 1; i <= maxScan; i++) {
           try {
             const tr = await pm.get_tender({ id: i });
             if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {

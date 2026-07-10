@@ -1,9 +1,9 @@
 {
-  "lastUpdated": 1783613920149,
-  "lastLedger": 3519598,
+  "lastUpdated": 1783641674254,
+  "lastLedger": 3525131,
   "pvoCount": 21,
   "escrowCount": 1,
-  "eventCount": 23,
+  "eventCount": 4,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -137,15 +137,6 @@
       "timeline": [
         {
           "order": 0,
-          "timestamp": 1783582972000,
-          "type": "pvo_created_event",
-          "description": "PVO created:  Manila Bay Coastal Rehabilitation",
-          "tx_hash": "18aa946965c7b591c5c37d38b77bdef6e2c258eece51f95115f487db35ba9f40",
-          "ledger": 3513430,
-          "contract": "pvo_core"
-        },
-        {
-          "order": 1,
           "timestamp": 1783611682000,
           "type": "milestone_created_event",
           "description": "Milestone #26 created (150,000,000 PHP)",
@@ -154,7 +145,7 @@
           "contract": "pvo_core"
         },
         {
-          "order": 2,
+          "order": 1,
           "timestamp": 1783612509000,
           "type": "milestone_created_event",
           "description": "Milestone #27 created (150,000,000 PHP)",
@@ -163,7 +154,7 @@
           "contract": "pvo_core"
         },
         {
-          "order": 3,
+          "order": 2,
           "timestamp": 1783612694000,
           "type": "milestone_created_event",
           "description": "Milestone #28 created (150,000,000 PHP)",
@@ -196,17 +187,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783583113000,
-          "type": "pvo_created_event",
-          "description": "PVO created: North Luzon Expressway Extension Phase III",
-          "tx_hash": "9435520438704442ee65eb693cac97a78ef6bf0310f190b9df966b95589bbecb",
-          "ledger": 3513458,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -231,17 +212,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783583759000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Baguio City Water Supply Modernization",
-          "tx_hash": "8bc8e4756215102bfe9bd0e280acceaa902cd574cbf9e8d6a98a61639e7bc2b6",
-          "ledger": 3513587,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -266,17 +237,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783583829000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Laoag International Airport Upgrade",
-          "tx_hash": "c37ec597482cb3133555d0f2755bd4c1e025070b115d72c1847a596dca2d74a6",
-          "ledger": 3513601,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -301,17 +262,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783583904000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Puerto Princesa Seaport Expansion*",
-          "tx_hash": "3c6d34041a0249a8a5d6116fca91eea96653415c2d8d69191332b9a31e46e411",
-          "ledger": 3513616,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -336,17 +287,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783583989000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Bicol Regional Hospital Trauma Center",
-          "tx_hash": "e9cdf94c9df1715ad26ff232cf8d92e92c24ba99108435e9a1434d317f3125c1",
-          "ledger": 3513633,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -371,17 +312,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584144000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Tarlac-Pangasinan Expressway Segment",
-          "tx_hash": "040045a25e200215e5b4745a921d8b03464f6823f6e3a39cea1647f34c76f601",
-          "ledger": 3513664,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -406,17 +337,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584255000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Cebu-Mactan Bridge Widening",
-          "tx_hash": "ec2b2fbec98b33821a620794accc997a73c8a1b2f3ba288975b763e16dbbd1a5",
-          "ledger": 3513686,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -441,17 +362,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584325000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Iloilo River Flood Control System",
-          "tx_hash": "b30247344a9927cf5f5da8ba83ab9ec688acf70a0182a66555b96747fb7a5b22",
-          "ledger": 3513700,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -476,17 +387,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584415000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Bacolod-Silay Airport New Terminal",
-          "tx_hash": "a6c3dee7c51319f81fb7804a9b669729ae5ebf898d793686f9e8da914f33328a",
-          "ledger": 3513718,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -511,17 +412,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584505000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Tacloban City Storm Surge Protection",
-          "tx_hash": "420a31c7a3d5f51b6741eca1b4929653e1d09ef945861183f18a0ba09a9ec964",
-          "ledger": 3513736,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -546,17 +437,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584570000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Bohol Circumferential Road Completion",
-          "tx_hash": "1e6c43f0940db324550910c932b565d3693df18376290642fc787e03e999511e",
-          "ledger": 3513749,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -581,17 +462,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584660000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Davao City Bypass Road Construction",
-          "tx_hash": "7a5aa0a41341c0b18c905d5ceb61cd13dcaef8775971bbd172d4043a3a27e2ef",
-          "ledger": 3513767,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -616,17 +487,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584745000,
-          "type": "pvo_created_event",
-          "description": "PVO created: General Santos Fish Port Modernization",
-          "tx_hash": "486271c64865eb28b66c6961cc097511d825e84742889f4672d15c8138bb42fd",
-          "ledger": 3513784,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -651,17 +512,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584820000,
-          "type": "pvo_created_event",
-          "description": "PVO created:  Cagayan de Oro River Basin Dredging",
-          "tx_hash": "432ca776cfdbb549875602de5644c41ff216644d1463e6c212d5c68e24c9b85d",
-          "ledger": 3513799,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -686,17 +537,7 @@
       "public_value_score": 0,
       "contractor_assigned": false,
       "milestones": [],
-      "timeline": [
-        {
-          "order": 0,
-          "timestamp": 1783584926000,
-          "type": "pvo_created_event",
-          "description": "PVO created: Zamboanga City Waterfront Redevelopment",
-          "tx_hash": "7898f14dc65ada472fec82484712ec8d96541914d74ecf4a5e21c663348cdddb",
-          "ledger": 3513820,
-          "contract": "pvo_core"
-        }
-      ],
+      "timeline": [],
       "stats": {
         "total_escrowed": 0,
         "total_released": 0,
@@ -708,6 +549,57 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3524922,
+      "ledgerClosedAt": "2026-07-09T23:42:10Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            118,
+            40,
+            8,
+            4,
+            30,
+            100,
+            231,
+            167,
+            35,
+            118,
+            2,
+            205,
+            42,
+            49,
+            179,
+            43,
+            197,
+            53,
+            88,
+            124,
+            73,
+            70,
+            44,
+            147,
+            112,
+            73,
+            202,
+            60,
+            32,
+            231,
+            203,
+            23
+          ]
+        }
+      },
+      "eventName": "tender_created_event",
+      "txHash": "7b87c20d0db2653d8771473289ca41b53b471f5770924bb3896ee4b35c9da694",
+      "data": {
+        "agency": "[object Object]",
+        "budget": 4500000000000000,
+        "id": 3
+      }
+    },
     {
       "ledger": 3519364,
       "ledgerClosedAt": "2026-07-09T15:58:14Z",
@@ -859,1046 +751,6 @@
         "budget": 1500000000000000,
         "milestone_id": 26,
         "pvo_id": 6
-      }
-    },
-    {
-      "ledger": 3513872,
-      "ledgerClosedAt": "2026-07-09T08:19:46Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "c8fceb3a19ef1b53462445f506ffc3e26f46be3a47e58bc8e230cee977eb2dbe",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 25,
-        "title": "Marawi Rehabilitation Housing Project",
-        "total_budget": 11000000000000000
-      }
-    },
-    {
-      "ledger": 3513861,
-      "ledgerClosedAt": "2026-07-09T08:18:51Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "7c31dc82e9f4b401ba1f287d65390ca70aecc43529f512b76fbb193e9201f8fc",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 24,
-        "title": " Cotabato City Solar Power Farm",
-        "total_budget": 15000000000000000
-      }
-    },
-    {
-      "ledger": 3513848,
-      "ledgerClosedAt": "2026-07-09T08:17:46Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "3bc9e210621403d6a3b6a0b162921f66e873f00302f39a21e1fbb395771882ba",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 23,
-        "title": "Surigao-Siargao Ferry Terminal",
-        "total_budget": 1800000000000000
-      }
-    },
-    {
-      "ledger": 3513833,
-      "ledgerClosedAt": "2026-07-09T08:16:31Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "50588d5c69144a547b5fc8957bec451b59f8f8bd55064788af6a885d46d22c8b",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 22,
-        "title": "Butuan-Agusan Bridge Replacement",
-        "total_budget": 9400000000000000
-      }
-    },
-    {
-      "ledger": 3513820,
-      "ledgerClosedAt": "2026-07-09T08:15:26Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "7898f14dc65ada472fec82484712ec8d96541914d74ecf4a5e21c663348cdddb",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 21,
-        "title": "Zamboanga City Waterfront Redevelopment",
-        "total_budget": 5200000000000000
-      }
-    },
-    {
-      "ledger": 3513799,
-      "ledgerClosedAt": "2026-07-09T08:13:40Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "432ca776cfdbb549875602de5644c41ff216644d1463e6c212d5c68e24c9b85d",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 20,
-        "title": " Cagayan de Oro River Basin Dredging",
-        "total_budget": 2600000000000000
-      }
-    },
-    {
-      "ledger": 3513784,
-      "ledgerClosedAt": "2026-07-09T08:12:25Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "486271c64865eb28b66c6961cc097511d825e84742889f4672d15c8138bb42fd",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 19,
-        "title": "General Santos Fish Port Modernization",
-        "total_budget": 3800000000000000
-      }
-    },
-    {
-      "ledger": 3513767,
-      "ledgerClosedAt": "2026-07-09T08:11:00Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "7a5aa0a41341c0b18c905d5ceb61cd13dcaef8775971bbd172d4043a3a27e2ef",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 18,
-        "title": "Davao City Bypass Road Construction",
-        "total_budget": 35000000000000000
-      }
-    },
-    {
-      "ledger": 3513749,
-      "ledgerClosedAt": "2026-07-09T08:09:30Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "1e6c43f0940db324550910c932b565d3693df18376290642fc787e03e999511e",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 17,
-        "title": "Bohol Circumferential Road Completion",
-        "total_budget": 6100000000000000
-      }
-    },
-    {
-      "ledger": 3513736,
-      "ledgerClosedAt": "2026-07-09T08:08:25Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "420a31c7a3d5f51b6741eca1b4929653e1d09ef945861183f18a0ba09a9ec964",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 16,
-        "title": "Tacloban City Storm Surge Protection",
-        "total_budget": 7500000000000000
-      }
-    },
-    {
-      "ledger": 3513718,
-      "ledgerClosedAt": "2026-07-09T08:06:55Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "a6c3dee7c51319f81fb7804a9b669729ae5ebf898d793686f9e8da914f33328a",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 15,
-        "title": "Bacolod-Silay Airport New Terminal",
-        "total_budget": 12000000000000000
-      }
-    },
-    {
-      "ledger": 3513700,
-      "ledgerClosedAt": "2026-07-09T08:05:25Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "b30247344a9927cf5f5da8ba83ab9ec688acf70a0182a66555b96747fb7a5b22",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 14,
-        "title": "Iloilo River Flood Control System",
-        "total_budget": 4200000000000000
-      }
-    },
-    {
-      "ledger": 3513686,
-      "ledgerClosedAt": "2026-07-09T08:04:15Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "ec2b2fbec98b33821a620794accc997a73c8a1b2f3ba288975b763e16dbbd1a5",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 13,
-        "title": "Cebu-Mactan Bridge Widening",
-        "total_budget": 8900000000000000
-      }
-    },
-    {
-      "ledger": 3513664,
-      "ledgerClosedAt": "2026-07-09T08:02:24Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "040045a25e200215e5b4745a921d8b03464f6823f6e3a39cea1647f34c76f601",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 12,
-        "title": "Tarlac-Pangasinan Expressway Segment",
-        "total_budget": 28000000000000000
-      }
-    },
-    {
-      "ledger": 3513633,
-      "ledgerClosedAt": "2026-07-09T07:59:49Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "e9cdf94c9df1715ad26ff232cf8d92e92c24ba99108435e9a1434d317f3125c1",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 11,
-        "title": "Bicol Regional Hospital Trauma Center",
-        "total_budget": 5500000000000000
-      }
-    },
-    {
-      "ledger": 3513616,
-      "ledgerClosedAt": "2026-07-09T07:58:24Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "3c6d34041a0249a8a5d6116fca91eea96653415c2d8d69191332b9a31e46e411",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 10,
-        "title": "Puerto Princesa Seaport Expansion*",
-        "total_budget": 6800000000000000
-      }
-    },
-    {
-      "ledger": 3513601,
-      "ledgerClosedAt": "2026-07-09T07:57:09Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "c37ec597482cb3133555d0f2755bd4c1e025070b115d72c1847a596dca2d74a6",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 9,
-        "title": "Laoag International Airport Upgrade",
-        "total_budget": 18000000000000000
-      }
-    },
-    {
-      "ledger": 3513587,
-      "ledgerClosedAt": "2026-07-09T07:55:59Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "8bc8e4756215102bfe9bd0e280acceaa902cd574cbf9e8d6a98a61639e7bc2b6",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 8,
-        "title": "Baguio City Water Supply Modernization",
-        "total_budget": 320000000000000
-      }
-    },
-    {
-      "ledger": 3513458,
-      "ledgerClosedAt": "2026-07-09T07:45:13Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "9435520438704442ee65eb693cac97a78ef6bf0310f190b9df966b95589bbecb",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 7,
-        "title": "North Luzon Expressway Extension Phase III",
-        "total_budget": 21000000000000000
-      }
-    },
-    {
-      "ledger": 3513430,
-      "ledgerClosedAt": "2026-07-09T07:42:52Z",
-      "contract": "pvo_core",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            114,
-            195,
-            78,
-            162,
-            53,
-            129,
-            203,
-            194,
-            198,
-            190,
-            15,
-            135,
-            243,
-            88,
-            139,
-            59,
-            89,
-            9,
-            130,
-            253,
-            23,
-            208,
-            73,
-            5,
-            24,
-            84,
-            140,
-            71,
-            49,
-            10,
-            116,
-            20
-          ]
-        }
-      },
-      "eventName": "pvo_created_event",
-      "txHash": "18aa946965c7b591c5c37d38b77bdef6e2c258eece51f95115f487db35ba9f40",
-      "data": {
-        "contractor": "[object Object]",
-        "id": 6,
-        "title": " Manila Bay Coastal Rehabilitation",
-        "total_budget": 4500000000000000
       }
     }
   ],

@@ -41,7 +41,9 @@ export function ProcurementMarketplace() {
         });
         const count = await client.get_tender_count();
         const list: Tender[] = [];
-        for (let i = 1; i <= Number(count.result); i++) {
+        // Scan beyond count to catch sparse IDs
+        const maxScan = Number(count.result) + 10;
+        for (let i = 1; i <= maxScan; i++) {
           const r = await client.get_tender({ id: i });
           if (r.result) list.push({
             id: r.result.id, title: r.result.title,
