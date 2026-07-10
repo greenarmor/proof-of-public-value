@@ -1008,26 +1008,45 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
 
 function EscrowGuide() {
   const steps = [
-    { n: 0, title: "Donor Commits Pledge", icon: "🌍", desc: "International donor commits a grant on-chain, locking the pledge amount. The donor then transfers foreign currency to the CentralBank wallet.", actor: "InternationalDonor" },
-    { n: 1, title: "CentralBank Disburses", icon: "🏦", desc: "CentralBank approves the pledge: mints pPHP to the Funding Agency wallet and marks the grant as disbursed. For National Budget PVOs, CentralBank uses Direct Fund instead.", actor: "CentralBank" },
-    { n: 2, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with the awarded contractor (read-only), PVO, milestone, amount (auto-filled from winning bid), and sets Community Confirmations threshold.", actor: "FundingAgency" },
-    { n: 3, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
-    { n: 4, title: "Gate 1 — Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
-    { n: 5, title: "Gate 2 — Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
-    { n: 6, title: "Gate 3 — Community Oracle", icon: "📊", desc: "Citizen submits GPS-tagged field report. Report must be verified through the Community Oracle to prove real-world project existence.", actor: "Citizens" },
-    { n: 7, title: "Gate 4 — Community Confirm", icon: "📸", desc: "Citizens confirm the milestone. Each verified confirmation increments the counter. Must reach the threshold set at escrow creation.", actor: "Citizens" },
-    { n: 8, title: "Gate 5 — AI Risk Check", icon: "🤖", desc: "AI oracle runs LAST for maximum data analysis. Validates evidence and assigns a risk score. Must pass for release.", actor: "AIAuditor" },
-    { n: 9, title: "Release or Dispute", icon: "🔓", desc: "Once all 5 gates pass (Ready), anyone can trigger release. Contractor receives pPHP visible in Freighter. Dispute can be raised anytime before release.", actor: "Any Role" },
+    { n: 0, title: "Funding Arrives at FA", icon: "🏦", desc: "Donor path: Donor pledges → transfers foreign currency to CentralBank → CentralBank mints pPHP to FA + marks disbursed. National Budget path: GovernmentAgency creates PVO → CentralBank Direct Fund mints pPHP to FA directly.", actor: "CentralBank" },
+    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with awarded contractor (auto-filled, read-only), PVO, milestone, amount (auto-filled from winning bid divided by milestone count), and sets Community Confirmations threshold.", actor: "FundingAgency" },
+    { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
+    { n: 3, title: "Gate 1 — Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
+    { n: 4, title: "Gate 2 — Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
+    { n: 5, title: "Gate 3 — Community Oracle", icon: "📊", desc: "Citizen submits GPS-tagged field report. Report must be verified through the Community Oracle to prove real-world project existence.", actor: "Citizens" },
+    { n: 6, title: "Gate 4 — Community Confirm", icon: "📸", desc: "Citizens confirm the milestone. Each verified confirmation increments the counter. Must reach the threshold set at escrow creation.", actor: "Citizens" },
+    { n: 7, title: "Gate 5 — AI Risk Check", icon: "🤖", desc: "AI oracle runs LAST for maximum data analysis. Validates evidence and assigns a risk score. Must pass for release.", actor: "AIAuditor" },
+    { n: 8, title: "Release or Dispute", icon: "🔓", desc: "Once all 5 gates pass (Ready), anyone can trigger release. Contractor receives pPHP visible in Freighter. Dispute can be raised anytime before release.", actor: "Any Role" },
   ];
 
   return (
     <div className="max-w-2xl">
       <div className="card p-6 mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System + Donor Funding</h2>
-        <p className="text-sm text-slate-500">
-          Donors commit pledges on-chain, then CentralBank mints pPHP to the Funding Agency. Every escrow passes through 5 independent verification gates (in correct order: Engineer, Compliance, Community Oracle, Community Confirmations, AI Risk) before funds can be released.
-          This ensures no single party can authorize payment alone — preventing corruption and ensuring quality.
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System — Two Funding Paths</h2>
+        <p className="text-sm text-slate-500 mb-3">
+          Every escrow passes through 5 independent verification gates before funds can be released.
+          There are two ways pPHP reaches the Funding Agency wallet:
         </p>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="font-semibold text-blue-800 mb-1">🌍 Donor-Funded PVO</p>
+            <ol className="list-decimal list-inside text-blue-700 space-y-1 text-xs">
+              <li>Donor commits pledge on-chain</li>
+              <li>Donor transfers foreign currency to CentralBank</li>
+              <li><strong>CentralBank</strong> approves: mints pPHP to FA + marks disbursed</li>
+              <li>FundingAgency creates escrow &rarr; funds &rarr; gates &rarr; release</li>
+            </ol>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+            <p className="font-semibold text-emerald-800 mb-1">🏛️ National Budget PVO</p>
+            <ol className="list-decimal list-inside text-emerald-700 space-y-1 text-xs">
+              <li>GovernmentAgency creates PVO with fund_source: "National Budget"</li>
+              <li><strong>CentralBank</strong> uses <em>Direct Fund</em>: mints pPHP directly to FA</li>
+              <li>FundingAgency creates escrow &rarr; funds &rarr; gates &rarr; release</li>
+              <li>Unspent amount = government savings</li>
+            </ol>
+          </div>
+        </div>
       </div>
       <div className="card p-5 mb-4 bg-amber-50 border-amber-200">
         <h3 className="font-semibold text-amber-800 mb-1">📸 Community Confirmations Threshold</h3>
