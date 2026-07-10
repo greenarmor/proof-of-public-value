@@ -475,6 +475,22 @@ export function TransparencyPortal() {
                       {formatBudget(selected.total_budget)}
                     </dd>
                   </div>
+                  {bidMap[selected.id] > 0 && (
+                    <>
+                      <div>
+                        <dt className="stat-label">Winning Bid</dt>
+                        <dd className="text-sm font-medium text-emerald-600 mt-1">
+                          {currency}{(bidMap[selected.id] / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="stat-label">Savings</dt>
+                        <dd className="text-sm font-medium text-green-600 mt-1">
+                          {currency}{((Number(selected.total_budget) - bidMap[selected.id]) / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                        </dd>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <dt className="stat-label">Contractor</dt>
                     <dd className="text-sm font-medium mt-1">
