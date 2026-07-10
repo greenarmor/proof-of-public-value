@@ -563,11 +563,13 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
       <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="relative">
             <label className="block text-sm font-medium text-slate-700 mb-1">Recipient (Contractor)</label>
-            <input type="text" value={recipient} onChange={e => { setRecipient(e.target.value); setShowRecipientDd(true); }}
-              onFocus={() => setShowRecipientDd(true)}
+            <input type="text" value={recipient}
+              readOnly={!!prefillRecipient}
+              onChange={e => { if (!prefillRecipient) { setRecipient(e.target.value); setShowRecipientDd(true); } }}
+              onFocus={() => { if (!prefillRecipient) setShowRecipientDd(true); }}
               onBlur={() => setTimeout(() => setShowRecipientDd(false), 200)}
-              className="input font-mono text-xs" placeholder="Search contractor address..." required />
-            {showRecipientDd && filteredContractors.length > 0 && (
+              className={`input font-mono text-xs ${prefillRecipient ? "bg-slate-100" : ""}`} placeholder="Search contractor address..." required />
+            {!prefillRecipient && showRecipientDd && filteredContractors.length > 0 && (
               <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                 {filteredContractors.slice(0, 8).map(c => (
                   <button key={c} type="button" onMouseDown={() => { setRecipient(c); setShowRecipientDd(false); }}
