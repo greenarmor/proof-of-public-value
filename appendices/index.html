@@ -1172,10 +1172,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#master-reset-script" class="md-nav__link">
+  <a href="#deployment-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Master Reset Script
+        Deployment Scripts
       
     </span>
   </a>
@@ -1863,10 +1863,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#master-reset-script" class="md-nav__link">
+  <a href="#deployment-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Master Reset Script
+        Deployment Scripts
       
     </span>
   </a>
@@ -2453,8 +2453,36 @@
 - Compliance history</p>
 <hr />
 <h2 id="governance-flow">Governance Flow<a class="headerlink" href="#governance-flow" title="Permanent link">&para;</a></h2>
-<h3 id="master-reset-script">Master Reset Script<a class="headerlink" href="#master-reset-script" title="Permanent link">&para;</a></h3>
-<p>A development tool (<code>scripts/master-reset.js</code>) that redeploys all contracts, creates 20 test PVOs, mints RPT tokens to citizens, simulates donor pledges, and runs a full 5-gate escrow lifecycle. Used for testing and demonstrations. <strong>Not for production.</strong></p>
+<h3 id="deployment-scripts">Deployment Scripts<a class="headerlink" href="#deployment-scripts" title="Permanent link">&para;</a></h3>
+<p><strong>Lean Reset</strong> (<code>.dev-logs/lean-reset.js</code>): Deploys all 12 contracts fresh, assigns all 13 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.</p>
+<p><strong>Partial Deploy</strong> (<code>.dev-logs/partial-deploy.js</code>): Deploys only the contracts you specify, keeping all others untouched. Calls <code>update_*_address</code> admin functions on unchanged contracts to rewire cross-contract references. Roles, reputation scores, and entity registrations on unchanged contracts survive.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Redeploy just 3 contracts (keeps access_control, reputation, etc.)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>node<span class="w"> </span>.dev-logs/partial-deploy.js<span class="w"> </span>pvo_core<span class="w"> </span>escrow<span class="w"> </span>procurement_market
+</code></pre></div>
+<p>This works because every contract that stores cross-contract addresses now has admin-gated <code>update_*_address</code> functions:</p>
+<table>
+<thead>
+<tr>
+<th>Contract</th>
+<th>Update Functions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>escrow</code></td>
+<td><code>update_pvo_core_address</code>, <code>update_compliance_engine_address</code>, <code>update_community_oracle_address</code></td>
+</tr>
+<tr>
+<td><code>procurement_market</code></td>
+<td><code>update_pvo_core_address</code>, <code>update_reputation_address</code>, <code>update_access_control_address</code></td>
+</tr>
+<tr>
+<td><code>grant_commitment</code></td>
+<td><code>update_pvo_core_address</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Not for production.</strong></p>
 <hr />
 <h3 id="freighter-wallet">Freighter Wallet<a class="headerlink" href="#freighter-wallet" title="Permanent link">&para;</a></h3>
 <p>The <a href="https://freighter.app">Freighter browser extension</a> is the <strong>user's cryptographic identity</strong> on Stellar. Every action in PoPV requires signing a transaction with the user's Freighter wallet. The wallet:</p>
@@ -2467,11 +2495,11 @@
 <hr />
 <h2 id="status-lifecycles">Status Lifecycles<a class="headerlink" href="#status-lifecycles" title="Permanent link">&para;</a></h2>
 <h3 id="pvo-status-flow">PVO Status Flow<a class="headerlink" href="#pvo-status-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Proposed → InProgress → Completed
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                  ↓
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>          Suspended (under investigation)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                  ↓
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>          Terminated (project cancelled)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Proposed → InProgress → Completed
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>                  ↓
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>          Suspended (under investigation)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>                  ↓
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>          Terminated (project cancelled)
 </code></pre></div>
 <ul>
 <li><strong>Proposed</strong>: PVO created, awaiting donor funding</li>
@@ -2481,7 +2509,7 @@
 <li><strong>Terminated</strong>: Project permanently cancelled</li>
 </ul>
 <h3 id="milestone-status-flow">Milestone Status Flow<a class="headerlink" href="#milestone-status-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Pending → EvidenceSubmitted → EngineerApproved → AIValidated → CompliancePassed → CommunityVerified → Released
 </code></pre></div>
 <ul>
 <li><strong>Pending</strong>: Milestone defined, no evidence submitted yet</li>
@@ -2493,9 +2521,9 @@
 <li><strong>Released</strong>: Payment sent to contractor</li>
 </ul>
 <h3 id="grant-status-flow">Grant Status Flow<a class="headerlink" href="#grant-status-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Committed → Disbursed → Completed
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>     ↓
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Cancelled
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Committed → Disbursed → Completed
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>     ↓
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Cancelled
 </code></pre></div>
 <ul>
 <li><strong>Committed</strong>: Donor pledged funds, pPHP transferred to funding agency</li>
@@ -2504,11 +2532,11 @@
 <li><strong>Cancelled</strong>: Donor revoked the pledge (only before disbursement)</li>
 </ul>
 <h3 id="escrow-status-flow">Escrow Status Flow<a class="headerlink" href="#escrow-status-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Created → Funded → EngineerApproved → AIValidated → CompliancePassed → OracleValidated → CommunityVerified → Ready → Released
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                                                                                                                    ↓
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                                                                                                               Refunded
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                                                                                                                    ↓
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                                                                                                               Disputed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Created → Funded → EngineerApproved → AIValidated → CompliancePassed → OracleValidated → CommunityVerified → Ready → Released
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                                                                                                                    ↓
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>                                                                                                               Refunded
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                                                                                                                    ↓
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                                                                                                               Disputed
 </code></pre></div>
 <hr />
 <h2 id="map-pin-color-legend">Map Pin Color Legend<a class="headerlink" href="#map-pin-color-legend" title="Permanent link">&para;</a></h2>
@@ -2550,11 +2578,11 @@
 <h2 id="technical-patterns">Technical Patterns<a class="headerlink" href="#technical-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="cross-contract-calls">Cross-Contract Calls<a class="headerlink" href="#cross-contract-calls" title="Permanent link">&para;</a></h3>
 <p>Contracts communicate using Soroban's <code>env.invoke_contract</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">env</span><span class="p">.</span><span class="n">invoke_contract</span><span class="p">::</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="o">&amp;</span><span class="n">contract_address</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="o">&amp;</span><span class="n">Symbol</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">env</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;function_name&quot;</span><span class="p">),</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">soroban_sdk</span><span class="p">::</span><span class="fm">vec!</span><span class="p">[</span><span class="o">&amp;</span><span class="n">env</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="o">..</span><span class="p">.]</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">env</span><span class="p">.</span><span class="n">invoke_contract</span><span class="p">::</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="o">&amp;</span><span class="n">contract_address</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="o">&amp;</span><span class="n">Symbol</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="o">&amp;</span><span class="n">env</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;function_name&quot;</span><span class="p">),</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">soroban_sdk</span><span class="p">::</span><span class="fm">vec!</span><span class="p">[</span><span class="o">&amp;</span><span class="n">env</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="o">..</span><span class="p">.]</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
 </code></pre></div></p>
 <p>Examples in PoPV:
 - Escrow → PVO Core (auto-complete on release)
@@ -2562,13 +2590,13 @@
 - Community Oracle → Reputation (check RPT balance)</p>
 <h3 id="storage-keys">Storage Keys<a class="headerlink" href="#storage-keys" title="Permanent link">&para;</a></h3>
 <p>All contract state uses <code>Symbol</code> storage keys for clarity:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">const</span><span class="w"> </span><span class="n">PVOS</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;PVOS&quot;</span><span class="p">);</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">const</span><span class="w"> </span><span class="n">MILESTONES</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;MILSTNS&quot;</span><span class="p">);</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">const</span><span class="w"> </span><span class="n">ESCROWS</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;ESCROWS&quot;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">const</span><span class="w"> </span><span class="n">PVOS</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;PVOS&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">const</span><span class="w"> </span><span class="n">MILESTONES</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;MILSTNS&quot;</span><span class="p">);</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">const</span><span class="w"> </span><span class="n">ESCROWS</span><span class="p">:</span><span class="w"> </span><span class="nc">Symbol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">symbol_short</span><span class="o">!</span><span class="p">(</span><span class="s">&quot;ESCROWS&quot;</span><span class="p">);</span>
 </code></pre></div></p>
 <h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
 <p>Every state-changing operation emits a Soroban contract event:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">MilestoneCreatedEvent</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">pvo_id</span><span class="p">,</span><span class="w"> </span><span class="n">milestone_id</span><span class="p">,</span><span class="w"> </span><span class="n">budget</span><span class="w"> </span><span class="p">}.</span><span class="n">publish</span><span class="p">(</span><span class="o">&amp;</span><span class="n">env</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">MilestoneCreatedEvent</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">pvo_id</span><span class="p">,</span><span class="w"> </span><span class="n">milestone_id</span><span class="p">,</span><span class="w"> </span><span class="n">budget</span><span class="w"> </span><span class="p">}.</span><span class="n">publish</span><span class="p">(</span><span class="o">&amp;</span><span class="n">env</span><span class="p">);</span>
 </code></pre></div></p>
 <p>This enables real-time indexing and public auditability.</p>
 <hr />
@@ -2620,26 +2648,26 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 - Search and filter by PVO title, department, municipality, status</p>
 <h3 id="provenance-tree-structure">Provenance Tree Structure<a class="headerlink" href="#provenance-tree-structure" title="Permanent link">&para;</a></h3>
 <p>The data model is hierarchical, matching exactly how public works projects are structured in the real world:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>PVO #3: Davao Coastal Road (parent)
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>├── Milestone #4: Engineering &amp; Mobilization (child)
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>│
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>├── Milestone #5: Structural Base (child)
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>│   └── Escrow #2  —  ₱50,000,000 (Created)
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>│       └── ... 5 gates (all pending, no escrow funded yet)
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>│
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>└── Timeline (chronological events with tx hashes)
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    ├── PVO created                    tx=3d54e07b...  🔗
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    ├── Milestone #5 created           tx=bf550c7a...  🔗
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    └── Escrow #1 status→EngineerApproved   tx=f64a0a72...  🔗
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PVO #3: Davao Coastal Road (parent)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── Milestone #4: Engineering &amp; Mobilization (child)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>│   ├── Gate 4: Community Confirm      ⬜ pending
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>│
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>├── Milestone #5: Structural Base (child)
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>│   └── Escrow #2  —  ₱50,000,000 (Created)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>│       └── ... 5 gates (all pending, no escrow funded yet)
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>│
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>└── Timeline (chronological events with tx hashes)
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    ├── PVO created                    tx=3d54e07b...  🔗
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    ├── Milestone #4 created           tx=fe9bb155...  🔗
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    ├── Milestone #5 created           tx=bf550c7a...  🔗
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    ├── Contractor assigned            tx=bab8c00d...  🔗
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    ├── Escrow #1 created              tx=f8ceb49e...  🔗
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    └── Escrow #1 status→EngineerApproved   tx=f64a0a72...  🔗
 </code></pre></div>
 <h3 id="how-events-are-captured">How Events Are Captured<a class="headerlink" href="#how-events-are-captured" title="Permanent link">&para;</a></h3>
 <p>The indexer calls <code>server.getEvents()</code> against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects — the indexer decodes these to extract:</p>
@@ -2738,17 +2766,17 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 </tbody>
 </table>
 <h3 id="running-the-provenance-system">Running the Provenance System<a class="headerlink" href="#running-the-provenance-system" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Start the indexer (continuous mode, polls every 30s):</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Build once and serve for 10 seconds:</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--once
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Build only, no HTTP server:</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--build
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Combined with frontend (production):</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>npm<span class="w"> </span>run<span class="w"> </span>prod<span class="w">   </span><span class="c1"># builds frontend + serves on :5174 + provenance on :3111</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Start the indexer (continuous mode, polls every 30s):</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Build once and serve for 10 seconds:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--once
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Build only, no HTTP server:</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts<span class="w"> </span>--build
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Combined with frontend (production):</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>npm<span class="w"> </span>run<span class="w"> </span>prod<span class="w">   </span><span class="c1"># builds frontend + serves on :5174 + provenance on :3111</span>
 </code></pre></div>
 <p>The indexer must be running for the Provenance Explorer to display data. If the service is offline, the Explorer page shows a clear error message with the exact command to start it.</p>
 <h3 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h3>

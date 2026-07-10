@@ -2823,7 +2823,7 @@ The contractor submits milestone evidence (drone imagery, GPS, photos, engineeri
 <tr>
 <td><code>escrow</code></td>
 <td>See config.ts</td>
-<td>15</td>
+<td>18</td>
 <td>15</td>
 </tr>
 <tr>
@@ -2871,8 +2871,8 @@ The contractor submits milestone evidence (drone imagery, GPS, photos, engineeri
 <tr>
 <td><code>procurement_market</code></td>
 <td>See config.ts</td>
-<td>7</td>
-<td>7</td>
+<td>9</td>
+<td>14</td>
 </tr>
 <tr>
 <td><code>pPHP SAC</code></td>
@@ -2883,13 +2883,13 @@ The contractor submits milestone evidence (drone imagery, GPS, photos, engineeri
 <tr>
 <td><code>grant_commitment</code></td>
 <td>See config.ts</td>
-<td>7</td>
-<td>13</td>
+<td>8</td>
+<td>15</td>
 </tr>
 </tbody>
 </table>
-<p><strong>40 tests (pvo_core + escrow + procurement_market) all passing.</strong></p>
-<p>Contract IDs are in <code>frontend/src/config.ts</code> and auto-updated by the master-reset script.</p>
+<p><strong>62 tests (pvo_core + escrow + procurement_market + grant_commitment) all passing.</strong></p>
+<p>Contract IDs are in <code>frontend/src/config.ts</code> and auto-updated by the lean-reset or partial-deploy scripts.</p>
 <hr />
 <h2 id="try-it-live">Try It Live<a class="headerlink" href="#try-it-live" title="Permanent link">&para;</a></h2>
 <p><strong>Production build:</strong> <code>npm run build &amp;&amp; npm start</code> from project root → <code>http://localhost:5174</code></p>
@@ -3009,10 +3009,13 @@ Import in Freighter: Add Account → Import Secret Key or Seed Phrase.</p>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>build
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Run all tests</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-p<span class="w"> </span>pvo_core<span class="w"> </span>-p<span class="w"> </span>escrow<span class="w"> </span>-p<span class="w"> </span>procurement_market<span class="w">   </span><span class="c1"># 40 tests</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>cargo<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-p<span class="w"> </span>pvo_core<span class="w"> </span>-p<span class="w"> </span>escrow<span class="w"> </span>-p<span class="w"> </span>procurement_market<span class="w"> </span>-p<span class="w"> </span>grant_commitment<span class="w">   </span><span class="c1"># 62 tests</span>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># Full system reset</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>node<span class="w"> </span>.dev-logs/master-reset.js<span class="w">     </span><span class="c1"># ~8 min</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># Full system reset (all 12 contracts)</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>node<span class="w"> </span>.dev-logs/lean-reset.js<span class="w">     </span><span class="c1"># ~8 min</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="c1"># Partial deploy (only changed contracts, keeps state of others)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>node<span class="w"> </span>.dev-logs/partial-deploy.js<span class="w"> </span>pvo_core<span class="w"> </span>escrow<span class="w"> </span>procurement_market
 </code></pre></div>
 <hr />
 <h2 id="roles-responsibilities">Roles &amp; Responsibilities<a class="headerlink" href="#roles-responsibilities" title="Permanent link">&para;</a></h2>
