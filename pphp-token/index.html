@@ -29,7 +29,7 @@
     
     
       
-        <title>pPHP Token - Proof of Public Value (PoPV)</title>
+        <title>pPHP Token (CBDC) - Proof of Public Value (PoPV)</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#appendix-b-pphp-token-escrow-settlement" class="md-skip">
+        <a href="#appendix-b-pphp-token-cbdc-model-with-centralbank" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              pPHP Token
+              pPHP Token (CBDC)
             
           </span>
         </div>
@@ -430,6 +430,25 @@
         </a>
       </li>
     
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.dev-logs/workflow.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CBDC Workflow
+
+      </a>
+    </li>
   
 
       
@@ -884,7 +903,7 @@
   <span class="md-ellipsis">
     
   
-    pPHP Token
+    pPHP Token (CBDC)
   
 
     
@@ -902,7 +921,7 @@
   <span class="md-ellipsis">
     
   
-    pPHP Token
+    pPHP Token (CBDC)
   
 
     
@@ -939,10 +958,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-problem-pphp-solves" class="md-nav__link">
+  <a href="#the-centralbank-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Problem pPHP Solves
+        The CentralBank Model
       
     </span>
   </a>
@@ -972,10 +991,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-escrow-uses-pphp" class="md-nav__link">
+  <a href="#contract-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Escrow Uses pPHP
+        Contract Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cbdc-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBDC Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CBDC Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mint-government-budget-allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mint (Government Budget Allocation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#escrow-project-funding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Escrow (Project Funding)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redeem-contractor-cash-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redeem (Contractor Cash-Out)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#donor-funded-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Donor-Funded Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#national-budget-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        National Budget Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Matrix
       
     </span>
   </a>
@@ -995,10 +1097,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#exercise-b1-check-your-pphp-balance" class="md-nav__link">
+  <a href="#b1-check-token-metadata" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.1: Check Your pPHP Balance
+        B.1: Check Token Metadata
       
     </span>
   </a>
@@ -1006,10 +1108,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-b2-admin-mints-pphp-to-a-wallet" class="md-nav__link">
+  <a href="#b2-centralbank-mints-pphp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.2: Admin Mints pPHP to a Wallet
+        B.2: CentralBank Mints pPHP
       
     </span>
   </a>
@@ -1017,54 +1119,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-b3-check-token-metadata" class="md-nav__link">
+  <a href="#b3-centralbank-redeems-contractor-cash-out" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.3: Check Token Metadata
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b4-create-and-fund-a-5m-peso-escrow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.4: Create and Fund a 5M Peso Escrow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b5-verify-token-movement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.5: Verify Token Movement
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b6-complete-all-5-gates-and-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.6: Complete All 5 Gates and Release
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b7-dispute-and-refund" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.7: Dispute and Refund
+        B.3: CentralBank Redeems (Contractor Cash-Out)
       
     </span>
   </a>
@@ -1073,100 +1131,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-flow-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Flow Diagram
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testnet-vs-mainnet-where-does-the-value-come-from" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testnet vs Mainnet: Where Does the Value Come From?
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testnet vs Mainnet: Where Does the Value Come From?">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#on-testnet-current" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        On Testnet (Current)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#on-mainnet-production" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        On Mainnet (Production)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-design-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why This Design Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mainnet-token-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mainnet Token Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deployment-switch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment Switch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checklist
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1214,6 +1178,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.dev-logs/workflow.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CBDC Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1252,10 +1243,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-problem-pphp-solves" class="md-nav__link">
+  <a href="#the-centralbank-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Problem pPHP Solves
+        The CentralBank Model
       
     </span>
   </a>
@@ -1285,10 +1276,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-escrow-uses-pphp" class="md-nav__link">
+  <a href="#contract-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How Escrow Uses pPHP
+        Contract Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cbdc-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBDC Lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CBDC Lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mint-government-budget-allocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mint (Government Budget Allocation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#escrow-project-funding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Escrow (Project Funding)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redeem-contractor-cash-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redeem (Contractor Cash-Out)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#donor-funded-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Donor-Funded Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#national-budget-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        National Budget Flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#role-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Role Matrix
       
     </span>
   </a>
@@ -1308,10 +1382,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#exercise-b1-check-your-pphp-balance" class="md-nav__link">
+  <a href="#b1-check-token-metadata" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.1: Check Your pPHP Balance
+        B.1: Check Token Metadata
       
     </span>
   </a>
@@ -1319,10 +1393,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-b2-admin-mints-pphp-to-a-wallet" class="md-nav__link">
+  <a href="#b2-centralbank-mints-pphp" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.2: Admin Mints pPHP to a Wallet
+        B.2: CentralBank Mints pPHP
       
     </span>
   </a>
@@ -1330,54 +1404,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#exercise-b3-check-token-metadata" class="md-nav__link">
+  <a href="#b3-centralbank-redeems-contractor-cash-out" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exercise B.3: Check Token Metadata
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b4-create-and-fund-a-5m-peso-escrow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.4: Create and Fund a 5M Peso Escrow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b5-verify-token-movement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.5: Verify Token Movement
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b6-complete-all-5-gates-and-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.6: Complete All 5 Gates and Release
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#exercise-b7-dispute-and-refund" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exercise B.7: Dispute and Refund
+        B.3: CentralBank Redeems (Contractor Cash-Out)
       
     </span>
   </a>
@@ -1386,100 +1416,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#token-flow-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Token Flow Diagram
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testnet-vs-mainnet-where-does-the-value-come-from" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testnet vs Mainnet: Where Does the Value Come From?
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testnet vs Mainnet: Where Does the Value Come From?">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#on-testnet-current" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        On Testnet (Current)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#on-mainnet-production" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        On Mainnet (Production)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-this-design-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why This Design Works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mainnet-token-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mainnet Token Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deployment-switch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment Switch
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checklist
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1503,21 +1439,52 @@
   
 
 
-<h1 id="appendix-b-pphp-token-escrow-settlement">Appendix B: pPHP Token &amp; Escrow Settlement<a class="headerlink" href="#appendix-b-pphp-token-escrow-settlement" title="Permanent link">&para;</a></h1>
-<p>How PoPV uses a custom on-chain token to settle real escrow payments, solving the testnet XLM limit and enabling realistic multi-million peso testing.</p>
+<h1 id="appendix-b-pphp-token-cbdc-model-with-centralbank">Appendix B: pPHP Token — CBDC Model with CentralBank<a class="headerlink" href="#appendix-b-pphp-token-cbdc-model-with-centralbank" title="Permanent link">&para;</a></h1>
+<p>How PoPV uses a CentralBank-gated Soroban token to simulate CBDC settlement, with mint and redeem controlled by a dedicated central bank role - not the Administrator.</p>
 <hr />
 <h2 id="what-youll-learn">What You'll Learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Why pPHP exists instead of using native XLM</li>
-<li>How amounts are encoded (centavos, not pesos)</li>
-<li>How to mint pPHP and check balances</li>
-<li>How escrow transfers real tokens on fund, release, and refund</li>
-<li>How this maps to production (mainnet)</li>
+<li>Why pPHP is now a Soroban token (not SAC)</li>
+<li>How the CentralBank role controls monetary supply</li>
+<li>The full CBDC lifecycle: mint → escrow → redeem</li>
+<li>How donor pledges are disbursed by CentralBank</li>
+<li>How this maps to real-world CBDC models</li>
 </ul>
 <hr />
-<h2 id="the-problem-pphp-solves">The Problem pPHP Solves<a class="headerlink" href="#the-problem-pphp-solves" title="Permanent link">&para;</a></h2>
-<p>Stellar testnet's Friendbot funds wallets with a maximum of <strong>10,000 XLM</strong>. Real infrastructure projects cost <strong>5 to 50 million pesos</strong>. Using native XLM directly would exhaust test wallets instantly.</p>
-<p>pPHP is a custom Soroban fungible token with <strong>unlimited mintable supply</strong> controlled by the Administrator, so we can simulate realistic government budgets without XLM constraints.</p>
+<h2 id="the-centralbank-model">The CentralBank Model<a class="headerlink" href="#the-centralbank-model" title="Permanent link">&para;</a></h2>
+<p>pPHP implements a <strong>two-tier CBDC model</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Actor</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Issuance</strong></td>
+<td>CentralBank</td>
+<td>Mints and burns pPHP via <code>has_role(CentralBank)</code></td>
+</tr>
+<tr>
+<td><strong>Distribution</strong></td>
+<td>FundingAgency</td>
+<td>Receives minted pPHP, funds escrows</td>
+</tr>
+<tr>
+<td><strong>Settlement</strong></td>
+<td>Escrow Contract</td>
+<td>Holds pPHP until 5 gates pass</td>
+</tr>
+<tr>
+<td><strong>Redemption</strong></td>
+<td>CentralBank</td>
+<td>Burns pPHP when contractor cashes out</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key separation:</strong> The Administrator manages the system (roles, config) but CANNOT mint or redeem pPHP. Only the CentralBank wallet can.</p>
 <hr />
 <h2 id="token-details">Token Details<a class="headerlink" href="#token-details" title="Permanent link">&para;</a></h2>
 <table>
@@ -1538,345 +1505,184 @@
 </tr>
 <tr>
 <td>Decimals</td>
-<td><code>2</code> (1 peso = 100 centavos)</td>
+<td><code>7</code> (1 peso = 10,000,000 stroops, SAC-compatible)</td>
 </tr>
 <tr>
-<td>Admin</td>
-<td><code>alice</code> (Administrator)</td>
+<td>Contract Type</td>
+<td>Soroban <code>TokenInterface</code></td>
 </tr>
 <tr>
-<td>Contract</td>
-<td><code>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y</code></td>
+<td>Role Enforcement</td>
+<td><code>access_control.has_role(caller, CentralBank)</code> on mint + redeem</td>
 </tr>
 <tr>
-<td>Interface</td>
-<td>Soroban <code>TokenInterface</code> (SAC-compatible)</td>
+<td>Admin Functions</td>
+<td><code>update_access_control_address</code> only</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="amount-encoding">Amount Encoding<a class="headerlink" href="#amount-encoding" title="Permanent link">&para;</a></h2>
-<p>All on-chain amounts are in <strong>centavos</strong> (the smallest unit). Divide by 100 to get pesos.</p>
+<p>All on-chain amounts are in <strong>SAC atomic units</strong> (pesos × 10⁷). The frontend uses <code>PPHP_SCALE = 10_000_000</code>.</p>
 <table>
 <thead>
 <tr>
 <th>Real Value</th>
-<th>Centavos (on-chain)</th>
-<th>Notes</th>
+<th>On-Chain (stroops)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1.00 peso</td>
-<td><code>100</code></td>
-<td>Minimum unit</td>
+<td>1 peso</td>
+<td><code>10,000,000</code></td>
 </tr>
 <tr>
 <td>1,000 pesos</td>
-<td><code>100,000</code></td>
-<td>Small milestone</td>
+<td><code>10,000,000,000</code></td>
 </tr>
 <tr>
 <td>1,000,000 pesos</td>
-<td><code>100,000,000</code></td>
-<td>Medium project</td>
+<td><code>10,000,000,000,000</code></td>
 </tr>
 <tr>
 <td>50,000,000 pesos</td>
-<td><code>5,000,000,000</code></td>
-<td>Large infrastructure</td>
-</tr>
-<tr>
-<td>1,000,000,000 pesos</td>
-<td><code>100,000,000,000</code></td>
-<td>National budget line item</td>
+<td><code>500,000,000,000,000</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>i128</code> max is ~170 quintillion. No overflow risk even for national budgets.</p>
+<p><code>i128</code> max is ~170 quintillion. No overflow risk.</p>
 <hr />
-<h2 id="how-escrow-uses-pphp">How Escrow Uses pPHP<a class="headerlink" href="#how-escrow-uses-pphp" title="Permanent link">&para;</a></h2>
-<p>The escrow contract (<code>CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X</code>) stores a <code>token_address</code> field. When you create an escrow, you specify which token to use:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>create_escrow(funder, recipient, pvo_id, milestone_id, amount, token_address, community_required)
+<h2 id="contract-functions">Contract Functions<a class="headerlink" href="#contract-functions" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>initialize(access_control_address, admin, decimal, name, symbol)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mint(caller, to, amount)        → only CentralBank (cross-calls access_control)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>redeem(caller, from, amount)    → only CentralBank (cross-calls access_control)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>update_access_control_address(admin, new_address)  → admin-only
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>balance(id)                     → i128 (anyone)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>total_supply()                  → i128 (anyone)
 </code></pre></div>
-<p>The contract then uses <code>soroban_sdk::token::Client</code> to transfer real tokens:</p>
+<p>All standard <code>TokenInterface</code> functions (<code>transfer</code>, <code>approve</code>, <code>transfer_from</code>, <code>burn</code>, <code>burn_from</code>) are also available.</p>
+<hr />
+<h2 id="cbdc-lifecycle">CBDC Lifecycle<a class="headerlink" href="#cbdc-lifecycle" title="Permanent link">&para;</a></h2>
+<h3 id="mint-government-budget-allocation">Mint (Government Budget Allocation)<a class="headerlink" href="#mint-government-budget-allocation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>CentralBank.mint(caller=CB, to=FundingAgency, amount)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    │
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    ▼
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>access_control.has_role(caller, CentralBank)? → ✅
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    │
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    ▼
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>pPHP created → FundingAgency balance increases → total_supply increases
+</code></pre></div>
+<h3 id="escrow-project-funding">Escrow (Project Funding)<a class="headerlink" href="#escrow-project-funding" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>FundingAgency.fund_escrow() → pPHP moves FA wallet → escrow contract vault
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    │
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    ▼
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>5 gates pass (Engineer, Compliance, Oracle, Community, AI)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    │
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    ▼
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>escrow.release() → pPHP moves escrow vault → contractor wallet
+</code></pre></div>
+<h3 id="redeem-contractor-cash-out">Redeem (Contractor Cash-Out)<a class="headerlink" href="#redeem-contractor-cash-out" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CentralBank.redeem(caller=CB, from=contractor, amount)
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    ▼
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>access_control.has_role(caller, CentralBank)? → ✅
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    ▼
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>pPHP burned → contractor balance decreases → total_supply decreases
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    ↓ (off-chain)
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>CentralBank pays contractor real pesos
+</code></pre></div>
+<hr />
+<h2 id="donor-funded-flow">Donor-Funded Flow<a class="headerlink" href="#donor-funded-flow" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Donor commits pledge → <code>grant_commitment.commit_grant(donor, pvo_id, amount, org, "pPHP")</code></li>
+<li>CentralBank approves → <code>pphp_token.mint(caller=CB, to=FA, amount)</code> + <code>grant_commitment.admin_mark_disbursed(caller=CB, grant_id)</code></li>
+<li>FundingAgency funds escrow → <code>escrow.fund_escrow(funder, escrow_id, amount)</code></li>
+<li>Gates pass → <code>escrow.release()</code> → contractor receives pPHP</li>
+<li>Contractor redeems → <code>pphp_token.redeem(caller=CB, from=contractor, amount)</code></li>
+</ol>
+<hr />
+<h2 id="national-budget-flow">National Budget Flow<a class="headerlink" href="#national-budget-flow" title="Permanent link">&para;</a></h2>
+<ol>
+<li>CentralBank Direct Fund → <code>pphp_token.mint(caller=CB, to=FA, amount)</code></li>
+<li>FundingAgency funds escrow → same as donor flow</li>
+<li>Gates pass → contractor receives pPHP</li>
+<li>Contractor redeems → same as donor flow</li>
+</ol>
+<hr />
+<h2 id="role-matrix">Role Matrix<a class="headerlink" href="#role-matrix" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Action</th>
-<th>Token Flow</th>
-<th>Who Signs</th>
+<th>Role</th>
+<th style="text-align: center;">Can Mint?</th>
+<th style="text-align: center;">Can Redeem?</th>
+<th style="text-align: center;">Can Mark Disbursed?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>fund_escrow</code></td>
-<td>Funder to Escrow Contract</td>
-<td>Funder</td>
+<td><strong>CentralBank</strong></td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
 </tr>
 <tr>
-<td><code>release</code></td>
-<td>Escrow Contract to Recipient</td>
-<td>Any caller (gates must pass)</td>
+<td>Administrator</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
 </tr>
 <tr>
-<td><code>refund</code></td>
-<td>Escrow Contract to Funder</td>
-<td>Funder</td>
+<td>FundingAgency</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>InternationalDonor</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
 </tr>
 </tbody>
 </table>
-<p>Before release, tokens are <strong>locked inside the escrow contract address</strong>. No one can access them until all 5 gates pass or a refund is triggered.</p>
 <hr />
 <h2 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h2>
-<h3 id="exercise-b1-check-your-pphp-balance">Exercise B.1: Check Your pPHP Balance<a class="headerlink" href="#exercise-b1-check-your-pphp-balance" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--id<span class="w"> </span>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
-</code></pre></div>
-<details class="success">
-<summary>Expected Output</summary>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&quot;600000000&quot;
-</code></pre></div>
-That is 6,000,000 pesos (600M centavos).</p>
-</details>
-<hr />
-<h3 id="exercise-b2-admin-mints-pphp-to-a-wallet">Exercise B.2: Admin Mints pPHP to a Wallet<a class="headerlink" href="#exercise-b2-admin-mints-pphp-to-a-wallet" title="Permanent link">&para;</a></h3>
-<p>Only the Administrator (<code>alice</code>) can mint:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--id<span class="w"> </span>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--<span class="w"> </span>mint<span class="w"> </span>--to<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--amount<span class="w"> </span><span class="m">1000000000</span>
-</code></pre></div>
-<p>This mints 10,000,000 pesos (1 billion centavos) to the funding agency wallet.</p>
-<details class="success">
-<summary>Expected Output</summary>
-<p>Transaction submitted successfully.</p>
-</details>
-<hr />
-<h3 id="exercise-b3-check-token-metadata">Exercise B.3: Check Token Metadata<a class="headerlink" href="#exercise-b3-check-token-metadata" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Symbol</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--id<span class="w"> </span>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--<span class="w"> </span>symbol
+<h3 id="b1-check-token-metadata">B.1: Check Token Metadata<a class="headerlink" href="#b1-check-token-metadata" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span>pphp:<span class="w"> </span>frontend/src/config.ts<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-f2<span class="k">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$TOKEN</span><span class="w"> </span>--<span class="w"> </span>symbol
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Decimals</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--id<span class="w"> </span>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--<span class="w"> </span>decimals
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># Total supply</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--id<span class="w"> </span>CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--<span class="w"> </span>total_supply
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$TOKEN</span><span class="w"> </span>--<span class="w"> </span>decimals
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$TOKEN</span><span class="w"> </span>--<span class="w"> </span>total_supply
 </code></pre></div>
-<details class="success">
-<summary>Expected Output</summary>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&quot;pPHP&quot;
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>2
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>&lt;total minted so far&gt;
+<h3 id="b2-centralbank-mints-pphp">B.2: CentralBank Mints pPHP<a class="headerlink" href="#b2-centralbank-mints-pphp" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span>pphp:<span class="w"> </span>frontend/src/config.ts<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-f2<span class="k">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nv">FA</span><span class="o">=</span><span class="s2">&quot;GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>central_bank<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$TOKEN</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--<span class="w"> </span>mint<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--caller<span class="w"> </span>GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>--to<span class="w"> </span><span class="nv">$FA</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--amount<span class="w"> </span><span class="m">100000000000000000</span><span class="w">  </span><span class="c1"># 10B pesos</span>
 </code></pre></div>
-</details>
-<hr />
-<h3 id="exercise-b4-create-and-fund-a-5m-peso-escrow">Exercise B.4: Create and Fund a 5M Peso Escrow<a class="headerlink" href="#exercise-b4-create-and-fund-a-5m-peso-escrow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X&quot;</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">FUNDER</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">CONTRACTOR</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>contractor<span class="k">)</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Create escrow: 5M pesos = 500,000,000 centavos</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nv">ESCROW_ID</span><span class="o">=</span><span class="k">$(</span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>--<span class="w"> </span>create_escrow<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span>--funder<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FUNDER</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span>--recipient<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CONTRACTOR</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">    </span>--pvo_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span>--milestone_id<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span>--amount<span class="w"> </span><span class="m">500000000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">    </span>--token_address<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PPHP</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span>--community_required<span class="w"> </span><span class="m">3</span><span class="k">)</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Escrow ID: </span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="c1"># Fund it: real pPHP tokens move from funder to escrow contract</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">  </span>--<span class="w"> </span>fund_escrow<span class="w"> </span>--funder<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FUNDER</span><span class="s2">&quot;</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--amount<span class="w"> </span><span class="m">500000000</span>
+<h3 id="b3-centralbank-redeems-contractor-cash-out">B.3: CentralBank Redeems (Contractor Cash-Out)<a class="headerlink" href="#b3-centralbank-redeems-contractor-cash-out" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>grep<span class="w"> </span>pphp:<span class="w"> </span>frontend/src/config.ts<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-f2<span class="k">)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">CONTRACTOR</span><span class="o">=</span><span class="s2">&quot;GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>central_bank<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$TOKEN</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span>--<span class="w"> </span>redeem<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>--caller<span class="w"> </span>GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--from<span class="w"> </span><span class="nv">$CONTRACTOR</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>--amount<span class="w"> </span><span class="m">50000000000000000</span><span class="w">  </span><span class="c1"># 5B pesos</span>
 </code></pre></div>
-<details class="success">
-<summary>Expected Output</summary>
-<p>Escrow created and funded. Funder's pPHP balance drops by 5M pesos. Tokens are now locked in the escrow contract address.</p>
-</details>
-<hr />
-<h3 id="exercise-b5-verify-token-movement">Exercise B.5: Verify Token Movement<a class="headerlink" href="#exercise-b5-verify-token-movement" title="Permanent link">&para;</a></h3>
-<p>After funding, verify that tokens actually moved:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">PPHP</span><span class="o">=</span><span class="s2">&quot;CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y&quot;</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Funder balance should have decreased</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$PPHP</span><span class="w"> </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Contractor balance should still be unchanged (funds locked in escrow)</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>alice<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$PPHP</span><span class="w"> </span>--<span class="w"> </span>balance<span class="w"> </span>--id<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>contractor<span class="k">)</span>
-</code></pre></div>
-<hr />
-<h3 id="exercise-b6-complete-all-5-gates-and-release">Exercise B.6: Complete All 5 Gates and Release<a class="headerlink" href="#exercise-b6-complete-all-5-gates-and-release" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X&quot;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">ESCROW_ID</span><span class="o">=</span><span class="m">1</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Gate 1: Engineer</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>engineer<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>engineer_approve<span class="w"> </span>--engineer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>engineer<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Gate 5: AI</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>ai_auditor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>ai_validate<span class="w"> </span>--auditor<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>ai_auditor<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># Gate 2: Compliance</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>auditor<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>compliance_validate<span class="w"> </span>--compliance_officer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>auditor<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span><span class="w"> </span>--passed<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Gate 3: Community (3 confirmations needed)</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="k">for</span><span class="w"> </span>ALIAS<span class="w"> </span><span class="k">in</span><span class="w"> </span>citizen<span class="w"> </span>alice<span class="w"> </span>agency<span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">  </span>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span><span class="nv">$ALIAS</span><span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>add_community_confirmation<span class="w"> </span>--citizen<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span><span class="nv">$ALIAS</span><span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="k">done</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
-<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># Release: real pPHP tokens move from escrow contract to contractor</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>release<span class="w"> </span>--caller<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ESCROW_ID</span><span class="s2">&quot;</span>
-</code></pre></div>
-<details class="success">
-<summary>Expected Output</summary>
-<p>All gates pass. Status advances to <code>Ready</code> then <code>Released</code>. Contractor's pPHP balance increases by 5M pesos.</p>
-</details>
-<hr />
-<h3 id="exercise-b7-dispute-and-refund">Exercise B.7: Dispute and Refund<a class="headerlink" href="#exercise-b7-dispute-and-refund" title="Permanent link">&para;</a></h3>
-<p>If fraud is detected, the Anti-Corruption Agency can dispute an escrow, and the funder can reclaim funds:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">ESCROW</span><span class="o">=</span><span class="s2">&quot;CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Dispute</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>anti_corruption<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>dispute<span class="w"> </span>--disputer<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>anti_corruption<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">2</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Refund: tokens return from escrow contract to funder</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>stellar<span class="w"> </span>contract<span class="w"> </span>invoke<span class="w"> </span>--source<span class="w"> </span>funding_agency<span class="w"> </span>--network<span class="w"> </span>testnet<span class="w"> </span>--send<span class="o">=</span>yes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span>--id<span class="w"> </span><span class="nv">$ESCROW</span><span class="w"> </span>--<span class="w"> </span>refund<span class="w"> </span>--funder<span class="w"> </span><span class="k">$(</span>stellar<span class="w"> </span>keys<span class="w"> </span>address<span class="w"> </span>funding_agency<span class="k">)</span><span class="w"> </span>--escrow_id<span class="w"> </span><span class="m">2</span>
-</code></pre></div>
-<details class="success">
-<summary>Expected Output</summary>
-<p>Status: <code>Disputed</code> then <code>Refunded</code>. Funder's pPHP balance is restored. Contractor never received the funds.</p>
-</details>
-<hr />
-<h2 id="token-flow-diagram">Token Flow Diagram<a class="headerlink" href="#token-flow-diagram" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>                         pPHP Token Transfers
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  +----------+         fund_escrow         +--------------+
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  |  Funder  | ---------- 5M -----------&gt; |    Escrow     |
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  |  Wallet  |                            |   Contract    |
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  +----------+                            |   (locked)    |
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>                                           +-------+-------+
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>                                               |         |
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>                                      release   |         |  refund
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>                                              v         v
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>  +--------------+                  +--------------+
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>  |  Contractor  | &lt;---- 5M ------- |    Escrow     |
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>  |    Wallet    |                  |   Contract    |
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>  +--------------+                  +--------------+
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>  All 5 gates must pass before release.
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>  Dispute blocks release and enables refund.
-</code></pre></div>
-<hr />
-<h2 id="testnet-vs-mainnet-where-does-the-value-come-from">Testnet vs Mainnet: Where Does the Value Come From?<a class="headerlink" href="#testnet-vs-mainnet-where-does-the-value-come-from" title="Permanent link">&para;</a></h2>
-<p>This is the most important concept to understand about the pPHP token.</p>
-<h3 id="on-testnet-current">On Testnet (Current)<a class="headerlink" href="#on-testnet-current" title="Permanent link">&para;</a></h3>
-<p>pPHP is a <strong>simulation token</strong>. It has no real-world value, no liquidity, and no peg to any currency. The Administrator mints it freely to fund testing.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Testnet pPHP
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  - Minted from nothing by the admin
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  - No collateral backing
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  - Cannot be converted to any other asset
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  - Exists only to test the escrow lock/unlock logic
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  - Worth: 0.00
-</code></pre></div>
-<p>This is fine for testing because we are validating <strong>code</strong>, not <strong>settlement</strong>. The escrow contract correctly calls <code>token::Client.transfer()</code>, tokens move between wallets, gates lock and unlock funds. The logic is proven.</p>
-<p>But if someone mints you 5 million pPHP on testnet, you cannot spend it anywhere. There is no exchange, no liquidity pool, no peg.</p>
-<h3 id="on-mainnet-production">On Mainnet (Production)<a class="headerlink" href="#on-mainnet-production" title="Permanent link">&para;</a></h3>
-<p>The escrow contract does not care which token it holds. The <code>token_address</code> parameter is a <strong>plug</strong>. You swap the testnet pPHP address for a mainnet token that already has real value:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Mainnet deployment
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  - token_address = USDC (backed by Circle&#39;s USD reserves)
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  - token_address = GovPHP (backed 1:1 by peso deposits at a custodian bank)
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  - token_address = EURC (backed by euro reserves)
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>Same escrow code. Same 5 gates. Same lock/unlock logic.
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>Only the token_address parameter changes.
-</code></pre></div>
-<h3 id="why-this-design-works">Why This Design Works<a class="headerlink" href="#why-this-design-works" title="Permanent link">&para;</a></h3>
-<p>The escrow is a <strong>lockbox</strong>, not a currency. Its job is to:
-1. Receive tokens from the funder
-2. Hold them until 5 independent gates pass
-3. Release them to the contractor (or refund to funder)</p>
-<p>The escrow does not need liquidity itself. The <strong>token contract</strong> provides the value. On testnet we use a worthless token to test the lockbox. On mainnet we plug in a real one.</p>
-<h3 id="mainnet-token-options">Mainnet Token Options<a class="headerlink" href="#mainnet-token-options" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Token</th>
-<th>How It Is Backed</th>
-<th>Liquidity</th>
-<th>Best For</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>GovPHP SAC</strong></td>
-<td>Government deposits real pesos at a custodian bank. Tokens minted 1:1</td>
-<td>Philippine banking network</td>
-<td>All government infrastructure projects</td>
-</tr>
-<tr>
-<td><strong>USDC</strong></td>
-<td>Circle holds USD reserves in cash and short-term treasuries</td>
-<td>Every major crypto exchange</td>
-<td>International donor-funded projects</td>
-</tr>
-<tr>
-<td><strong>EURC</strong></td>
-<td>Circle holds EUR reserves</td>
-<td>European exchanges</td>
-<td>EU-funded development projects</td>
-</tr>
-<tr>
-<td><strong>XLM</strong></td>
-<td>Native Stellar token (not pegged to anything)</td>
-<td>All Stellar DEXs</td>
-<td>Emergency fast-settlement projects (volatile)</td>
-</tr>
-</tbody>
-</table>
-<p>None of these have anything to do with XLM as a backing asset. XLM is just the network's gas token. It pays for transaction fees but does not back any pegged asset on Stellar.</p>
-<h3 id="deployment-switch">Deployment Switch<a class="headerlink" href="#deployment-switch" title="Permanent link">&para;</a></h3>
-<p>Moving from testnet to mainnet requires only two changes in <code>frontend/src/config.ts</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// TESTNET (current)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// escrow contract</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nx">pphp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// simulation token</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1">// MAINNET (production)</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;mainnet_escrow_contract_id&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="nx">pphp</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&lt;real_asset_contract_id&gt;&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// USDC, GovPHP, or EURC</span>
-</code></pre></div>
-<p>No contract code changes. No escrow recompilation. The same Rust binary runs on mainnet with a different token address.</p>
-<hr />
-<h2 id="checklist">Checklist<a class="headerlink" href="#checklist" title="Permanent link">&para;</a></h2>
-<ul>
-<li>[ ] Checked pPHP balance</li>
-<li>[ ] Admin minted pPHP to a wallet</li>
-<li>[ ] Created escrow with <code>token_address</code> parameter</li>
-<li>[ ] Funded escrow (verified tokens left funder wallet)</li>
-<li>[ ] Completed 5 gates and released (verified tokens reached contractor)</li>
-<li>[ ] Tested dispute and refund (verified tokens returned to funder)</li>
-</ul>
 
 
 

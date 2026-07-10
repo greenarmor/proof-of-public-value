@@ -433,6 +433,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.dev-logs/workflow.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CBDC Workflow
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1487,7 +1506,7 @@
   <span class="md-ellipsis">
     
   
-    pPHP Token
+    pPHP Token (CBDC)
   
 
     
@@ -1532,6 +1551,33 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.dev-logs/workflow.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CBDC Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2375,7 +2421,7 @@
 <p>The <strong>international donor pledge system</strong>. Models real-world development finance:</p>
 <ol>
 <li><strong>Commit</strong>  -  Donor records a pledge specifying PVO, amount, and org name. The pledge must <strong>exactly match</strong> the PVO's remaining budget (prevents over/under-pledging).</li>
-<li><strong>Disburse</strong>  -  Admin mints pPHP to the funding agency and marks the grant as disbursed.</li>
+<li><strong>Disburse</strong>  -  CentralBank mints pPHP to the funding agency and marks the grant as disbursed.</li>
 <li><strong>Complete</strong>  -  After escrow release, the grant is marked completed.</li>
 </ol>
 <p><strong>Exact-amount enforcement</strong>: the contract cross-calls <code>pvo_core.get_pvo_budget()</code> and sums existing grants. If the pledge doesn't equal the remaining budget, the transaction is rejected on-chain.</p>

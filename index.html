@@ -431,6 +431,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.dev-logs/workflow.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  CBDC Workflow
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1552,7 +1571,7 @@
   <span class="md-ellipsis">
     
   
-    pPHP Token
+    pPHP Token (CBDC)
   
 
     
@@ -1597,6 +1616,33 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.dev-logs/workflow.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CBDC Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2346,10 +2392,10 @@
 </tbody>
 </table>
 <p><strong>13 Soroban smart contracts</strong> execute every business rule on-chain:
-- <code>access_control</code>  -  13 role-based permissions
+- <code>access_control</code>  -  14 role-based permissions
 - <code>pvo_core</code>  -  PVO lifecycle, milestones, evidence, budget validation
 - <code>escrow</code>  -  5-gate conditional fund lock + InProgress auto-transition
-- <code>grant_commitment</code>  -  Donor pledges with exact-budget enforcement
+- <code>grant_commitment</code>  -  Donor pledges with CentralBank-gated disbursement
 - <code>community_oracle</code>  -  Citizen report verification
 - <code>reputation</code>  -  RPT soulbound token gatekeeper (anti-Sybil)
 - <code>ai_oracle</code>  -  Fraud detection engine
@@ -2357,12 +2403,15 @@
 - <code>audit_trail</code>  -  Immutable decision log
 - <code>value_score</code>  -  0-100 public value rating
 - <code>public_index</code>  -  National department rankings
-- <code>procurement_market</code>  -  Supplier pre-qualification
-- <code>pphp_sac</code>  -  Stellar Asset Contract settlement token (SAC, 7 decimals)</p>
+- <code>procurement_market</code>  -  Competitive bidding with min-bid enforcement
+- <code>pphp_token</code>  -  Soroban token with CentralBank-gated mint/redeem (CBDC model)</p>
 <p><strong>Cross-contract calls</strong> enable complex workflows without centralized orchestration:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>escrow.release() → pvo_core.update_pvo_status(InProgress)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>escrow.fund() → pvo_core.update_pvo_status(InProgress)
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>grant_commitment.commit() → pvo_core.get_pvo_budget() (verify exact match)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>procurement_market.submit_bid() → access_control.has_any_role(Contractor, Supplier)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>pphp_token.mint() → access_control.has_role(caller, CentralBank)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pphp_token.redeem() → access_control.has_role(caller, CentralBank)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>grant_commitment.admin_mark_disbursed() → access_control.has_role(caller, CentralBank)
 </code></pre></div></p>
 <p><strong>Result:</strong> Anyone can clone the repo, run <code>npm run build &amp;&amp; npm start</code>, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.</p>
 <h3 id="ai-oracle-provenance-indexer-independent-services-every-frontend">AI Oracle &amp; Provenance Indexer — Independent Services, Every Frontend<a class="headerlink" href="#ai-oracle-provenance-indexer-independent-services-every-frontend" title="Permanent link">&para;</a></h3>
