@@ -21,7 +21,7 @@ PVO → Milestones → Tender → Bids → Award → Escrow → Fund →
 
 
 
-**Total: 167 tests, 121 functions, ~139 KB WASM**
+**Total: 176 tests, 127 functions, ~145 KB WASM**
 
 ---
 
@@ -156,11 +156,16 @@ npm run dev   # -> http://localhost:5174
 
 ### Path B: Full System (deploy your own contracts)
 
-Requires Rust, Stellar CLI, and Soroban SDK. Deploys 13 contracts under your control.
+Requires Rust, Stellar CLI, and Soroban SDK. Deploys 12 contracts under your control.
 
 ```bash
-node .dev-logs/lean-reset.js   # deploys contracts, assigns roles, mints tokens
+node .dev-logs/lean-reset.js   # deploys all contracts, assigns roles, mints tokens
 npm run dev                    # -> http://localhost:5174
+```
+
+**Partial deploy** (only redeploy changed contracts, keeps state of others):
+```bash
+node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 ```
 
 

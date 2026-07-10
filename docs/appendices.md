@@ -290,9 +290,26 @@ The **pre-qualification registry**. Contractors and suppliers must register here
 
 ## Governance Flow
 
-### Master Reset Script
+### Deployment Scripts
 
-A development tool (`scripts/master-reset.js`) that redeploys all contracts, creates 20 test PVOs, mints RPT tokens to citizens, simulates donor pledges, and runs a full 5-gate escrow lifecycle. Used for testing and demonstrations. **Not for production.**
+**Lean Reset** (`.dev-logs/lean-reset.js`): Deploys all 12 contracts fresh, assigns all 13 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.
+
+**Partial Deploy** (`.dev-logs/partial-deploy.js`): Deploys only the contracts you specify, keeping all others untouched. Calls `update_*_address` admin functions on unchanged contracts to rewire cross-contract references. Roles, reputation scores, and entity registrations on unchanged contracts survive.
+
+```bash
+# Redeploy just 3 contracts (keeps access_control, reputation, etc.)
+node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
+```
+
+This works because every contract that stores cross-contract addresses now has admin-gated `update_*_address` functions:
+
+| Contract | Update Functions |
+|----------|-----------------|
+| `escrow` | `update_pvo_core_address`, `update_compliance_engine_address`, `update_community_oracle_address` |
+| `procurement_market` | `update_pvo_core_address`, `update_reputation_address`, `update_access_control_address` |
+| `grant_commitment` | `update_pvo_core_address` |
+
+**Not for production.**
 
 ---
 

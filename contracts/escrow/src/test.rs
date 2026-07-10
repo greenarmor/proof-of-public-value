@@ -63,9 +63,10 @@ fn setup() -> (Env, DynamicEscrowClient<'static>) {
     let compliance_id = register_compliance(&env);
     let oracle_id = register_community(&env);
     let pvo_core_id = register_pvo_core(&env);
+    let admin = Address::generate(&env);
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize(&compliance_id, &oracle_id, &pvo_core_id);
+    client.initialize(&compliance_id, &oracle_id, &pvo_core_id, &admin);
     (env, client)
 }
 
@@ -83,14 +84,15 @@ fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTok
     let compliance_id = register_compliance(&env);
     let oracle_id = register_community(&env);
     let pvo_core_id = register_pvo_core(&env);
+    let admin = Address::generate(&env);
     let contract_id = env.register(DynamicEscrow, ());
     let client = DynamicEscrowClient::new(&env, &contract_id);
-    client.initialize(&compliance_id, &oracle_id, &pvo_core_id);
+    client.initialize(&compliance_id, &oracle_id, &pvo_core_id, &admin);
 
-    let admin = Address::generate(&env);
+    let token_admin = Address::generate(&env);
     let token_id = env.register(pphp_token::PphpToken, ());
     let token_client = pphp_token::PphpTokenClient::new(&env, &token_id);
-    token_client.initialize(&admin, &2, &String::from_str(&env, "pPHP"), &String::from_str(&env, "pPHP"));
+    token_client.initialize(&token_admin, &2, &String::from_str(&env, "pPHP"), &String::from_str(&env, "pPHP"));
 
     (env, client, token_client)
 }
@@ -116,7 +118,7 @@ fn test_initialize() {
 fn test_double_initialize() {
     let (env, client) = setup();
     let dummy = Address::generate(&env);
-    client.initialize(&dummy, &dummy, &dummy);
+    client.initialize(&dummy, &dummy, &dummy, &dummy);
 }
 
 #[test]

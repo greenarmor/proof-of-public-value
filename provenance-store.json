@@ -1,9 +1,9 @@
 {
-  "lastUpdated": 1783641674254,
-  "lastLedger": 3525131,
+  "lastUpdated": 1783647458375,
+  "lastLedger": 3526286,
   "pvoCount": 21,
   "escrowCount": 1,
-  "eventCount": 4,
+  "eventCount": 5,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -549,6 +549,58 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3525830,
+      "ledgerClosedAt": "2026-07-10T00:57:58Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            118,
+            40,
+            8,
+            4,
+            30,
+            100,
+            231,
+            167,
+            35,
+            118,
+            2,
+            205,
+            42,
+            49,
+            179,
+            43,
+            197,
+            53,
+            88,
+            124,
+            73,
+            70,
+            44,
+            147,
+            112,
+            73,
+            202,
+            60,
+            32,
+            231,
+            203,
+            23
+          ]
+        }
+      },
+      "eventName": "bid_submitted_event",
+      "txHash": "cf3756abac7ffc35c0a9ce6d774ea297ab4fe492e41040b0a568e367e60a6503",
+      "data": {
+        "contractor": "[object Object]",
+        "final_score": 29,
+        "id": 4,
+        "tender_id": 3
+      }
+    },
     {
       "ledger": 3524922,
       "ledgerClosedAt": "2026-07-09T23:42:10Z",

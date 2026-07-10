@@ -31,9 +31,10 @@ fn setup() -> (Env, GrantCommitmentClient<'static>) {
     let env = Env::default();
     env.mock_all_auths();
     let pvo_core_id = register_pvo_core(&env);
+    let admin = Address::generate(&env);
     let contract_id = env.register(GrantCommitment, ());
     let client = GrantCommitmentClient::new(&env, &contract_id);
-    client.initialize(&pvo_core_id);
+    client.initialize(&pvo_core_id, &admin);
     (env, client)
 }
 
@@ -61,9 +62,10 @@ fn setup_pvo_with_budget(budget: i128) -> (Env, GrantCommitmentClient<'static>, 
         &0u64,
     );
 
+    let admin = Address::generate(&env);
     let contract_id = env.register(GrantCommitment, ());
     let client = GrantCommitmentClient::new(&env, &contract_id);
-    client.initialize(&pvo_core_id);
+    client.initialize(&pvo_core_id, &admin);
     (env, client, pvo_client)
 }
 

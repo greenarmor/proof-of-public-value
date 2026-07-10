@@ -463,7 +463,7 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 |----------|----|-----------|-------|
 | `access_control` | See config.ts | 9 | 11 |
 | `pvo_core` | See config.ts | 18 | 18 |
-| `escrow` | See config.ts | 15 | 15 |
+| `escrow` | See config.ts | 18 | 15 |
 | `community_oracle` | See config.ts | 8 | 12 |
 | `reputation` | See config.ts | 12 | 19 |
 | `audit_trail` | See config.ts | 10 | 12 |
@@ -471,13 +471,13 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 | `ai_oracle` | See config.ts | 13 | 17 |
 | `public_index` | See config.ts | 7 | 7 |
 | `compliance_engine` | See config.ts | 8 | 8 |
-| `procurement_market` | See config.ts | 7 | 7 |
+| `procurement_market` | See config.ts | 9 | 14 |
 | `pPHP SAC` | `CCJRB...A32X` | 8 | 8 |
-| `grant_commitment` | See config.ts | 7 | 13 |
+| `grant_commitment` | See config.ts | 8 | 15 |
 
-**40 tests (pvo_core + escrow + procurement_market) all passing.**
+**62 tests (pvo_core + escrow + procurement_market + grant_commitment) all passing.**
 
-Contract IDs are in `frontend/src/config.ts` and auto-updated by the master-reset script.
+Contract IDs are in `frontend/src/config.ts` and auto-updated by the lean-reset or partial-deploy scripts.
 
 ---
 
@@ -533,10 +533,13 @@ npx tsx provenance-indexer/service.ts   # → API on http://127.0.0.1:3111
 stellar contract build
 
 # Run all tests
-cargo test -p pvo_core -p escrow -p procurement_market   # 40 tests
+cargo test -p pvo_core -p escrow -p procurement_market -p grant_commitment   # 62 tests
 
-# Full system reset
-node .dev-logs/master-reset.js     # ~8 min
+# Full system reset (all 12 contracts)
+node .dev-logs/lean-reset.js     # ~8 min
+
+# Partial deploy (only changed contracts, keeps state of others)
+node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 ```
 
 ---

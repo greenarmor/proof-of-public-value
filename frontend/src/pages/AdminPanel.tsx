@@ -751,8 +751,8 @@ function SettingsTab() {
   };
 
   return (
-    <div className="card p-6 max-w-lg space-y-6">
-      <div>
+    <div className="space-y-6 max-w-lg">
+      <div className="card p-6">
         <h2 className="text-lg font-semibold mb-2">🌐 Currency Symbol</h2>
         <p className="text-sm text-slate-500 mb-4">
           Customize the currency symbol shown across all dashboards.
@@ -776,6 +776,110 @@ function SettingsTab() {
           Current: <strong className="text-brand-600">{currency}</strong> · Saved in browser
         </p>
       </div>
+      <ProcurementSettings />
+    </div>
+  );
+}
+
+function ProcurementSettings() {
+  const { address } = useWallet();
+  const [currentMinBids, setCurrentMinBids] = useState<number | null>(null);
+  const [newMinBids, setNewMinBids] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const loadMinBids = useCallback(async () => {
+    try {
+      const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+      const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+      const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(contract.call("get_min_bids"))
+        .setTimeout(30)
+        .build();
+      const sim: any = await server.simulateTransaction(tx);
+      if (sim.result?.retval?.value !== undefined) {
+        const val = Number(sim.result.retval.value());
+        setCurrentMinBids(val);
+        setNewMinBids(String(val));
+      }
+    } catch {
+      setCurrentMinBids(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMinBids();
+  }, [loadMinBids]);
+
+  const handleSetMinBids = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !newMinBids) return;
+    const val = Number(newMinBids);
+    if (val < 1) { setMsg({ text: "Minimum bids must be at least 1", ok: false }); return; }
+    setBusy(true);
+    setMsg(null);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const contract = new Contract(CONTRACT_IDS.procurement_market);
+      const op = contract.call("set_min_bids", new Address(address).toScVal(), xdr.ScVal.scvU32(val));
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(op)
+        .setTimeout(30)
+        .build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setMsg({ text: `Min bids set to ${val}. Contract now requires ${val} bid(s) before award.`, ok: true });
+      setCurrentMinBids(val);
+    } catch (err: any) {
+      setMsg({ text: err.message?.slice(0, 150) || "Failed to set min bids", ok: false });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold mb-2">🏗️ Procurement: Minimum Bids</h2>
+      <p className="text-sm text-slate-500 mb-4">
+        Set the minimum number of bids required before a tender can be awarded. The contract enforces this on-chain.
+      </p>
+      {currentMinBids !== null ? (
+        <p className="text-sm text-slate-600 mb-3">
+          Current threshold: <strong className="text-brand-600">{currentMinBids} bid{currentMinBids > 1 ? "s" : ""}</strong>
+        </p>
+      ) : (
+        <p className="text-sm text-slate-400 mb-3">Loading current threshold...</p>
+      )}
+      {msg && (
+        <div className={`mb-3 p-3 rounded-lg text-sm ${msg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+          {msg.text}
+        </div>
+      )}
+      <form className="flex gap-2 items-end" onSubmit={handleSetMinBids}>
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Bids Required</label>
+          <input
+            type="number"
+            min="1"
+            value={newMinBids}
+            onChange={(e) => setNewMinBids(e.target.value)}
+            className="input"
+            placeholder="2"
+            required
+          />
+        </div>
+        <button type="submit" disabled={busy} className="btn-primary px-6 py-2">
+          {busy ? "Saving..." : "Set Threshold"}
+        </button>
+      </form>
     </div>
   );
 }

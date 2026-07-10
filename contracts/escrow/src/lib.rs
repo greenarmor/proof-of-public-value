@@ -104,13 +104,14 @@ const INITIALIZED: Symbol = symbol_short!("INIT");
 const COMPLIANCE_ENGINE: Symbol = symbol_short!("COMPENG");
 const COMMUNITY_ORACLE: Symbol = symbol_short!("COMOR");
 const PVO_CORE: Symbol = symbol_short!("PVOCORE");
+const ADMIN: Symbol = symbol_short!("ADMIN");
 
 #[contract]
 pub struct DynamicEscrow;
 
 #[contractimpl]
 impl DynamicEscrow {
-    pub fn initialize(env: Env, compliance_engine: Address, community_oracle: Address, pvo_core: Address) {
+    pub fn initialize(env: Env, compliance_engine: Address, community_oracle: Address, pvo_core: Address, admin: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
@@ -119,7 +120,32 @@ impl DynamicEscrow {
         storage.set(&COMPLIANCE_ENGINE, &compliance_engine);
         storage.set(&COMMUNITY_ORACLE, &community_oracle);
         storage.set(&PVO_CORE, &pvo_core);
+        storage.set(&ADMIN, &admin);
         storage.set(&INITIALIZED, &true);
+    }
+
+    pub fn update_pvo_core_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&PVO_CORE, &new_address);
+    }
+
+    pub fn update_compliance_engine_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&COMPLIANCE_ENGINE, &new_address);
+    }
+
+    pub fn update_community_oracle_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&COMMUNITY_ORACLE, &new_address);
     }
 
     pub fn create_escrow(

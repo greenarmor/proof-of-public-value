@@ -49,19 +49,29 @@ const PVO_INDEX: Symbol = symbol_short!("PVO_IDX");
 const DONOR_INDEX: Symbol = symbol_short!("DONOR_IDX");
 const PVO_CORE: Symbol = symbol_short!("PVOCORE");
 const INITIALIZED: Symbol = symbol_short!("INIT");
+const ADMIN: Symbol = symbol_short!("ADMIN");
 
 #[contract]
 pub struct GrantCommitment;
 
 #[contractimpl]
 impl GrantCommitment {
-    pub fn initialize(env: Env, pvo_core: Address) {
+    pub fn initialize(env: Env, pvo_core: Address, admin: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&PVO_CORE, &pvo_core);
+        storage.set(&ADMIN, &admin);
         storage.set(&INITIALIZED, &true);
+    }
+
+    pub fn update_pvo_core_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update pvo_core address");
+        storage.set(&PVO_CORE, &new_address);
     }
 
     pub fn commit_grant(

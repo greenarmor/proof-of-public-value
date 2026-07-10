@@ -25,6 +25,26 @@ export function ProcurementMarketplace() {
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
+  const [minBids, setMinBids] = useState(2);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.procurement_market);
+        const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+        const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("get_min_bids"))
+          .setTimeout(30)
+          .build();
+        const sim: any = await server.simulateTransaction(tx);
+        if (sim.result?.retval?.value !== undefined) {
+          setMinBids(Number(sim.result.retval.value()));
+        }
+      } catch {}
+    })();
+  }, []);
 
   useEffect(() => {
     if (!canCreateTender) setActiveTab("browse");
@@ -83,19 +103,17 @@ export function ProcurementMarketplace() {
           }`}>
           📋 Browse Tenders
         </button>
-        {canCreateTender && (
           <button onClick={() => setActiveTab("award")}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === "award" ? "border-purple-600 text-purple-700" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}>
             🏆 Award
           </button>
-        )}
       </div>
 
       {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
       
-      {activeTab === "award" && canCreateTender && <AwardTab address={address!} tenders={tenders} loading={loading} />}
+      {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} canAward={canCreateTender} minBids={minBids} />}
 
       {canCreateTender && (
         <div className="mt-4">
@@ -117,11 +135,12 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
   const currency = getCurrency();
   const [bidModal, setBidModal] = useState<Tender | null>(null);
   if (loading) return <div className="text-center py-10 text-gray-400">Loading tenders...</div>;
+  const openTenders = tenders.filter(t => t.status.tag === "Open");
 
   return (
     <>
     <div className="grid gap-4">
-      {tenders.map(t => (
+      {openTenders.map(t => (
         <div key={t.id} className="bg-white border border-gray-200 rounded-lg p-5">
           <div className="flex items-start justify-between mb-3">
             <div>
@@ -147,7 +166,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
           </div>
         </div>
       ))}
-      {tenders.length === 0 && <div className="text-center py-10 text-gray-400">No tenders yet. Create one with the "Create Tender" tab.</div>}
+      {openTenders.length === 0 && <div className="text-center py-10 text-gray-400">No open tenders available for bidding.</div>}
     </div>
     <Modal open={!!bidModal} onClose={() => setBidModal(null)} title="Submit Bid">
       {bidModal && <BidForm tender={bidModal} onDone={() => setBidModal(null)} />}
@@ -272,31 +291,58 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
   );
 }
 
-function AwardTab({ address, tenders, loading }: { address: string; tenders: Tender[]; loading: boolean }) {
+function AwardTab({ address, tenders, loading, canAward, minBids }: { address: string; tenders: Tender[]; loading: boolean; canAward: boolean; minBids: number }) {
   const currency = getCurrency();
 
   if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>;
 
   const openTenders = tenders.filter(t => t.status.tag === "Open" && !t.winner);
-
-  if (openTenders.length === 0) {
-    return (
-      <div className="card p-12 text-center">
-        <div className="text-5xl mb-4">🏆</div>
-        <h3 className="font-semibold text-slate-700 mb-1">No open tenders to award</h3>
-        <p className="text-sm text-slate-400">Create a tender first, then suppliers can bid. Come back here to award.</p>
-      </div>
-    );
-  }
+  const awardedTenders = tenders.filter(t => t.status.tag === "Awarded");
 
   return (
-    <div className="space-y-6">
-      {openTenders.map(t => <TenderAwardCard key={t.id} tender={t} currency={currency} address={address} />)}
+    <div className="space-y-8">
+      {openTenders.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-slate-700 mb-3">📋 Open for Award</h3>
+          <div className="space-y-4">
+            {openTenders.map(t => <TenderAwardCard key={t.id} tender={t} currency={currency} address={address} canAward={canAward} minBids={minBids} />)}
+          </div>
+        </div>
+      )}
+      {awardedTenders.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-slate-700 mb-3">✅ Awarded</h3>
+          <div className="space-y-3">
+            {awardedTenders.map(t => (
+              <div key={t.id} className="card p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-mono text-slate-400">Tender #{t.id}</span>
+                    <h4 className="font-medium text-slate-900">{t.title}</h4>
+                  </div>
+                  <span className="badge-blue text-xs">Awarded</span>
+                </div>
+                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <span>Budget: {currency}{(Number(t.budget) / PPHP_SCALE).toLocaleString()}</span>
+                  {t.winner && <span>Winner: <WalletAddress addr={t.winner} chars={6}/></span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {openTenders.length === 0 && awardedTenders.length === 0 && (
+        <div className="card p-12 text-center">
+          <div className="text-5xl mb-4">🏆</div>
+          <h3 className="font-semibold text-slate-700 mb-1">No tenders yet</h3>
+          <p className="text-sm text-slate-400">Create a tender first, then contractors can bid. Come back here to award.</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function TenderAwardCard({ tender, currency, address }: { tender: Tender; currency: string; address: string }) {
+function TenderAwardCard({ tender, currency, address, canAward, minBids }: { tender: Tender; currency: string; address: string; canAward: boolean; minBids: number }) {
   const [bids, setBids] = useState<any[]>([]);
   const [bidsLoading, setBidsLoading] = useState(true);
   const [txState, setTxState] = useState<TxState>("idle");
@@ -356,10 +402,12 @@ function TenderAwardCard({ tender, currency, address }: { tender: Tender; curren
           <p className="text-sm text-slate-500 mt-0.5">{tender.description}</p>
           <p className="text-xs text-slate-400 mt-1">Budget: {currency}{(Number(tender.budget)/PPHP_SCALE).toLocaleString()}</p>
         </div>
-        <button onClick={handleAward} disabled={busy || bids.length === 0}
-          className="btn-primary text-sm px-4 py-2">
-          {busy ? "Awarding..." : "🏆 Award Tender"}
-        </button>
+        {canAward && (
+          <button onClick={handleAward} disabled={busy || bids.length < minBids}
+            className="btn-primary text-sm px-4 py-2">
+            {busy ? "Awarding..." : bids.length < minBids ? `🏆 Award Tender (${bids.length}/${minBids} bids needed)` : "🏆 Award Tender"}
+          </button>
+        )}
       </div>
 
       {/* Bids list */}

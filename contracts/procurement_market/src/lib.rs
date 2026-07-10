@@ -19,6 +19,14 @@ mod pvo_core_client {
 }
 use pvo_core_client::Client as PvoCoreClient;
 
+// Cross-contract: import access_control client
+mod access_control_client {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/access_control.wasm"
+    );
+}
+use access_control_client::Client as AccessControlClient;
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TenderStatus {
@@ -90,13 +98,16 @@ const TENDER_BIDS: Symbol = symbol_short!("TNDRBIDS");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 const REPUTATION: Symbol = symbol_short!("REP");
 const PVO_CORE_ADDR: Symbol = symbol_short!("PVOCORE");
+const ACCESS_CONTROL: Symbol = symbol_short!("AC");
+const ADMIN: Symbol = symbol_short!("ADMIN");
+const MIN_BIDS: Symbol = symbol_short!("MINBIDS");
 
 #[contract]
 pub struct ProcurementMarket;
 
 #[contractimpl]
 impl ProcurementMarket {
-    pub fn initialize(env: Env, reputation_address: Address, pvo_core_address: Address) {
+    pub fn initialize(env: Env, reputation_address: Address, pvo_core_address: Address, access_control_address: Address, admin: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
@@ -104,7 +115,48 @@ impl ProcurementMarket {
         storage.set(&COUNTER, &0u32);
         storage.set(&REPUTATION, &reputation_address);
         storage.set(&PVO_CORE_ADDR, &pvo_core_address);
+        storage.set(&ACCESS_CONTROL, &access_control_address);
+        storage.set(&ADMIN, &admin);
+        storage.set(&MIN_BIDS, &1u32);
         storage.set(&INITIALIZED, &true);
+    }
+
+    pub fn set_min_bids(env: Env, admin: Address, min_bids: u32) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can set min bids");
+        assert!(min_bids >= 1, "min bids must be at least 1");
+        storage.set(&MIN_BIDS, &min_bids);
+    }
+
+    pub fn get_min_bids(env: Env) -> u32 {
+        let storage = env.storage().persistent();
+        storage.get(&MIN_BIDS).unwrap_or(1)
+    }
+
+    pub fn update_pvo_core_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&PVO_CORE_ADDR, &new_address);
+    }
+
+    pub fn update_reputation_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&REPUTATION, &new_address);
+    }
+
+    pub fn update_access_control_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update addresses");
+        storage.set(&ACCESS_CONTROL, &new_address);
     }
 
     pub fn create_tender(
@@ -154,6 +206,18 @@ impl ProcurementMarket {
         contractor.require_auth();
 
         let storage = env.storage().persistent();
+
+        // Role check: only Contractor or Supplier can submit bids
+        let ac_address: Address = storage.get(&ACCESS_CONTROL).expect("access_control not configured");
+        let ac_client = AccessControlClient::new(&env, &ac_address);
+        let mut allowed_roles = Vec::new(&env);
+        allowed_roles.push_back(access_control_client::Role::Contractor);
+        allowed_roles.push_back(access_control_client::Role::Supplier);
+        assert!(
+            ac_client.has_any_role(&contractor, &allowed_roles),
+            "only contractors and suppliers can submit bids"
+        );
+
         let tenders: Map<u32, Tender> = storage.get(&TENDERS).unwrap_or_else(|| Map::new(&env));
         let tender = tenders.get(tender_id).expect("tender not found");
         assert!(tender.status == TenderStatus::Open, "tender is not open");
@@ -217,6 +281,9 @@ impl ProcurementMarket {
         let bids: Map<u32, Bid> = storage.get(&BIDS).unwrap_or_else(|| Map::new(&env));
         let idx: Map<u32, Vec<u32>> = storage.get(&TENDER_BIDS).unwrap_or_else(|| Map::new(&env));
         let ids = idx.get(tender_id).unwrap_or_else(|| Vec::new(&env));
+
+        let min_bids: u32 = storage.get(&MIN_BIDS).unwrap_or(1);
+        assert!(ids.len() >= min_bids as u32, "insufficient bids: requires at least {}", min_bids);
 
         let mut best_score = 0u32;
         let mut winner: Option<Address> = None;
