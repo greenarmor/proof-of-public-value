@@ -810,7 +810,13 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                 </div>
                 <h3 className="font-semibold text-slate-900">{pvo.title}</h3>
                 <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                  <span>{currency}{(Number(pvo.total_budget) / PPHP_SCALE).toLocaleString()}</span>
+                  <span>Budget: {currency}{(Number(pvo.total_budget) / PPHP_SCALE).toLocaleString()}</span>
+                  {bidPriceMap[pvoId] > 0 && (
+                    <>
+                      <span className="text-emerald-600 font-medium">Winning Bid: {currency}{(bidPriceMap[pvoId] / PPHP_SCALE).toLocaleString()}</span>
+                      <span className="text-green-600">Savings: {currency}{((Number(pvo.total_budget) - bidPriceMap[pvoId]) / PPHP_SCALE).toLocaleString()}</span>
+                    </>
+                  )}
                   <span>{pvo.municipality || pvo.department}</span>
                   <span>Contractor: <WalletAddress addr={pvo.contractor} chars={6} /></span>
                   {totalMs > 0 && <span className="text-slate-400">{escrowedMs}/{totalMs} milestones escrowed</span>}
