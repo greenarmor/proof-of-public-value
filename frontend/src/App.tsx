@@ -560,7 +560,7 @@ function DevBanner() {
     <div className="sticky bottom-0 z-40 bg-amber-50 border-t border-amber-200 overflow-hidden">
       <div className="py-2 whitespace-nowrap" style={{ animation: "marquee 18s linear infinite" }}>
         <span className="text-sm text-amber-800 font-medium px-4">
-          The system will periodically reset its data by redeploying affected contracts as needed, since we are in active development
+          Smart contracts may be redeployed when gaps are found and fixed during active development - only affected contracts are reset while the rest keep their state
         </span>
       </div>
     </div>
