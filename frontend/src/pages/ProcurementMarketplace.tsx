@@ -111,7 +111,7 @@ export function ProcurementMarketplace() {
           </button>
       </div>
 
-      {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} />}
+      {activeTab === "browse" && <BrowseTenders tenders={tenders} loading={loading} canBid={hasRole("Contractor", "Supplier")} />}
       
       {activeTab === "award" && <AwardTab address={address!} tenders={tenders} loading={loading} canAward={canCreateTender} minBids={minBids} />}
 
@@ -131,7 +131,7 @@ export function ProcurementMarketplace() {
   );
 }
 
-function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boolean }) {
+function BrowseTenders({ tenders, loading, canBid }: { tenders: Tender[]; loading: boolean; canBid: boolean }) {
   const currency = getCurrency();
   const [bidModal, setBidModal] = useState<Tender | null>(null);
   if (loading) return <div className="text-center py-10 text-gray-400">Loading tenders...</div>;
@@ -160,7 +160,7 @@ function BrowseTenders({ tenders, loading }: { tenders: Tender[]; loading: boole
           </div>
           <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
             <span className="text-xs text-gray-400">Scoring: Price (max 50) + Quality (max 30) + Timeline (max 20)</span>
-            {t.status.tag === "Open" && (
+            {t.status.tag === "Open" && canBid && (
               <button onClick={() => setBidModal(t)} className="btn-primary text-xs px-3 py-1">📤 Bid</button>
             )}
           </div>
