@@ -1,24 +1,31 @@
-# Appendix B: pPHP Token & Escrow Settlement
+# Appendix B: pPHP Token — CBDC Model with CentralBank
 
-How PoPV uses a custom on-chain token to settle real escrow payments, solving the testnet XLM limit and enabling realistic multi-million peso testing.
+How PoPV uses a CentralBank-gated Soroban token to simulate CBDC settlement, with mint and redeem controlled by a dedicated central bank role - not the Administrator.
 
 ---
 
 ## What You'll Learn
 
-- Why pPHP exists instead of using native XLM
-- How amounts are encoded (centavos, not pesos)
-- How to mint pPHP and check balances
-- How escrow transfers real tokens on fund, release, and refund
-- How this maps to production (mainnet)
+- Why pPHP is now a Soroban token (not SAC)
+- How the CentralBank role controls monetary supply
+- The full CBDC lifecycle: mint → escrow → redeem
+- How donor pledges are disbursed by CentralBank
+- How this maps to real-world CBDC models
 
 ---
 
-## The Problem pPHP Solves
+## The CentralBank Model
 
-Stellar testnet's Friendbot funds wallets with a maximum of **10,000 XLM**. Real infrastructure projects cost **5 to 50 million pesos**. Using native XLM directly would exhaust test wallets instantly.
+pPHP implements a **two-tier CBDC model**:
 
-pPHP is a custom Soroban fungible token with **unlimited mintable supply** controlled by the Administrator, so we can simulate realistic government budgets without XLM constraints.
+| Tier | Actor | Function |
+|------|-------|----------|
+| **Issuance** | CentralBank | Mints and burns pPHP via `has_role(CentralBank)` |
+| **Distribution** | FundingAgency | Receives minted pPHP, funds escrows |
+| **Settlement** | Escrow Contract | Holds pPHP until 5 gates pass |
+| **Redemption** | CentralBank | Burns pPHP when contractor cashes out |
+
+**Key separation:** The Administrator manages the system (roles, config) but CANNOT mint or redeem pPHP. Only the CentralBank wallet can.
 
 ---
 
@@ -28,321 +35,153 @@ pPHP is a custom Soroban fungible token with **unlimited mintable supply** contr
 |-------|-------|
 | Name | Philippine Peso Testnet |
 | Symbol | `pPHP` |
-| Decimals | `2` (1 peso = 100 centavos) |
-| Admin | `alice` (Administrator) |
-| Contract | `CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y` |
-| Interface | Soroban `TokenInterface` (SAC-compatible) |
+| Decimals | `7` (1 peso = 10,000,000 stroops, SAC-compatible) |
+| Contract Type | Soroban `TokenInterface` |
+| Role Enforcement | `access_control.has_role(caller, CentralBank)` on mint + redeem |
+| Admin Functions | `update_access_control_address` only |
 
 ---
 
 ## Amount Encoding
 
-All on-chain amounts are in **centavos** (the smallest unit). Divide by 100 to get pesos.
+All on-chain amounts are in **SAC atomic units** (pesos × 10⁷). The frontend uses `PPHP_SCALE = 10_000_000`.
 
-| Real Value | Centavos (on-chain) | Notes |
-|------------|---------------------|-------|
-| 1.00 peso | `100` | Minimum unit |
-| 1,000 pesos | `100,000` | Small milestone |
-| 1,000,000 pesos | `100,000,000` | Medium project |
-| 50,000,000 pesos | `5,000,000,000` | Large infrastructure |
-| 1,000,000,000 pesos | `100,000,000,000` | National budget line item |
+| Real Value | On-Chain (stroops) |
+|------------|-------------------|
+| 1 peso | `10,000,000` |
+| 1,000 pesos | `10,000,000,000` |
+| 1,000,000 pesos | `10,000,000,000,000` |
+| 50,000,000 pesos | `500,000,000,000,000` |
 
-`i128` max is ~170 quintillion. No overflow risk even for national budgets.
+`i128` max is ~170 quintillion. No overflow risk.
 
 ---
 
-## How Escrow Uses pPHP
-
-The escrow contract (`CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X`) stores a `token_address` field. When you create an escrow, you specify which token to use:
+## Contract Functions
 
 ```
-create_escrow(funder, recipient, pvo_id, milestone_id, amount, token_address, community_required)
+initialize(access_control_address, admin, decimal, name, symbol)
+mint(caller, to, amount)        → only CentralBank (cross-calls access_control)
+redeem(caller, from, amount)    → only CentralBank (cross-calls access_control)
+update_access_control_address(admin, new_address)  → admin-only
+balance(id)                     → i128 (anyone)
+total_supply()                  → i128 (anyone)
 ```
 
-The contract then uses `soroban_sdk::token::Client` to transfer real tokens:
+All standard `TokenInterface` functions (`transfer`, `approve`, `transfer_from`, `burn`, `burn_from`) are also available.
 
-| Action | Token Flow | Who Signs |
-|--------|-----------|-----------|
-| `fund_escrow` | Funder to Escrow Contract | Funder |
-| `release` | Escrow Contract to Recipient | Any caller (gates must pass) |
-| `refund` | Escrow Contract to Funder | Funder |
+---
 
-Before release, tokens are **locked inside the escrow contract address**. No one can access them until all 5 gates pass or a refund is triggered.
+## CBDC Lifecycle
+
+### Mint (Government Budget Allocation)
+```
+CentralBank.mint(caller=CB, to=FundingAgency, amount)
+    │
+    ▼
+access_control.has_role(caller, CentralBank)? → ✅
+    │
+    ▼
+pPHP created → FundingAgency balance increases → total_supply increases
+```
+
+### Escrow (Project Funding)
+```
+FundingAgency.fund_escrow() → pPHP moves FA wallet → escrow contract vault
+    │
+    ▼
+5 gates pass (Engineer, Compliance, Oracle, Community, AI)
+    │
+    ▼
+escrow.release() → pPHP moves escrow vault → contractor wallet
+```
+
+### Redeem (Contractor Cash-Out)
+```
+CentralBank.redeem(caller=CB, from=contractor, amount)
+    │
+    ▼
+access_control.has_role(caller, CentralBank)? → ✅
+    │
+    ▼
+pPHP burned → contractor balance decreases → total_supply decreases
+    ↓ (off-chain)
+CentralBank pays contractor real pesos
+```
+
+---
+
+## Donor-Funded Flow
+
+1. Donor commits pledge → `grant_commitment.commit_grant(donor, pvo_id, amount, org, "pPHP")`
+2. CentralBank approves → `pphp_token.mint(caller=CB, to=FA, amount)` + `grant_commitment.admin_mark_disbursed(caller=CB, grant_id)`
+3. FundingAgency funds escrow → `escrow.fund_escrow(funder, escrow_id, amount)`
+4. Gates pass → `escrow.release()` → contractor receives pPHP
+5. Contractor redeems → `pphp_token.redeem(caller=CB, from=contractor, amount)`
+
+---
+
+## National Budget Flow
+
+1. CentralBank Direct Fund → `pphp_token.mint(caller=CB, to=FA, amount)`
+2. FundingAgency funds escrow → same as donor flow
+3. Gates pass → contractor receives pPHP
+4. Contractor redeems → same as donor flow
+
+---
+
+## Role Matrix
+
+| Role | Can Mint? | Can Redeem? | Can Mark Disbursed? |
+|------|:---:|:---:|:---:|
+| **CentralBank** | ✅ | ✅ | ✅ |
+| Administrator | ❌ | ❌ | ❌ |
+| FundingAgency | ❌ | ❌ | ❌ |
+| InternationalDonor | ❌ | ❌ | ❌ |
 
 ---
 
 ## Exercises
 
-### Exercise B.1: Check Your pPHP Balance
+### B.1: Check Token Metadata
 
 ```bash
+TOKEN=$(grep pphp: frontend/src/config.ts | head -1 | cut -d'"' -f2)
+
 stellar contract invoke --source alice --network testnet \
-  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
-  -- balance --id $(stellar keys address funding_agency)
-```
+  --id $TOKEN -- symbol
 
-??? success "Expected Output"
-    ```
-    "600000000"
-    ```
-    That is 6,000,000 pesos (600M centavos).
-
----
-
-### Exercise B.2: Admin Mints pPHP to a Wallet
-
-Only the Administrator (`alice`) can mint:
-
-```bash
-stellar contract invoke --source alice --network testnet --send=yes \
-  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
-  -- mint --to $(stellar keys address funding_agency) --amount 1000000000
-```
-
-This mints 10,000,000 pesos (1 billion centavos) to the funding agency wallet.
-
-??? success "Expected Output"
-    Transaction submitted successfully.
-
----
-
-### Exercise B.3: Check Token Metadata
-
-```bash
-# Symbol
 stellar contract invoke --source alice --network testnet \
-  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
-  -- symbol
+  --id $TOKEN -- decimals
 
-# Decimals
 stellar contract invoke --source alice --network testnet \
-  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
-  -- decimals
-
-# Total supply
-stellar contract invoke --source alice --network testnet \
-  --id CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y \
-  -- total_supply
+  --id $TOKEN -- total_supply
 ```
 
-??? success "Expected Output"
-    ```
-    "pPHP"
-    2
-    <total minted so far>
-    ```
-
----
-
-### Exercise B.4: Create and Fund a 5M Peso Escrow
+### B.2: CentralBank Mints pPHP
 
 ```bash
-PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
-ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
-FUNDER=$(stellar keys address funding_agency)
-CONTRACTOR=$(stellar keys address contractor)
+TOKEN=$(grep pphp: frontend/src/config.ts | head -1 | cut -d'"' -f2)
+FA="GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO"
 
-# Create escrow: 5M pesos = 500,000,000 centavos
-ESCROW_ID=$(stellar contract invoke --source funding_agency --network testnet --send=yes \
-  --id $ESCROW \
-  -- create_escrow \
-    --funder "$FUNDER" \
-    --recipient "$CONTRACTOR" \
-    --pvo_id 1 \
-    --milestone_id 1 \
-    --amount 500000000 \
-    --token_address "$PPHP" \
-    --community_required 3)
-
-echo "Escrow ID: $ESCROW_ID"
-
-# Fund it: real pPHP tokens move from funder to escrow contract
-stellar contract invoke --source funding_agency --network testnet --send=yes \
-  --id $ESCROW \
-  -- fund_escrow --funder "$FUNDER" --escrow_id "$ESCROW_ID" --amount 500000000
+stellar contract invoke --source central_bank --network testnet --send=yes \
+  --id $TOKEN \
+  -- mint \
+  --caller GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO \
+  --to $FA \
+  --amount 100000000000000000  # 10B pesos
 ```
 
-??? success "Expected Output"
-    Escrow created and funded. Funder's pPHP balance drops by 5M pesos. Tokens are now locked in the escrow contract address.
-
----
-
-### Exercise B.5: Verify Token Movement
-
-After funding, verify that tokens actually moved:
+### B.3: CentralBank Redeems (Contractor Cash-Out)
 
 ```bash
-PPHP="CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y"
+TOKEN=$(grep pphp: frontend/src/config.ts | head -1 | cut -d'"' -f2)
+CONTRACTOR="GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF"
 
-# Funder balance should have decreased
-stellar contract invoke --source alice --network testnet \
-  --id $PPHP -- balance --id $(stellar keys address funding_agency)
-
-# Contractor balance should still be unchanged (funds locked in escrow)
-stellar contract invoke --source alice --network testnet \
-  --id $PPHP -- balance --id $(stellar keys address contractor)
+stellar contract invoke --source central_bank --network testnet --send=yes \
+  --id $TOKEN \
+  -- redeem \
+  --caller GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO \
+  --from $CONTRACTOR \
+  --amount 50000000000000000  # 5B pesos
 ```
-
----
-
-### Exercise B.6: Complete All 5 Gates and Release
-
-```bash
-ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
-ESCROW_ID=1
-
-# Gate 1: Engineer
-stellar contract invoke --source engineer --network testnet --send=yes \
-  --id $ESCROW -- engineer_approve --engineer $(stellar keys address engineer) --escrow_id "$ESCROW_ID"
-
-# Gate 5: AI
-stellar contract invoke --source ai_auditor --network testnet --send=yes \
-  --id $ESCROW -- ai_validate --auditor $(stellar keys address ai_auditor) --escrow_id "$ESCROW_ID" --passed true
-
-# Gate 2: Compliance
-stellar contract invoke --source auditor --network testnet --send=yes \
-  --id $ESCROW -- compliance_validate --compliance_officer $(stellar keys address auditor) --escrow_id "$ESCROW_ID" --passed true
-
-# Gate 3: Community (3 confirmations needed)
-for ALIAS in citizen alice agency; do
-  stellar contract invoke --source $ALIAS --network testnet --send=yes \
-    --id $ESCROW -- add_community_confirmation --citizen $(stellar keys address $ALIAS) --escrow_id "$ESCROW_ID"
-done
-
-# Release: real pPHP tokens move from escrow contract to contractor
-stellar contract invoke --source funding_agency --network testnet --send=yes \
-  --id $ESCROW -- release --caller $(stellar keys address funding_agency) --escrow_id "$ESCROW_ID"
-```
-
-??? success "Expected Output"
-    All gates pass. Status advances to `Ready` then `Released`. Contractor's pPHP balance increases by 5M pesos.
-
----
-
-### Exercise B.7: Dispute and Refund
-
-If fraud is detected, the Anti-Corruption Agency can dispute an escrow, and the funder can reclaim funds:
-
-```bash
-ESCROW="CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X"
-
-# Dispute
-stellar contract invoke --source anti_corruption --network testnet --send=yes \
-  --id $ESCROW -- dispute --disputer $(stellar keys address anti_corruption) --escrow_id 2
-
-# Refund: tokens return from escrow contract to funder
-stellar contract invoke --source funding_agency --network testnet --send=yes \
-  --id $ESCROW -- refund --funder $(stellar keys address funding_agency) --escrow_id 2
-```
-
-??? success "Expected Output"
-    Status: `Disputed` then `Refunded`. Funder's pPHP balance is restored. Contractor never received the funds.
-
----
-
-## Token Flow Diagram
-
-```
-                         pPHP Token Transfers
-
-
-  +----------+         fund_escrow         +--------------+
-  |  Funder  | ---------- 5M -----------> |    Escrow     |
-  |  Wallet  |                            |   Contract    |
-  +----------+                            |   (locked)    |
-                                           +-------+-------+
-                                               |         |
-                                      release   |         |  refund
-                                              v         v
-  +--------------+                  +--------------+
-  |  Contractor  | <---- 5M ------- |    Escrow     |
-  |    Wallet    |                  |   Contract    |
-  +--------------+                  +--------------+
-
-  All 5 gates must pass before release.
-  Dispute blocks release and enables refund.
-```
-
----
-
-## Testnet vs Mainnet: Where Does the Value Come From?
-
-This is the most important concept to understand about the pPHP token.
-
-### On Testnet (Current)
-
-pPHP is a **simulation token**. It has no real-world value, no liquidity, and no peg to any currency. The Administrator mints it freely to fund testing.
-
-```
-Testnet pPHP
-  - Minted from nothing by the admin
-  - No collateral backing
-  - Cannot be converted to any other asset
-  - Exists only to test the escrow lock/unlock logic
-  - Worth: 0.00
-```
-
-This is fine for testing because we are validating **code**, not **settlement**. The escrow contract correctly calls `token::Client.transfer()`, tokens move between wallets, gates lock and unlock funds. The logic is proven.
-
-But if someone mints you 5 million pPHP on testnet, you cannot spend it anywhere. There is no exchange, no liquidity pool, no peg.
-
-### On Mainnet (Production)
-
-The escrow contract does not care which token it holds. The `token_address` parameter is a **plug**. You swap the testnet pPHP address for a mainnet token that already has real value:
-
-```
-Mainnet deployment
-  - token_address = USDC (backed by Circle's USD reserves)
-  - token_address = GovPHP (backed 1:1 by peso deposits at a custodian bank)
-  - token_address = EURC (backed by euro reserves)
-
-Same escrow code. Same 5 gates. Same lock/unlock logic.
-Only the token_address parameter changes.
-```
-
-### Why This Design Works
-
-The escrow is a **lockbox**, not a currency. Its job is to:
-1. Receive tokens from the funder
-2. Hold them until 5 independent gates pass
-3. Release them to the contractor (or refund to funder)
-
-The escrow does not need liquidity itself. The **token contract** provides the value. On testnet we use a worthless token to test the lockbox. On mainnet we plug in a real one.
-
-### Mainnet Token Options
-
-| Token | How It Is Backed | Liquidity | Best For |
-|-------|-----------------|-----------|----------|
-| **GovPHP SAC** | Government deposits real pesos at a custodian bank. Tokens minted 1:1 | Philippine banking network | All government infrastructure projects |
-| **USDC** | Circle holds USD reserves in cash and short-term treasuries | Every major crypto exchange | International donor-funded projects |
-| **EURC** | Circle holds EUR reserves | European exchanges | EU-funded development projects |
-| **XLM** | Native Stellar token (not pegged to anything) | All Stellar DEXs | Emergency fast-settlement projects (volatile) |
-
-None of these have anything to do with XLM as a backing asset. XLM is just the network's gas token. It pays for transaction fees but does not back any pegged asset on Stellar.
-
-### Deployment Switch
-
-Moving from testnet to mainnet requires only two changes in `frontend/src/config.ts`:
-
-```typescript
-// TESTNET (current)
-escrow: "CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X",  // escrow contract
-pphp: "CANQ5IHIQQIXSWU3LT534HUBJBKCSLL3FPU2NW6WA2MMN2D5Y5DKWA2Y",  // simulation token
-
-// MAINNET (production)
-escrow: "<mainnet_escrow_contract_id>",
-pphp: "<real_asset_contract_id>",  // USDC, GovPHP, or EURC
-```
-
-No contract code changes. No escrow recompilation. The same Rust binary runs on mainnet with a different token address.
-
----
-
-## Checklist
-
-- [ ] Checked pPHP balance
-- [ ] Admin minted pPHP to a wallet
-- [ ] Created escrow with `token_address` parameter
-- [ ] Funded escrow (verified tokens left funder wallet)
-- [ ] Completed 5 gates and released (verified tokens reached contractor)
-- [ ] Tested dispute and refund (verified tokens returned to funder)

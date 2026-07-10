@@ -6,7 +6,7 @@ Every role in PoPV, what it can do, which contracts it touches, and how the dash
 
 ## Role Overview
 
-PoPV uses 13 roles. Each role has a dedicated dashboard in the frontend, tied to live on-chain contracts.
+PoPV uses 14 roles. Each role has a dedicated dashboard in the frontend, tied to live on-chain contracts.
 
 ```
 Public Pages (no wallet needed)
@@ -27,6 +27,7 @@ Role Dashboards (wallet required)
 ├── FundingAgency     → escrow (create, fund, release, refund)
 ├── InternationalDonor → grant_commitment (pledge, track)
 ├── AIAuditor         → ai_oracle (risk scoring)
+├── CentralBank       → pphp_token (mint/redeem), grant_commitment (disburse)
 └── Administrator     → access_control, all dashboards
 ```
 
@@ -74,6 +75,48 @@ Even if someone can see the dashboard, they cannot call functions reserved for o
 
 ## Role Details
 
+### CentralBank
+
+| Field | Value |
+|-------|-------|
+| Alias | `central_bank` |
+| Route | `/central-bank` |
+| Dashboard | Central Bank Dashboard |
+| Contracts | `pphp_token`, `grant_commitment` |
+| Can mint | ✅ (only role) |
+
+The CentralBank controls monetary supply. It mints pPHP to the FundingAgency (government budget allocation), disburses donor pledges, and redeems pPHP when contractors cash out. This role is separated from the Administrator - the Administrator manages the system but cannot mint or redeem currency.
+
+**Dashboard tabs:**
+
+| Tab | What's wired | Data source | Write actions |
+|-----|-------------|-------------|--------------|
+| Direct Fund | Mint pPHP to FundingAgency | `pphp_token.mint(caller, to, amount)` | CentralBank-gated mint |
+| Pledges | Donor pledge approval + mint + disburse | `grant_commitment.get_all_grants`, `pphp_token.mint` | Two-step: mint + mark disbursed |
+| Redeem | Contractor cash-out (burn pPHP) | `pphp_token.redeem(caller, from, amount)` | CentralBank-gated redeem |
+
+**Key functions:**
+
+```bash
+# Mint pPHP to Funding Agency
+stellar contract invoke --source central_bank --network testnet --send=yes \
+  --id <pphp_token_address> \
+  -- mint \
+  --caller GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO \
+  --to GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO \
+  --amount 100000000000000000
+
+# Redeem (cash-out contractor)
+stellar contract invoke --source central_bank --network testnet --send=yes \
+  --id <pphp_token_address> \
+  -- redeem \
+  --caller GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO \
+  --from GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF \
+  --amount 50000000000000000
+```
+
+---
+
 ### Administrator
 
 | Field | Value |
@@ -84,7 +127,7 @@ Even if someone can see the dashboard, they cannot call functions reserved for o
 | Contract | `access_control` |
 | Can access | All dashboards |
 
-The Administrator assigns and revokes roles, mints RPT tokens, and manages the system. This is the only role that can call `assign_role` and `revoke_role` on the `access_control` contract.
+The Administrator assigns and revokes roles, mints RPT tokens, and manages the system. This is the only role that can call `assign_role` and `revoke_role` on the `access_control` contract. **Note:** The Administrator CANNOT mint or redeem pPHP - that is exclusively the CentralBank role.
 
 **Key functions:**
 

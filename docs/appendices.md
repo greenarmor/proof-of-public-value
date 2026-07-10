@@ -176,7 +176,7 @@ The access control contract is the **first contract deployed**  -  all other con
 The **international donor pledge system**. Models real-world development finance:
 
 1. **Commit**  -  Donor records a pledge specifying PVO, amount, and org name. The pledge must **exactly match** the PVO's remaining budget (prevents over/under-pledging).
-2. **Disburse**  -  Admin mints pPHP to the funding agency and marks the grant as disbursed.
+2. **Disburse**  -  CentralBank mints pPHP to the funding agency and marks the grant as disbursed.
 3. **Complete**  -  After escrow release, the grant is marked completed.
 
 **Exact-amount enforcement**: the contract cross-calls `pvo_core.get_pvo_budget()` and sums existing grants. If the pledge doesn't equal the remaining budget, the transaction is rejected on-chain.

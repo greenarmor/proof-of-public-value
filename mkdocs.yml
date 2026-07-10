@@ -63,5 +63,6 @@ nav:
   - Appendices:
       - Glossary: appendices.md
       - Escrow Deep Dive: escrow-deep-dive.md
-      - pPHP Token: pphp-token.md
+      - pPHP Token (CBDC): pphp-token.md
       - AI Oracle: ai-oracle.md
+  - CBDC Workflow: ../.dev-logs/workflow.md

@@ -47,10 +47,10 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 | Off-chain services | Provenance Indexer (optional, experimental) + AI Oracle  -  standalone TS services |
 
 **13 Soroban smart contracts** execute every business rule on-chain:
-- `access_control`  -  13 role-based permissions
+- `access_control`  -  14 role-based permissions
 - `pvo_core`  -  PVO lifecycle, milestones, evidence, budget validation
 - `escrow`  -  5-gate conditional fund lock + InProgress auto-transition
-- `grant_commitment`  -  Donor pledges with exact-budget enforcement
+- `grant_commitment`  -  Donor pledges with CentralBank-gated disbursement
 - `community_oracle`  -  Citizen report verification
 - `reputation`  -  RPT soulbound token gatekeeper (anti-Sybil)
 - `ai_oracle`  -  Fraud detection engine
@@ -58,14 +58,17 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 - `audit_trail`  -  Immutable decision log
 - `value_score`  -  0-100 public value rating
 - `public_index`  -  National department rankings
-- `procurement_market`  -  Supplier pre-qualification
-- `pphp_sac`  -  Stellar Asset Contract settlement token (SAC, 7 decimals)
+- `procurement_market`  -  Competitive bidding with min-bid enforcement
+- `pphp_token`  -  Soroban token with CentralBank-gated mint/redeem (CBDC model)
 
 **Cross-contract calls** enable complex workflows without centralized orchestration:
 ```
-escrow.release() → pvo_core.update_pvo_status(InProgress)
+escrow.fund() → pvo_core.update_pvo_status(InProgress)
 grant_commitment.commit() → pvo_core.get_pvo_budget() (verify exact match)
-community_oracle.verify() → reputation.check_balance(RPT ≥ 1)
+procurement_market.submit_bid() → access_control.has_any_role(Contractor, Supplier)
+pphp_token.mint() → access_control.has_role(caller, CentralBank)
+pphp_token.redeem() → access_control.has_role(caller, CentralBank)
+grant_commitment.admin_mark_disbursed() → access_control.has_role(caller, CentralBank)
 ```
 
 **Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.
