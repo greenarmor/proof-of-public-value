@@ -608,17 +608,23 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => {
                     const bidPrice = milestoneBidPrices[m.id];
-                    const usePrice = bidPrice != null ? bidPrice : m.budget;
+                    // Compute total bid across all milestones for the selected PVO
+                    const totalBid = milestones.reduce(
+                      (sum: number, ms: any) => sum + (milestoneBidPrices[ms.id] || 0), 0
+                    );
+                    const msCount = milestones.length || 1;
+                    const hasBids = totalBid > 0;
+                    const perMsAmount = hasBids ? Math.round(totalBid / msCount) : m.budget;
                     return (
-                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (usePrice > 0) setAmount(String(usePrice / PPHP_SCALE)); }}
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (perMsAmount > 0) setAmount(String(perMsAmount / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
                       <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
                       <span className="text-xs text-slate-400 ml-2">
-                        {bidPrice != null ? (
+                        {hasBids ? (
                           <>
                             <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
                             {" → "}
-                            <span className="text-emerald-600">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
+                            <span className="text-emerald-600">{currency}{(perMsAmount / PPHP_SCALE).toLocaleString()}</span>
                           </>
                         ) : (
                           <>{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</>
@@ -820,7 +826,15 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
                       const bidPrice = bidPriceMap[`${pvoId}-${m.id}`];
-                      const escrowAmount = bidPrice != null ? String(bidPrice / PPHP_SCALE) : String(m.budget / PPHP_SCALE);
+                      // Total winning bid for this PVO across all milestones
+                      const totalBid = milestones.reduce(
+                        (sum: number, ms: any) => sum + (bidPriceMap[`${pvoId}-${ms.id}`] || 0), 0
+                      );
+                      const msCount = milestones.length || 1;
+                      const hasBids = totalBid > 0;
+                      const escrowAmount = hasBids
+                        ? String(Math.round(totalBid / msCount / PPHP_SCALE))
+                        : String(m.budget / PPHP_SCALE);
                       return (
                         <div key={m.id} className="flex items-center justify-between p-4">
                           <div className="flex-1">
@@ -830,12 +844,12 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                             </div>
                             <span className="text-xs text-slate-400">
                               {m.description && `${m.description} · `}
-                              {bidPrice != null ? (
+                              {hasBids ? (
                                 <>
                                   <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
                                   {" → "}
-                                  <span className="text-emerald-600 font-medium">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
-                                  <span className="text-emerald-500 ml-1">(awarded bid)</span>
+                                  <span className="text-emerald-600 font-medium">{currency}{(Math.round(totalBid / msCount / PPHP_SCALE)).toLocaleString()}</span>
+                                  <span className="text-emerald-500 ml-1">(bid ÷{msCount})</span>
                                 </>
                               ) : (
                                 <>{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</>
