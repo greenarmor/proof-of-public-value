@@ -1169,7 +1169,7 @@ function CitizenReportBadge({
                   </p>
                   <button
                     onClick={addConfirmation}
-                    disabled={submitting || message?.ok}
+                    disabled={submitting}
                     className="btn-primary w-full text-xs py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {message?.ok
