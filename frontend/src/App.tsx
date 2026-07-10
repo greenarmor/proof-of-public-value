@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
@@ -23,6 +23,8 @@ import { DonorDashboard } from "./pages/DonorDashboard";
 import { LandingPage } from "./pages/LandingPage";
 import { ProvenanceExplorer } from "./pages/ProvenanceExplorer";
 import { formatAddress } from "./helpers";
+import { Client as PvoCoreClient } from "./contracts/pvo_core/src";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "./config";
 
 interface NavItem {
   to: string;
@@ -524,6 +526,47 @@ function ProtectedRoute({ element, roles }: { element: React.ReactNode; roles?: 
   return <>{element}</>;
 }
 
+function DevBanner() {
+  const [pvoCount, setPvoCount] = useState<number | null>(null);
+
+  const checkPvoCount = useCallback(async () => {
+    try {
+      const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(CONTRACT_IDS.pvo_core);
+      const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+      const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(contract.call("get_pvo_count"))
+        .setTimeout(30)
+        .build();
+      const sim: any = await server.simulateTransaction(tx);
+      if (sim.result?.retval?.value !== undefined) {
+        setPvoCount(Number(sim.result.retval.value()));
+      }
+    } catch {
+      setPvoCount(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkPvoCount();
+    const interval = setInterval(checkPvoCount, 30_000);
+    return () => clearInterval(interval);
+  }, [checkPvoCount]);
+
+  if (pvoCount === null || pvoCount > 0) return null;
+
+  return (
+    <div className="sticky bottom-0 z-40 bg-amber-50 border-t border-amber-200 overflow-hidden">
+      <div className="py-2 whitespace-nowrap" style={{ animation: "marquee 18s linear infinite" }}>
+        <span className="text-sm text-amber-800 font-medium px-4">
+          The system will periodically reset its data by redeploying affected contracts as needed, since we are in active development
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <WalletProvider>
@@ -660,6 +703,7 @@ function App() {
             </p>
             <p className="text-xs text-slate-300 mt-1">No Proof. No Payment.</p>
           </footer>
+          <DevBanner />
         </div>
       </BrowserRouter>
     </WalletProvider>
