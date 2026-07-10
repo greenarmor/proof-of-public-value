@@ -106,6 +106,7 @@ function PledgeManager({ address }: { address: string }) {
   const [pledges, setPledges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<number | null>(null);
+  const [completed, setCompleted] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     (async () => {
@@ -133,6 +134,7 @@ function PledgeManager({ address }: { address: string }) {
 
   const handleConvert = async (pledge: any) => {
     setBusy(pledge.id);
+    let mintSucceeded = false;
     try {
       const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
         await import("@stellar/stellar-sdk");
@@ -166,6 +168,7 @@ function PledgeManager({ address }: { address: string }) {
       if (signedResp?.error) throw new Error(signedResp.error.message);
       let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
+      mintSucceeded = true;
 
       // 2) Mark grant as Disbursed on-chain (second tx)
       const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
@@ -191,11 +194,16 @@ function PledgeManager({ address }: { address: string }) {
       signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
 
-      setPledges((prev) => prev.filter((p) => p.id !== pledge.id));
+      // Mark completed regardless of mark_disbursed outcome - mint already succeeded
+      setCompleted((prev) => new Set(prev).add(pledge.id));
       const pesos = pphpAmount / PPHP_SCALE;
       alert(`Minted ₱${pesos.toLocaleString()} pPHP to Funding Agency`);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
+      // Only mark completed if mint succeeded (prevent re-minting)
+      if (mintSucceeded) {
+        setCompleted((prev) => new Set(prev).add(pledge.id));
+      }
     } finally {
       setBusy(null);
     }
@@ -223,9 +231,9 @@ function PledgeManager({ address }: { address: string }) {
                 </div>
                 <button
                   onClick={() => handleConvert(p)}
-                  disabled={busy === p.id}
-                  className="btn-primary text-sm px-4 py-2">
-                  {busy === p.id ? "Processing..." : "Approve & Mint"}
+                  disabled={busy === p.id || completed.has(p.id)}
+                  className={`text-sm px-4 py-2 ${completed.has(p.id) ? "bg-emerald-100 text-emerald-700 cursor-not-allowed border border-emerald-200 rounded-lg" : busy === p.id ? "btn-primary opacity-60" : "btn-primary"}`}>
+                  {completed.has(p.id) ? "✓ Done" : busy === p.id ? "Processing..." : "Approve & Mint"}
                 </button>
               </div>
             );
