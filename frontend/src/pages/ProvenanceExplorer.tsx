@@ -593,6 +593,7 @@ export function ProvenanceExplorer() {
   const totalTxLinked = pvos.reduce(
     (s, p) =>
       s +
+      p.timeline.filter((t) => t.tx_hash).length +
       p.milestones
         .filter((m) => m.escrow)
         .flatMap((m) => m.gates)
