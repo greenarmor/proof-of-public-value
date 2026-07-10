@@ -1,9 +1,9 @@
 {
-  "lastUpdated": 1783672386279,
-  "lastLedger": 3531266,
+  "lastUpdated": 1783680676309,
+  "lastLedger": 3532922,
   "pvoCount": 15,
   "escrowCount": 0,
-  "eventCount": 36,
+  "eventCount": 40,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -840,6 +840,214 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3532798,
+      "ledgerClosedAt": "2026-07-10T10:39:34Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            50,
+            30,
+            211,
+            63,
+            43,
+            247,
+            204,
+            219,
+            83,
+            98,
+            28,
+            194,
+            126,
+            121,
+            244,
+            123,
+            113,
+            32,
+            49,
+            19,
+            116,
+            131,
+            200,
+            200,
+            142,
+            237,
+            12,
+            137,
+            81,
+            236,
+            85,
+            51
+          ]
+        }
+      },
+      "eventName": "bid_submitted_event",
+      "txHash": "74b494a4fb1c85564ebe1d0b278168bf5f729419f79be7aaa3e09cc2f693281d",
+      "data": {
+        "contractor": "[object Object]",
+        "final_score": 27,
+        "id": 9,
+        "tender_id": 3
+      }
+    },
+    {
+      "ledger": 3532779,
+      "ledgerClosedAt": "2026-07-10T10:37:59Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            50,
+            30,
+            211,
+            63,
+            43,
+            247,
+            204,
+            219,
+            83,
+            98,
+            28,
+            194,
+            126,
+            121,
+            244,
+            123,
+            113,
+            32,
+            49,
+            19,
+            116,
+            131,
+            200,
+            200,
+            142,
+            237,
+            12,
+            137,
+            81,
+            236,
+            85,
+            51
+          ]
+        }
+      },
+      "eventName": "bid_submitted_event",
+      "txHash": "5a5a59f14a75a63c21106d1ff5627dfdb3d3584a1f942b550533a45eae5c3d9e",
+      "data": {
+        "contractor": "[object Object]",
+        "final_score": 32,
+        "id": 8,
+        "tender_id": 4
+      }
+    },
+    {
+      "ledger": 3532768,
+      "ledgerClosedAt": "2026-07-10T10:37:04Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            50,
+            30,
+            211,
+            63,
+            43,
+            247,
+            204,
+            219,
+            83,
+            98,
+            28,
+            194,
+            126,
+            121,
+            244,
+            123,
+            113,
+            32,
+            49,
+            19,
+            116,
+            131,
+            200,
+            200,
+            142,
+            237,
+            12,
+            137,
+            81,
+            236,
+            85,
+            51
+          ]
+        }
+      },
+      "eventName": "bid_submitted_event",
+      "txHash": "2b42bc9650b97f72367250eddf3c9cb3e4ec1b1b072e6b6daa14e20c4a7ac3e8",
+      "data": {
+        "contractor": "[object Object]",
+        "final_score": 26,
+        "id": 7,
+        "tender_id": 2
+      }
+    },
+    {
+      "ledger": 3532755,
+      "ledgerClosedAt": "2026-07-10T10:35:59Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            50,
+            30,
+            211,
+            63,
+            43,
+            247,
+            204,
+            219,
+            83,
+            98,
+            28,
+            194,
+            126,
+            121,
+            244,
+            123,
+            113,
+            32,
+            49,
+            19,
+            116,
+            131,
+            200,
+            200,
+            142,
+            237,
+            12,
+            137,
+            81,
+            236,
+            85,
+            51
+          ]
+        }
+      },
+      "eventName": "bid_submitted_event",
+      "txHash": "49fa8d5e6cb4c0b322faf47a7bf5db5c2a29c1758d968efb3cc4c3a21aef02a6",
+      "data": {
+        "contractor": "[object Object]",
+        "final_score": 29,
+        "id": 6,
+        "tender_id": 1
+      }
+    },
     {
       "ledger": 3529753,
       "ledgerClosedAt": "2026-07-10T06:25:25Z",
