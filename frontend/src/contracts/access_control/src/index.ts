@@ -34,11 +34,11 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CBDWHDIO637P7XCYEQMO52LMJBNOJYSALCWSGUJ2RQKRRDDME34MA746",
+    contractId: "CCZ3IEI6QUGRCVVN5BKVHNVI3UV3Y7J6FDXHFM2W75CMKNZNX3Q7W7YI",
   }
 } as const
 
-export type Role = {tag: "Citizen", values: void} | {tag: "Engineer", values: void} | {tag: "Inspector", values: void} | {tag: "Contractor", values: void} | {tag: "Supplier", values: void} | {tag: "GovernmentAgency", values: void} | {tag: "Auditor", values: void} | {tag: "CommissionOnAudit", values: void} | {tag: "AntiCorruptionAgency", values: void} | {tag: "FundingAgency", values: void} | {tag: "InternationalDonor", values: void} | {tag: "Administrator", values: void} | {tag: "AIAuditor", values: void};
+export type Role = {tag: "Citizen", values: void} | {tag: "Engineer", values: void} | {tag: "Inspector", values: void} | {tag: "Contractor", values: void} | {tag: "Supplier", values: void} | {tag: "GovernmentAgency", values: void} | {tag: "Auditor", values: void} | {tag: "CommissionOnAudit", values: void} | {tag: "AntiCorruptionAgency", values: void} | {tag: "FundingAgency", values: void} | {tag: "InternationalDonor", values: void} | {tag: "Administrator", values: void} | {tag: "AIAuditor", values: void} | {tag: "CentralBank", values: void};
 
 
 export interface RoleAssignment {
@@ -115,7 +115,7 @@ export class Client extends ContractClient {
   }
   constructor(public readonly options: ContractClientOptions) {
     super(
-      new ContractSpec([ "AAAAAgAAAAAAAAAAAAAABFJvbGUAAAANAAAAAAAAAAAAAAAHQ2l0aXplbgAAAAAAAAAAAAAAAAhFbmdpbmVlcgAAAAAAAAAAAAAACUluc3BlY3RvcgAAAAAAAAAAAAAAAAAACkNvbnRyYWN0b3IAAAAAAAAAAAAAAAAACFN1cHBsaWVyAAAAAAAAAAAAAAAQR292ZXJubWVudEFnZW5jeQAAAAAAAAAAAAAAB0F1ZGl0b3IAAAAAAAAAAAAAAAARQ29tbWlzc2lvbk9uQXVkaXQAAAAAAAAAAAAAAAAAABRBbnRpQ29ycnVwdGlvbkFnZW5jeQAAAAAAAAAAAAAADUZ1bmRpbmdBZ2VuY3kAAAAAAAAAAAAAAAAAABJJbnRlcm5hdGlvbmFsRG9ub3IAAAAAAAAAAAAAAAAADUFkbWluaXN0cmF0b3IAAAAAAAAAAAAAAAAAAAlBSUF1ZGl0b3IAAAA=",
+      new ContractSpec([ "AAAAAgAAAAAAAAAAAAAABFJvbGUAAAAOAAAAAAAAAAAAAAAHQ2l0aXplbgAAAAAAAAAAAAAAAAhFbmdpbmVlcgAAAAAAAAAAAAAACUluc3BlY3RvcgAAAAAAAAAAAAAAAAAACkNvbnRyYWN0b3IAAAAAAAAAAAAAAAAACFN1cHBsaWVyAAAAAAAAAAAAAAAQR292ZXJubWVudEFnZW5jeQAAAAAAAAAAAAAAB0F1ZGl0b3IAAAAAAAAAAAAAAAARQ29tbWlzc2lvbk9uQXVkaXQAAAAAAAAAAAAAAAAAABRBbnRpQ29ycnVwdGlvbkFnZW5jeQAAAAAAAAAAAAAADUZ1bmRpbmdBZ2VuY3kAAAAAAAAAAAAAAAAAABJJbnRlcm5hdGlvbmFsRG9ub3IAAAAAAAAAAAAAAAAADUFkbWluaXN0cmF0b3IAAAAAAAAAAAAAAAAAAAlBSUF1ZGl0b3IAAAAAAAAAAAAAAAAAAAtDZW50cmFsQmFuawA=",
         "AAAAAQAAAAAAAAAAAAAADlJvbGVBc3NpZ25tZW50AAAAAAAFAAAAAAAAAAZhY3RpdmUAAAAAAAEAAAAAAAAAB2FkZHJlc3MAAAAAEwAAAAAAAAALYXNzaWduZWRfYXQAAAAABgAAAAAAAAALYXNzaWduZWRfYnkAAAAAEwAAAAAAAAAEcm9sZQAAB9AAAAAEUm9sZQ==",
         "AAAAAAAAAAAAAAAIZ2V0X3JvbGUAAAABAAAAAAAAAAdhZGRyZXNzAAAAABMAAAABAAAD6AAAB9AAAAAOUm9sZUFzc2lnbm1lbnQAAA==",
         "AAAAAAAAAAAAAAAIaGFzX3JvbGUAAAACAAAAAAAAAAdhZGRyZXNzAAAAABMAAAAAAAAABHJvbGUAAAfQAAAABFJvbGUAAAABAAAAAQ==",
