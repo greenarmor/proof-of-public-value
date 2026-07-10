@@ -73,6 +73,7 @@ export function TransparencyPortal() {
   const [pvoFunding, setPvoFunding] = useState<
     Record<number, { funded: number; escrowed: number; released: number }>
   >({});
+  const [bidMap, setBidMap] = useState<Record<number, number>>({});
 
   const loadPVOs = useCallback(async () => {
     setLoading(true);
@@ -202,6 +203,36 @@ export function TransparencyPortal() {
         } catch {}
       }
       setPvos(list);
+      // Fetch winning bids from procurement_market for budget reconciliation
+      (async () => {
+        try {
+          const { Client: PM } = await import("../contracts/procurement_market/src");
+          const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+          const tCount = await pm.get_tender_count();
+          const bMap: Record<number, number> = {};
+          const maxScan = Number(tCount.result) + 10;
+          for (let i = 1; i <= maxScan; i++) {
+            try {
+              const tr = await pm.get_tender({ id: i });
+              if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
+                const pid = Number(tr.result.pvo_id);
+                const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
+                const bids = bidsResult.result || [];
+                let bestBid: any = null;
+                for (const b of bids) {
+                  if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
+                    bestBid = b;
+                  }
+                }
+                if (bestBid) {
+                  bMap[pid] = (bMap[pid] || 0) + Number(bestBid.price);
+                }
+              }
+            } catch {}
+          }
+          setBidMap(bMap);
+        } catch {}
+      })();
     } catch {
     } finally {
       setLoading(false);
@@ -712,6 +743,16 @@ export function TransparencyPortal() {
                         {pvo.milestonesReleased}/{pvo.milestonesTotal} milestones
                       </span>
                     </div>
+                    {bidMap[pvo.id] > 0 && (
+                      <div className="flex items-center gap-2 text-[11px] mb-1">
+                        <span className="text-emerald-600 font-medium">
+                          Winning Bid: {currency}{(bidMap[pvo.id] / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                        </span>
+                        <span className="text-green-600">
+                          Savings: {currency}{((Number(pvo.total_budget) - bidMap[pvo.id]) / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                        </span>
+                      </div>
+                    )}
                     {/* PVO Progress — released / budget */}
                     {pvoFunding[pvo.id] &&
                       Number(pvo.total_budget) > 0 &&
