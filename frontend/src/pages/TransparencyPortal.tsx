@@ -203,41 +203,45 @@ export function TransparencyPortal() {
         } catch {}
       }
       setPvos(list);
-      // Fetch winning bids from procurement_market for budget reconciliation
-      (async () => {
-        try {
-          const { Client: PM } = await import("../contracts/procurement_market/src");
-          const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-          const tCount = await pm.get_tender_count();
-          const bMap: Record<number, number> = {};
-          const maxScan = Number(tCount.result) + 10;
-          for (let i = 1; i <= maxScan; i++) {
-            try {
-              const tr = await pm.get_tender({ id: i });
-              if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
-                const pid = Number(tr.result.pvo_id);
-                const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
-                const bids = bidsResult.result || [];
-                let bestBid: any = null;
-                for (const b of bids) {
-                  if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
-                    bestBid = b;
-                  }
-                }
-                if (bestBid) {
-                  bMap[pid] = (bMap[pid] || 0) + Number(bestBid.price);
-                }
-              }
-            } catch {}
-          }
-          setBidMap(bMap);
-        } catch {}
-      })();
     } catch {
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Fetch winning bids after PVOs are loaded
+  useEffect(() => {
+    if (loading || pvos.length === 0) return;
+    (async () => {
+      try {
+        const { Client: PM } = await import("../contracts/procurement_market/src");
+        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const tCount = await pm.get_tender_count();
+        const bMap: Record<number, number> = {};
+        const maxScan = Number(tCount.result) + 10;
+        for (let i = 1; i <= maxScan; i++) {
+          try {
+            const tr = await pm.get_tender({ id: i });
+            if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
+              const pid = Number(tr.result.pvo_id);
+              const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
+              const bids = bidsResult.result || [];
+              let bestBid: any = null;
+              for (const b of bids) {
+                if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
+                  bestBid = b;
+                }
+              }
+              if (bestBid) {
+                bMap[pid] = (bMap[pid] || 0) + Number(bestBid.price);
+              }
+            }
+          } catch {}
+        }
+        setBidMap(bMap);
+      } catch {}
+    })();
+  }, [loading, pvos.length]);
 
   // Fetch funding data (grants + escrows) per PVO
   useEffect(() => {
