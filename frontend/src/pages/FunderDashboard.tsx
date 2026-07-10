@@ -420,6 +420,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
   const [pvList, setPvList] = useState<{id:number;title:string;municipality:string;budget:number}[]>([]);
   const [contractors, setContractors] = useState<string[]>([]);
   const [milestones, setMilestones] = useState<{id:number;title:string;budget:number}[]>([]);
+  const [milestoneBidPrices, setMilestoneBidPrices] = useState<Record<number, number>>({});
   const [showRecipientDd, setShowRecipientDd] = useState(false);
   const [showPvoDd, setShowPvoDd] = useState(false);
   const [showMilestoneDd, setShowMilestoneDd] = useState(false);
@@ -452,7 +453,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
 
   // Fetch milestones when PVO is selected
   useEffect(() => {
-    if (!pvoId) { setMilestones([]); return; }
+    if (!pvoId) { setMilestones([]); setMilestoneBidPrices({}); return; }
     (async () => {
       try {
         const { Client: PC } = await import("../contracts/pvo_core/src");
@@ -460,7 +461,35 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
         const result = await pc.get_pvo_milestones({ pvo_id: Number(pvoId) });
         const ml = (result.result || []).map((m: any) => ({ id: Number(m.id), title: m.title || "", budget: Number(m.budget) }));
         setMilestones(ml);
-      } catch { setMilestones([]); }
+        // Fetch awarded tender bid prices for these milestones
+        try {
+          const { Client: PM } = await import("../contracts/procurement_market/src");
+          const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+          const tCount = await pm.get_tender_count();
+          const bpMap: Record<number, number> = {};
+          const maxScan = Number(tCount.result) + 10;
+          for (let i = 1; i <= maxScan; i++) {
+            try {
+              const tr = await pm.get_tender({ id: i });
+              if (tr.result && tr.result.status?.tag === "Awarded" && Number(tr.result.pvo_id) === Number(pvoId)) {
+                const msId = Number(tr.result.milestone_id);
+                const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
+                const bids = bidsResult.result || [];
+                let bestBid: any = null;
+                for (const b of bids) {
+                  if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
+                    bestBid = b;
+                  }
+                }
+                if (bestBid) {
+                  bpMap[msId] = Number(bestBid.price);
+                }
+              }
+            } catch {}
+          }
+          setMilestoneBidPrices(bpMap);
+        } catch {}
+      } catch { setMilestones([]); setMilestoneBidPrices({}); }
     })();
   }, [pvoId]);
 
@@ -577,13 +606,27 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
                 className="input" placeholder={pvoId ? "Select milestone..." : "Select PVO first"} disabled={!pvoId} readOnly={!!prefillMilestoneId} required />
               {showMilestoneDd && filteredMilestones.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  {filteredMilestones.slice(0, 10).map(m => (
-                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget / PPHP_SCALE)); }}
+                  {filteredMilestones.slice(0, 10).map(m => {
+                    const bidPrice = milestoneBidPrices[m.id];
+                    const usePrice = bidPrice != null ? bidPrice : m.budget;
+                    return (
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (usePrice > 0) setAmount(String(usePrice / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
                       <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
-                      <span className="text-xs text-slate-400 ml-2">{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</span>
+                      <span className="text-xs text-slate-400 ml-2">
+                        {bidPrice != null ? (
+                          <>
+                            <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
+                            {" → "}
+                            <span className="text-emerald-600">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <>{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</>
+                        )}
+                      </span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -646,6 +689,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
   const [awardedPvos, setAwardedPvos] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [milestoneCache, setMilestoneCache] = useState<Record<number, any[]>>({});
+  const [bidPriceMap, setBidPriceMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     (async () => {
@@ -655,16 +699,38 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
         const tCount = await pm.get_tender_count();
         const awardedPvoIds = new Set<number>();
         const contractorMap: Record<number, string> = {};
+        const tenderByPvoMs: Record<string, number> = {};
         const maxScan = Number(tCount.result) + 10;
         for (let i = 1; i <= maxScan; i++) {
           try {
             const tr = await pm.get_tender({ id: i });
             if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
-              awardedPvoIds.add(Number(tr.result.pvo_id));
-              contractorMap[Number(tr.result.pvo_id)] = tr.result.winner;
+              const pid = Number(tr.result.pvo_id);
+              const msId = Number(tr.result.milestone_id);
+              awardedPvoIds.add(pid);
+              contractorMap[pid] = tr.result.winner;
+              tenderByPvoMs[`${pid}-${msId}`] = Number(tr.result.id);
             }
           } catch {}
         }
+        // Fetch winning bid price for each awarded tender
+        const bpMap: Record<string, number> = {};
+        for (const [key, tenderId] of Object.entries(tenderByPvoMs)) {
+          try {
+            const bidsResult = await pm.get_bids_by_tender({ tender_id: tenderId });
+            const bids = bidsResult.result || [];
+            let bestBid: any = null;
+            for (const b of bids) {
+              if (!bestBid || Number(b.final_score) > Number(bestBid.final_score)) {
+                bestBid = b;
+              }
+            }
+            if (bestBid) {
+              bpMap[key] = Number(bestBid.price);
+            }
+          } catch {}
+        }
+        setBidPriceMap(bpMap);
         if (awardedPvoIds.size === 0) { setAwardedPvos([]); return; }
         const { Client: PC } = await import("../contracts/pvo_core/src");
         const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
@@ -753,6 +819,8 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                   <div className="divide-y divide-slate-100">
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
+                      const bidPrice = bidPriceMap[`${pvoId}-${m.id}`];
+                      const escrowAmount = bidPrice != null ? String(bidPrice / PPHP_SCALE) : String(m.budget / PPHP_SCALE);
                       return (
                         <div key={m.id} className="flex items-center justify-between p-4">
                           <div className="flex-1">
@@ -762,11 +830,20 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                             </div>
                             <span className="text-xs text-slate-400">
                               {m.description && `${m.description} · `}
-                              {currency}{(m.budget / PPHP_SCALE).toLocaleString()}
+                              {bidPrice != null ? (
+                                <>
+                                  <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
+                                  {" → "}
+                                  <span className="text-emerald-600 font-medium">{currency}{(bidPrice / PPHP_SCALE).toLocaleString()}</span>
+                                  <span className="text-emerald-500 ml-1">(awarded bid)</span>
+                                </>
+                              ) : (
+                                <>{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</>
+                              )}
                             </span>
                           </div>
                           <button
-                            onClick={() => onCreateEscrow(pvoId, m.id, String(m.budget / PPHP_SCALE), pvo.contractor)}
+                            onClick={() => onCreateEscrow(pvoId, m.id, escrowAmount, pvo.contractor)}
                             disabled={escrowed}
                             className={`text-xs px-4 py-2 ${escrowed ? "btn-secondary opacity-50 cursor-not-allowed" : "btn-primary"}`}>
                             {escrowed ? "✓ Escrowed" : "🔒 Escrow"}
