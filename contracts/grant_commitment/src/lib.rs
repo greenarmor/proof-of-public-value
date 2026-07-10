@@ -2,6 +2,15 @@
 
 use soroban_sdk::{contract, contractevent, contractimpl, contracttype, symbol_short, Address, Env, IntoVal, Map, String, Symbol, Vec};
 
+// Cross-contract: import access_control client
+mod access_control_client {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/access_control.wasm"
+    );
+}
+use access_control_client::Client as AccessControlClient;
+use access_control_client::Role as AccessRole;
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum GrantStatus {
@@ -48,6 +57,7 @@ const GRANTS: Symbol = symbol_short!("GRANTS");
 const PVO_INDEX: Symbol = symbol_short!("PVO_IDX");
 const DONOR_INDEX: Symbol = symbol_short!("DONOR_IDX");
 const PVO_CORE: Symbol = symbol_short!("PVOCORE");
+const ACCESS_CONTROL: Symbol = symbol_short!("AC");
 const INITIALIZED: Symbol = symbol_short!("INIT");
 const ADMIN: Symbol = symbol_short!("ADMIN");
 
@@ -56,12 +66,13 @@ pub struct GrantCommitment;
 
 #[contractimpl]
 impl GrantCommitment {
-    pub fn initialize(env: Env, pvo_core: Address, admin: Address) {
+    pub fn initialize(env: Env, pvo_core: Address, access_control: Address, admin: Address) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
         storage.set(&PVO_CORE, &pvo_core);
+        storage.set(&ACCESS_CONTROL, &access_control);
         storage.set(&ADMIN, &admin);
         storage.set(&INITIALIZED, &true);
     }
@@ -72,6 +83,14 @@ impl GrantCommitment {
         let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
         assert!(admin == stored_admin, "only admin can update pvo_core address");
         storage.set(&PVO_CORE, &new_address);
+    }
+
+    pub fn update_access_control_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("admin not set");
+        assert!(admin == stored_admin, "only admin can update access_control address");
+        storage.set(&ACCESS_CONTROL, &new_address);
     }
 
     pub fn commit_grant(
@@ -147,6 +166,12 @@ impl GrantCommitment {
         caller.require_auth();
 
         let storage = env.storage().persistent();
+        let ac_address: Address = storage.get(&ACCESS_CONTROL).expect("access_control not set");
+        let ac_client = AccessControlClient::new(&env, &ac_address);
+        assert!(
+            ac_client.has_role(&caller, &AccessRole::CentralBank),
+            "only central bank can mark disbursed"
+        );
         let mut grants: Map<u32, Grant> = storage.get(&GRANTS).unwrap_or_else(|| Map::new(&env));
         let mut grant = grants.get(grant_id).expect("grant not found");
 

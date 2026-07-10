@@ -15,6 +15,7 @@ import { EscrowMonitor } from "./pages/EscrowMonitor";
 import { EconomicMemory } from "./pages/EconomicMemory";
 import { AIDashboard } from "./pages/AIDashboard";
 import { AdminPanel } from "./pages/AdminPanel";
+import { CentralBankDashboard } from "./pages/CentralBankDashboard";
 import { InspectorPanel } from "./pages/InspectorPanel";
 import { SupplierPortal } from "./pages/SupplierPortal";
 import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
@@ -132,6 +133,7 @@ const NAV_ITEMS: NavItem[] = [
     group: "finance",
   },
 
+  { to: "/central-bank", label: "Central Bank", icon: "🏦", roles: ["CentralBank"], group: "system" },
   { to: "/admin", label: "System Panel", icon: "⚙️", roles: ["Administrator"], group: "system" },
 ];
 
@@ -694,6 +696,9 @@ function App() {
               <Route
                 path="/admin"
                 element={<ProtectedRoute element={<AdminPanel />} roles={["Administrator"]} />}
+      />
+      <Route path="/central-bank"
+      element={<ProtectedRoute element={<CentralBankDashboard />} roles={["CentralBank"]} />}
               />
             </Routes>
           </main>

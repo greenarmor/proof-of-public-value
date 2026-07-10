@@ -3,7 +3,17 @@
 use soroban_sdk::token::TokenInterface;
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, Map, MuxedAddress, String, Symbol};
 
+// Cross-contract: import access_control client
+mod access_control_client {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/access_control.wasm"
+    );
+}
+use access_control_client::Client as AccessControlClient;
+use access_control_client::Role as AccessRole;
+
 const ADMIN: Symbol = symbol_short!("ADMIN");
+const ACCESS_CONTROL: Symbol = symbol_short!("AC");
 const DECIMALS: Symbol = symbol_short!("DECIMALS");
 const NAME: Symbol = symbol_short!("NAME");
 const SYMBOL: Symbol = symbol_short!("SYMBOL");
@@ -24,11 +34,12 @@ pub struct PphpToken;
 
 #[contractimpl]
 impl PphpToken {
-    pub fn initialize(env: Env, admin: Address, decimal: u32, name: String, symbol: String) {
+    pub fn initialize(env: Env, access_control_address: Address, admin: Address, decimal: u32, name: String, symbol: String) {
         let storage = env.storage().persistent();
         if storage.has(&INITIALIZED) {
             panic!("already initialized");
         }
+        storage.set(&ACCESS_CONTROL, &access_control_address);
         storage.set(&ADMIN, &admin);
         storage.set(&DECIMALS, &decimal);
         storage.set(&NAME, &name);
@@ -39,10 +50,16 @@ impl PphpToken {
         storage.set(&INITIALIZED, &true);
     }
 
-    pub fn mint(env: Env, to: Address, amount: i128) {
+    pub fn mint(env: Env, caller: Address, to: Address, amount: i128) {
+        caller.require_auth();
+
         let storage = env.storage().persistent();
-        let admin: Address = storage.get(&ADMIN).unwrap_or_else(|| panic!("not initialized"));
-        admin.require_auth();
+        let ac_address: Address = storage.get(&ACCESS_CONTROL).expect("access_control not set");
+        let ac_client = AccessControlClient::new(&env, &ac_address);
+        assert!(
+            ac_client.has_role(&caller, &AccessRole::CentralBank),
+            "only central bank can mint"
+        );
 
         if amount <= 0 {
             panic!("amount must be positive");
@@ -56,6 +73,42 @@ impl PphpToken {
         let mut supply: i128 = storage.get(&TOTAL_SUPPLY).unwrap();
         supply += amount;
         storage.set(&TOTAL_SUPPLY, &supply);
+    }
+
+    pub fn redeem(env: Env, caller: Address, from: Address, amount: i128) {
+        caller.require_auth();
+
+        let storage = env.storage().persistent();
+        let ac_address: Address = storage.get(&ACCESS_CONTROL).expect("access_control not set");
+        let ac_client = AccessControlClient::new(&env, &ac_address);
+        assert!(
+            ac_client.has_role(&caller, &AccessRole::CentralBank),
+            "only central bank can redeem"
+        );
+
+        if amount <= 0 {
+            panic!("amount must be positive");
+        }
+
+        let mut balances: Map<Address, i128> = storage.get(&BALANCES).unwrap();
+        let from_balance = balances.get(from.clone()).unwrap_or(0);
+        if from_balance < amount {
+            panic!("insufficient balance");
+        }
+        balances.set(from.clone(), from_balance - amount);
+        storage.set(&BALANCES, &balances);
+
+        let mut supply: i128 = storage.get(&TOTAL_SUPPLY).unwrap();
+        supply -= amount;
+        storage.set(&TOTAL_SUPPLY, &supply);
+    }
+
+    pub fn update_access_control_address(env: Env, admin: Address, new_address: Address) {
+        admin.require_auth();
+        let storage = env.storage().persistent();
+        let stored_admin: Address = storage.get(&ADMIN).expect("not initialized");
+        assert!(admin == stored_admin, "only admin can update access_control address");
+        storage.set(&ACCESS_CONTROL, &new_address);
     }
 
     pub fn admin(env: Env) -> Address {

@@ -35,7 +35,6 @@ export function AdminPanel() {
   >("roles");
   const [assignModal, setAssignModal] = useState(false);
   const [mintModal, setMintModal] = useState(false);
-  const [directFundModal, setDirectFundModal] = useState(false);
 
   if (!connected) {
     return (
@@ -63,7 +62,7 @@ export function AdminPanel() {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-1 border-b border-gray-200">
-          {(["roles", "pledges", "disputes", "health", "upgrade", "settings"] as const).map(
+          {(["roles", "disputes", "health", "upgrade", "settings"] as const).map(
             (tab) => (
               <button
                 key={tab}
@@ -75,7 +74,6 @@ export function AdminPanel() {
                 }`}
               >
                 {tab === "roles" && "👥 Roles"}
-                {tab === "pledges" && "💸 Pledges"}
                 {tab === "disputes" && "⚖️ Dispute Resolution"}
                 {tab === "health" && "📊 Health"}
                 {tab === "upgrade" && "🔄 Upgrade"}
@@ -93,14 +91,10 @@ export function AdminPanel() {
           </button>
         </div>
         <div>
-          <button onClick={() => setDirectFundModal(true)} className="btn-primary text-xs px-4 py-2 bg-amber-600 hover:bg-amber-700">
-            💰 Direct Fund
-          </button>
         </div>
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
-      {activeTab === "pledges" && <PledgeManager />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
@@ -111,9 +105,6 @@ export function AdminPanel() {
       </Modal>
       <Modal open={mintModal} onClose={() => setMintModal(false)} title="Mint RPT Tokens">
         <MintRPTForm onDone={() => setMintModal(false)} />
-      </Modal>
-      <Modal open={directFundModal} onClose={() => setDirectFundModal(false)} title="Direct Fund — National Budget">
-        <DirectFundForm onDone={() => setDirectFundModal(false)} />
       </Modal>
     </div>
   );
@@ -880,192 +871,6 @@ function ProcurementSettings() {
           {busy ? "Saving..." : "Set Threshold"}
         </button>
       </form>
-    </div>
-  );
-}
-
-function DirectFundForm({ onDone }: { onDone: () => void }) {
-  const { address } = useWallet();
-  const [pvoId, setPvoId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [isBusy, setIsBusy] = useState(false);
-  const [txMsg, setTxMsg] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsBusy(true);
-    setTxMsg("");
-    try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
-      const acct = await server.getAccount(address!);
-      const sac = new Contract("CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X");
-      const FA = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
-      const sacAmt = Math.round(Number(amount) * PPHP_SCALE);
-      const op = sac.call("mint", new Address(FA).toScVal(), new ScInt(sacAmt).toI128());
-      const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
-      const prepared = await server.prepareTransaction(tx);
-      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
-      setTxMsg(`Minted ${amount} PHP to Funding Agency`);
-      setTimeout(onDone, 1500);
-    } catch (err: any) {
-      setTxMsg(err.message?.slice(0, 200) || "Failed");
-    } finally { setIsBusy(false); }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {txMsg && <div className={`p-3 rounded-lg text-sm ${txMsg.startsWith("Minted") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{txMsg.startsWith("Minted") ? "✅ " : "❌ "}{txMsg}</div>}
-      <p className="text-xs text-amber-600">For National Budget PVOs — mint pPHP directly to Funding Agency. No donor required.</p>
-      <div><label className="block text-sm font-medium text-gray-700 mb-1">PVO ID</label><input type="number" value={pvoId} onChange={e => setPvoId(e.target.value)} className="input" placeholder="1" /></div>
-      <div><label className="block text-sm font-medium text-gray-700 mb-1">Amount (in pesos)</label><input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input" placeholder="500000000" />
-        {amount && <p className="text-xs text-gray-400 mt-1">= {(Number(amount) * PPHP_SCALE).toLocaleString()} SAC units (₱{Number(amount).toLocaleString()})</p>}
-      </div>
-      <button type="submit" disabled={isBusy} className="btn-primary w-full py-3">{isBusy ? "Signing..." : "Mint to Funding Agency"}</button>
-    </form>
-  );
-}
-
-function PledgeManager() {
-  const [pledges, setPledges] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<number | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { Client } = await import("../contracts/grant_commitment/src");
-        const gc = new Client({
-          contractId: CONTRACT_IDS.grant_commitment,
-          networkPassphrase: NETWORK_PASSPHRASE,
-          rpcUrl: RPC_URL,
-        });
-        const result = await gc.get_all_grants();
-        const raw = (result.result || []).filter(
-          (g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed",
-        );
-        const seen = new Set();
-        const unique = raw.filter((g: any) => !seen.has(g.id) && seen.add(g.id));
-        setPledges(unique); // was: setPledges((result.result || []).filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed"));
-      } catch (e) {
-        console.error("PledgeManager:", e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const handleConvert = async (pledge: any) => {
-    setBusy(pledge.id);
-    try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
-      // Pledge amount is already in SAC atomic units (matches PVO budget exactly)
-      const pphpAmount = Number(pledge.amount);
-
-      const server = new rpc.Server(RPC_URL);
-      const account = await server.getAccount(
-        "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
-      );
-      const sacContract = new Contract("CCJRBA36WHKFDUJMNW2BPP7OYHNUJHJ4MYAQW4ORCTF2IEIOWW5ZA32X");
-
-      // 1) Mint exact pledged amount to funding agency (separate tx — Freighter rejects multi-op)
-      const mintOp = sacContract.call(
-        "mint",
-        new Address(FUNDING).toScVal(),
-        new ScInt(pphpAmount).toI128(),
-      );
-
-      let tx1 = new TransactionBuilder(account, {
-        fee: "100000",
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .addOperation(mintOp)
-        .setTimeout(30)
-        .build();
-      tx1 = await server.prepareTransaction(tx1);
-      let signedResp: any = await signTransaction(tx1.toXDR(), {
-        networkPassphrase: NETWORK_PASSPHRASE,
-      });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
-
-      // 2) Mark grant as Disbursed on-chain (second tx)
-      const ALICE = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
-      const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
-      const markDisbursedOp = gcContract.call(
-        "admin_mark_disbursed",
-        new Address(ALICE).toScVal(),
-        nativeToScVal(pledge.id, { type: "u32" }),
-      );
-
-      // Refresh account sequence number after first tx
-      const account2 = await server.getAccount(
-        "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
-      );
-      let tx2 = new TransactionBuilder(account2, {
-        fee: "100000",
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .addOperation(markDisbursedOp)
-        .setTimeout(30)
-        .build();
-      tx2 = await server.prepareTransaction(tx2);
-      signedResp = await signTransaction(tx2.toXDR(), {
-        networkPassphrase: NETWORK_PASSPHRASE,
-      });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
-
-      setPledges((prev) => prev.filter((p) => p.id !== pledge.id));
-      const pesos = pphpAmount / PPHP_SCALE;
-      alert(`Minted ₱${pesos.toLocaleString()} pPHP to Funding Agency`);
-    } catch (e: any) {
-      alert("Error: " + (e.message || e).slice(0, 200));
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading pledges...</div>;
-
-  return (
-    <div>
-      {pledges.length === 0 ? (
-        <div className="card p-8 text-center text-slate-400">No pending pledges to convert.</div>
-      ) : (
-        <div className="space-y-3">
-          {pledges.map((p: any) => {
-            const pesos = Number(p.amount) / PPHP_SCALE;
-            return (
-              <div key={p.id} className="card p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    {p.org_name} — PVO #{p.pvo_id}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    ₱{pesos.toLocaleString()} pPHP (exact PVO budget)
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleConvert(p)}
-                  disabled={busy === p.id}
-                  className="btn-primary text-xs px-3 py-1.5"
-                >
-                  {busy === p.id ? "Minting..." : "💸 Mint & Disburse"}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

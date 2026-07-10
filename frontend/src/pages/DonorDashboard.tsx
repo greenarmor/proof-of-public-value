@@ -215,7 +215,7 @@ function PledgeForm({ address, pvoId, remaining, onDone }: { address: string; pv
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       try { await server.sendTransaction(signedTx); } catch (e: any) { if (!e.message?.includes("switch")) throw e; }
-      setTxState("done"); setTxMsg(`Pledged ${cur}${formatBudget(amount)}!`);
+      setTxState("done"); setTxMsg(`Pledged ${cur}${formatBudget(amount)}! Transfer foreign currency to CentralBank: GBRDP...BBBHO`);
       setTimeout(onDone, 2000);
     } catch (err: any) {
       setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed");

@@ -70,14 +70,23 @@ fn setup() -> (Env, DynamicEscrowClient<'static>) {
     (env, client)
 }
 
-fn register_token<'a>(env: &'a Env, admin: &Address) -> (Address, pphp_token::PphpTokenClient<'a>) {
+fn register_access_control(env: &Env) -> (Address, Address, access_control::AccessControlClient<'_>) {
+    let ac_id = env.register(access_control::AccessControl, ());
+    let ac_client = access_control::AccessControlClient::new(env, &ac_id);
+    let ac_admin = Address::generate(env);
+    ac_client.initialize(&ac_admin);
+    (ac_id, ac_admin, ac_client)
+}
+
+fn register_token<'a>(env: &'a Env, ac_address: &Address) -> (Address, pphp_token::PphpTokenClient<'a>) {
     let token_id = env.register(pphp_token::PphpToken, ());
     let token_client = pphp_token::PphpTokenClient::new(env, &token_id);
-    token_client.initialize(admin, &2, &String::from_str(env, "pPHP"), &String::from_str(env, "pPHP"));
+    let admin = Address::generate(env);
+    token_client.initialize(ac_address, &admin, &7, &String::from_str(env, "pPHP"), &String::from_str(env, "pPHP"));
     (token_id, token_client)
 }
 
-fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTokenClient<'static>) {
+fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTokenClient<'static>, Address) {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -89,21 +98,25 @@ fn setup_with_token() -> (Env, DynamicEscrowClient<'static>, pphp_token::PphpTok
     let client = DynamicEscrowClient::new(&env, &contract_id);
     client.initialize(&compliance_id, &oracle_id, &pvo_core_id, &admin);
 
+    let (ac_id, ac_admin, ac_client) = register_access_control(&env);
+
     let token_admin = Address::generate(&env);
+    ac_client.assign_role(&ac_admin, &token_admin, &access_control::Role::CentralBank);
+
     let token_id = env.register(pphp_token::PphpToken, ());
     let token_client = pphp_token::PphpTokenClient::new(&env, &token_id);
-    token_client.initialize(&token_admin, &2, &String::from_str(&env, "pPHP"), &String::from_str(&env, "pPHP"));
+    token_client.initialize(&ac_id, &token_admin, &7, &String::from_str(&env, "pPHP"), &String::from_str(&env, "pPHP"));
 
-    (env, client, token_client)
+    (env, client, token_client, token_admin)
 }
 
-fn create_and_fund(env: &Env, client: &DynamicEscrowClient, token_client: &pphp_token::PphpTokenClient<'_>) -> (u32, Address, Address) {
+fn create_and_fund(env: &Env, client: &DynamicEscrowClient, token_client: &pphp_token::PphpTokenClient<'_>, minter: &Address) -> (u32, Address, Address) {
     let funder = Address::generate(env);
     let recipient = Address::generate(env);
     let token_addr = token_client.address.clone();
 
     let id = client.create_escrow(&funder, &recipient, &1, &1, &1_000_000, &token_addr, &2);
-    token_client.mint(&funder, &1_000_000);
+    token_client.mint(minter, &funder, &1_000_000);
     client.fund_escrow(&funder, &id, &1_000_000);
     (id, funder, recipient)
 }
@@ -124,8 +137,8 @@ fn test_double_initialize() {
 #[test]
 fn test_create_escrow() {
     let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_addr, _) = register_token(&env, &admin);
+    let (ac_id, _, _) = register_access_control(&env);
+    let (token_addr, _) = register_token(&env, &ac_id);
     let funder = Address::generate(&env);
     let recipient = Address::generate(&env);
 
@@ -143,8 +156,8 @@ fn test_create_escrow() {
 #[should_panic(expected = "amount must be positive")]
 fn test_create_escrow_zero_amount() {
     let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_addr, _) = register_token(&env, &admin);
+    let (ac_id, _, _) = register_access_control(&env);
+    let (token_addr, _) = register_token(&env, &ac_id);
     let funder = Address::generate(&env);
     let recipient = Address::generate(&env);
 
@@ -153,8 +166,8 @@ fn test_create_escrow_zero_amount() {
 
 #[test]
 fn test_fund_escrow() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, funder, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, funder, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let escrow = client.get_escrow(&id).unwrap();
     assert_eq!(escrow.status, EscrowStatus::Funded);
@@ -166,20 +179,20 @@ fn test_fund_escrow() {
 #[test]
 #[should_panic(expected = "funding amount must match escrow amount")]
 fn test_fund_wrong_amount() {
-    let (env, client, token_client) = setup_with_token();
+    let (env, client, token_client, minter) = setup_with_token();
     let token_addr = token_client.address.clone();
     let funder = Address::generate(&env);
 
     let id = client.create_escrow(&funder, &Address::generate(&env), &1, &1, &1_000_000, &token_addr, &2);
 
-    token_client.mint(&funder, &500_000);
+    token_client.mint(&minter, &funder, &500_000);
     client.fund_escrow(&funder, &id, &500_000);
 }
 
 #[test]
 fn test_full_unlock_and_release() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, funder, recipient) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, funder, recipient) = create_and_fund(&env, &client, &token_client, &minter);
 
     let engineer = Address::generate(&env);
     let auditor = Address::generate(&env);
@@ -210,8 +223,8 @@ fn test_full_unlock_and_release() {
 
 #[test]
 fn test_release_fails_without_conditions() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, _, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, _, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let engineer = Address::generate(&env);
     client.engineer_approve(&engineer, &id);
@@ -223,8 +236,8 @@ fn test_release_fails_without_conditions() {
 
 #[test]
 fn test_refund() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, funder, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, funder, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let refunded = client.refund(&funder, &id);
     assert!(refunded);
@@ -239,8 +252,8 @@ fn test_refund() {
 #[test]
 #[should_panic(expected = "cannot refund released escrow")]
 fn test_refund_after_release() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, funder, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, funder, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let engineer = Address::generate(&env);
     let auditor = Address::generate(&env);
@@ -263,8 +276,8 @@ fn test_refund_after_release() {
 
 #[test]
 fn test_dispute() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, _, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, _, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let disputer = Address::generate(&env);
     client.dispute(&disputer, &id);
@@ -275,8 +288,8 @@ fn test_dispute() {
 
 #[test]
 fn test_refund_disputed() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, funder, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, funder, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let disputer = Address::generate(&env);
     client.dispute(&disputer, &id);
@@ -291,8 +304,8 @@ fn test_refund_disputed() {
 #[test]
 fn test_get_escrows_by_pvo() {
     let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_addr, _) = register_token(&env, &admin);
+    let (ac_id, _, _) = register_access_control(&env);
+    let (token_addr, _) = register_token(&env, &ac_id);
     let funder = Address::generate(&env);
     let recipient = Address::generate(&env);
 
@@ -307,8 +320,8 @@ fn test_get_escrows_by_pvo() {
 #[test]
 fn test_get_escrow_count() {
     let (env, client) = setup();
-    let admin = Address::generate(&env);
-    let (token_addr, _) = register_token(&env, &admin);
+    let (ac_id, _, _) = register_access_control(&env);
+    let (token_addr, _) = register_token(&env, &ac_id);
 
     assert_eq!(client.get_escrow_count(), 0);
 
@@ -321,8 +334,8 @@ fn test_get_escrow_count() {
 
 #[test]
 fn test_ai_validation_failure() {
-    let (env, client, token_client) = setup_with_token();
-    let (id, _, _) = create_and_fund(&env, &client, &token_client);
+    let (env, client, token_client, minter) = setup_with_token();
+    let (id, _, _) = create_and_fund(&env, &client, &token_client, &minter);
 
     let engineer = Address::generate(&env);
     let auditor = Address::generate(&env);

@@ -18,6 +18,7 @@ pub enum Role {
     InternationalDonor,
     Administrator,
     AIAuditor,
+    CentralBank,
 }
 
 #[contracttype]
@@ -186,6 +187,7 @@ impl AccessControl {
             Role::InternationalDonor => symbol_short!("R_DONOR"),
             Role::Administrator => symbol_short!("R_ADMIN"),
             Role::AIAuditor => symbol_short!("R_AI"),
+            Role::CentralBank => symbol_short!("R_CB"),
         }
     }
 

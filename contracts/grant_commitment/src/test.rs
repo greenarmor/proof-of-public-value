@@ -4,6 +4,14 @@ use crate::{GrantCommitment, GrantCommitmentClient, GrantStatus};
 use soroban_sdk::testutils::Address as AddressTestUtils;
 use soroban_sdk::{Address, Env, String, Symbol};
 
+fn register_access_control(env: &Env) -> (Address, Address, access_control::AccessControlClient<'_>) {
+    let ac_id = env.register(access_control::AccessControl, ());
+    let ac_client = access_control::AccessControlClient::new(env, &ac_id);
+    let ac_admin = Address::generate(env);
+    ac_client.initialize(&ac_admin);
+    (ac_id, ac_admin, ac_client)
+}
+
 fn register_pvo_core(env: &Env) -> Address {
     let pvo_id = env.register(pvo_core::PVOCore, ());
     let client = pvo_core::PVOCoreClient::new(env, &pvo_id);
@@ -31,14 +39,15 @@ fn setup() -> (Env, GrantCommitmentClient<'static>) {
     let env = Env::default();
     env.mock_all_auths();
     let pvo_core_id = register_pvo_core(&env);
+    let (ac_id, _, _) = register_access_control(&env);
     let admin = Address::generate(&env);
     let contract_id = env.register(GrantCommitment, ());
     let client = GrantCommitmentClient::new(&env, &contract_id);
-    client.initialize(&pvo_core_id, &admin);
+    client.initialize(&pvo_core_id, &ac_id, &admin);
     (env, client)
 }
 
-fn setup_pvo_with_budget(budget: i128) -> (Env, GrantCommitmentClient<'static>, pvo_core::PVOCoreClient<'static>) {
+fn setup_pvo_with_budget(budget: i128) -> (Env, GrantCommitmentClient<'static>, pvo_core::PVOCoreClient<'static>, Address) {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -62,11 +71,16 @@ fn setup_pvo_with_budget(budget: i128) -> (Env, GrantCommitmentClient<'static>, 
         &0u64,
     );
 
+    let (ac_id, ac_admin, ac_client) = register_access_control(&env);
+    let cb = Address::generate(&env);
+    ac_client.assign_role(&ac_admin, &cb, &access_control::Role::CentralBank);
+    drop(ac_client);
+
     let admin = Address::generate(&env);
     let contract_id = env.register(GrantCommitment, ());
     let client = GrantCommitmentClient::new(&env, &contract_id);
-    client.initialize(&pvo_core_id, &admin);
-    (env, client, pvo_client)
+    client.initialize(&pvo_core_id, &ac_id, &admin);
+    (env, client, pvo_client, cb)
 }
 
 fn commit_exact(
@@ -87,7 +101,7 @@ fn commit_exact(
 
 #[test]
 fn test_commit_exact_amount() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     // Must pledge exactly the full budget (no prior pledges)
@@ -102,7 +116,7 @@ fn test_commit_exact_amount() {
 #[test]
 #[should_panic(expected = "pledge must exactly match")]
 fn test_commit_wrong_amount_fails() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     // Try to pledge less than the full budget
@@ -112,7 +126,7 @@ fn test_commit_wrong_amount_fails() {
 #[test]
 #[should_panic(expected = "pledge must exactly match")]
 fn test_commit_more_than_budget_fails() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     commit_exact(&env, &client, &donor, 1, 2_000_000_000, "World Bank", "USD");
@@ -120,7 +134,7 @@ fn test_commit_more_than_budget_fails() {
 
 #[test]
 fn test_pvo_fully_funded_blocks_new_pledge() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     // First donor pledges exact full budget
@@ -138,7 +152,7 @@ fn test_pvo_fully_funded_blocks_new_pledge() {
 
 #[test]
 fn test_get_pvo_remaining() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
 
     // Initially, remaining = full budget
     assert_eq!(client.get_pvo_remaining(&1u32), 1_000_000_000);
@@ -152,7 +166,7 @@ fn test_get_pvo_remaining() {
 
 #[test]
 fn test_get_committed_total() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
 
     assert_eq!(client.get_committed_total(&1u32), 0);
 
@@ -164,7 +178,7 @@ fn test_get_committed_total() {
 
 #[test]
 fn test_cancelled_grant_excluded_from_committed() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     // Pledge exact amount, then cancel
@@ -180,13 +194,12 @@ fn test_cancelled_grant_excluded_from_committed() {
 
 #[test]
 fn test_admin_mark_disbursed() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, cb) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
-    let admin = Address::generate(&env);
 
     let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
 
-    client.admin_mark_disbursed(&admin, &id);
+    client.admin_mark_disbursed(&cb, &id);
     let grant = client.get_grant(&id).unwrap();
     assert_eq!(grant.status, GrantStatus::Disbursed);
 }
@@ -194,19 +207,18 @@ fn test_admin_mark_disbursed() {
 #[test]
 #[should_panic(expected = "grant must be in Committed status")]
 fn test_admin_mark_disbursed_already_disbursed() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, cb) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
-    let admin = Address::generate(&env);
 
     let id = commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
-    client.admin_mark_disbursed(&admin, &id);
-    client.admin_mark_disbursed(&admin, &id);
+    client.admin_mark_disbursed(&cb, &id);
+    client.admin_mark_disbursed(&cb, &id);
 }
 
 #[test]
 #[should_panic(expected = "amount must be positive")]
 fn test_commit_zero_amount() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
     client.commit_grant(
         &donor, &1, &0,
@@ -217,7 +229,7 @@ fn test_commit_zero_amount() {
 
 #[test]
 fn test_get_grants_by_pvo() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
@@ -227,7 +239,7 @@ fn test_get_grants_by_pvo() {
 
 #[test]
 fn test_get_grants_by_donor() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");
@@ -236,7 +248,7 @@ fn test_get_grants_by_donor() {
 
 #[test]
 fn test_get_all_grants() {
-    let (env, client, _) = setup_pvo_with_budget(1_000_000_000);
+    let (env, client, _, _) = setup_pvo_with_budget(1_000_000_000);
     let donor = Address::generate(&env);
 
     commit_exact(&env, &client, &donor, 1, 1_000_000_000, "World Bank", "USD");

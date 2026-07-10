@@ -237,7 +237,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
       try {
         const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
-        const contract = new Contract(CONTRACT_IDS.pphp_sac);
+        const contract = new Contract(CONTRACT_IDS.pphp);
         const account = await server.getAccount(address);
         const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
           .addOperation(contract.call("balance", new Address(address).toScVal()))
