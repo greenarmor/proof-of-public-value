@@ -213,7 +213,7 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div><p className="stat-label">Department</p><p className="text-sm font-medium">{selected.department}</p></div>
             <div><p className="stat-label">Location</p><p className="text-sm font-medium">{selected.municipality}</p></div>
-            <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(selected.total_budget)}</p></div>
+            <div><p className="stat-label">Est. Budget</p><p className="text-sm font-medium">{currency}{formatBudget(selected.total_budget)}</p></div>
             <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{selected.milestones.length}</p></div>
           </div>
           </>

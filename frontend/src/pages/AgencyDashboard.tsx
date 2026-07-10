@@ -159,7 +159,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total Projects", value: pvos.length, color: "text-gray-900" },
-          { label: "Total Budget", value: `${currency}${(totalBudget / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
+          { label: "Total Est. Budget", value: `${currency}${(totalBudget / 1_000_000).toFixed(1)}M`, color: "text-purple-600" },
           { label: "Active Milestones", value: totalMilestones, color: "text-blue-600" },
           { label: "Avg Score", value: `${Math.round(pvos.reduce((s: number, p: any) => s + Number(p.public_value_score), 0) / pvos.length)}/100`, color: "text-green-600" },
         ].map((stat) => (
@@ -177,7 +177,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
               <th className="text-left px-4 py-3 font-medium text-gray-500">ID</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Project</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Dept.</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Budget</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-500">Est. Budget</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Milestones</th>
               <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
             </tr>
@@ -386,7 +386,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (in Pesos)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Est. Budget (in Pesos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="500000000" min="1" step="0.01" />
             {budget && Number(budget) > 0 && <p className="text-xs text-gray-400 mt-1">= {(Number(budget) * PPHP_SCALE).toLocaleString()} SAC units (₱{Number(budget).toLocaleString()})</p>}
           </div>
@@ -479,7 +479,7 @@ function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string
       <div><label className="block text-sm font-medium text-gray-700 mb-1">Tender Title</label><input type="text" value={`PVO #${pvoId} — ${pvoTitle}`} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
       <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={desc} onChange={e => setDesc(e.target.value)} className="input" rows={2} placeholder="Describe the scope of work..." /></div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className="block text-sm font-medium text-gray-700 mb-1">Budget (SAC units)</label><input type="text" value={pvoBudget} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono" />
+        <div><label className="block text-sm font-medium text-gray-700 mb-1">Est. Budget (SAC units)</label><input type="text" value={pvoBudget} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono" />
           {pvoBudget && <p className="text-xs text-gray-400 mt-1">{currency}{(Number(pvoBudget) / PPHP_SCALE).toLocaleString()}</p>}
         </div>
         <div><label className="block text-sm font-medium text-gray-700 mb-1">Bid Submission Deadline</label><input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} className="input" /></div>
@@ -640,7 +640,7 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Budget (in Pesos)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Est. Budget (in Pesos)</label>
             <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" placeholder="e.g. 5000000 = ₱5,000,000" required min="1" step="0.01" />
             <p className="text-xs text-slate-400 mt-1">{budget && Number(budget) > 0 ? `= ${(Number(budget) * PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 0})} SAC units (₱${Number(budget).toLocaleString()})` : "1 peso = 10,000,000 SAC units"}</p>
             {pvoId && (() => {
@@ -655,7 +655,7 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
               const overBudget = remaining < 0;
               return (
                 <div className={`mt-2 p-3 rounded-lg border text-xs ${overBudget ? "bg-red-50 border-red-200 text-red-700" : "bg-blue-50 border-blue-200 text-blue-700"}`}>
-                  <div className="flex justify-between mb-1"><span>PVO Total Budget:</span><span className="font-semibold">₱{totalBudget.toLocaleString()}</span></div>
+                  <div className="flex justify-between mb-1"><span>PVO Total Est. Budget:</span><span className="font-semibold">₱{totalBudget.toLocaleString()}</span></div>
                   {alreadyAllocated > 0 && (
                     <div className="flex justify-between mb-1"><span>Already Allocated:</span><span>₱{alreadyAllocated.toLocaleString()}</span></div>
                   )}

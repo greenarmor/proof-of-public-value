@@ -101,7 +101,7 @@ function AllProjects({ address }: { address: string }) {
           <p className="text-sm text-slate-500 mt-1">{selected.description}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div><p className="stat-label">Location</p><p className="text-sm font-medium">{selected.municipality}</p></div>
-            <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
+            <div><p className="stat-label">Est. Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
             <div><p className="stat-label">Contractor</p><p className="text-sm font-medium font-mono"><WalletAddress addr={selected.contractor} chars={4}/></p></div>
             <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{(selected.milestones || []).length}</p></div>
           </div>

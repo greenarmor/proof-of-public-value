@@ -474,7 +474,7 @@ export function TransparencyPortal() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="stat-label">Budget</dt>
+                    <dt className="stat-label">Est. Budget</dt>
                     <dd className="text-sm font-medium text-slate-900 mt-1">
                       {formatBudget(selected.total_budget)}
                     </dd>

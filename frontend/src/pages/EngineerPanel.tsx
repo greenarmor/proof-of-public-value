@@ -479,7 +479,7 @@ function AllPVOs() {
           <p className="text-sm text-gray-500 mt-1">{selected.description}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             <div><p className="stat-label">Department</p><p className="text-sm font-medium">{selected.department}</p></div>
-            <div><p className="stat-label">Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
+            <div><p className="stat-label">Est. Budget</p><p className="text-sm font-medium">{currency}{formatBudget(String(selected.total_budget))}</p></div>
             <div><p className="stat-label">Status</p><span className="badge badge-blue">{statusToString(selected.status)}</span></div>
             <div><p className="stat-label">Milestones</p><p className="text-sm font-medium">{(selected.milestones || []).length}</p></div>
           </div>

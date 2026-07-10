@@ -72,7 +72,7 @@ export function EconomicMemory() {
                 <span className="text-sm text-gray-400">{r.department}</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
-                <div>Budget: ₱ {Number(r.budget).toLocaleString()}</div>
+                <div>Est. Budget: ₱ {Number(r.budget).toLocaleString()}</div>
                 <div>Status: {r.status}</div>
                 {r.reputation !== undefined && (
                   <div>Reputation: <span className={`font-medium ${r.reputation >= 80 ? "text-green-600" : r.reputation >= 50 ? "text-yellow-600" : "text-red-600"}`}>{r.reputation}/PPHP_SCALE</span></div>

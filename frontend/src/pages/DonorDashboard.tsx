@@ -133,7 +133,7 @@ export function DonorDashboard() {
                   <span className={`badge text-xs ${pvo.status === "Completed" ? "badge-green" : pvo.status === "Proposed" ? "badge-blue" : "badge-purple"}`}>{pvo.status}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Budget: {currency}{formatBudget(pvo.totalBudget)}</span>
+                  <span className="text-slate-500">Est. Budget: {currency}{formatBudget(pvo.totalBudget)}</span>
                   <span className={`text-xs font-medium ${fullyFunded ? "text-emerald-600" : "text-brand-600"}`}>
                     {fullyFunded ? "✅ Fully Funded" : `Needed: ${currency}${formatBudget(pvo.remaining)}`}
                   </span>

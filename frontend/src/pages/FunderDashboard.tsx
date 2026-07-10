@@ -810,7 +810,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                 </div>
                 <h3 className="font-semibold text-slate-900">{pvo.title}</h3>
                 <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
-                  <span>Budget: {currency}{(Number(pvo.total_budget) / PPHP_SCALE).toLocaleString()}</span>
+                  <span>Est. Budget: {currency}{(Number(pvo.total_budget) / PPHP_SCALE).toLocaleString()}</span>
                   {bidPriceMap[pvoId] > 0 && (
                     <>
                       <span className="text-emerald-600 font-medium">Winning Bid: {currency}{(bidPriceMap[pvoId] / PPHP_SCALE).toLocaleString()}</span>
@@ -978,7 +978,7 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
                       {status === "Disbursed" && (
                         <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency — ready for escrow</p>
                       )}
-                      <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
+                      <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Est. Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
                     </div>
                     <button onClick={() => onCreateEscrow(Number(g.pvo_id))} className="btn-primary text-xs px-3 py-1 ml-auto">
                       ➕ Create Escrow
