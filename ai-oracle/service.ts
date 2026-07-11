@@ -59,6 +59,12 @@ const CONTRACT_IDS: Record<string, string> = {
   escrow: "CC4SC2USPQ6AWXIHKYBSN5BNOBYYVSPJK3C67ZWVAY2MM3TYQU3QNRXX",
   ai_oracle: "CAVOYO6RPO3P6WRTD73Y4EQCWZVSCY6JCWELG3MFKNIIQ7IJCGNRWR7G",
   reputation: "CD7FFWLH2YD57MV5HXT74RBXIJ6IRFLLEATXFACQCDB275EWN5W7L3BG",
+  audit_trail: "CB6AXOUYHEOWUUSEP6543GZYHMN6D2VA5WV5LXOMPNMJFYJ3XQNPZBV6",
+  compliance_engine: "CAB4BREUIZPAVZIQ7AL2YTKSXBOAL5EQUFSTDOBYMJV34BPHWGLI5SCB",
+  procurement_market: "CALDZKNCOYS4NVOUZPRCDFAE7NHLAQ7AK45KMOX5JFVJ4MWEBBT4RSZD",
+  grant_commitment: "CAVRWEOGNFXWVVWAZGXYHY6VYQO5KEW6WWPRZT3V3ZNAX7HDYNK7CWRS",
+  community_oracle: "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32",
+  value_score: "CB6YODGT7D5O2PXBCM3RMGOVMNUMYB7U2TDTPMZPTUK2IBBBUPHE2UVU",
 };
 
 const READ_SOURCE = process.env.AI_AUDITOR_SOURCE ?? "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
@@ -82,6 +88,26 @@ interface AnalysisResult {
   riskScore: number;
   flags: string[];
   reasoning: string;
+}
+
+interface ForensicCaseFile {
+  pvoId: number;
+  pvo: any;
+  milestones: any[];
+  escrows: any[];
+  grants: any[];
+  tenders: any[];
+  bidsByTender: Record<number, any[]>;
+  violations: any[];
+  isCompliant: boolean;
+  communityReports: any[];
+  verifiedReportCount: number;
+  contractorReputation: any | null;
+  contractorComplaints: any[];
+  valueScore: any | null;
+  auditHistory: any[];
+  flags: string[];
+  timeline: { timestamp: number; event: string; detail: string }[];
 }
 
 // ── AI Auditor Wallet ───────────────────────────────────
@@ -408,9 +434,275 @@ function getEscrowsByPvo(pvoId: number): any[] {
   } catch { return []; }
 }
 
-// ── Comprehensive PVO Analysis ──────────────────────────
-async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: string, contractor: string, milestones: any[], pvoFundSource: string, pvoDescription: string): Promise<void> {
+// ── Forensic Data Collection (All Contracts) ────────────
+function queryContract(contractKey: string, method: string, args: string = ""): any {
+  const raw = cli(
+    `contract invoke --id ${CONTRACT_IDS[contractKey]} --source ${AI_SOURCE_KEY} --network testnet -- ${method} ${args}`
+  );
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed.result !== undefined ? parsed.result : parsed;
+  } catch { return null; }
+}
+
+function collectForensicData(pvoId: number, pvo: any, milestones: any[]): ForensicCaseFile {
+  const flags: string[] = [];
+  const timeline: { timestamp: number; event: string; detail: string }[] = [];
+  const contractor = String(pvo.contractor || "");
+
+  // 1. Escrow data
+  const escrows = queryContract("escrow", "get_escrows_by_pvo", `--pvo_id ${pvoId}`) || [];
+  for (const e of escrows) {
+    timeline.push({
+      timestamp: Number(e.created_at || 0),
+      event: "Escrow Created",
+      detail: `Escrow #${e.id} for milestone #${e.milestone_id}, amount ${Number(e.amount || 0) / 10_000_000}`
+    });
+    const eStatus = typeof e.status === "string" ? e.status : e.status?.tag ?? "";
+    if (e.released_at && Number(e.released_at) > 0) {
+      timeline.push({
+        timestamp: Number(e.released_at),
+        event: "Escrow Released",
+        detail: `Escrow #${e.id} released to ${String(e.recipient || "").slice(0, 12)}...`
+      });
+    }
+    if (eStatus === "Disputed") {
+      flags.push("EscrowDisputed");
+      timeline.push({ timestamp: 0, event: "Escrow Disputed", detail: `Escrow #${e.id}` });
+    }
+  }
+
+  // 2. Grant commitments
+  const grants = queryContract("grant_commitment", "get_grants_by_pvo", `--pvo_id ${pvoId}`) || [];
+  for (const g of grants) {
+    timeline.push({
+      timestamp: Number(g.created_at || 0),
+      event: "Grant Committed",
+      detail: `Grant #${g.id}: ${g.org_name || "Unknown"} committed ${Number(g.amount || 0) / 10_000_000} (${g.currency || "PHP"})`
+    });
+  }
+  const committedTotal = queryContract("grant_commitment", "get_committed_total", `--pvo_id ${pvoId}`);
+  const pvoRemaining = queryContract("grant_commitment", "get_pvo_remaining", `--pvo_id ${pvoId}`);
+  if (pvoRemaining !== null && Number(pvoRemaining) > 0) {
+    flags.push(`FundingGap:${Number(pvoRemaining) / 10_000_000}PHP_unfunded`);
+  }
+
+  // 3. Procurement trail
+  const tenderCount = queryContract("procurement_market", "get_tender_count") || 0;
+  const tenders: any[] = [];
+  const bidsByTender: Record<number, any[]> = {};
+  for (let t = 1; t <= Number(tenderCount); t++) {
+    const tender = queryContract("procurement_market", "get_tender", `--id ${t}`);
+    if (tender && Number(tender.pvo_id) === pvoId) {
+      tenders.push(tender);
+      const bids = queryContract("procurement_market", "get_bids_by_tender", `--tender_id ${t}`) || [];
+      bidsByTender[t] = bids;
+      timeline.push({
+        timestamp: Number(tender.created_at || 0),
+        event: "Tender Created",
+        detail: `Tender #${t}: ${tender.title} budget ${Number(tender.budget || 0) / 10_000_000}`
+      });
+      if (tender.winner) {
+        timeline.push({
+          timestamp: 0,
+          event: "Tender Awarded",
+          detail: `Tender #${t} awarded to ${String(tender.winner).slice(0, 12)}...`
+        });
+      }
+      if (bids.length === 1) {
+        flags.push("SingleBidTender");
+      }
+      const prices = bids.map((b: any) => Number(b.price || 0));
+      if (prices.length >= 2) {
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        if (min > 0 && (max - min) / min < 0.02) {
+          flags.push("SuspiciousBidClustering");
+        }
+      }
+    }
+  }
+
+  // 4. Compliance violations
+  const violations = queryContract("compliance_engine", "get_violations_by_pvo", `--pvo_id ${pvoId}`) || [];
+  const isCompliant = queryContract("compliance_engine", "is_pvo_compliant", `--pvo_id ${pvoId}`);
+  for (const v of violations) {
+    const rule = typeof v.rule === "string" ? v.rule : v.rule?.tag ?? "Unknown";
+    timeline.push({
+      timestamp: Number(v.timestamp || 0),
+      event: v.resolved ? "Violation Resolved" : "Violation Detected",
+      detail: `${rule} (severity ${v.severity})${v.auto_paused ? " - AUTO-PAUSED" : ""}`
+    });
+    if (!v.resolved && Number(v.severity) >= 70) {
+      flags.push(`CriticalViolation:${rule}`);
+    }
+  }
+
+  // 5. Community reports
+  const communityReports = queryContract("community_oracle", "get_reports_by_pvo", `--pvo_id ${pvoId}`) || [];
+  const verifiedReportCount = queryContract("community_oracle", "get_verified_report_count", `--pvo_id ${pvoId}`) || 0;
+  for (const cr of communityReports) {
+    timeline.push({
+      timestamp: Number(cr.timestamp || 0),
+      event: cr.verified ? "Community Report Verified" : "Community Report Submitted",
+      detail: `${typeof cr.report_type === "string" ? cr.report_type : cr.report_type?.tag ?? "Report"} by ${String(cr.citizen || "").slice(0, 12)}...`
+    });
+  }
+
+  // 6. Contractor reputation
+  let contractorReputation: any = null;
+  let contractorComplaints: any[] = [];
+  if (contractor && contractor.length > 10) {
+    contractorReputation = queryContract("reputation", "get_reputation", `--entity ${contractor}`);
+    contractorComplaints = queryContract("reputation", "get_complaints_by_entity", `--entity ${contractor}`) || [];
+    if (!contractorReputation) {
+      flags.push("UnregisteredContractor");
+    } else {
+      const rep = contractorReputation;
+      if (Number(rep.reputation_score || 0) < 40) flags.push(`LowReputation:${rep.reputation_score}`);
+      if (Number(rep.safety_violations || 0) > 0) flags.push(`SafetyViolations:${rep.safety_violations}`);
+      if (Number(rep.audit_findings || 0) > 2) flags.push(`MultipleAuditFindings:${rep.audit_findings}`);
+      if (Number(rep.delayed_projects || 0) > Number(rep.completed_projects || 0) && Number(rep.completed_projects || 0) > 0) {
+        flags.push("HighDelayRate");
+      }
+    }
+    for (const comp of contractorComplaints) {
+      timeline.push({
+        timestamp: Number(comp.timestamp || 0),
+        event: comp.verified ? "Complaint Verified" : "Complaint Filed",
+        detail: `${comp.category || "Unknown"}: ${(comp.description || "").slice(0, 60)}`
+      });
+    }
+  }
+
+  // 7. Value score
+  const valueScore = queryContract("value_score", "get_score", `--pvo_id ${pvoId}`);
+  if (valueScore && Number(valueScore.overall_score || 0) > 0) {
+    timeline.push({
+      timestamp: Number(valueScore.last_updated || 0),
+      event: "Value Score Updated",
+      detail: `Overall: ${valueScore.overall_score}/100 from ${valueScore.total_evaluations || 0} evaluations`
+    });
+  }
+
+  // 8. Audit trail
+  const auditHistory = queryContract("audit_trail", "get_pvo_audit_history", `--pvo_id ${pvoId}`) || [];
+  for (const entry of auditHistory) {
+    const cat = typeof entry.category === "string" ? entry.category : entry.category?.tag ?? "Unknown";
+    timeline.push({
+      timestamp: Number(entry.timestamp || 0),
+      event: `Audit: ${cat}`,
+      detail: `${entry.actor_role || "Unknown"}: ${(entry.action || "").slice(0, 60)}`
+    });
+  }
+
+  // 9. PVO genesis
+  timeline.push({
+    timestamp: Number(pvo.created_at || 0),
+    event: "PVO Created",
+    detail: `"${pvo.title}" budget ${Number(pvo.total_budget || 0) / 10_000_000} funded by ${pvo.fund_source || "unknown"}`
+  });
+
+  // 10. Milestone evidence trail
+  for (const m of milestones) {
+    const mStatus = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
+    if (mStatus !== "Pending") {
+      timeline.push({
+        timestamp: 0,
+        event: `Milestone ${mStatus}`,
+        detail: `MS #${m.id}: ${m.title}`
+      });
+    }
+    for (const ev of (m.submitted_evidence || [])) {
+      const evType = typeof ev.evidence_type === "string" ? ev.evidence_type : ev.evidence_type?.tag ?? "Unknown";
+      timeline.push({
+        timestamp: Number(ev.submitted_at || 0),
+        event: "Evidence Submitted",
+        detail: `${evType} for MS #${m.id} by ${String(ev.submitter || "").slice(0, 12)}...`
+      });
+    }
+  }
+
+  // 11. Cross-contract forensic checks
+  // Budget mismatch: escrow total vs milestone budget sum
+  if (escrows.length > 0 && milestones.length > 0) {
+    for (const e of escrows) {
+      const ms = milestones.find((m: any) => Number(m.id) === Number(e.milestone_id));
+      if (ms && Number(ms.budget) > 0) {
+        const ratio = Number(e.amount) / Number(ms.budget);
+        if (ratio > 1.1 || ratio < 0.9) {
+          flags.push(`EscrowBudgetMismatch:escrow_${e.id}_is_${Math.round(ratio * 100)}%_of_milestone_${ms.id}_budget`);
+        }
+      }
+    }
+  }
+
+  // Ghost project: no escrows, no evidence, no community reports, old PVO
+  if (escrows.length === 0 && milestones.every((m: any) => (m.submitted_evidence || []).length === 0)
+      && communityReports.length === 0) {
+    flags.push("GhostProject");
+  }
+
+  // Collusion: same contractor across multiple PVOs
+  // (checked in the poll loop where we have all PVO data)
+
+  // Sort timeline by timestamp
+  timeline.sort((a, b) => a.timestamp - b.timestamp);
+
+  return {
+    pvoId,
+    pvo,
+    milestones,
+    escrows,
+    grants,
+    tenders,
+    bidsByTender,
+    violations,
+    isCompliant: isCompliant === true || isCompliant === "true",
+    communityReports,
+    verifiedReportCount: Number(verifiedReportCount),
+    contractorReputation,
+    contractorComplaints,
+    valueScore,
+    auditHistory,
+    flags,
+    timeline,
+  };
+}
+
+// ── Forensic Map: FraudIndicator Mapping ────────────────
+function forensicFlagsToIndicators(flags: string[]): string[] {
+  const indicators = new Set<string>();
+  for (const f of flags) {
+    const lower = f.toLowerCase();
+    if (lower.includes("ghost")) indicators.add("GhostProject");
+    if (lower.includes("collusion") || lower.includes("clustering") || lower.includes("singlebid")) indicators.add("CollusionPattern");
+    if (lower.includes("budget") || lower.includes("deviation") || lower.includes("mismatch")) indicators.add("AbnormalBudgetGrowth");
+    if (lower.includes("duplicate")) indicators.add("DuplicateInvoice");
+    if (lower.includes("timing") || lower.includes("unusual")) indicators.add("UnusualPaymentTiming");
+    if (lower.includes("shell") || lower.includes("unregistered")) indicators.add("ShellCompanyRisk");
+    if (lower.includes("inflation") || lower.includes("material")) indicators.add("MaterialCostInflation");
+    if (lower.includes("repeated") || lower.includes("contractor")) indicators.add("RepeatedContractorWin");
+  }
+  if (indicators.size === 0) indicators.add("AbnormalBudgetGrowth");
+  return [...indicators];
+}
+
+// ── Comprehensive Forensic PVO Analysis ──────────────────
+async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
+  const { pvoId, pvo, milestones, escrows, grants, tenders, violations, communityReports,
+          contractorReputation, contractorComplaints, valueScore, auditHistory, flags, timeline } = caseFile;
+
+  const pvoTitle = pvo.title ?? `PVO #${pvoId}`;
+  const pvoMunicipality = pvo.municipality ?? "";
+  const contractor = String(pvo.contractor ?? "");
+  const pvoFundSource = pvo.fund_source ?? "";
+  const pvoDescription = pvo.description ?? "";
+
   console.log(`\n  --- PVO #${pvoId}: ${pvoTitle} ---`);
+  console.log(`  [Forensic] ${timeline.length} timeline events | ${flags.length} flags | ${escrows.length} escrows | ${grants.length} grants | ${tenders.length} tenders | ${violations.length} violations | ${communityReports.length} community reports | ${auditHistory.length} audit entries`);
+  if (flags.length > 0) console.log(`  [Forensic Flags] ${flags.join(", ")}`);
 
   const geo = getGeoRisk(pvoMunicipality);
   const pvoGps = extractGpsFromDesc(pvoDescription);
@@ -429,18 +721,20 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
 
   // 2. Submit Digital Twin (once per PVO)
   if (!hasDigitalTwin(pvoId)) {
-    const totalBudget = milestones.reduce((s, m) => s + Number(m.budget || 0), 0);
+    const totalBudget = milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
     const totalBudgetPesos = totalBudget / 10_000_000;
     const materialIdx = Math.min(95, Math.round(totalBudgetPesos / 500_000_000 * 100) || 50);
     const laborIdx = Math.min(95, milestones.length * 6);
-    const escrows = getEscrowsByPvo(pvoId);
     let deviation = false;
     if (escrows.length > 0) {
       const escrowTotal = escrows.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
       const escrowPesos = escrowTotal / 10_000_000;
       deviation = Math.abs(escrowPesos - totalBudgetPesos) > totalBudgetPesos * 0.1;
     }
-    console.log(`  [Digital Twin] Expected cost: ${(totalBudget / 10_000_000).toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx}`);
+    if (flags.some(f => f.toLowerCase().includes("deviation") || f.toLowerCase().includes("mismatch"))) {
+      deviation = true;
+    }
+    console.log(`  [Digital Twin] Expected cost: ${(totalBudget / 10_000_000).toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx} | deviation: ${deviation}`);
     if (submitDigitalTwin(pvoId, totalBudget, materialIdx, laborIdx, deviation)) {
       console.log(`  [Digital Twin] Submitted`);
     } else {
@@ -450,20 +744,22 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     console.log(`  [Digital Twin] Already exists, skipping`);
   }
 
-  // 3. Submit Risk Prediction (data-driven based on project factors)
+  // 3. Submit Risk Prediction (cross-contract, data-driven)
   const existingFraud = getFraudByPvo(pvoId);
   if (existingFraud.length === 0) {
-    const factors: string[] = [];
+    const factors: string[] = [...flags];
     let delayProb = 10;
     let overrunProb = 8;
 
-    const totalBudgetPesos = milestones.reduce((s, m) => s + Number(m.budget || 0), 0) / 10_000_000;
+    // Factor: Budget scale
+    const totalBudgetPesos = milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0) / 10_000_000;
     if (totalBudgetPesos > 1_000_000_000) {
       delayProb += 20;
       overrunProb += 15;
       factors.push("Large-scale project (>1B)");
     }
 
+    // Factor: Milestone completion
     const releasedCount = milestones.filter((m: any) => {
       const st = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
       return st === "Released";
@@ -472,6 +768,7 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     delayProb += Math.round(pendingRatio * 25);
     if (pendingRatio > 0.5) factors.push(`${pendingRatio > 0.75 ? "Majority" : "Half"} of milestones still pending`);
 
+    // Factor: Evidence coverage
     const milestonesWithEvidence = milestones.filter((m: any) => (m.submitted_evidence ?? []).length > 0).length;
     const evidenceRatio = milestones.length > 0 ? milestonesWithEvidence / milestones.length : 0;
     if (evidenceRatio < 0.5) {
@@ -479,6 +776,7 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
       factors.push("Low evidence submission rate");
     }
 
+    // Factor: Geo risk
     if (geo.flood > 60) {
       delayProb += 10;
       factors.push(`High flood risk (${geo.flood}%)`);
@@ -488,9 +786,58 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
       factors.push(`High landslide risk (${geo.landslide}%)`);
     }
 
+    // Factor: Fund source
     if (pvoFundSource === "National Budget") {
       factors.push("Funded by national budget (bureaucratic risk)");
       delayProb += 5;
+    }
+
+    // Factor: Contractor reputation (from reputation contract)
+    if (contractorReputation) {
+      const rep = contractorReputation;
+      const repScore = Number(rep.reputation_score || 50);
+      if (repScore < 50) {
+        delayProb += Math.round((50 - repScore) * 0.4);
+        factors.push(`Low contractor reputation (${repScore}/100)`);
+      }
+      if (Number(rep.delayed_projects || 0) > 0) {
+        delayProb += Number(rep.delayed_projects) * 3;
+        factors.push(`${rep.delayed_projects} prior delayed projects`);
+      }
+      if (Number(rep.budget_overruns || 0) > 0) {
+        overrunProb += Number(rep.budget_overruns) * 5;
+        factors.push(`${rep.budget_overruns} prior budget overruns`);
+      }
+      if (Number(rep.safety_violations || 0) > 0) {
+        delayProb += 10;
+        factors.push(`${rep.safety_violations} safety violations on record`);
+      }
+      if (Number(rep.audit_findings || 0) > 2) {
+        delayProb += 8;
+        factors.push(`${rep.audit_findings} audit findings`);
+      }
+    }
+
+    // Factor: Compliance violations
+    const unresolvedViolations = violations.filter((v: any) => !v.resolved);
+    if (unresolvedViolations.length > 0) {
+      delayProb += unresolvedViolations.length * 8;
+      factors.push(`${unresolvedViolations.length} unresolved compliance violations`);
+    }
+
+    // Factor: Community engagement
+    if (communityReports.length === 0 && milestones.some((m: any) => {
+      const st = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
+      return st === "Released" || st === "EvidenceSubmitted";
+    })) {
+      factors.push("No community reports for active milestones");
+      delayProb += 5;
+    }
+
+    // Factor: Value score
+    if (valueScore && Number(valueScore.overall_score || 0) > 0 && Number(valueScore.overall_score) < 50) {
+      factors.push(`Low value score (${valueScore.overall_score}/100)`);
+      delayProb += 10;
     }
 
     delayProb = Math.min(95, Math.max(5, delayProb));
@@ -499,7 +846,7 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     const confid = Math.min(96, 65 + factors.length * 7);
 
     console.log(`  [Risk] Contractor: ${contractor.slice(0, 12)}... delay=${delayProb}% overrun=${overrunProb}% cat=${riskCat}`);
-    console.log(`  [Risk] Factors: ${factors.join("; ")}`);
+    console.log(`  [Risk] ${factors.length} factors: ${factors.slice(0, 5).join("; ")}${factors.length > 5 ? ` (+${factors.length - 5} more)` : ""}`);
     if (submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid)) {
       console.log(`  [Risk] Submitted`);
     } else {
@@ -515,7 +862,6 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     const milestoneBudget = Number(m.budget ?? 0);
     const milestoneId = Number(m.id);
 
-    // Build evidence summary
     const evidence: Evidence = {
       gps_lat: null,
       gps_lng: null,
@@ -528,9 +874,7 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     let gpsReportedLng = 0;
 
     for (const ev of submitted) {
-      const evType = typeof ev.evidence_type === "string"
-        ? ev.evidence_type
-        : ev.evidence_type?.tag ?? "";
+      const evType = typeof ev.evidence_type === "string" ? ev.evidence_type : ev.evidence_type?.tag ?? "";
       evidence.evidence_types.push(evType);
 
       if (evType === "GpsCoordinates" && ev.metadata) {
@@ -557,7 +901,7 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
     }
     evidence.metadata_preview = JSON.stringify(submitted).slice(0, 300);
 
-    // 6. Submit Fraud Detection (once per PVO)
+    // 6. Submit Fraud Detection (once per PVO) - enhanced with forensic flags
     if (existingFraud.length === 0 && submitted.length > 0) {
       let result: AnalysisResult;
       if (LLM_API_KEY) {
@@ -575,12 +919,33 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
         console.log(`  [Fraud] Rule: risk=${result.riskScore} flags=${result.flags.join(",") || "none"}`);
       }
 
-      const indicators = mapFlagsToIndicators(result.flags);
-      const confidence = Math.min(95, 60 + submitted.length * 8 + evidence.evidence_types.length * 3);
+      // Merge forensic flags into fraud indicators
+      const ruleIndicators = mapFlagsToIndicators(result.flags);
+      const forensicIndicators = forensicFlagsToIndicators(flags);
+      const indicators = [...new Set([...ruleIndicators, ...forensicIndicators])];
+
+      // Adjust risk score based on forensic flags
+      let forensicRiskAdjust = 0;
+      for (const f of flags) {
+        const lower = f.toLowerCase();
+        if (lower.includes("ghost")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 40);
+        if (lower.includes("collusion") || lower.includes("clustering")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 30);
+        if (lower.includes("criticalviolation")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 25);
+        if (lower.includes("safety")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 20);
+        if (lower.includes("fundinggap")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 15);
+        if (lower.includes("unregistered")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 15);
+        if (lower.includes("lowrep")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
+        if (lower.includes("singlebid")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
+        if (lower.includes("highdelay")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
+        if (lower.includes("disputed")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 15);
+      }
+      const finalRiskScore = Math.min(100, result.riskScore + forensicRiskAdjust);
+
+      const confidence = Math.min(95, 60 + submitted.length * 8 + evidence.evidence_types.length * 3 + flags.length * 2);
       const hash = `${pvoId}-${milestoneId}-${Date.now()}`;
 
-      console.log(`  [Fraud] PVO #${pvoId}: score=${result.riskScore} indicators=${indicators.join(",")}`);
-      if (submitFraudDetection(pvoId, result.riskScore, indicators, confidence, hash)) {
+      console.log(`  [Fraud] PVO #${pvoId}: score=${finalRiskScore} (base=${result.riskScore} +forensic=${forensicRiskAdjust}) indicators=${indicators.join(",")}`);
+      if (submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash)) {
         console.log(`  [Fraud] Submitted on-chain`);
       } else {
         console.error(`  [Fraud] Failed to submit`);
@@ -591,16 +956,25 @@ async function analyzePvo(pvoId: number, pvoTitle: string, pvoMunicipality: stri
         console.log(`  [GPS] Evidence #${gpsEvidenceId}: reported=[${gpsReportedLat},${gpsReportedLng}] expected=[${pvoGps.lat},${pvoGps.lng}]`);
         submitGpsValidation(gpsEvidenceId, pvoGps.lat, pvoGps.lng, gpsReportedLat, gpsReportedLng, 30000);
       }
-
-      // Re-check risk prediction now that fraud detection exists
-      if (existingFraud.length === 0) {
-        const delayProb = Math.min(90, 20 + result.riskScore / 2);
-        const overrunProb = Math.min(85, 15 + result.riskScore / 3);
-        const riskCat = (delayProb + overrunProb) > 70 ? 3 : (delayProb + overrunProb) > 50 ? 2 : (delayProb + overrunProb) > 25 ? 1 : 0;
-        submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, 78);
-      }
     }
   }
+}
+
+// ── Cross-PVO Collusion Detection ───────────────────────
+function detectCollusion(allPvoData: { pvoId: number; contractor: string }[]): string[] {
+  const flags: string[] = [];
+  const contractorPvos: Record<string, number[]> = {};
+  for (const d of allPvoData) {
+    if (!d.contractor || d.contractor.length < 5) continue;
+    if (!contractorPvos[d.contractor]) contractorPvos[d.contractor] = [];
+    contractorPvos[d.contractor].push(d.pvoId);
+  }
+  for (const [contractor, pvoIds] of Object.entries(contractorPvos)) {
+    if (pvoIds.length >= 3) {
+      flags.push(`CollusionPattern:${contractor.slice(0, 12)}_holds_${pvoIds.length}_PVOs`);
+    }
+  }
+  return flags;
 }
 
 // ── Escrow Gate 5 Check ──────────────────────────────────
@@ -634,12 +1008,11 @@ function checkEscrowGates(): void {
   }
 }
 
-// ── Evidence Poller ─────────────────────────────────────
+// ── Forensic Poller ─────────────────────────────────────
 async function poll(): Promise<void> {
-  console.log(`\n[${new Date().toISOString()}] AI Oracle scanning...`);
+  console.log(`\n[${new Date().toISOString()}] AI Oracle forensic scan...`);
 
   try {
-    // Phase 1: Submit comprehensive analysis for all PVOs
     const pvoCountRaw = cli(
       `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_count`
     );
@@ -651,35 +1024,62 @@ async function poll(): Promise<void> {
       return;
     }
 
-    console.log(`  Found ${pvoCount} PVOs. Analyzing...`);
+    console.log(`  Found ${pvoCount} PVOs. Building forensic case files...`);
+
+    // First pass: collect all PVO data for cross-PVO collusion detection
+    const allPvoBasic: { pvoId: number; contractor: string }[] = [];
+    const pvoDataCache: { pvo: any; milestones: any[] }[] = [];
 
     for (let pvoId = 1; pvoId <= pvoCount; pvoId++) {
       try {
         const pvoRaw = cli(
           `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo --pvo_id ${pvoId}`
         );
-        if (!pvoRaw) continue;
+        if (!pvoRaw) { pvoDataCache.push({ pvo: null, milestones: [] }); continue; }
         const pvo = JSON.parse(pvoRaw).result || JSON.parse(pvoRaw);
-        if (!pvo) continue;
+        if (!pvo) { pvoDataCache.push({ pvo: null, milestones: [] }); continue; }
 
         const milestonesRaw = cli(
           `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
         );
-        if (!milestonesRaw) continue;
-        const mParsed = JSON.parse(milestonesRaw);
-        const milestones = Array.isArray(mParsed) ? mParsed : (mParsed.result || []);
+        let milestones: any[] = [];
+        if (milestonesRaw) {
+          const mParsed = JSON.parse(milestonesRaw);
+          milestones = Array.isArray(mParsed) ? mParsed : (mParsed.result || []);
+        }
 
-        await analyzePvo(
-          pvoId,
-          pvo.title ?? `PVO #${pvoId}`,
-          pvo.municipality ?? "",
-          pvo.contractor ?? "",
-          milestones,
-          pvo.fund_source ?? "",
-          pvo.description ?? ""
-        );
+        pvoDataCache.push({ pvo, milestones });
+        allPvoBasic.push({ pvoId, contractor: String(pvo.contractor || "") });
+      } catch {
+        pvoDataCache.push({ pvo: null, milestones: [] });
+      }
+    }
+
+    // Cross-PVO collusion detection
+    const collusionFlags = detectCollusion(allPvoBasic);
+    if (collusionFlags.length > 0) {
+      console.log(`  [Cross-PVO] ${collusionFlags.length} collusion patterns detected`);
+    }
+
+    // Second pass: collect forensic data and analyze each PVO
+    for (let pvoId = 1; pvoId <= pvoCount; pvoId++) {
+      const cached = pvoDataCache[pvoId - 1];
+      if (!cached || !cached.pvo) continue;
+
+      try {
+        const caseFile = collectForensicData(pvoId, cached.pvo, cached.milestones);
+
+        // Inject cross-PVO collusion flags for this contractor
+        const contractor = String(cached.pvo.contractor || "");
+        for (const cf of collusionFlags) {
+          if (cf.toLowerCase().includes(contractor.toLowerCase().slice(0, 12))) {
+            caseFile.flags.push(cf);
+          }
+        }
+
+        await analyzePvo(caseFile);
       } catch (e: any) {
-        console.error(`  PVO #${pvoId} error: ${e.message?.slice(0, 80)}`);
+        console.error(`  PVO #${pvoId} error: ${e.message?.slice(0, 100)}`);
       }
     }
 
@@ -688,7 +1088,7 @@ async function poll(): Promise<void> {
 
     // Summary
     const fraudCount = getFraudCount();
-    console.log(`\n  Done. Total fraud detections on-chain: ${fraudCount}`);
+    console.log(`\n  Forensic scan complete. Total fraud detections on-chain: ${fraudCount}`);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`  ${msg.slice(0, 100)}`);
@@ -698,14 +1098,16 @@ async function poll(): Promise<void> {
 // ── Main ────────────────────────────────────────────────
 const runOnce = process.argv.includes("--once");
 
-console.log("========================================");
-console.log("  PoPV AI Oracle v2 (LLM + Rule-based)  ");
-console.log("========================================");
+console.log("============================================");
+console.log("  PoPV AI Oracle v3 - Forensic Engine");
+console.log("============================================");
 console.log(`  AI Auditor: ${AI_AUDITOR_PUBLIC}`);
 console.log(`  Mode: ${runOnce ? "Once" : `Continuous (${POLL_INTERVAL_MS / 1000}s)`}`);
 console.log(`  LLM: ${LLM_API_KEY ? `${LLM_MODEL} @ ${LLM_BASE_URL}` : "Disabled (rule-based only)"}`);
-console.log(`  Contracts: pvo_core, escrow, ai_oracle, reputation`);
-console.log(`  Submissions: fraud, risk, image, digital twin, geo risk, GPS validation, Gate 5\n`);
+console.log(`  Forensic scope: 10 contracts, full project lifecycle`);
+console.log(`  Data sources: pvo_core, escrow, audit_trail, reputation,`);
+console.log(`    compliance, procurement, grants, community, value_score, ai_oracle`);
+console.log(`  Submissions: fraud, risk, image, twin, geo, GPS, Gate 5\n`);
 
 poll();
 
