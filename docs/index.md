@@ -7,7 +7,7 @@
 
 ## 🏆 Why This Hackathon Project Exists
 
-The **APAC Stellar Hackathon** challenges builders to create financial infrastructure powered by Stellar's payment rails. The **DeFi & Ecosystem Composability** category asks: how can stablecoins and Soroban smart contracts be combined to build real-world financial systems? We believe they should not just move money  -  they should enforce accountability.
+The **APAC Stellar Hackathon** challenges builders to create financial infrastructure powered by Stellar's payment rails. The **DeFi & Ecosystem Composability** category asks: how can stablecoins and Soroban smart contracts be combined to build real-world financial systems? We believe we should not just move money  -  we should enforce accountability.
 
 **PoPV answers that question with a system that uses Stellar as the backbone of government transparency.**
 
