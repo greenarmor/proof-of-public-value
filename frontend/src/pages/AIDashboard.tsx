@@ -1151,9 +1151,9 @@ function ForensicCaseTab() {
                 if (Number(rep.safety_violations || 0) > 0) flags.push({ flag: `SafetyViolations: ${rep.safety_violations}`, severity: "high" });
                 if (Number(rep.audit_findings || 0) > 2) flags.push({ flag: `MultipleAuditFindings: ${rep.audit_findings}`, severity: "low" });
               } else {
-                flags.push({ flag: "UnregisteredContractor", severity: "medium" });
+                flags.push({ flag: "NoReputationRecord: no performance history", severity: "info" });
               }
-            } catch { flags.push({ flag: "UnregisteredContractor", severity: "medium" }); }
+            } catch { flags.push({ flag: "NoReputationRecord: no performance history", severity: "info" }); }
 
             if (contractorCounts[contractor] >= 3) {
               flags.push({ flag: `CollusionPattern: holds ${contractorCounts[contractor]} PVOs`, severity: "critical" });

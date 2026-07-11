@@ -561,7 +561,7 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     contractorReputation = queryContract("reputation", "get_reputation", `--entity ${contractor}`);
     contractorComplaints = queryContract("reputation", "get_complaints_by_entity", `--entity ${contractor}`) || [];
     if (!contractorReputation) {
-      flags.push("UnregisteredContractor");
+      flags.push("NoReputationRecord:no_performance_history");
     } else {
       const rep = contractorReputation;
       if (Number(rep.reputation_score || 0) < 40) flags.push(`LowReputation:${rep.reputation_score}`);
@@ -719,7 +719,7 @@ function forensicFlagsToIndicators(flags: string[]): string[] {
     if (lower.includes("budget") || lower.includes("deviation") || lower.includes("mismatch")) indicators.add("AbnormalBudgetGrowth");
     if (lower.includes("duplicate")) indicators.add("DuplicateInvoice");
     if (lower.includes("timing") || lower.includes("unusual")) indicators.add("UnusualPaymentTiming");
-    if (lower.includes("shell") || lower.includes("unregistered")) indicators.add("ShellCompanyRisk");
+    if (lower.includes("noreputation") || lower.includes("shell")) indicators.add("ShellCompanyRisk");
     if (lower.includes("inflation") || lower.includes("material")) indicators.add("MaterialCostInflation");
     if (lower.includes("repeated") || lower.includes("contractor")) indicators.add("RepeatedContractorWin");
   }
@@ -972,7 +972,7 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
         if (lower.includes("criticalviolation")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 25);
         if (lower.includes("safety")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 20);
         if (lower.includes("fundinggap")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 15);
-        if (lower.includes("unregistered")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 15);
+        if (lower.includes("noreputation")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
         if (lower.includes("lowrep")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
         if (lower.includes("singlebid")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
         if (lower.includes("highdelay")) forensicRiskAdjust = Math.max(forensicRiskAdjust, 10);
