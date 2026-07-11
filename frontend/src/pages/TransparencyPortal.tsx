@@ -916,7 +916,7 @@ function ExpandableProvenance({ data }: { data: any }) {
       {open && (
         <div className="card p-4 bg-slate-50/50 border-slate-200">
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(data.timeline || []).map((e: any, i: number) => (
+            {(data.timeline || []).slice().reverse().map((e: any, i: number) => (
               <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
                 <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
