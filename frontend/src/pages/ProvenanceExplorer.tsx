@@ -554,6 +554,8 @@ export function ProvenanceExplorer() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const fetchData = useCallback(async () => {
     try {
@@ -581,19 +583,25 @@ export function ProvenanceExplorer() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const filteredPVOs = pvos.filter((p) => {
-    const matchesSearch =
-      !search ||
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.department.toLowerCase().includes(search.toLowerCase()) ||
-      p.municipality.toLowerCase().includes(search.toLowerCase()) ||
-      `pvo ${p.pvo_id}`.includes(search.toLowerCase()) ||
-      p.contractor?.toLowerCase().includes(search.toLowerCase());
+  const filteredPVOs = pvos
+    .filter((p) => {
+      const matchesSearch =
+        !search ||
+        p.title.toLowerCase().includes(search.toLowerCase()) ||
+        p.department.toLowerCase().includes(search.toLowerCase()) ||
+        p.municipality.toLowerCase().includes(search.toLowerCase()) ||
+        `pvo ${p.pvo_id}`.includes(search.toLowerCase()) ||
+        p.contractor?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => b.pvo_id - a.pvo_id); // newest first
 
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  const totalPages = Math.max(1, Math.ceil(filteredPVOs.length / PAGE_SIZE));
+  const pagedPVOs = filteredPVOs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
 
   const totalEscrowed = pvos.reduce((s, p) => s + p.stats.total_escrowed, 0);
   const totalReleased = pvos.reduce((s, p) => s + p.stats.total_released, 0);
@@ -717,18 +725,40 @@ export function ProvenanceExplorer() {
       </div>
 
       <div className="space-y-3">
-        {filteredPVOs.length === 0 ? (
+        {pagedPVOs.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-slate-400">
-              {pvos.length === 0
-                ? "No PVOs found. The indexer will pick them up on the next poll."
-                : "No PVOs match your filters."}
+              {filteredPVOs.length === 0
+                ? pvos.length === 0
+                  ? "No PVOs found. The indexer will pick them up on the next poll."
+                  : "No PVOs match your filters."
+                : ""}
             </p>
           </div>
         ) : (
-          filteredPVOs.map((pvo) => <PVOProvenanceCard key={pvo.pvo_id} pvo={pvo} />)
+          pagedPVOs.map((pvo) => <PVOProvenanceCard key={pvo.pvo_id} pvo={pvo} />)
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-30 hover:bg-slate-50 transition-colors">
+            ← Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button key={p} onClick={() => setPage(p)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${p === page ? "bg-indigo-600 text-white" : "border border-slate-200 hover:bg-slate-50"}`}>
+              {p}
+            </button>
+          ))}
+          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-30 hover:bg-slate-50 transition-colors">
+            Next →
+          </button>
+          <span className="text-xs text-slate-400 ml-2">{filteredPVOs.length} total</span>
+        </div>
+      )}
 
       <div className="text-xs text-slate-400 text-center pt-4 border-t border-slate-100">
         Data from local provenance indexer ({API_BASE}) · TX links open in Stellar Expert
