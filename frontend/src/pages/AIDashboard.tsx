@@ -19,7 +19,7 @@ interface FraudResult {
 export function AIDashboard() {
   const { address, connected, connect, hasRole } = useWallet();
   const canPassGate = hasRole("AIAuditor", "Administrator");
-  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps" | "gate">("fraud");
+  const [activeTab, setActiveTab] = useState<"fraud" | "risk" | "image" | "twin" | "geo" | "gps" | "gate" | "forensic">("fraud");
   const [fraudResults, setFraudResults] = useState<FraudResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -117,6 +117,7 @@ export function AIDashboard() {
       {activeTab === "twin" && <DigitalTwinTab />}
       {activeTab === "geo" && <GeoRiskTab pvoId={0} />}
       {activeTab === "gps" && <GpsValidationTab />}
+      {activeTab === "forensic" && <ForensicCaseTab />}
       {activeTab === "gate" && <EscrowGateTab address={address} connected={connected} onConnect={connect} />}
     </div>
   );
@@ -898,6 +899,439 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
             <p className="text-xs text-slate-400">Escrow must pass Gates 1-4 (Engineer, Compliance, Oracle, Community) before AI Gate 5 can be submitted.</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Forensic Case Tab ───────────────────────────────────
+
+interface ForensicFlag {
+  flag: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+}
+
+interface ForensicTimelineEntry {
+  timestamp: number;
+  event: string;
+  detail: string;
+  category: string;
+}
+
+interface ForensicCase {
+  pvoId: number;
+  pvoTitle: string;
+  status: string;
+  municipality: string;
+  contractor: string;
+  fundSource: string;
+  totalBudget: number;
+  flags: ForensicFlag[];
+  timeline: ForensicTimelineEntry[];
+  escrowCount: number;
+  grantCount: number;
+  tenderCount: number;
+  violationCount: number;
+  communityReportCount: number;
+  verifiedReportCount: number;
+  contractorRepScore: number | null;
+  isCompliant: boolean;
+  valueScore: number | null;
+  auditEntryCount: number;
+  fundingGap: number | null;
+  releasedMilestones: number;
+  totalMilestones: number;
+  evidenceCount: number;
+}
+
+function ForensicCaseTab() {
+  const [cases, setCases] = useState<ForensicCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPvo, setSelectedPvo] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const PvoClient = (await import("../contracts/pvo_core/src")).Client;
+        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const GrantClient = (await import("../contracts/grant_commitment/src")).Client;
+        const grantClient = new GrantClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ComplianceClient = (await import("../contracts/compliance_engine/src")).Client;
+        const complianceClient = new ComplianceClient({ contractId: CONTRACT_IDS.compliance_engine, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const CommunityClient = (await import("../contracts/community_oracle/src")).Client;
+        const communityClient = new CommunityClient({ contractId: CONTRACT_IDS.community_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const RepClient = (await import("../contracts/reputation/src")).Client;
+        const repClient = new RepClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ValueClient = (await import("../contracts/value_score/src")).Client;
+        const valueClient = new ValueClient({ contractId: CONTRACT_IDS.value_score, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const AuditClient = (await import("../contracts/audit_trail/src")).Client;
+        const auditClient = new AuditClient({ contractId: CONTRACT_IDS.audit_trail, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ProcClient = (await import("../contracts/procurement_market/src")).Client;
+        const procClient = new ProcClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+
+        const cnt = await pvoClient.get_pvo_count();
+        const allPvos: { pvoId: number; contractor: string }[] = [];
+        const caseFiles: ForensicCase[] = [];
+
+        const pvoCache: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          const r = await pvoClient.get_pvo({ pvo_id: i });
+          pvoCache.push(r.result);
+          if (r.result) allPvos.push({ pvoId: i, contractor: String((r.result as any).contractor || "") });
+        }
+        const contractorCounts: Record<string, number> = {};
+        for (const p of allPvos) {
+          if (p.contractor && p.contractor.length > 5) {
+            contractorCounts[p.contractor] = (contractorCounts[p.contractor] || 0) + 1;
+          }
+        }
+
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          const pvo = pvoCache[i - 1] as any;
+          if (!pvo) continue;
+
+          const flags: ForensicFlag[] = [];
+          const timeline: ForensicTimelineEntry[] = [];
+          const contractor = String(pvo.contractor || "");
+          const totalBudgetPesos = Number(pvo.total_budget || 0) / PPHP_SCALE;
+
+          timeline.push({ timestamp: Number(pvo.created_at || 0), event: "PVO Created", detail: `"${pvo.title}" budget ${totalBudgetPesos.toLocaleString()} funded by ${pvo.fund_source || "unknown"}`, category: "genesis" });
+          const pvoStatus = typeof pvo.status === "string" ? pvo.status : pvo.status?.tag ?? "";
+
+          const msR = await pvoClient.get_pvo_milestones({ pvo_id: i });
+          const milestones = (msR.result || []) as any[];
+          let evidenceCount = 0;
+          let releasedCount = 0;
+          for (const m of milestones) {
+            const mStatus = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
+            if (mStatus !== "Pending") {
+              timeline.push({ timestamp: 0, event: `Milestone ${mStatus}`, detail: `MS #${m.id}: ${m.title}`, category: "milestone" });
+            }
+            if (mStatus === "Released") releasedCount++;
+            const ev = m.submitted_evidence || [];
+            evidenceCount += ev.length;
+            for (const e of ev) {
+              const evType = typeof e.evidence_type === "string" ? e.evidence_type : e.evidence_type?.tag ?? "Unknown";
+              timeline.push({ timestamp: Number(e.submitted_at || 0), event: "Evidence Submitted", detail: `${evType} for MS #${m.id}`, category: "evidence" });
+            }
+          }
+
+          let escrowCount = 0;
+          try {
+            const eR = await escrowClient.get_escrows_by_pvo({ pvo_id: i });
+            const escrows = (eR.result || []) as any[];
+            escrowCount = escrows.length;
+            for (const e of escrows) {
+              timeline.push({ timestamp: Number(e.created_at || 0), event: "Escrow Created", detail: `Escrow #${e.id}: ${Number(e.amount || 0) / PPHP_SCALE} for MS #${e.milestone_id}`, category: "escrow" });
+              const eStatus = typeof e.status === "string" ? e.status : e.status?.tag ?? "";
+              if (eStatus === "Released" && Number(e.released_at || 0) > 0) {
+                timeline.push({ timestamp: Number(e.released_at), event: "Escrow Released", detail: `Escrow #${e.id} released`, category: "escrow" });
+              }
+              if (eStatus === "Disputed") { flags.push({ flag: "EscrowDisputed", severity: "high" }); }
+              const ms = milestones.find((m: any) => Number(m.id) === Number(e.milestone_id));
+              if (ms && Number(ms.budget) > 0) {
+                const ratio = Number(e.amount) / Number(ms.budget);
+                if (ratio > 1.1 || ratio < 0.9) flags.push({ flag: `EscrowBudgetMismatch: escrow ${Math.round(ratio * 100)}% of milestone budget`, severity: "medium" });
+              }
+            }
+          } catch {}
+
+          let grantCount = 0;
+          let fundingGap: number | null = null;
+          try {
+            const gR = await grantClient.get_grants_by_pvo({ pvo_id: i });
+            const grants = (gR.result || []) as any[];
+            grantCount = grants.length;
+            for (const g of grants) {
+              timeline.push({ timestamp: Number(g.created_at || 0), event: "Grant Committed", detail: `${g.org_name || "Donor"}: ${Number(g.amount || 0) / PPHP_SCALE}`, category: "funding" });
+            }
+            const remaining = await grantClient.get_pvo_remaining({ pvo_id: i });
+            const remainingNum = Number(remaining.result || 0) / PPHP_SCALE;
+            if (remainingNum > 0) { fundingGap = remainingNum; flags.push({ flag: `FundingGap: ${remainingNum.toLocaleString()} unfunded`, severity: "medium" }); }
+          } catch {}
+
+          let tenderCount = 0;
+          try {
+            const tCnt = await procClient.get_tender_count();
+            for (let t = 1; t <= Number(tCnt.result); t++) {
+              const tender = await procClient.get_tender({ id: t });
+              if (tender.result && Number((tender.result as any).pvo_id) === i) {
+                tenderCount++;
+                const td = tender.result as any;
+                timeline.push({ timestamp: Number(td.created_at || 0), event: "Tender Created", detail: `${td.title}: ${Number(td.budget || 0) / PPHP_SCALE}`, category: "procurement" });
+                const bids = ((await procClient.get_bids_by_tender({ tender_id: t })).result || []) as any[];
+                if (bids.length === 1) flags.push({ flag: "SingleBidTender", severity: "low" });
+                const prices = bids.map((b: any) => Number(b.price || 0));
+                if (prices.length >= 2) {
+                  const minP = Math.min(...prices), maxP = Math.max(...prices);
+                  if (minP > 0 && (maxP - minP) / minP < 0.02) flags.push({ flag: "SuspiciousBidClustering", severity: "low" });
+                }
+                if (td.winner) timeline.push({ timestamp: 0, event: "Tender Awarded", detail: `Tender #${t} awarded`, category: "procurement" });
+              }
+            }
+          } catch {}
+
+          let violationCount = 0;
+          let isCompliant = true;
+          try {
+            const vR = await complianceClient.get_violations_by_pvo({ pvo_id: i });
+            const violations = (vR.result || []) as any[];
+            violationCount = violations.length;
+            for (const v of violations) {
+              const rule = typeof v.rule === "string" ? v.rule : v.rule?.tag ?? "Unknown";
+              timeline.push({ timestamp: Number(v.timestamp || 0), event: v.resolved ? "Violation Resolved" : "Violation Detected", detail: `${rule} (severity ${v.severity})`, category: "compliance" });
+              if (!v.resolved && Number(v.severity) >= 70) flags.push({ flag: `CriticalViolation: ${rule}`, severity: "high" });
+            }
+            const compR = await complianceClient.is_pvo_compliant({ pvo_id: i });
+            isCompliant = compR.result === true;
+          } catch {}
+
+          let communityReportCount = 0;
+          let verifiedReportCount = 0;
+          try {
+            const cR = await communityClient.get_reports_by_pvo({ pvo_id: i });
+            const reports = (cR.result || []) as any[];
+            communityReportCount = reports.length;
+            for (const cr of reports) {
+              timeline.push({ timestamp: Number(cr.timestamp || 0), event: cr.verified ? "Report Verified" : "Report Submitted", detail: `${typeof cr.report_type === "string" ? cr.report_type : cr.report_type?.tag ?? "Report"}`, category: "community" });
+            }
+            const vCount = await communityClient.get_verified_report_count({ pvo_id: i });
+            verifiedReportCount = Number(vCount.result || 0);
+          } catch {}
+
+          let contractorRepScore: number | null = null;
+          if (contractor && contractor.length > 10) {
+            try {
+              const repR = await repClient.get_reputation({ entity: contractor });
+              if (repR.result) {
+                const rep = repR.result as any;
+                contractorRepScore = Number(rep.reputation_score || 0);
+                if (contractorRepScore < 40) flags.push({ flag: `LowReputation: ${contractorRepScore}/100`, severity: "low" });
+                if (Number(rep.safety_violations || 0) > 0) flags.push({ flag: `SafetyViolations: ${rep.safety_violations}`, severity: "high" });
+                if (Number(rep.audit_findings || 0) > 2) flags.push({ flag: `MultipleAuditFindings: ${rep.audit_findings}`, severity: "low" });
+              } else {
+                flags.push({ flag: "UnregisteredContractor", severity: "medium" });
+              }
+            } catch { flags.push({ flag: "UnregisteredContractor", severity: "medium" }); }
+
+            if (contractorCounts[contractor] >= 3) {
+              flags.push({ flag: `CollusionPattern: holds ${contractorCounts[contractor]} PVOs`, severity: "critical" });
+            }
+          }
+
+          if (escrowCount === 0 && evidenceCount === 0 && communityReportCount === 0) {
+            flags.push({ flag: "GhostProject: no activity", severity: "critical" });
+          }
+
+          let valueScore: number | null = null;
+          try {
+            const vsR = await valueClient.get_score({ pvo_id: i });
+            if (vsR.result) { valueScore = Number((vsR.result as any).overall_score || 0); }
+          } catch {}
+
+          let auditEntryCount = 0;
+          try {
+            const auditR = await auditClient.get_pvo_audit_history({ pvo_id: i });
+            const entries = (auditR.result || []) as any[];
+            auditEntryCount = entries.length;
+            for (const entry of entries) {
+              const cat = typeof entry.category === "string" ? entry.category : entry.category?.tag ?? "Unknown";
+              timeline.push({ timestamp: Number(entry.timestamp || 0), event: `Audit: ${cat}`, detail: `${entry.actor_role || "Unknown"}: ${(entry.action || "").slice(0, 50)}`, category: "audit" });
+            }
+          } catch {}
+
+          try {
+            const frR = await aiClient.get_fraud_by_pvo({ pvo_id: i });
+            const frauds = (frR.result || []) as any[];
+            if (frauds.length > 0) {
+              const latest = frauds[frauds.length - 1];
+              timeline.push({ timestamp: Number(latest.timestamp || 0), event: "AI Fraud Detection", detail: `Risk: ${latest.risk_score}/100, confidence: ${latest.confidence}%`, category: "ai" });
+            }
+          } catch {}
+          try {
+            if (contractor) {
+              const riskR = await aiClient.get_latest_risk_prediction({ contractor });
+              if (riskR.result) {
+                const r = riskR.result as any;
+                timeline.push({ timestamp: Number(r.timestamp || 0), event: "AI Risk Prediction", detail: `Delay: ${r.delay_probability}%, Overrun: ${r.overrun_probability}%, Category: ${r.risk_category}`, category: "ai" });
+              }
+            }
+          } catch {}
+
+          timeline.sort((a, b) => a.timestamp - b.timestamp);
+
+          caseFiles.push({
+            pvoId: i, pvoTitle: pvo.title || `PVO #${i}`, status: pvoStatus,
+            municipality: pvo.municipality || "", contractor, fundSource: pvo.fund_source || "",
+            totalBudget: totalBudgetPesos, flags, timeline, escrowCount, grantCount, tenderCount,
+            violationCount, communityReportCount, verifiedReportCount, contractorRepScore, isCompliant,
+            valueScore, auditEntryCount, fundingGap, releasedMilestones: releasedCount,
+            totalMilestones: milestones.length, evidenceCount,
+          });
+        }
+        setCases(caseFiles);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  if (selectedPvo !== null) {
+    const caseData = cases.find((c) => c.pvoId === selectedPvo);
+    if (caseData) return <ForensicCaseDetail data={caseData} onBack={() => setSelectedPvo(null)} />;
+  }
+
+  if (cases.length === 0) return <div className="card p-6 text-center text-slate-400">No PVOs found.</div>;
+
+  const sevColors: Record<string, string> = {
+    critical: "bg-red-100 text-red-700 border-red-200",
+    high: "bg-orange-100 text-orange-700 border-orange-200",
+    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    low: "bg-blue-100 text-blue-700 border-blue-200",
+    info: "bg-gray-100 text-gray-600 border-gray-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-3 mb-2">
+        <div className="bg-white border border-gray-200 rounded-lg p-3"><dt className="text-xs text-gray-500">Total PVOs</dt><dd className="text-xl font-bold text-gray-900">{cases.length}</dd></div>
+        <div className="bg-white border border-gray-200 rounded-lg p-3"><dt className="text-xs text-gray-500">Critical Flags</dt><dd className="text-xl font-bold text-red-600">{cases.reduce((s, c) => s + c.flags.filter(f => f.severity === "critical").length, 0)}</dd></div>
+        <div className="bg-white border border-gray-200 rounded-lg p-3"><dt className="text-xs text-gray-500">Ghost Projects</dt><dd className="text-xl font-bold text-orange-600">{cases.filter(c => c.flags.some(f => f.flag.includes("GhostProject"))).length}</dd></div>
+        <div className="bg-white border border-gray-200 rounded-lg p-3"><dt className="text-xs text-gray-500">Total Flags</dt><dd className="text-xl font-bold text-purple-600">{cases.reduce((s, c) => s + c.flags.length, 0)}</dd></div>
+      </div>
+
+      {cases.map((c) => (
+        <div key={c.pvoId} onClick={() => setSelectedPvo(c.pvoId)}
+          className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-purple-300 hover:shadow-sm transition">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-gray-900">{c.pvoTitle}</span>
+                <span className="text-xs text-gray-400">PVO #{c.pvoId}</span>
+              </div>
+              <p className="text-xs text-gray-400">{c.municipality} · {c.status} · Budget: {c.totalBudget.toLocaleString()}</p>
+            </div>
+            <div className="flex flex-wrap gap-1 justify-end max-w-[40%]">
+              {c.flags.slice(0, 4).map((f, i) => (
+                <span key={i} className={`px-1.5 py-0.5 text-xs rounded border ${sevColors[f.severity]}`}>{f.flag.split(":")[0].replace(/([A-Z])/g, " $1").trim()}</span>
+              ))}
+              {c.flags.length > 4 && <span className="text-xs text-gray-400">+{c.flags.length - 4}</span>}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-400">
+            <span>{c.timeline.length} events</span>
+            <span>{c.escrowCount} escrows</span>
+            <span>{c.grantCount} grants</span>
+            <span>{c.tenderCount} tenders</span>
+            <span>{c.violationCount} violations</span>
+            <span>{c.communityReportCount} reports</span>
+            <span>{c.releasedMilestones}/{c.totalMilestones} milestones</span>
+            <span>{c.evidenceCount} evidence</span>
+            {c.contractorRepScore !== null && <span>Rep: {c.contractorRepScore}</span>}
+            {c.fundingGap !== null && <span className="text-orange-500">Gap: {c.fundingGap.toLocaleString()}</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const catIcons: Record<string, string> = {
+  genesis: "📋", milestone: "📌", evidence: "📎", escrow: "💰",
+  funding: "🤝", procurement: "📮", compliance: "⚠", community: "👥",
+  audit: "📝", ai: "🤖",
+};
+
+const catColors: Record<string, string> = {
+  genesis: "border-l-blue-400", milestone: "border-l-purple-400", evidence: "border-l-cyan-400", escrow: "border-l-green-400",
+  funding: "border-l-indigo-400", procurement: "border-l-pink-400", compliance: "border-l-red-400", community: "border-l-teal-400",
+  audit: "border-l-gray-400", ai: "border-l-violet-400",
+};
+
+function ForensicCaseDetail({ data, onBack }: { data: ForensicCase; onBack: () => void }) {
+  const sevColors: Record<string, string> = {
+    critical: "bg-red-100 text-red-700 border-red-200",
+    high: "bg-orange-100 text-orange-700 border-orange-200",
+    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    low: "bg-blue-100 text-blue-700 border-blue-200",
+    info: "bg-gray-100 text-gray-600 border-gray-200",
+  };
+
+  const fmtTime = (ts: number) => {
+    if (!ts) return "";
+    try { return new Date(ts * 1000).toLocaleString(); } catch { return ""; }
+  };
+
+  return (
+    <div className="space-y-4">
+      <button onClick={onBack} className="text-sm text-purple-600 hover:text-purple-800">← Back to all cases</button>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{data.pvoTitle}</h2>
+            <p className="text-sm text-gray-400">PVO #{data.pvoId} · {data.municipality} · {data.status}</p>
+            <div className="flex gap-4 mt-2 text-xs text-gray-500">
+              <span>Budget: <strong>{data.totalBudget.toLocaleString()}</strong></span>
+              <span>Fund: <strong>{data.fundSource}</strong></span>
+              <span>Contractor: <code className="text-xs">{data.contractor.slice(0, 16)}...</code></span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="border rounded p-2"><p className="text-xs text-gray-400">Rep Score</p><p className="font-bold text-gray-900">{data.contractorRepScore ?? "N/A"}</p></div>
+            <div className="border rounded p-2"><p className="text-xs text-gray-400">Value Score</p><p className="font-bold text-gray-900">{data.valueScore ?? "N/A"}</p></div>
+            <div className={`border rounded p-2 ${data.isCompliant ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}><p className="text-xs text-gray-400">Compliance</p><p className="font-bold text-gray-900">{data.isCompliant ? "Pass" : "Fail"}</p></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+          {[
+            { label: "Escrows", val: data.escrowCount }, { label: "Grants", val: data.grantCount },
+            { label: "Tenders", val: data.tenderCount }, { label: "Violations", val: data.violationCount },
+            { label: "Community", val: data.communityReportCount }, { label: "Verified", val: data.verifiedReportCount },
+            { label: "Audit Entries", val: data.auditEntryCount }, { label: "Evidence", val: data.evidenceCount },
+            { label: "Milestones", val: `${data.releasedMilestones}/${data.totalMilestones}` },
+            { label: "Funding Gap", val: data.fundingGap !== null ? data.fundingGap.toLocaleString() : "None" },
+          ].map((s) => (
+            <div key={s.label} className="border border-gray-200 rounded p-2 text-center">
+              <p className="text-xs text-gray-400">{s.label}</p>
+              <p className="text-sm font-medium text-gray-700">{s.val}</p>
+            </div>
+          ))}
+        </div>
+
+        {data.flags.length > 0 && (
+          <div className="border-t pt-3">
+            <p className="text-sm font-medium text-gray-500 mb-2">Forensic Flags ({data.flags.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {data.flags.map((f, i) => (
+                <span key={i} className={`px-2 py-1 text-xs rounded border ${sevColors[f.severity]}`}>{f.flag}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="font-semibold mb-4">Forensic Timeline ({data.timeline.length} events)</h3>
+        <div className="space-y-2">
+          {data.timeline.map((entry, i) => (
+            <div key={i} className={`flex gap-3 border-l-2 pl-3 py-1.5 ${catColors[entry.category] || "border-l-gray-300"}`}>
+              <div className="flex-shrink-0 text-sm">{catIcons[entry.category] || "o"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm font-medium text-gray-800">{entry.event}</span>
+                  {entry.timestamp > 0 && <span className="text-xs text-gray-300 flex-shrink-0">{fmtTime(entry.timestamp)}</span>}
+                </div>
+                {entry.detail && <p className="text-xs text-gray-500 mt-0.5">{entry.detail}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
