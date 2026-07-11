@@ -108,6 +108,8 @@ interface ForensicCaseFile {
   auditHistory: any[];
   flags: string[];
   timeline: { timestamp: number; event: string; detail: string }[];
+  actualBudget: number | null;
+  actualBudgetPerMs: number | null;
 }
 
 // ── AI Auditor Wallet ───────────────────────────────────
@@ -484,8 +486,10 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
   }
   const committedTotal = queryContract("grant_commitment", "get_committed_total", `--pvo_id ${pvoId}`);
   const pvoRemaining = queryContract("grant_commitment", "get_pvo_remaining", `--pvo_id ${pvoId}`);
+  const pvoEstimatedBudget = Number(pvo.total_budget || 0);
+  const pvoEstimatedPesos = pvoEstimatedBudget / 10_000_000;
   if (pvoRemaining !== null && Number(pvoRemaining) > 0) {
-    flags.push(`FundingGap:${Number(pvoRemaining) / 10_000_000}PHP_unfunded`);
+    flags.push(`FundingGap:${Number(pvoRemaining) / 10_000_000}PHP_unfunded_of_${pvoEstimatedPesos.toLocaleString()}`);
   }
 
   // 3. Procurement trail
@@ -624,13 +628,45 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     }
   }
 
-  // 11. Cross-contract forensic checks
-  // Budget mismatch: escrow total vs milestone budget sum
+  // 11. Compute actual budget from winning tender bid
+  let actualBudget: number | null = null;
+  let actualBudgetPerMs: number | null = null;
+
+  for (const tender of tenders) {
+    const tStatus = typeof tender.status === "string" ? tender.status : tender.status?.tag ?? "";
+    if ((tStatus === "Awarded" || tender.winner) && bidsByTender[tender.id]) {
+      const bids = bidsByTender[tender.id] as any[];
+      if (bids.length > 0) {
+        const winner = bids.reduce((best: any, b: any) =>
+          (Number(b.final_score || 0) > Number(best.final_score || 0)) ? b : best, bids[0]);
+        actualBudget = Number(winner.price || 0);
+        if (milestones.length > 0) {
+          actualBudgetPerMs = actualBudget / milestones.length;
+        }
+        const actualPesos = actualBudget / 10_000_000;
+        if (pvoEstimatedPesos > 0 && Math.abs(actualPesos - pvoEstimatedPesos) / pvoEstimatedPesos > 0.05) {
+          const pct = Math.round((actualPesos - pvoEstimatedPesos) / pvoEstimatedPesos * 100);
+          flags.push(`BudgetDeviation:winning_bid_${actualPesos.toLocaleString()}_vs_estimated_${pvoEstimatedPesos.toLocaleString()}_(${pct > 0 ? "+" : ""}${pct}%)`);
+        }
+        break;
+      }
+    }
+  }
+
+  // 12. Cross-contract forensic checks using actual budget
   if (escrows.length > 0 && milestones.length > 0) {
     for (const e of escrows) {
       const ms = milestones.find((m: any) => Number(m.id) === Number(e.milestone_id));
-      if (ms && Number(ms.budget) > 0) {
-        const ratio = Number(e.amount) / Number(ms.budget);
+      if (!ms) continue;
+      const escrowAmount = Number(e.amount);
+      // Use winning bid amount as reference if available, otherwise fall back to milestone budget
+      if (actualBudgetPerMs !== null && actualBudgetPerMs > 0) {
+        const ratio = escrowAmount / actualBudgetPerMs;
+        if (ratio > 1.1 || ratio < 0.9) {
+          flags.push(`EscrowBudgetMismatch:escrow_${e.id}_is_${Math.round(ratio * 100)}%_of_actual_per_ms_${(actualBudgetPerMs / 10_000_000).toLocaleString()}`);
+        }
+      } else if (Number(ms.budget) > 0) {
+        const ratio = escrowAmount / Number(ms.budget);
         if (ratio > 1.1 || ratio < 0.9) {
           flags.push(`EscrowBudgetMismatch:escrow_${e.id}_is_${Math.round(ratio * 100)}%_of_milestone_${ms.id}_budget`);
         }
@@ -668,6 +704,8 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     auditHistory,
     flags,
     timeline,
+    actualBudget,
+    actualBudgetPerMs,
   };
 }
 
@@ -721,8 +759,9 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
 
   // 2. Submit Digital Twin (once per PVO)
   if (!hasDigitalTwin(pvoId)) {
-    const totalBudget = milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
-    const totalBudgetPesos = totalBudget / 10_000_000;
+    const budgetForTwin = caseFile.actualBudget
+      ?? milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
+    const totalBudgetPesos = budgetForTwin / 10_000_000;
     const materialIdx = Math.min(95, Math.round(totalBudgetPesos / 500_000_000 * 100) || 50);
     const laborIdx = Math.min(95, milestones.length * 6);
     let deviation = false;

@@ -1021,9 +1021,12 @@ function ForensicCaseTab() {
           }
 
           let escrowCount = 0;
+          let escrows: any[] = [];
+          let actualBudget: number | null = null;
+          let actualBudgetPerMs: number | null = null;
           try {
             const eR = await escrowClient.get_escrows_by_pvo({ pvo_id: i });
-            const escrows = (eR.result || []) as any[];
+            escrows = (eR.result || []) as any[];
             escrowCount = escrows.length;
             for (const e of escrows) {
               timeline.push({ timestamp: Number(e.created_at || 0), event: "Escrow Created", detail: `Escrow #${e.id}: ${Number(e.amount || 0) / PPHP_SCALE} for MS #${e.milestone_id}`, category: "escrow" });
@@ -1071,9 +1074,43 @@ function ForensicCaseTab() {
                   if (minP > 0 && (maxP - minP) / minP < 0.02) flags.push({ flag: "SuspiciousBidClustering", severity: "low" });
                 }
                 if (td.winner) timeline.push({ timestamp: 0, event: "Tender Awarded", detail: `Tender #${t} awarded`, category: "procurement" });
+
+                // Capture winning bid as actual budget reference
+                const tStatus = typeof td.status === "string" ? td.status : td.status?.tag ?? "";
+                if ((tStatus === "Awarded" || td.winner) && bids.length > 0 && actualBudget === null) {
+                  const winner = bids.reduce((best: any, b: any) =>
+                    (Number(b.final_score || 0) > Number(best.final_score || 0)) ? b : best, bids[0]);
+                  actualBudget = Number(winner.price || 0);
+                  if (milestones.length > 0) actualBudgetPerMs = actualBudget / milestones.length;
+                  const actualPesos = actualBudget / PPHP_SCALE;
+                  const estimatedPesos = Number(pvo.total_budget || 0) / PPHP_SCALE;
+                  if (estimatedPesos > 0 && Math.abs(actualPesos - estimatedPesos) / estimatedPesos > 0.05) {
+                    const pct = Math.round((actualPesos - estimatedPesos) / estimatedPesos * 100);
+                    flags.push({ flag: `BudgetDeviation: winning bid ${actualPesos.toLocaleString()} vs estimated ${estimatedPesos.toLocaleString()} (${pct > 0 ? "+" : ""}${pct}%)`, severity: "medium" });
+                  }
+                }
               }
             }
           } catch {}
+
+          // Now recompute escrow budget flags using actual budget if available
+          if (actualBudgetPerMs !== null) {
+            // Remove stale EscrowBudgetMismatch flags based on estimated milestone budgets
+            const staleFlags = flags.filter(f => f.flag.startsWith("EscrowBudgetMismatch"));
+            for (const sf of staleFlags) {
+              const idx = flags.indexOf(sf);
+              if (idx >= 0) flags.splice(idx, 1);
+            }
+            // Recompute using actual budget per milestone
+            for (const e of escrows) {
+              const ms = milestones.find((m: any) => Number(m.id) === Number(e.milestone_id));
+              if (!ms) continue;
+              const ratio = Number(e.amount || 0) / actualBudgetPerMs;
+              if (ratio > 1.1 || ratio < 0.9) {
+                flags.push({ flag: `EscrowBudgetMismatch: escrow ${Math.round(ratio * 100)}% of actual per-MS (${(actualBudgetPerMs / PPHP_SCALE).toLocaleString()})`, severity: "medium" });
+              }
+            }
+          }
 
           let violationCount = 0;
           let isCompliant = true;
