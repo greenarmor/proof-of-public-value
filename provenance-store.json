@@ -1,6 +1,6 @@
 {
-  "lastUpdated": 1783770679344,
-  "lastLedger": 3550899,
+  "lastUpdated": 1783778628131,
+  "lastLedger": 3552486,
   "earliestLedger": 3429104,
   "pvoCount": 15,
   "escrowCount": 2,
@@ -1159,8 +1159,59 @@
   ],
   "events": [
     {
-      "ledger": 3550896,
-      "ledgerClosedAt": "2026-07-11T11:50:16Z",
+      "ledger": 3551736,
+      "ledgerClosedAt": "2026-07-11T13:00:23Z",
+      "contract": "ai_oracle",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            42,
+            236,
+            59,
+            209,
+            123,
+            182,
+            255,
+            90,
+            51,
+            31,
+            247,
+            142,
+            18,
+            2,
+            182,
+            107,
+            33,
+            99,
+            201,
+            21,
+            136,
+            179,
+            109,
+            133,
+            83,
+            80,
+            136,
+            125,
+            9,
+            17,
+            155,
+            27
+          ]
+        }
+      },
+      "eventName": "fraud_detected_event",
+      "txHash": "e927029bf795c65757a18660a9f946998541353d1bb5a15cf072e3abf503e9fa",
+      "data": {
+        "auditor": "[object Object]",
+        "pvo_id": 1,
+        "risk_score": 0
+      }
+    },
+    {
+      "ledger": 3551000,
+      "ledgerClosedAt": "2026-07-11T11:58:57Z",
       "contract": "ai_oracle",
       "contractId": {
         "_id": {
@@ -1202,10 +1253,10 @@
         }
       },
       "eventName": "risk_predicted_event",
-      "txHash": "08f51f6eb0028bfbc806bfdb9c202de1eb4cd1e8e3a814ae8d6ce7601e842710",
+      "txHash": "39d8e68a9a9e9b1ae711026a44285f257543e5d3e9d8af6f32657d0c637886d6",
       "data": {
         "contractor": "[object Object]",
-        "risk_category": 3
+        "risk_category": 2
       }
     },
     {
@@ -1307,57 +1358,6 @@
       "data": {
         "evidence_id": 32,
         "progress_percent": 70
-      }
-    },
-    {
-      "ledger": 3543982,
-      "ledgerClosedAt": "2026-07-11T02:13:11Z",
-      "contract": "ai_oracle",
-      "contractId": {
-        "_id": {
-          "type": "Buffer",
-          "data": [
-            42,
-            236,
-            59,
-            209,
-            123,
-            182,
-            255,
-            90,
-            51,
-            31,
-            247,
-            142,
-            18,
-            2,
-            182,
-            107,
-            33,
-            99,
-            201,
-            21,
-            136,
-            179,
-            109,
-            133,
-            83,
-            80,
-            136,
-            125,
-            9,
-            17,
-            155,
-            27
-          ]
-        }
-      },
-      "eventName": "fraud_detected_event",
-      "txHash": "0633674d259b78e30187dd1950b5f380be34889a976871123df16e1c1efaf48a",
-      "data": {
-        "auditor": "[object Object]",
-        "pvo_id": 1,
-        "risk_score": 0
       }
     },
     {

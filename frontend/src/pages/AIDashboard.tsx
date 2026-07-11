@@ -76,7 +76,7 @@ export function AIDashboard() {
           { label: "Fraud Alerts", value: fraudResults.filter((f) => f.risk_score >= 50).length, color: "text-red-600" },
           { label: "Total Scans", value: fraudResults.length, color: "text-gray-900" },
           { label: "High Risk", value: fraudResults.filter((f) => f.risk_score >= 75).length, color: "text-orange-600" },
-          { label: "Avg Confidence", value: fraudResults.length > 0 ? `${Math.round(fraudResults.reduce((s, r) => s + r.confidence, 0) / fraudResults.length)}%` : "-", color: "text-purple-600" },
+          { label: "Avg Coverage", value: fraudResults.length > 0 ? `${Math.round(fraudResults.reduce((s, r) => s + r.confidence, 0) / fraudResults.length)}%` : "-", color: "text-purple-600" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-gray-200 rounded-lg p-4">
             <dt className="text-sm text-gray-500">{stat.label}</dt>
@@ -136,7 +136,7 @@ function FraudTab({ results, loading }: { results: FraudResult[]; loading: boole
             <th className="text-left px-4 py-3 font-medium text-gray-500">PVO</th>
             <th className="text-left px-4 py-3 font-medium text-gray-500">Risk</th>
             <th className="text-left px-4 py-3 font-medium text-gray-500">Indicators</th>
-            <th className="text-left px-4 py-3 font-medium text-gray-500">Confidence</th>
+            <th className="text-left px-4 py-3 font-medium text-gray-500">Coverage</th>
             <th className="text-left px-4 py-3 font-medium text-gray-500">Evidence</th>
           </tr>
         </thead>
@@ -817,7 +817,7 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
                   </div>
                   <span className="font-mono text-xs font-medium">{fraudRisk}/100</span>
                 </div>
-                {fraudConfidence !== null && <p className="text-xs text-gray-400">Confidence: {fraudConfidence}%</p>}
+                {fraudConfidence !== null && <p className="text-xs text-gray-400">Data Coverage: {fraudConfidence}%</p>}
                 {fraudIndicators.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {fraudIndicators.map((ind: string, i: number) => (
