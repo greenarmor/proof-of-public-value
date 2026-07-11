@@ -36,7 +36,8 @@ const RPC_URL = "https://soroban-testnet.stellar.org:443";
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const POLL_INTERVAL_MS = 30_000;
 const HTTP_PORT = 3111;
-const MAX_LEDGER_RANGE = 9999;
+const MAX_LEDGER_RANGE = 120000; // ~2 weeks of testnet history
+const CHUNK_SIZE = 2000; // ledgers per RPC call (API limits)
 
 const CONTRACT_IDS: Record<string, string> = {
   pvo_core: "CAWILXZIRYKZ7DJRHARD7QX2JMJHRYMQTZTOH44KI234BC4OEJNZWMMF",
@@ -161,6 +162,7 @@ interface CapturedEvent {
 interface ProvenanceStore {
   lastUpdated: number;
   lastLedger: number;
+  earliestLedger: number;
   pvoCount: number;
   escrowCount: number;
   eventCount: number;
@@ -634,6 +636,7 @@ async function buildProvenance(
     return {
       lastUpdated: Date.now(),
       lastLedger: existingStore?.lastLedger ?? 0,
+      earliestLedger: existingStore?.earliestLedger ?? (existingStore?.lastLedger ?? 0),
       pvoCount: 0,
       escrowCount: 0,
       eventCount: existingStore?.eventCount ?? 0,
@@ -657,31 +660,57 @@ async function buildProvenance(
 
   let lastLedger = existingStore?.lastLedger ?? 0;
   let allEvents = existingStore?.events ?? [];
+  // Track the earliest ledger we've ever scanned to ensure full coverage
+  let earliestScanned = existingStore?.earliestLedger ?? lastLedger;
 
   try {
     const latest = await sdkServer.getLatestLedger();
-    const endLedger = latest.sequence ?? latest;
+    const endLedger = Number(latest.sequence ?? latest);
     let startLedger: number;
 
     if (lastLedger > 0 && endLedger - lastLedger < MAX_LEDGER_RANGE) {
+      // Incremental: scan only new ledgers since last run
       startLedger = lastLedger + 1;
     } else {
+      // Full scan: cover as much history as the RPC allows
+      // But limit to MAX_LEDGER_RANGE from earliest known or from end
+      const desiredStart = Math.max(1, earliestScanned > 0 ? earliestScanned : endLedger - MAX_LEDGER_RANGE);
       startLedger = Math.max(1, endLedger - MAX_LEDGER_RANGE);
     }
 
-    console.log(`  📡 Scanning ledgers ${startLedger} → ${endLedger}...`);
-    const newEvents = await fetchEvents(startLedger, endLedger);
-
+    // Chunked scanning: split into 2000-ledger chunks to stay within RPC limits
+    console.log(`  📡 Scanning ledgers ${startLedger} → ${endLedger} (chunks of ${CHUNK_SIZE})...`);
+    let totalNew = 0;
     const existingTxHashes = new Set(allEvents.map((e) => e.txHash));
-    const deduped = newEvents.filter((e) => !existingTxHashes.has(e.txHash));
-    allEvents = [...allEvents, ...deduped].sort((a, b) => b.ledger - a.ledger);
 
-    if (allEvents.length > 5000) {
-      allEvents = allEvents.slice(0, 5000);
+    for (let chunkStart = startLedger; chunkStart <= endLedger; chunkStart += CHUNK_SIZE) {
+      const chunkEnd = Math.min(chunkStart + CHUNK_SIZE - 1, endLedger);
+      try {
+        const chunkEvents = await fetchEvents(chunkStart, chunkEnd);
+        const newInChunk = chunkEvents.filter((e) => !existingTxHashes.has(e.txHash));
+        for (const e of newInChunk) {
+          allEvents.push(e);
+          existingTxHashes.add(e.txHash);
+        }
+        totalNew += newInChunk.length;
+      } catch (chunkErr) {
+        // Skip failed chunks gracefully
+      }
     }
 
+    allEvents.sort((a, b) => b.ledger - a.ledger);
+
+    if (allEvents.length > 50000) {
+      // Only trim oldest events if store grows unreasonably large
+      // But preserve at least 10000 to cover full project timelines
+      allEvents = allEvents.slice(0, 50000);
+    }
+
+    if (earliestScanned === 0 || startLedger < earliestScanned) {
+      earliestScanned = startLedger;
+    }
     lastLedger = endLedger;
-    console.log(`  📡 ${deduped.length} new events (total: ${allEvents.length})`);
+    console.log(`  📡 ${totalNew} new events (total: ${allEvents.length})`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`  ⚠️ Event scan skipped: ${msg.slice(0, 100)}`);
@@ -770,6 +799,7 @@ async function buildProvenance(
   const store: ProvenanceStore = {
     lastUpdated: Date.now(),
     lastLedger,
+    earliestLedger: earliestScanned || lastLedger,
     pvoCount,
     escrowCount,
     eventCount: allEvents.length,
@@ -848,7 +878,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 
   if (url.pathname === "/api/rebuild" || url.pathname === "/api/rebuild/") {
     console.log("  🔄 Manual rebuild triggered");
-    buildProvenance(null).then(s => { currentStore = s; });
+    buildProvenance(currentStore).then(s => { currentStore = s; });
     sendJSON(res, { status: "rebuilding", message: "Full rebuild triggered. Check /api/health for progress." });
     return;
   }
@@ -858,6 +888,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
       status: "healthy",
       lastUpdated: currentStore?.lastUpdated ?? null,
       lastLedger: currentStore?.lastLedger ?? null,
+      earliestLedger: currentStore?.earliestLedger ?? null,
       pvoCount: currentStore?.pvoCount ?? 0,
       escrowCount: currentStore?.escrowCount ?? 0,
       eventCount: currentStore?.eventCount ?? 0,
@@ -990,8 +1021,8 @@ async function main(): Promise<void> {
       pollCount++;
       const forceRebuild = pollCount % FULL_REBUILD_EVERY === 0;
       if (forceRebuild) {
-        console.log("  🔄 Periodic full rebuild to catch any missed events...");
-        currentStore = await buildProvenance(null);
+        console.log("  🔄 Periodic full rebuild (keeping existing events)...");
+        currentStore = await buildProvenance(currentStore);
       } else {
         currentStore = await buildProvenance(currentStore);
       }
