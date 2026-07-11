@@ -776,8 +776,8 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     console.log(`  [Geo Risk] Already exists, skipping`);
   }
 
-  // 2. Submit Digital Twin (once per PVO)
-  if (!hasDigitalTwin(pvoId)) {
+  // 2. Submit Digital Twin (updates every scan)
+  if (true) {
     const budgetForTwin = caseFile.actualBudget
       ?? milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
     const totalBudgetPesos = budgetForTwin / 10_000_000;
@@ -945,7 +945,7 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
       }
 
       // 5. Submit Image Verification for each evidence item
-      if (existingFraud.length === 0) {
+      {
         const mStatus = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
         const progress = mStatus === "Released" ? 100 : mStatus === "EvidenceSubmitted" ? 40 : mStatus === "Ready" ? 80 : 20;
         const metaLen = String(ev.metadata || "").length;
@@ -957,8 +957,8 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     }
     evidence.metadata_preview = JSON.stringify(submitted).slice(0, 300);
 
-    // 6. Submit Fraud Detection (once per PVO) - enhanced with forensic flags
-    if (existingFraud.length === 0 && submitted.length > 0) {
+    // 6. Submit Fraud Detection (every scan with evidence)
+    if (submitted.length > 0) {
       let result: AnalysisResult;
       if (LLM_API_KEY) {
         try {
