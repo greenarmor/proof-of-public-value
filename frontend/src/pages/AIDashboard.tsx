@@ -1102,7 +1102,6 @@ function ForensicCaseTab() {
                 if (td.winner) timeline.push({ timestamp: 0, event: "Tender Awarded", detail: `Tender #${t} awarded`, category: "procurement" });
 
                 // Capture winning bid as actual budget reference
-                const tStatus = typeof td.status === "string" ? td.status : td.status?.tag ?? "";
                 if ((tStatus === "Awarded" || td.winner) && bids.length > 0 && actualBudget === null) {
                   const winner = bids.reduce((best: any, b: any) =>
                     (Number(b.final_score || 0) > Number(best.final_score || 0)) ? b : best, bids[0]);
