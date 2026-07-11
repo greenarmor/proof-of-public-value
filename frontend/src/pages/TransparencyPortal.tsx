@@ -922,6 +922,7 @@ function ExpandableProvenance({ data }: { data: any }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-slate-700">{e.description}</p>
                   <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                    {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleDateString()}</span>}
                     <span>{e.contract}</span>
                     {e.ledger && <span>ledger #{e.ledger}</span>}
                   </div>
