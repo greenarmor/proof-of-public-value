@@ -598,7 +598,9 @@ export function TransparencyPortal() {
               <ForensicCard pvoId={Number(selected.id)} contractor={selected.contractor} />
 
               {/* Provenance Chain */}
-              {provenanceData && (
+              {provenanceLoading ? (
+                <div className="mt-4 card p-4 text-center text-sm text-slate-400">Loading provenance chain...</div>
+              ) : provenanceData ? (
                 <div className="mt-4 space-y-3">
                   <h3 className="text-sm font-semibold text-slate-700">🔗 Provenance Chain ({provenanceData.timeline?.length || 0} events)</h3>
                   <div className="card p-4 bg-slate-50/50 border-slate-200">
