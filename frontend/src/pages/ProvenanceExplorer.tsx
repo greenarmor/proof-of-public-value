@@ -691,6 +691,27 @@ export function ProvenanceExplorer() {
         >
           ↻ Refresh
         </button>
+        <label className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+          📂 Import Store
+          <input type="file" accept=".json" className="hidden" onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                const store = JSON.parse(reader.result as string);
+                if (store.pvOs && Array.isArray(store.pvOs)) {
+                  setPvos(store.pvOs);
+                  setHealth(prev => prev ? { ...prev, eventCount: store.eventCount ?? store.events?.length ?? 0, lastLedger: store.lastLedger ?? 0 } : null);
+                  setError(null);
+                } else {
+                  setError("Invalid store file: missing pvOs array");
+                }
+              } catch { setError("Failed to parse JSON file"); }
+            };
+            reader.readAsText(file);
+          }} />
+        </label>
       </div>
 
       <div className="space-y-3">

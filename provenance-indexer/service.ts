@@ -982,6 +982,22 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  // Full provenance store download (node replication archive)
+  if (url.pathname === "/api/store" || url.pathname === "/provenance-store.json") {
+    if (!currentStore) {
+      sendJSON(res, { error: "Store not built yet" }, 503);
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "public, max-age=30",
+      "Content-Disposition": "inline; filename=\"provenance-store.json\"",
+    });
+    res.end(JSON.stringify(currentStore, null, 2));
+    return;
+  }
+
   const singleMatch = url.pathname.match(/^\/api\/provenance\/(\d+)$/);
   if (singleMatch) {
     const pvoId = parseInt(singleMatch[1]);
