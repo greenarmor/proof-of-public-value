@@ -5,6 +5,7 @@ import { Client as EscrowClient } from "../contracts/escrow/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatAddress } from "../helpers";
 import { BlockchainLoader } from "../components/BlockchainLoader";
+import { getCached, setCached } from "../dataCache";
 
 interface FraudResult {
   id: number;
@@ -550,11 +551,13 @@ interface EscrowWithOracle {
 }
 
 function EscrowGateTab({ address, connected, onConnect }: { address: string | null; connected: boolean; onConnect: () => void }) {
-  const [escrows, setEscrows] = useState<EscrowWithOracle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedInit = getCached<EscrowWithOracle[]>("escrow_gate_data");
+  const [escrows, setEscrows] = useState<EscrowWithOracle[]>(cachedInit.data || []);
+  const [loading, setLoading] = useState(!cachedInit.data);
 
   const load = async () => {
-    setLoading(true);
+    const cached = getCached<EscrowWithOracle[]>("escrow_gate_data");
+    if (cached.stale || !cached.data) setLoading(true);
     try {
       const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
@@ -621,6 +624,7 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
         } catch {}
       }
       setEscrows(list);
+      setCached("escrow_gate_data", list);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
