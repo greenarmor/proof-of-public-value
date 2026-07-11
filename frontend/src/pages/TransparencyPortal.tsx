@@ -596,7 +596,7 @@ export function TransparencyPortal() {
                   );
                 })()}
 
-              {/* AI Forensic Analysis */}
+              {/* AI Oracle Analysis */}
               <ForensicCard pvoId={Number(selected.id)} contractor={selected.contractor} />
 
               {/* Escrow Cards */}
@@ -1245,7 +1245,7 @@ function ReleaseButton({ escrowId }: { escrowId: number }) {
   );
 }
 
-// ── AI Forensic Analysis Card ───────────────────────────
+// ── AI Oracle Analysis Card ───────────────────────────
 function ForensicCard({ pvoId, contractor }: { pvoId: number; contractor: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1288,7 +1288,7 @@ function ForensicCard({ pvoId, contractor }: { pvoId: number; contractor: string
 
   return (
     <div className="mt-4 space-y-3">
-      <h3 className="text-sm font-semibold text-slate-700">🤖 AI Forensic Analysis</h3>
+      <h3 className="text-sm font-semibold text-slate-700">🤖 AI Oracle Analysis</h3>
       <div className="card p-4 bg-purple-50/30 border-purple-100">
         <div className="grid grid-cols-2 gap-3">
           {data.fraud && (
