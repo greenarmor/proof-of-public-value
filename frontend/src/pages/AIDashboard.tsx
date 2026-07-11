@@ -4,6 +4,7 @@ import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatAddress } from "../helpers";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 
 interface FraudResult {
   id: number;
@@ -1256,7 +1257,7 @@ function ForensicCaseTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Building forensic case files..." />;
 
   if (selectedPvo !== null) {
     const caseData = cases.find((c) => c.pvoId === selectedPvo);

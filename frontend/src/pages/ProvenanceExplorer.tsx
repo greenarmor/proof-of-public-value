@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { formatAddress } from "../helpers";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 
 // ── Types (mirrors provenance-indexer) ───────────────────
 type GateStatus = "pending" | "passed" | "failed";
@@ -621,14 +622,7 @@ export function ProvenanceExplorer() {
   const allStatuses = Array.from(new Set(pvos.map((p) => p.status))).sort();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading provenance data...</p>
-        </div>
-      </div>
-    );
+    return <BlockchainLoader text="Loading provenance data from Stellar testnet..." />;
   }
 
   return (

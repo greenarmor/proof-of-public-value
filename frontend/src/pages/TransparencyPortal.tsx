@@ -13,6 +13,7 @@ const PROVENANCE_API_BASE =
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   PROVENANCE_API;
 
+import { BlockchainLoader } from "../components/BlockchainLoader";
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
 interface PVOData {
@@ -375,14 +376,7 @@ export function TransparencyPortal() {
   }, [filter]);
 
   if (loading)
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin" />
-          <p className="text-slate-400">Loading projects from Stellar testnet...</p>
-        </div>
-      </div>
-    );
+    return <BlockchainLoader text="Loading projects from Stellar testnet..." />;
 
   return (
     <div className="lg:h-auto h-[calc(100vh-4rem)] flex flex-col overflow-hidden lg:overflow-visible">
