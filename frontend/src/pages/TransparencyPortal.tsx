@@ -64,8 +64,9 @@ const STATUS_COLORS: Record<string, string> = {
 export function TransparencyPortal() {
   const currency = getCurrency();
   const { address, connected, hasRole } = useWallet();
-  const [pvos, setPvos] = useState<PVOData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedInit = getCached<PVOData[]>("transparency_pvos");
+  const [pvos, setPvos] = useState<PVOData[]>(cachedInit.data || []);
+  const [loading, setLoading] = useState(!cachedInit.data);
   const [selected, setSelected] = useState<PVOData | null>(null);
   const [escrows, setEscrows] = useState<any[]>([]);
   const [escrowsLoading, setEscrowsLoading] = useState(false);
@@ -80,15 +81,8 @@ export function TransparencyPortal() {
   const [bidMap, setBidMap] = useState<Record<number, number>>({});
 
   const loadPVOs = useCallback(async () => {
-    // Try cache first for instant navigation
     const cached = getCached<PVOData[]>("transparency_pvos");
-    if (cached.data) {
-      setPvos(cached.data);
-      setLoading(false);
-      if (!cached.stale) return; // Fresh cache, no need to fetch
-    }
-
-    if (!cached.data) setLoading(true);
+    if (cached.stale || !cached.data) setLoading(true);
     try {
       const client = new PvoCoreClient({
         contractId: CONTRACT_IDS.pvo_core,
