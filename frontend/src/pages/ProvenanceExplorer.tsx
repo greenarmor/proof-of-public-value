@@ -265,12 +265,21 @@ function TimelineList({ entries }: { entries: TimelineEntry[] }) {
   );
 }
 
-function MilestoneCard({ milestone }: { milestone: MilestoneProvenance }) {
+function MilestoneCard({ milestone, pvoTimeline }: { milestone: MilestoneProvenance; pvoTimeline: TimelineEntry[] }) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState<"gates" | "timeline">("gates");
   const hasEscrow = !!milestone.escrow;
   const gatesPassed = milestone.gates.filter((g) => g.status === "passed").length;
   const hasTxHashes = milestone.gates.some((g) => g.tx_hash);
+
+  // Filter PVO timeline to entries relevant to this milestone's escrow
+  const escrowTimeline = pvoTimeline.filter((t) =>
+    milestone.escrow && (
+      t.type.includes("escrow") ||
+      (t.description || "").includes(`Escrow #${milestone.escrow.escrow_id}`) ||
+      (t.description || "").includes(`MS #${milestone.milestone_id}`)
+    )
+  );
 
   return (
     <div className={`rounded-lg border ${hasEscrow ? "border-indigo-200 bg-indigo-50/30" : "border-slate-200 bg-slate-50/50"}`}>
@@ -359,7 +368,7 @@ function MilestoneCard({ milestone }: { milestone: MilestoneProvenance }) {
 
               {tab === "timeline" && (
                 <div className="bg-white rounded-lg border border-slate-100 p-3">
-                  <TimelineList entries={[]} />
+                  <TimelineList entries={escrowTimeline} />
                 </div>
               )}
             </>
@@ -499,7 +508,7 @@ function PVOProvenanceCard({ pvo }: { pvo: PVOProvenance }) {
           {tab === "milestones" && (
             <div className="space-y-2">
               {pvo.milestones.map((m) => (
-                <MilestoneCard key={m.milestone_id} milestone={m} />
+                <MilestoneCard key={m.milestone_id} milestone={m} pvoTimeline={pvo.timeline} />
               ))}
               {pvo.milestones.length === 0 && (
                 <p className="text-sm text-slate-400 italic text-center py-4">No milestones created.</p>
