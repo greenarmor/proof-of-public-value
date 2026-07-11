@@ -531,29 +531,90 @@ function GpsValidationTab() {
     </div>
   );
 }
+
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
+interface EscrowWithOracle {
+  escrow: any;
+  pvoTitle: string;
+  pvoMunicipality: string;
+  contractor: string;
+  milestone: any;
+  fraudData: any;
+  riskData: any;
+  geoData: any;
+  twinData: any;
+}
+
 function EscrowGateTab({ address, connected, onConnect }: { address: string | null; connected: boolean; onConnect: () => void }) {
-  const [escrows, setEscrows] = useState<any[]>([]);
+  const [escrows, setEscrows] = useState<EscrowWithOracle[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const client = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-      const cnt = await client.get_escrow_count();
-      const list: any[] = [];
+      const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const { Client: PvoClient } = await import("../contracts/pvo_core/src");
+      const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+
+      const cnt = await escrowClient.get_escrow_count();
+      const list: EscrowWithOracle[] = [];
+
       for (let i = 1; i <= Number(cnt.result); i++) {
         try {
-          const r = await client.get_escrow({ escrow_id: i });
-          if (r.result) {
-            const e = r.result as any;
-            const c = e.conditions;
-            if (!c.ai_risk_check && c.engineer_approval && c.compliance_validation && c.community_oracle_validation
-              && Number(c.community_confirmation) >= Number(c.community_required)) {
-              list.push(e);
+          const r = await escrowClient.get_escrow({ escrow_id: i });
+          if (!r.result) continue;
+          const escrow = r.result as any;
+          const pvoId = Number(escrow.pvo_id);
+
+          let pvoTitle = `PVO #${pvoId}`;
+          let pvoMunicipality = "";
+          let contractor = "";
+          try {
+            const pvoR = await pvoClient.get_pvo({ pvo_id: pvoId });
+            if (pvoR.result) {
+              pvoTitle = (pvoR.result as any).title || pvoTitle;
+              pvoMunicipality = (pvoR.result as any).municipality || "";
+              contractor = (pvoR.result as any).contractor || "";
             }
+          } catch {}
+
+          let milestone = null;
+          try {
+            const msR = await pvoClient.get_pvo_milestones({ pvo_id: pvoId });
+            const msList = (msR.result || []) as any[];
+            milestone = msList.find((m: any) => Number(m.id) === Number(escrow.milestone_id)) || null;
+          } catch {}
+
+          let fraudData = null;
+          try {
+            const fr = await aiClient.get_fraud_by_pvo({ pvo_id: pvoId });
+            const frauds = (fr.result || []) as any[];
+            fraudData = frauds[frauds.length - 1] || null;
+          } catch {}
+
+          let riskData = null;
+          if (contractor) {
+            try {
+              const rr = await aiClient.get_latest_risk_prediction({ contractor });
+              riskData = rr.result || null;
+            } catch {}
           }
+
+          let geoData = null;
+          try {
+            const gr = await aiClient.get_geo_risk({ pvo_id: pvoId });
+            geoData = gr.result || null;
+          } catch {}
+
+          let twinData = null;
+          try {
+            const tr = await aiClient.get_digital_twin({ pvo_id: pvoId });
+            twinData = tr.result || null;
+          } catch {}
+
+          list.push({ escrow, pvoTitle, pvoMunicipality, contractor, milestone, fraudData, riskData, geoData, twinData });
         } catch {}
       }
       setEscrows(list);
@@ -563,12 +624,22 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
 
   useEffect(() => { if (connected) load(); }, [connected]);
 
+  const isReady = (e: EscrowWithOracle) => {
+    const c = e.escrow.conditions;
+    return !c.ai_risk_check && c.engineer_approval && c.compliance_validation && c.community_oracle_validation
+      && Number(c.community_confirmation) >= Number(c.community_required);
+  };
+  const isValidated = (e: EscrowWithOracle) => e.escrow.conditions.ai_risk_check === true;
+  const awaiting = escrows.filter(isReady);
+  const validated = escrows.filter(isValidated);
+  const pipeline = escrows.filter(e => !isReady(e) && !isValidated(e));
+
   if (!connected) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="text-5xl mb-4">🔓</div>
         <h3 className="font-semibold text-slate-700 mb-2">Wallet Connection Required</h3>
-        <p className="text-sm text-slate-400 mb-4">Connect your AI Auditor wallet to pass Gate 2 on escrows.</p>
+        <p className="text-sm text-slate-400 mb-4">Connect your AI Auditor wallet to manage Gate 5 on escrows.</p>
         <button onClick={onConnect} className="btn-primary px-6 py-3">Connect Wallet</button>
       </div>
     );
@@ -576,105 +647,103 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
 
   if (loading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-32" />)}</div>;
 
-  if (escrows.length === 0) {
-    return (
-      <div className="card p-12 text-center">
-        <div className="text-5xl mb-4">🤖</div>
-        <h3 className="font-semibold text-slate-700 mb-1">No escrows awaiting AI validation</h3>
-        <p className="text-sm text-slate-400 mb-4">Escrows that passed Gates 1-4 (Engineer, Compliance, Community Oracle, Community) will appear here for final AI fraud check (Gate 5).</p>
-        <button onClick={load} className="btn-secondary text-xs px-4 py-2">↻ Refresh</button>
-      </div>
-    );
-  }
-
   const currency = getCurrency();
 
   return (
-    <div className="space-y-3">
-      {escrows.map((e: any) => <AIGateCard key={Number(e.id)} escrow={e} currency={currency} address={address!} onAction={load} />)}
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <dt className="text-sm text-gray-500">Awaiting AI Gate</dt>
+          <dd className="text-2xl font-bold text-amber-600">{awaiting.length}</dd>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <dt className="text-sm text-gray-500">AI Validated</dt>
+          <dd className="text-2xl font-bold text-green-600">{validated.length}</dd>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <dt className="text-sm text-gray-500">In Pipeline</dt>
+          <dd className="text-2xl font-bold text-gray-900">{pipeline.length}</dd>
+        </div>
+      </div>
+
+      {escrows.length === 0 ? (
+        <div className="card p-12 text-center">
+          <div className="text-5xl mb-4">🤖</div>
+          <h3 className="font-semibold text-slate-700 mb-1">No escrows found</h3>
+          <p className="text-sm text-slate-400">Escrows will appear here once created. Gate 5 (AI fraud check) is the final gate before release.</p>
+        </div>
+      ) : (
+        <>
+          {awaiting.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-slate-700 mb-3">Awaiting AI Validation (Gate 5)</h3>
+              <div className="space-y-3">
+                {awaiting.map((e) => <AIGateCard key={Number(e.escrow.id)} data={e} currency={currency} address={address!} onAction={load} />)}
+              </div>
+            </div>
+          )}
+          {validated.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-slate-700 mb-3">AI Validated</h3>
+              <div className="space-y-3">
+                {validated.map((e) => <AIGateCard key={Number(e.escrow.id)} data={e} currency={currency} address={address!} onAction={load} />)}
+              </div>
+            </div>
+          )}
+          {pipeline.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-slate-700 mb-3">In Pipeline (Gates 1-4)</h3>
+              <div className="space-y-3">
+                {pipeline.map((e) => <AIGateCard key={Number(e.escrow.id)} data={e} currency={currency} address={address!} onAction={load} />)}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; currency: string; address: string; onAction: () => void }) {
+function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOracle; currency: string; address: string; onAction: () => void }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
-  const [scanResult, setScanResult] = useState<{ flags: string[]; riskScore: number; passed: boolean } | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [milestoneData, setMilestoneData] = useState<any>(null);
+  const escrow = data.escrow;
   const escrowId = Number(escrow.id);
   const pvoId = Number(escrow.pvo_id);
-  const milestoneId = Number(escrow.milestone_id);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { Client: PC } = await import("../contracts/pvo_core/src");
-        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const result = await pc.get_pvo_milestones({ pvo_id: pvoId });
-        const ms = (result.result || []) as any[];
-        const m = ms.find((x: any) => Number(x.id) === milestoneId);
-        setMilestoneData(m || null);
-      } catch {}
-    })();
-  }, [pvoId, milestoneId]);
+  const c = escrow.conditions;
+  const gates = [
+    { label: "Engineer", done: c.engineer_approval },
+    { label: "Compliance", done: c.compliance_validation },
+    { label: "Oracle", done: c.community_oracle_validation || false },
+    { label: `Community (${Number(c.community_confirmation)}/${Number(c.community_required)})`, done: Number(c.community_confirmation) >= Number(c.community_required) },
+    { label: "AI Risk", done: c.ai_risk_check },
+  ];
 
-  const runFraudDetection = () => {
-    setScanning(true);
-    setScanResult(null);
-    const flags: string[] = [];
-    let riskScore = 0;
+  const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
+  const readyForGate5 = !c.ai_risk_check && c.engineer_approval && c.compliance_validation && c.community_oracle_validation
+    && Number(c.community_confirmation) >= Number(c.community_required);
 
-    const evidence = milestoneData?.submitted_evidence || [];
+  const fraudRisk = data.fraudData ? Number(data.fraudData.risk_score ?? 0) : null;
+  const fraudConfidence = data.fraudData ? Number(data.fraudData.confidence ?? 0) : null;
+  const fraudIndicators = data.fraudData
+    ? (data.fraudData.indicators || []).map((ind: any) => typeof ind === "string" ? ind : ind?.tag ?? "")
+    : [];
+  const riskDelay = data.riskData ? Number(data.riskData.delay_probability ?? 0) : null;
+  const riskOverrun = data.riskData ? Number(data.riskData.overrun_probability ?? 0) : null;
+  const riskCat = data.riskData ? Number(data.riskData.risk_category ?? 0) : null;
+  const geoFlood = data.geoData ? Number(data.geoData.flood_risk ?? 0) : null;
+  const geoSeismic = data.geoData ? Number(data.geoData.seismic_risk ?? 0) : null;
+  const geoLandslide = data.geoData ? Number(data.geoData.landslide_risk ?? 0) : null;
+  const twinDeviation = data.twinData ? data.twinData.deviation_alert === true : false;
+  const twinMaterial = data.twinData ? Number(data.twinData.material_cost_index ?? 0) : null;
+  const twinLabor = data.twinData ? Number(data.twinData.labor_cost_index ?? 0) : null;
 
-    if (evidence.length === 0) {
-      flags.push("NO_EVIDENCE_SUBMITTED");
-      riskScore += 60;
-    }
+  const oracleRecommendation = fraudRisk !== null ? (fraudRisk < 50 ? "pass" : "reject") : null;
+  const catLabels = ["Low", "Medium", "High", "Critical"];
+  const hasOracleData = fraudRisk !== null || riskDelay !== null || geoFlood !== null || twinMaterial !== null;
 
-    for (const ev of evidence) {
-      const evType = typeof ev.evidence_type === "object" ? ev.evidence_type?.tag : ev.evidence_type;
-      const meta = String(ev.metadata || "").toLowerCase();
-
-      if (evType === "GpsCoordinates" && ev.metadata) {
-        const parts = String(ev.metadata).split(",").map(s => parseFloat(s.trim()));
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          const [lat, lng] = parts;
-          if (lat < 4 || lat > 21 || lng < 116 || lng > 127) {
-            flags.push("GPS_OUTSIDE_PHILIPPINES");
-            riskScore += 40;
-          }
-          if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-            flags.push("GPS_NEAR_ZERO");
-            riskScore += 50;
-          }
-        }
-      }
-
-      if (/test|demo|fake|sample|placeholder/.test(meta)) {
-        flags.push(`SUSPICIOUS_METADATA (evidence #${ev.id})`);
-        riskScore += 20;
-      }
-
-      if (!ev.metadata || ev.metadata.length < 5) {
-        flags.push(`INSUFFICIENT_DETAIL (evidence #${ev.id})`);
-        riskScore += 10;
-      }
-    }
-
-    if (!milestoneData?.description || milestoneData.description.length < 10) {
-      flags.push("MILESTONE_DESCRIPTION_TOO_SHORT");
-      riskScore += 10;
-    }
-
-    setTimeout(() => {
-      setScanning(false);
-      setScanResult({ flags, riskScore, passed: riskScore < 50 });
-    }, 1500);
-  };
-
-  const submitVerdict = async () => {
-    if (!scanResult) return;
+  const submitVerdict = async (passed: boolean) => {
     setTxState("preparing"); setTxMsg("");
     try {
       const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
@@ -682,7 +751,7 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
-      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(scanResult.passed));
+      const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(passed));
       const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       setTxState("signing");
       const prepared = await server.prepareTransaction(tx);
@@ -692,34 +761,34 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
       setTxState("done");
-      setTxMsg(scanResult.passed ? "AI fraud check PASSED. Gate 5 submitted on-chain." : "AI fraud check FAILED. Rejection submitted on-chain.");
+      setTxMsg(passed ? "AI Gate 5 PASSED - submitted on-chain." : "AI Gate 5 REJECTED - submitted on-chain.");
       setTimeout(() => onAction(), 3000);
     } catch (err: any) { setTxState("error"); setTxMsg(err.message?.slice(0, 150) || "Failed"); }
   };
 
   const busy = txState === "preparing" || txState === "signing" || txState === "sending";
-  const gates = [
-    { label: "Engineer", done: escrow.conditions.engineer_approval },
-    { label: "Compliance", done: escrow.conditions.compliance_validation },
-    { label: "Oracle", done: (escrow.conditions as any).community_oracle_validation || false },
-    { label: `Community (${Number(escrow.conditions.community_confirmation)}/${Number(escrow.conditions.community_required)})`, done: Number(escrow.conditions.community_confirmation) >= Number(escrow.conditions.community_required) },
-    { label: "AI Risk", done: escrow.conditions.ai_risk_check },
-  ];
 
   return (
     <div className="card p-5">
       {txMsg && (
         <div className={`mb-3 p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-          {txState === "done" ? "✅ " : "❌ "}{txMsg}
+          {txState === "done" ? "✓ " : "✗ "}{txMsg}
         </div>
       )}
+
       <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="flex items-center gap-2 mb-1"><span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span><span className="text-xs text-slate-300">·</span><span className="text-xs text-slate-400">PVO #{pvoId} · MS #{milestoneId}</span></div>
-          {milestoneData && <p className="font-semibold text-slate-900">{milestoneData.title}</p>}
-          <p className="text-xs text-slate-400 mt-0.5">{currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()} · {(milestoneData?.submitted_evidence || []).length} evidence items</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs text-slate-400 font-mono">Escrow #{escrowId}</span>
+            <span className="text-xs text-slate-300">·</span>
+            <span className="text-xs text-slate-400">{data.pvoTitle} (PVO #{pvoId})</span>
+          </div>
+          {data.milestone && <p className="font-semibold text-slate-900">{data.milestone.title}</p>}
+          <p className="text-xs text-slate-400 mt-0.5">
+            {currency}{(Number(escrow.amount)/PPHP_SCALE).toLocaleString()} · {(data.milestone?.submitted_evidence || []).length} evidence items
+          </p>
         </div>
-        <span className="badge badge-amber">{escrow.status.tag || escrow.status}</span>
+        <span className={`badge ${status === "Released" ? "badge-green" : status === "Funded" ? "badge-blue" : "badge-amber"}`}>{status}</span>
       </div>
 
       <div className="grid grid-cols-5 gap-2 mb-4">
@@ -730,55 +799,106 @@ function AIGateCard({ escrow, currency, address, onAction }: { escrow: any; curr
         ))}
       </div>
 
-      {txState === "done" ? (
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/5 gates passed</span>
-          <span className="badge-green text-xs px-4 py-2">{scanResult?.passed ? "✓ AI Passed - Gate 5" : "✗ AI Rejected - Gate 5"}</span>
-        </div>
-      ) : !scanResult ? (
-        <div className="pt-3 border-t border-slate-100">
-          <p className="text-xs text-slate-500 mb-3">Run the AI fraud detection engine to scan evidence for anomalies. The verdict is determined by the AI, not by human judgment.</p>
-          <button onClick={runFraudDetection} disabled={scanning}
-            className="btn-primary text-sm px-4 py-2 w-full">
-            {scanning ? "🤖 Scanning evidence..." : "🤖 Run AI Fraud Check"}
-          </button>
-          {scanning && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Analyzing GPS coordinates, metadata patterns, description completeness...</p>}
-        </div>
-      ) : (
-        <div className="pt-3 border-t border-slate-100">
-          <div className={`mb-3 p-3 rounded-lg text-sm ${scanResult.passed ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-            <p className="font-medium mb-2">🤖 AI Fraud Detection Results</p>
-            <p className="text-xs mb-2">Risk Score: <strong>{scanResult.riskScore}/100</strong> (threshold: 50)</p>
-            {scanResult.flags.length > 0 ? (
-              <div className="space-y-1">
-                {scanResult.flags.map((f, i) => (
-                  <div key={i} className="text-xs flex items-center gap-2">
-                    <span>🚨</span><span>{f}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs">No anomalies detected. All checks passed.</p>
-            )}
-            <p className={`text-xs mt-2 font-bold ${scanResult.passed ? "text-emerald-700" : "text-red-700"}`}>
-              {scanResult.passed ? "✅ AI VERDICT: PASS - No fraud detected" : "❌ AI VERDICT: REJECT - Fraud indicators found"}
-            </p>
-          </div>
-          <p className="text-xs text-slate-400 mb-3">The AI has determined the verdict above. Submit to record it on-chain as Gate 5 (final gate).</p>
-          <div className="flex gap-2">
-            <button onClick={submitVerdict} disabled={busy}
-              className={`btn-primary text-sm px-4 py-2 flex-1 ${!scanResult.passed ? "btn-danger" : ""}`}>
-              {busy ? "Signing..." : scanResult.passed ? "✅ Submit PASS Verdict On-Chain" : "🚨 Submit REJECT Verdict On-Chain"}
-            </button>
-            <button onClick={() => setScanResult(null)} disabled={busy}
-              className="btn-secondary text-sm px-4 py-2">
-              Re-run
-            </button>
-          </div>
-          {busy && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Check Freighter for signing prompt...</p>}
-        </div>
-      )}
+      <div className="border-t pt-3">
+        <p className="text-xs font-medium text-slate-500 mb-3">AI Oracle On-Chain Analysis</p>
 
+        {!hasOracleData ? (
+          <p className="text-xs text-slate-400">No AI Oracle analysis submitted yet for this PVO. Run the oracle service to generate analysis.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {fraudRisk !== null && (
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs font-medium text-slate-500 mb-2">Fraud Detection</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${fraudRisk >= 75 ? "bg-red-500" : fraudRisk >= 50 ? "bg-orange-500" : fraudRisk >= 25 ? "bg-yellow-500" : "bg-green-500"}`} style={{ width: `${fraudRisk}%` }} />
+                  </div>
+                  <span className="font-mono text-xs font-medium">{fraudRisk}/100</span>
+                </div>
+                {fraudConfidence !== null && <p className="text-xs text-gray-400">Confidence: {fraudConfidence}%</p>}
+                {fraudIndicators.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {fraudIndicators.map((ind: string, i: number) => (
+                      <span key={i} className="px-1.5 py-0.5 text-xs rounded bg-red-50 text-red-700">{ind.replace(/([A-Z])/g, " $1").trim()}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {riskDelay !== null && (
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs font-medium text-slate-500 mb-2">Risk Prediction</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><p className="text-gray-400">Delay</p><p className="font-medium text-gray-700">{riskDelay}%</p></div>
+                  <div><p className="text-gray-400">Overrun</p><p className="font-medium text-gray-700">{riskOverrun}%</p></div>
+                </div>
+                {riskCat !== null && <p className="text-xs text-gray-400 mt-1">Category: <span className="font-medium">{catLabels[riskCat] ?? "Unknown"}</span></p>}
+              </div>
+            )}
+
+            {geoFlood !== null && (
+              <div className="border border-gray-200 rounded-lg p-3">
+                <p className="text-xs font-medium text-slate-500 mb-2">Geo Risk - {data.geoData?.region || data.pvoMunicipality}</p>
+                <div className="grid grid-cols-3 gap-1 text-xs">
+                  <div><p className="text-gray-400">Flood</p><p className={`font-medium ${geoFlood > 60 ? "text-red-600" : "text-gray-700"}`}>{geoFlood}%</p></div>
+                  <div><p className="text-gray-400">Seismic</p><p className={`font-medium ${geoSeismic > 60 ? "text-red-600" : "text-gray-700"}`}>{geoSeismic}%</p></div>
+                  <div><p className="text-gray-400">Landslide</p><p className={`font-medium ${geoLandslide > 60 ? "text-red-600" : "text-gray-700"}`}>{geoLandslide}%</p></div>
+                </div>
+              </div>
+            )}
+
+            {twinMaterial !== null && (
+              <div className={`border rounded-lg p-3 ${twinDeviation ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+                <p className="text-xs font-medium text-slate-500 mb-2">Digital Twin {twinDeviation && <span className="badge badge-red ml-1">Deviation</span>}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><p className="text-gray-400">Material Idx</p><p className="font-medium text-gray-700">{twinMaterial}</p></div>
+                  <div><p className="text-gray-400">Labor Idx</p><p className="font-medium text-gray-700">{twinLabor}</p></div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {readyForGate5 && txState !== "done" && (
+          <div className="border-t pt-3">
+            {oracleRecommendation && (
+              <div className={`mb-3 p-3 rounded-lg text-sm ${oracleRecommendation === "pass" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                <p className="font-medium">AI Oracle Recommendation: {oracleRecommendation === "pass" ? "✓ PASS" : "✗ REJECT"}</p>
+                <p className="text-xs mt-1">
+                  {oracleRecommendation === "pass"
+                    ? `Risk score ${fraudRisk}/100 is below threshold (50). No critical fraud indicators detected.`
+                    : `Risk score ${fraudRisk}/100 exceeds threshold (50). Fraud indicators require review.`}
+                </p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => submitVerdict(true)} disabled={busy}
+                className="btn-primary text-sm px-4 py-2 flex-1">
+                {busy ? "Signing..." : "✓ Submit PASS (Gate 5)"}
+              </button>
+              <button onClick={() => submitVerdict(false)} disabled={busy}
+                className="btn-secondary text-sm px-4 py-2 flex-1 border-red-200 text-red-700 hover:bg-red-50">
+                {busy ? "..." : "✗ Submit REJECT"}
+              </button>
+            </div>
+            {busy && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Check Freighter for signing prompt...</p>}
+          </div>
+        )}
+
+        {txState === "done" && (
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <span className="text-[11px] text-slate-400">{gates.filter(g => g.done).length}/5 gates passed</span>
+            <span className="badge-green text-xs px-4 py-2">Gate 5 Submitted</span>
+          </div>
+        )}
+
+        {!readyForGate5 && !c.ai_risk_check && (
+          <div className="border-t pt-3">
+            <p className="text-xs text-slate-400">Escrow must pass Gates 1-4 (Engineer, Compliance, Oracle, Community) before AI Gate 5 can be submitted.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
