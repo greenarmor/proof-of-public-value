@@ -728,7 +728,7 @@ function forensicFlagsToIndicators(flags: string[]): string[] {
     if (lower.includes("mismatch") || lower.includes("gap")) indicators.add("AbnormalBudgetGrowth");
     if (lower.includes("duplicate")) indicators.add("DuplicateInvoice");
     if (lower.includes("timing") || lower.includes("unusual")) indicators.add("UnusualPaymentTiming");
-    if (lower.includes("noreputation") || lower.includes("shell")) indicators.add("ShellCompanyRisk");
+    if (lower.includes("shell")) indicators.add("ShellCompanyRisk");
     if (lower.includes("inflation") || lower.includes("material")) indicators.add("MaterialCostInflation");
     if (lower.includes("repeated") || lower.includes("contractor")) indicators.add("RepeatedContractorWin");
   }
