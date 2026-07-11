@@ -674,8 +674,9 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     }
   }
 
-  // Ghost project: no escrows, no evidence, no community reports, old PVO
-  if (escrows.length === 0 && milestones.every((m: any) => (m.submitted_evidence || []).length === 0)
+  // Ghost project: has milestones but zero escrows, zero evidence, zero community reports
+  if (milestones.length > 0 && escrows.length === 0
+      && milestones.every((m: any) => (m.submitted_evidence || []).length === 0)
       && communityReports.length === 0) {
     flags.push("GhostProject");
   }

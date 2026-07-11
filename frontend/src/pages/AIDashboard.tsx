@@ -1160,8 +1160,8 @@ function ForensicCaseTab() {
             }
           }
 
-          if (escrowCount === 0 && evidenceCount === 0 && communityReportCount === 0) {
-            flags.push({ flag: "GhostProject: no activity", severity: "critical" });
+          if (milestones.length > 0 && escrowCount === 0 && evidenceCount === 0 && communityReportCount === 0) {
+            flags.push({ flag: "GhostProject: has milestones but no activity", severity: "critical" });
           }
 
           let valueScore: number | null = null;
