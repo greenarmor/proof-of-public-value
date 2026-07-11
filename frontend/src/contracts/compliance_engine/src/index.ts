@@ -73,7 +73,7 @@ export interface Client {
 
   /**
    * Construct and simulate a report_violation transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
-   * Report a compliance violation — auto-pauses if severity ≥ 70
+   * Report a compliance violation - auto-pauses if severity ≥ 70
    */
   report_violation: ({officer, pvo_id, rule, description, severity}: {officer: string, pvo_id: u32, rule: ComplianceRule, description: string, severity: u32}, options?: MethodOptions) => Promise<AssembledTransaction<u32>>
 

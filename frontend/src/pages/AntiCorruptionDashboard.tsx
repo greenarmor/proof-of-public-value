@@ -257,7 +257,7 @@ function FraudTab({ frauds, address, onAction }: {
                   {risk >= 70 ? "Critical" : risk >= 40 ? "High" : "Medium"}
                 </span>
                 <div>
-                  <h3 className="font-semibold text-slate-900">Fraud #{f.id} — PVO #{Number(f.pvo_id)}</h3>
+                  <h3 className="font-semibold text-slate-900">Fraud #{f.id} - PVO #{Number(f.pvo_id)}</h3>
                   <p className="text-xs text-slate-400">Detected by <WalletAddress addr={f.auditor} chars={6}/></p>
                 </div>
               </div>

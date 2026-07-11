@@ -244,7 +244,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
         <span>{milestone.submitted_evidence.length} evidence items</span>
       </div>
 
-      {/* Inspector Reports — dedicated section for pre-visit briefing */}
+      {/* Inspector Reports - dedicated section for pre-visit briefing */}
       {(() => {
         const inspectionReports = milestone.submitted_evidence.filter((ev: any) => {
           const t = statusToString(ev.evidence_type);
@@ -254,7 +254,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
         return (
           <div className="mb-4 p-4 rounded-lg bg-purple-50 border border-purple-200">
             <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-2">
-              🔍 Inspector Reports ({inspectionReports.length}) — Pre-Visit Briefing
+              🔍 Inspector Reports ({inspectionReports.length}) - Pre-Visit Briefing
             </p>
             {inspectionReports.map((ev: any, i: number) => {
               let data: any = null;

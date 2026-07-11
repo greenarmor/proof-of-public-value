@@ -73,7 +73,7 @@ export function CreatePphpTrustline({ address }: { address: string }) {
       <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
         <p className="text-sm text-emerald-700">
           <strong>🪙 pPHP Balance:</strong>{" "}
-          {pphpBalance ? `${pphpBalance} pPHP` : "Trustline active — visible in Freighter"}
+          {pphpBalance ? `${pphpBalance} pPHP` : "Trustline active - visible in Freighter"}
         </p>
       </div>
     );

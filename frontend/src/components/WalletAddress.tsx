@@ -6,7 +6,7 @@ export function WalletAddress({ addr, chars = 6, className = "" }: {
 }) {
   const { address: connectedAddress } = useWallet();
 
-  if (!addr) return <span className={className}>—</span>;
+  if (!addr) return <span className={className}>-</span>;
 
   const isContract = addr.startsWith("C");
   const userHasRole = connectedAddress ? isRoleWallet(connectedAddress) : false;

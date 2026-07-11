@@ -14,7 +14,7 @@ export function formatAddress(addr: string, chars = 6): string {
   return `${addr.slice(0, chars)}...${addr.slice(-chars)}`;
 }
 
-// System role wallets — only these get stellar.expert links
+// System role wallets - only these get stellar.expert links
 const ROLE_WALLETS = new Set([
   "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV", // Administrator (Alice)
   "GCHNRJGVPQXIDC3AOCZMLBLFUSGOELDBHO4NG637H67RULGSOIZYJOAH", // Citizen (Bob)
@@ -32,7 +32,7 @@ const ROLE_WALLETS = new Set([
   "GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW", // AIAuditor
 ]);
 
-// Sensitive wallets — never linked to protect funders from OSINT
+// Sensitive wallets - never linked to protect funders from OSINT
 const BLOCKED_WALLETS = new Set([
   "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO", // funding_agency
   "GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44", // international_donor

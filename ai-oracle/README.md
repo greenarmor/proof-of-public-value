@@ -54,7 +54,7 @@ No Rust, no contracts, no local blockchain, no external APIs.
 ## Security
 
 The secret key is NEVER hardcoded. It reads from:
-1. `AI_AUDITOR_SECRET` environment variable (preferred — in-memory only)
+1. `AI_AUDITOR_SECRET` environment variable (preferred - in-memory only)
 2. `.dev-logs/newrolecreden.md` (gitignored, fallback)
 
 Never commit `.env` files. Never paste the key in code. For production, use Vercel environment variables or a secrets manager.

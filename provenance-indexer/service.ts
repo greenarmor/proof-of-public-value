@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PoPV Provenance Indexer — Independent audit trail service
+ * PoPV Provenance Indexer - Independent audit trail service
  *
  * Builds provenance chains per PVO: PVO (parent) → Milestone (child) → Gate records (sub).
  * Each record links to its Stellar transaction hash for audit trackback.
@@ -545,7 +545,7 @@ function describeEvent(ev: CapturedEvent): string {
     return `Public value score: ${d.score}`;
   }
   if (name.includes("escrow_created")) {
-    return `Escrow #${d.id} created — ${toPesos(d.amount).toLocaleString()} PHP`;
+    return `Escrow #${d.id} created - ${toPesos(d.amount).toLocaleString()} PHP`;
   }
   if (name.includes("escrow_funded")) {
     return `Escrow #${d.id} funded (${toPesos(d.amount).toLocaleString()} PHP)`;
@@ -763,7 +763,7 @@ async function buildProvenance(
     });
 
     console.log(
-      `  ✅ PVO #${i}: ${pvo.title} — ${milestones.length} milestones, ${timeline.length} timeline entries`
+      `  ✅ PVO #${i}: ${pvo.title} - ${milestones.length} milestones, ${timeline.length} timeline entries`
     );
   }
 
@@ -918,17 +918,17 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
 <body style="font-family:monospace;padding:2rem;background:#0a0a0a;color:#0f0">
 <h1>PoPV Provenance Indexer</h1>
 <p>Status: ${currentStore ? "Active" : "Building..."}</p>
-<p>Last updated: ${currentStore ? new Date(currentStore.lastUpdated).toISOString() : "—"}</p>
+<p>Last updated: ${currentStore ? new Date(currentStore.lastUpdated).toISOString() : "-"}</p>
 <p>PVOs: ${currentStore?.pvoCount ?? 0} | Escrows: ${currentStore?.escrowCount ?? 0} | Events: ${currentStore?.eventCount ?? 0}</p>
 <h3>API Endpoints:</h3>
 <ul>
 <li><a href="/api/health">GET /api/health</a></li>
-<li><a href="/api/provenance">GET /api/provenance</a> — all PVO provenance trees</li>
-<li>GET /api/provenance/:pvoId — single PVO chain</li>
-<li>GET /api/provenance/:pvoId/timeline — event timeline</li>
-<li><a href="/api/events">GET /api/events</a> — all captured events with tx hashes</li>
-<li>GET /api/events/:contractName — events by contract</li>
-<li><a href="/api/rebuild">GET /api/rebuild</a> — force full rebuild (use after new transactions)</li>
+<li><a href="/api/provenance">GET /api/provenance</a> - all PVO provenance trees</li>
+<li>GET /api/provenance/:pvoId - single PVO chain</li>
+<li>GET /api/provenance/:pvoId/timeline - event timeline</li>
+<li><a href="/api/events">GET /api/events</a> - all captured events with tx hashes</li>
+<li>GET /api/events/:contractName - events by contract</li>
+<li><a href="/api/rebuild">GET /api/rebuild</a> - force full rebuild (use after new transactions)</li>
 </ul>
 </body></html>`);
     return;

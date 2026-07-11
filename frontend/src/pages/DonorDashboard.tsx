@@ -240,7 +240,7 @@ function PledgeForm({ address, pvoId, remaining, onDone }: { address: string; pv
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Exact Amount Required (pesos)</label>
           <input type="number" value={amount} readOnly className="input bg-slate-50 font-mono" />
-          <p className="text-xs text-slate-400 mt-1">{cur}{formatBudget(amount)} — this is the full remaining budget for this PVO.</p>
+          <p className="text-xs text-slate-400 mt-1">{cur}{formatBudget(amount)} - this is the full remaining budget for this PVO.</p>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <p className="text-sm text-amber-700">

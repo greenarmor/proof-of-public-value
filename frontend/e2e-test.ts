@@ -1,5 +1,5 @@
 /**
- * E2E Test Script — Verifies all 13 contracts and every dashboard's data pipeline.
+ * E2E Test Script - Verifies all 13 contracts and every dashboard's data pipeline.
  * Each test corresponds to a live query a dashboard makes.
  */
 
@@ -119,7 +119,7 @@ async function main() {
     const client = createClient(CONTRACT_IDS.escrow, EscrowClient);
     const cnt = await client.get_escrow_count();
     if (Number(cnt.result) === 0) {
-      console.log("  -> No escrows yet (new contract) — skipping");
+      console.log("  -> No escrows yet (new contract) - skipping");
       return;
     }
     const result = await client.get_escrow({ escrow_id: 1 });
@@ -138,7 +138,7 @@ async function main() {
     const client = createClient(CONTRACT_IDS.escrow, EscrowClient);
     const cnt = await client.get_escrow_count();
     if (Number(cnt.result) === 0) {
-      console.log("  -> No escrows yet — skipping");
+      console.log("  -> No escrows yet - skipping");
       return;
     }
     const result = await client.check_conditions({ escrow_id: 1 });

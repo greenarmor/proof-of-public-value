@@ -2,7 +2,7 @@
 
 > Connect to the existing deployed contracts on Stellar testnet.  
 > No Rust, no `stellar contract build`, no lean-reset. Just the UI.  
-> **Live version:** [www.popv.quest](https://www.popv.quest) — no setup needed. Just connect Freighter.
+> **Live version:** [www.popv.quest](https://www.popv.quest) - no setup needed. Just connect Freighter.
 
 ---
 
@@ -108,7 +108,7 @@ If your wallet has 0 XLM, you can't pay transaction fees. Fund it:
 1. Copy the wallet's public key (starts with `G`, 56 characters)
 2. Go to: https://laboratory.stellar.org/#account-creator
 3. Paste the public key
-4. Click **"Create Account"** — funded with 10,000 testnet XLM
+4. Click **"Create Account"** - funded with 10,000 testnet XLM
 
 ---
 
@@ -197,7 +197,8 @@ Go to **http://localhost:5174** in Chrome or Firefox (the browser where you inst
 
 | Role | Dashboard URL | What you can do |
 |------|--------------|-----------------|
-| Administrator | `/admin` | Assign roles, mint RPT and pPHP |
+| Administrator | `/admin` | Assign roles, mint RPT |
+| CentralBank | `/central-bank` | Mint CBDC pPHP, redeem pPHP, mark grants disbursed |
 | GovernmentAgency | `/agency` | Create PVOs, define milestones, open tenders |
 | Contractor | `/contractor` | Browse tenders, submit bids, submit evidence |
 | Engineer | `/engineer` | Approve milestones (Gate 1) |
@@ -223,7 +224,7 @@ Use the **Role-Play** page (`/onboarding`) or follow this manual flow:
 | 3 | `agency` | Agency Dashboard | Click "Tender" on the PVO - set bid deadline | ✅ Yes |
 | 4 | `contractor` | `/procurement` | Browse open tenders - click "Bid" - enter price, quality | ✅ Yes |
 | 5 | `agency` | `/procurement` → Award tab | Click "Award Tender" - auto-picks highest bid | ✅ Yes |
-| 6 | `alice` (admin) | Admin Panel | Click "Direct Fund" - mint pPHP to Funding Agency | ✅ Yes |
+| 6 | `central_bank` | Central Bank Dashboard | Click "Direct Fund" - mint CBDC pPHP to Funding Agency | ✅ Yes |
 | 7 | `funding_agency` | Awarded PVOs tab | Expand PVO - click "Escrow" on a milestone | ✅ Yes |
 | 8 | `funding_agency` | Escrows tab | Click "Fund Escrow" on the created escrow | ✅ Yes |
 | 9 | `contractor` | Contractor Portal | Click PVO - expand milestone - "Submit Evidence" | ✅ Yes |
@@ -297,7 +298,7 @@ lsof -ti:5174 | xargs kill -9
 - Fund it: https://laboratory.stellar.org/#account-creator
 
 ### "trustline entry is missing" (RPT error)
-- As citizen, go to Citizen Report Form first — it auto-creates the RPT trustline
+- As citizen, go to Citizen Report Form first - it auto-creates the RPT trustline
 
 ---
 

@@ -44,7 +44,7 @@ The engine scans for 8 fraud patterns defined in the `ai_oracle` contract:
 | `MaterialCostInflation` | Material cost index >130% | `ai_oracle.update_digital_twin` data |
 | `ShellCompanyRisk` | Contractor has zero reputation on record | `reputation.get_reputation` |
 
-Each detection is submitted with a **risk score (0-100)** and **confidence percentage**. The risk score is NOT random — it's derived from the severity of the anomaly.
+Each detection is submitted with a **risk score (0-100)** and **confidence percentage**. The risk score is NOT random - it's derived from the severity of the anomaly.
 
 ### 2. Risk Prediction
 
@@ -75,7 +75,7 @@ Risk Level 2 (Medium): delay 30-60%
 Risk Level 3 (High):   delay > 60%
 ```
 
-The reputation score comes from the `reputation` contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.
+The reputation score comes from the `reputation` contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data - not self-reported.
 
 **Gate 5 impact:** Risk Category 3 (High) triggers a Gate 5 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.
 
@@ -103,9 +103,9 @@ d = 2r × arcsin(√(sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)))
 
 | Distance | Interpretation | Gate 5 effect |
 |----------|---------------|---------------|
-| < 5 km | Within municipality — likely valid | ✅ Pass |
-| 5-50 km | Nearby — needs review | ⚠️ Warning |
-| > 50 km | Suspicious — possible fake coordinates | ❌ Reject |
+| < 5 km | Within municipality - likely valid | ✅ Pass |
+| 5-50 km | Nearby - needs review | ⚠️ Warning |
+| > 50 km | Suspicious - possible fake coordinates | ❌ Reject |
 
 **Coordinate sources:**
 
@@ -145,7 +145,7 @@ Deviation Alert = actual > expected × 1.2
 |-------|-------|---------|
 | < 80 | Under-funded | Milestones not yet created, or premature stage |
 | 80-120 | On track | Spending aligns with budget |
-| > 120 | Cost inflation | Significantly over budget — red flag |
+| > 120 | Cost inflation | Significantly over budget - red flag |
 | > 130 | Severe | Material cost index triggers `MaterialCostInflation` fraud flag |
 
 **Gate 5 impact:** A deviation alert (actual > 120% of expected) triggers a Gate 5 rejection. The AI won't approve an escrow when costs have already exceeded the budget significantly.
@@ -195,7 +195,7 @@ Fetch HEAD request → https://gateway.pinata.cloud/ipfs/{hash}
 
 ### 6. Geo Risk Assessment
 
-Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards — flooding, landslides, and seismic activity.
+Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards - flooding, landslides, and seismic activity.
 
 **Contract struct:**
 
@@ -296,11 +296,11 @@ The service requires:
 
 ## Why This Approach
 
-Real-time AI inference on blockchains is not possible — smart contracts are deterministic enclaves with no I/O. Every production oracle (Chainlink, Pyth, Band Protocol) uses the same architecture:
+Real-time AI inference on blockchains is not possible - smart contracts are deterministic enclaves with no I/O. Every production oracle (Chainlink, Pyth, Band Protocol) uses the same architecture:
 
 1. Off-chain service reads data / runs model
 2. Signs transaction with authorized key
 3. Submits results to on-chain contract
 4. Smart contracts reference the stored results
 
-Our AI Oracle does exactly this, but with deterministic heuristics instead of black-box ML. Every finding is **reproducible** — anyone can re-run the analysis and get identical results. This is important for auditability: an auditor can verify that a fraud flag was raised because the same contractor appeared in 5 PVOs, not because "the model said so."
+Our AI Oracle does exactly this, but with deterministic heuristics instead of black-box ML. Every finding is **reproducible** - anyone can re-run the analysis and get identical results. This is important for auditability: an auditor can verify that a fraud flag was raised because the same contractor appeared in 5 PVOs, not because "the model said so."

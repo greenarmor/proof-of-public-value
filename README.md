@@ -1,8 +1,8 @@
 # Proof of Public Value (PoPV)
 
-> **"No Proof. No Payment."** — Public money must prove measurable value before it's released.
+> **"No Proof. No Payment."** - Public money must prove measurable value before it's released.
 
-PoPV is a serverless blockchain application on **Stellar Soroban** that makes government spending accountable. Every budget allocation becomes a programmable **Public Value Object (PVO)** with 5-gate conditional payments: engineer approval, compliance check, community verification, community confirmations, and AI fraud detection — with every decision linked to an immutable Stellar transaction hash.
+PoPV is a serverless blockchain application on **Stellar Soroban** that makes government spending accountable. Every budget allocation becomes a programmable **Public Value Object (PVO)** with 5-gate conditional payments: engineer approval, compliance check, community verification, community confirmations, and AI fraud detection - with every decision linked to an immutable Stellar transaction hash.
 
 ---
 
@@ -35,7 +35,7 @@ pPHP (Philippine Peso Testnet) is a custom Soroban token implementing `TokenInte
 
 | Decimals | 2 (100 centavos = ₱1.00) |
 | Supply | Unlimited (admin-gated mint) |
-| Purpose | Escrow settlement token — fund, release, refund |
+| Purpose | Escrow settlement token - fund, release, refund |
 | Minting | Admin-only via CLI |
 
 ### Why pPHP Exists
@@ -48,11 +48,11 @@ Bridge Construction:  ₱500,000,000 = 500,000,000 XLM →  Friendbot × 50,000 
 National Budget:      ₱5,000,000,000 = 5B XLM         →  Impossible
 ```
 
-pPHP solves this: unlimited mintable supply with 2 decimal places (100 centavos = ₱1). Zero value, zero backing — pure simulation. It exists to test the escrow lock/unlock logic at realistic peso amounts without burning through XLM faucets.
+pPHP solves this: unlimited mintable supply with 2 decimal places (100 centavos = ₱1). Zero value, zero backing - pure simulation. It exists to test the escrow lock/unlock logic at realistic peso amounts without burning through XLM faucets.
 
 ### How It Works
 
-The escrow contract is asset-agnostic — it accepts a `token_address` parameter. On testnet, that address is pPHP. On mainnet, it becomes USDC, GovPHP, EURC, or any backed asset.
+The escrow contract is asset-agnostic - it accepts a `token_address` parameter. On testnet, that address is pPHP. On mainnet, it becomes USDC, GovPHP, EURC, or any backed asset.
 
 ```
 Funder mints pPHP → funds escrow → tokens locked in escrow vault
@@ -66,7 +66,7 @@ Contractor holds real pPHP on-chain
 
 | Environment | Token | Backing | Why |
 |-------------|-------|---------|-----|
-| Testnet | **pPHP** | Nothing (simulation) | Unlimited mint — bypass Friendbot 10K XLM limit |
+| Testnet | **pPHP** | Nothing (simulation) | Unlimited mint - bypass Friendbot 10K XLM limit |
 | Mainnet | USDC | Circle USD reserves | Stablecoin, 1:1 USD backing |
 | Mainnet | XLM | Stellar network value | Native asset, liquid |
 | Mainnet | GovPHP | Peso deposits at custodian bank | If government issues a PHP-backed token |
@@ -88,8 +88,8 @@ The same escrow Rust binary runs unchanged on both networks. Only the `token_add
 
 ## Testnet Demo Wallets (Public Keys Only)
 
-> ⚠️ **Testnet only — never use these on mainnet.**
-> Secret keys are stored in `.dev-logs/role-credentials.md` (gitignored — never committed).
+> ⚠️ **Testnet only - never use these on mainnet.**
+> Secret keys are stored in `.dev-logs/role-credentials.md` (gitignored - never committed).
 > To import in Freighter: Add Account → Import Secret Key or Seed Phrase.
 
 
@@ -116,7 +116,7 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 | 11 | InternationalDonor | `/donor` | International Donor Dashboard |
 | 12 | AIAuditor | `/ai` | AI Monitor |
 | 13 | Citizen | `/citizen` | Citizen Interface |
-| — | No role | `/`, `/index`, `/memory` | Public pages only |
+| - | No role | `/`, `/index`, `/memory` | Public pages only |
 
 ---
 
@@ -138,7 +138,7 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 
 ## Quick Start
 
-**Live version:** [www.popv.quest](https://www.popv.quest) — no setup needed. Just connect Freighter.
+**Live version:** [www.popv.quest](https://www.popv.quest) - no setup needed. Just connect Freighter.
 
 ### Path A: Frontend Only (reuse existing testnet contracts)
 
@@ -152,7 +152,7 @@ cd frontend && npm install --include=dev && cd ..
 npm run dev   # -> http://localhost:5174
 ```
 
-➡️ **[Full Local Deploy Guide](docs/local-frontend-runbook.md)** — Node.js setup, Freighter wallet import, 15-step role-play walkthrough, troubleshooting.
+➡️ **[Full Local Deploy Guide](docs/local-frontend-runbook.md)** - Node.js setup, Freighter wallet import, 15-step role-play walkthrough, troubleshooting.
 
 ### Path B: Full System (deploy your own contracts)
 
@@ -173,14 +173,14 @@ node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 
 ## Features
 
-- **5-Gate Payment Release** — Funds unlock only after engineer, AI, compliance, community, and evidence verification
-- **AI Fraud Detection** — 8 indicator types (ghost projects, duplicate invoices, collusion, etc.)
-- **Citizen Verification** — GPS-tagged photo reports via IPFS with RPT token staking
-- **Immutable Audit Trail** — Every decision permanently recorded on-chain
-- **Public Value Index** — Department rankings measuring value per peso spent
-- **Procurement Marketplace** — Integrity-weighted bidding with reputation scoring
-- **Autonomous Compliance** — Auto-pause funds on regulatory violations
-- **Serverless** — No backend, no database — blockchain is the infrastructure
+- **5-Gate Payment Release** - Funds unlock only after engineer, AI, compliance, community, and evidence verification
+- **AI Fraud Detection** - 8 indicator types (ghost projects, duplicate invoices, collusion, etc.)
+- **Citizen Verification** - GPS-tagged photo reports via IPFS with RPT token staking
+- **Immutable Audit Trail** - Every decision permanently recorded on-chain
+- **Public Value Index** - Department rankings measuring value per peso spent
+- **Procurement Marketplace** - Integrity-weighted bidding with reputation scoring
+- **Autonomous Compliance** - Auto-pause funds on regulatory violations
+- **Serverless** - No backend, no database - blockchain is the infrastructure
 
 ---
 

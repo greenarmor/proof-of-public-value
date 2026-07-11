@@ -304,9 +304,9 @@ function SubmitInspection({ address, onDone }: { address: string; onDone: () => 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Inspection Result</label>
           <select value={rating} onChange={(e) => setRating(e.target.value)} className="select">
-            <option value="Pass">Pass — Meets Standards</option>
-            <option value="Conditional">Conditional — Minor Issues</option>
-            <option value="Fail">Fail — Does Not Meet Standards</option>
+            <option value="Pass">Pass - Meets Standards</option>
+            <option value="Conditional">Conditional - Minor Issues</option>
+            <option value="Fail">Fail - Does Not Meet Standards</option>
           </select>
         </div>
         <div>
@@ -426,7 +426,7 @@ function MyReports({ address }: { address: string }) {
             <span className={`badge ${r.verified ? "badge-green" : "badge-amber"}`}>{r.verified ? "Verified" : "Pending"}</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-400">
-            <span>Hash: {r.hash ? r.hash.slice(0, 16) + "..." : "—"}</span>
+            <span>Hash: {r.hash ? r.hash.slice(0, 16) + "..." : "-"}</span>
             {r.metadata && <span>Notes: {r.metadata.slice(0, 60)}</span>}
           </div>
         </div>
@@ -605,9 +605,9 @@ function InspectionForm({ address, pvoId, milestoneId, milestoneTitle, onDone }:
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">Inspection Rating</label>
           <select value={rating} onChange={(e) => setRating(e.target.value)} className="input text-sm">
-            <option value="Pass">✅ Pass — Evidence quality acceptable</option>
-            <option value="Fail">❌ Fail — Evidence quality unacceptable</option>
-            <option value="Flagged">⚠️ Flagged — Requires further review</option>
+            <option value="Pass">✅ Pass - Evidence quality acceptable</option>
+            <option value="Fail">❌ Fail - Evidence quality unacceptable</option>
+            <option value="Flagged">⚠️ Flagged - Requires further review</option>
           </select>
         </div>
         <div className="text-xs text-slate-400 pt-5">
@@ -618,7 +618,7 @@ function InspectionForm({ address, pvoId, milestoneId, milestoneTitle, onDone }:
         <label className="block text-xs font-medium text-slate-700 mb-1">Inspection Notes</label>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
           className="input text-sm" rows={3}
-          placeholder={`e.g. Drone imagery clear and timestamped. GPS coordinates within expected range.${rating === "Fail" ? " Photo metadata shows image taken before project start date — evidence may be fabricated." : " Evidence quality acceptable for Gate 1 review."}`}
+          placeholder={`e.g. Drone imagery clear and timestamped. GPS coordinates within expected range.${rating === "Fail" ? " Photo metadata shows image taken before project start date - evidence may be fabricated." : " Evidence quality acceptable for Gate 1 review."}`}
           required />
       </div>
       <button type="submit" disabled={busy} className="btn-primary w-full py-2 text-sm">

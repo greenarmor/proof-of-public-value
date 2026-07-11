@@ -159,8 +159,8 @@ Creates PVOs (Public Value Objects), allocates budgets, defines milestones, and 
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
 | Project Overview | All PVOs from chain | `pvo_core.get_pvo_count` + loop | None (read-only) |
-| New PVO | Form with all PVO fields | — | `pvo_core.create_pvo` via raw TransactionBuilder + Freighter |
-| Define Milestone | Form with evidence type picker | — | `pvo_core.create_milestone` with `Vec<EvidenceType>` encoding via TransactionBuilder |
+| New PVO | Form with all PVO fields | - | `pvo_core.create_pvo` via raw TransactionBuilder + Freighter |
+| Define Milestone | Form with evidence type picker | - | `pvo_core.create_milestone` with `Vec<EvidenceType>` encoding via TransactionBuilder |
 
 **What they do:**
 
@@ -207,7 +207,7 @@ Executes projects and submits evidence for each milestone. The contractor is the
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
 | My Projects | Contractor's assigned PVOs | `pvo_core.get_pv_os_by_contractor` + `get_pvo_milestones` | None (read-only) |
-| Submit Evidence | IPFS upload + form | — | `pvo_core.submit_evidence` via TransactionBuilder + Freighter (Gate 1) |
+| Submit Evidence | IPFS upload + form | - | `pvo_core.submit_evidence` via TransactionBuilder + Freighter (Gate 1) |
 | Payments | Escrows where recipient = contractor | `escrow.get_escrow` filtered by address | None (read-only) |
 | History | All submitted evidence across PVOs | `pvo_core` milestone evidence arrays | None (read-only) |
 
@@ -273,7 +273,7 @@ Conducts field inspections independently from the engineer. While the engineer c
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
 | All Projects | Every PVO with milestone drill-down | `pvo_core.get_pvo` + `get_pvo_milestones` | None (read-only) |
-| Submit Inspection | IPFS upload + form | — | `pvo_core.submit_evidence` (InspectionReport) via TransactionBuilder + Freighter |
+| Submit Inspection | IPFS upload + form | - | `pvo_core.submit_evidence` (InspectionReport) via TransactionBuilder + Freighter |
 | My Reports | InspectionReport evidence filtered by submitter | `pvo_core` milestone evidence arrays | None (read-only) |
 | Evidence History | All evidence across all PVOs | `pvo_core` milestone evidence arrays | None (read-only) |
 
@@ -297,12 +297,12 @@ In Philippine public works, these are two separate people from two separate orga
 | **Sector** | Private | Public |
 | **What they verify** | Structural integrity, spec compliance | Physical conditions on site |
 | **Contract function** | `escrow.engineer_approve()` | `pvo_core.submit_evidence(InspectionReport)` |
-| **Escrow gate** | ✅ Gate 1 — **required for payment** | ❌ No gate — supporting evidence |
+| **Escrow gate** | ✅ Gate 1 - **required for payment** | ❌ No gate - supporting evidence |
 | **Effect on money** | Blocks or releases funds | Documents conditions, no financial impact |
 | **Dashboard** | `/engineer` | `/inspector` |
 | **Conflict check** | Engineer is paid by contractor → potential bias | Inspector is independent → accountability layer |
 
-**Why both?** The engineer is paid by the contractor and signs off on payment release — a potential conflict of interest. The inspector works for the government and provides independent evidence. If an engineer approves shoddy work, the inspector's field report with photos creates an audit trail. The engineer can be penalized via the reputation contract for false approvals.
+**Why both?** The engineer is paid by the contractor and signs off on payment release - a potential conflict of interest. The inspector works for the government and provides independent evidence. If an engineer approves shoddy work, the inspector's field report with photos creates an audit trail. The engineer can be penalized via the reputation contract for false approvals.
 
 **In the escrow flow:**
 
@@ -319,7 +319,7 @@ The inspector's report is **evidence**, not a gate. It documents what the inspec
 
 ### Why the Engineer Gate Is Intentionally the Weakest
 
-In Philippine public works, the engineer is paid by the contractor. This is **not a bug in PoPV — it's a reality** that the system is designed around:
+In Philippine public works, the engineer is paid by the contractor. This is **not a bug in PoPV - it's a reality** that the system is designed around:
 
 ```
 Contractor pays Engineer → Engineer reviews Contractor's work → CONFLICT
@@ -388,11 +388,11 @@ These are two independent government roles checking different things at differen
 | | Inspector (DPWH / LGU) | Auditor (COA) |
 |---|---|----------------------|
 | **Employer** | Government agency (DPWH, LGU) | Constitutional office (Commission on Audit) |
-| **Level** | Physical — site conditions | Financial / regulatory — procurement law, budget rules |
+| **Level** | Physical - site conditions | Financial / regulatory - procurement law, budget rules |
 | **What they check** | Concrete thickness, asphalt quality, drainage | Receipts, bidding process, budget allocation, safety regs |
 | **Evidence type** | Photos, GPS coordinates, inspection notes | Audit entries, compliance reports, violation records |
 | **Contract function** | `pvo_core.submit_evidence(InspectionReport)` | `escrow.compliance_validate()` + `audit_trail` |
-| **Escrow gate** | ❌ No gate — supporting evidence | ✅ Gate 2 — **required for payment** |
+| **Escrow gate** | ❌ No gate - supporting evidence | ✅ Gate 2 - **required for payment** |
 | **Effect on money** | Documents conditions, no financial impact | Blocks or releases funds |
 | **Dashboard** | `/inspector` | `/auditor`, `/compliance` |
 | **How they override engineer** | Submit photos proving poor quality → audit trail | Reject compliance → Gate 2 fails → funds stay locked |
@@ -571,7 +571,7 @@ Suppliers browse procurement tenders and submit bids on-chain. They participate 
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
 | Tenders | All open procurement tenders | `procurement_market.get_tender` looped | None (read-only) |
-| Submit Bid | Tender selector + amount form | — | `procurement_market.submit_bid` via TransactionBuilder + Freighter |
+| Submit Bid | Tender selector + amount form | - | `procurement_market.submit_bid` via TransactionBuilder + Freighter |
 | My Bids | Bids filtered by supplier address | `procurement_market.get_bids_by_tender` filtered | None (read-only) |
 
 **What they do:**
@@ -593,7 +593,7 @@ Suppliers browse procurement tenders and submit bids on-chain. They participate 
 
 The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is **Gate 5** in the 5-gate escrow system.
 
-The dashboard is **public** — anyone can view AI findings at `/ai` without a wallet. See **[Appendix C: How the AI Oracle Works](ai-oracle.md)** for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.
+The dashboard is **public** - anyone can view AI findings at `/ai` without a wallet. See **[Appendix C: How the AI Oracle Works](ai-oracle.md)** for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.
 
 **Dashboard tabs:**
 

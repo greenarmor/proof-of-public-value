@@ -440,7 +440,7 @@ function TenderAwardCard({ tender, currency, address, canAward, minBids }: { ten
           <p className="text-sm text-slate-400 py-2">No bids yet. Suppliers submit via the Supplier Portal.</p>
         ) : canAward ? (
           <>
-            <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Bids ({bids.length}) — highest final score wins</p>
+            <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wider">Bids ({bids.length}) - highest final score wins</p>
             <div className="space-y-2">
               {bids.map((b: any) => (
                 <div key={Number(b.id)} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm">
@@ -459,7 +459,7 @@ function TenderAwardCard({ tender, currency, address, canAward, minBids }: { ten
         ) : (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
             <p className="text-sm text-amber-700">
-              🔒 {bids.length} bid{bids.length !== 1 ? "s" : ""} submitted — bid details are confidential until the tender is awarded.
+              🔒 {bids.length} bid{bids.length !== 1 ? "s" : ""} submitted - bid details are confidential until the tender is awarded.
             </p>
           </div>
         )}

@@ -393,7 +393,7 @@ export function TransparencyPortal() {
             required
           </p>
         </div>
-        {/* Search — hidden on mobile, shown on desktop */}
+        {/* Search - hidden on mobile, shown on desktop */}
         <div className="hidden md:flex items-center gap-2">
           <input
             type="text"
@@ -421,9 +421,9 @@ export function TransparencyPortal() {
           </Suspense>
         </div>
 
-        {/* Right panel: grid or detail — scrollable on mobile */}
+        {/* Right panel: grid or detail - scrollable on mobile */}
         <div className="flex-1 min-w-0 overflow-y-auto lg:overflow-visible">
-          {/* Mobile search — sticky below map */}
+          {/* Mobile search - sticky below map */}
           <div className="md:hidden sticky top-0 z-10 bg-white pb-2">
             <input
               type="text"
@@ -442,7 +442,7 @@ export function TransparencyPortal() {
             )}
           </div>
           {selected ? (
-            /* PVO Detail — expanded in right panel */
+            /* PVO Detail - expanded in right panel */
             <div>
               <button onClick={() => setSelected(null)} className="btn-ghost mb-4 text-sm">
                 ← Back to all projects
@@ -501,7 +501,7 @@ export function TransparencyPortal() {
                       {(() => {
                         if (!selected.contractor_assigned) {
                           return (
-                            <span className="text-amber-600">TBD — assigned after bidding</span>
+                            <span className="text-amber-600">TBD - assigned after bidding</span>
                           );
                         }
                         return <WalletAddress addr={selected.contractor} />;
@@ -529,7 +529,7 @@ export function TransparencyPortal() {
                 </div>
               </div>
 
-              {/* PVO Progress — same as card grid */}
+              {/* PVO Progress - same as card grid */}
               {pvoFunding[selected.id] &&
                 Number(selected.total_budget) > 0 &&
                 (() => {
@@ -777,7 +777,7 @@ export function TransparencyPortal() {
                         </span>
                       </div>
                     )}
-                    {/* PVO Progress — released / budget */}
+                    {/* PVO Progress - released / budget */}
                     {pvoFunding[pvo.id] &&
                       Number(pvo.total_budget) > 0 &&
                       (() => {

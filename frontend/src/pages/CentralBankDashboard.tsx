@@ -92,7 +92,7 @@ function DirectFundForm({ address }: { address: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
       {txMsg && <div className={`p-3 rounded-lg text-sm ${txMsg.startsWith("Minted") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{txMsg.startsWith("Minted") ? "✅ " : "❌ "}{txMsg}</div>}
-      <p className="text-xs text-amber-600">For National Budget PVOs — mint pPHP directly to Funding Agency. No donor required.</p>
+      <p className="text-xs text-amber-600">For National Budget PVOs - mint pPHP directly to Funding Agency. No donor required.</p>
       <div><label className="block text-sm font-medium text-slate-700 mb-1">PVO ID</label><input type="number" value={pvoId} onChange={e => setPvoId(e.target.value)} className="input" placeholder="1" /></div>
       <div><label className="block text-sm font-medium text-slate-700 mb-1">Amount (in pesos)</label><input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input" placeholder="500000000" />
         {amount && <p className="text-xs text-slate-400 mt-1">= {(Number(amount) * PPHP_SCALE).toLocaleString()} SAC units (₱{Number(amount).toLocaleString()})</p>}
@@ -147,7 +147,7 @@ function PledgeManager({ address }: { address: string }) {
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
 
-      // 1) Mint exact pledged amount to funding agency (separate tx — Freighter rejects multi-op)
+      // 1) Mint exact pledged amount to funding agency (separate tx - Freighter rejects multi-op)
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const mintOp = tokenContract.call(
         "mint",
@@ -229,7 +229,7 @@ function PledgeManager({ address }: { address: string }) {
               <div key={p.id} className="card p-4 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900">
-                    {p.org_name} — PVO #{p.pvo_id}
+                    {p.org_name} - PVO #{p.pvo_id}
                   </p>
                   <p className="text-sm text-slate-500">
                     ₱{pesos.toLocaleString()} pPHP (exact PVO budget)
@@ -273,7 +273,7 @@ function RedeemPanel({ address }: { address: string }) {
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       if (signedResp?.error) throw new Error(signedResp.error.message);
       await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
-      setTxMsg(`Redeemed ${amount} PHP from contractor — burned from circulation`);
+      setTxMsg(`Redeemed ${amount} PHP from contractor - burned from circulation`);
     } catch (err: any) {
       setTxMsg(err.message?.slice(0, 200) || "Failed");
     } finally { setIsBusy(false); }

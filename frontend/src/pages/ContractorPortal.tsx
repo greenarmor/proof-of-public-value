@@ -266,7 +266,7 @@ function ProjectsTab({ address, onSubmitEvidence }: { address: string; onSubmitE
           <div className="text-5xl mb-4">🚧</div>
           <h3 className="font-semibold text-gray-700 mb-1">No projects assigned</h3>
           <p className="text-sm text-gray-400">You are not listed as the contractor on any PVO yet.</p>
-          <p className="text-sm text-gray-400 mt-2">Win a tender to get assigned — go to the <a href="/procurement" className="text-brand-600 hover:underline font-medium">Procurement Marketplace</a> to browse open tenders and submit bids.</p>
+          <p className="text-sm text-gray-400 mt-2">Win a tender to get assigned - go to the <a href="/procurement" className="text-brand-600 hover:underline font-medium">Procurement Marketplace</a> to browse open tenders and submit bids.</p>
         </div>
       )}
       {pvos.map((p) => (
@@ -752,7 +752,7 @@ function HistoryTab({ address }: { address: string }) {
               <td className="px-4 py-3 text-gray-900">{ev.pvoTitle}<br /><span className="text-xs text-gray-400">PVO #{ev.pvoId}</span></td>
               <td className="px-4 py-3 text-gray-900">{ev.milestoneTitle}<br /><span className="text-xs text-gray-400">MS #{ev.milestoneId}</span></td>
               <td className="px-4 py-3"><span className="badge badge-blue">{ev.type}</span></td>
-              <td className="px-4 py-3 font-mono text-xs text-gray-500">{ev.hash ? ev.hash.slice(0, 12) + "..." : "—"}</td>
+              <td className="px-4 py-3 font-mono text-xs text-gray-500">{ev.hash ? ev.hash.slice(0, 12) + "..." : "-"}</td>
               <td className="px-4 py-3">
                 <span className={`badge ${ev.verified ? "badge-green" : "badge-amber"}`}>
                   {ev.verified ? "Verified" : "Pending"}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
@@ -204,6 +204,7 @@ function Header() {
   const { address, connected, connect, disconnect, roles, hasRole, connectMobile } = useWallet();
   const isMobile = useIsMobile();
   const [dashboardsOpen, setDashboardsOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -245,7 +246,7 @@ function Header() {
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
-            {/* Landing page nav — hidden when wallet connected */}
+            {/* Landing page nav - hidden when wallet connected */}
             {!connected &&
               landingItems.map((item) => (
                 <NavLink
@@ -257,7 +258,7 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
-            {/* Public nav — always visible */}
+            {/* Public nav - always visible */}
             {publicItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -284,7 +285,10 @@ function Header() {
 
             {/* Dashboards dropdown */}
             {(visibleRoleItems.length > 0 || visibleSystemItems.length > 0) && (
-              <div className="relative" onMouseLeave={() => setDashboardsOpen(false)}>
+              <div className="relative"
+                onMouseEnter={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); setDashboardsOpen(true); }}
+                onMouseLeave={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); closeTimerRef.current = setTimeout(() => setDashboardsOpen(false), 150); }}
+              >
                 <button
                   onClick={() => setDashboardsOpen((o) => !o)}
                   className={`nav-link ${dashboardsOpen || activeRoleLabel ? "nav-link-active" : "nav-link-inactive"}`}

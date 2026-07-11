@@ -1,4 +1,4 @@
-# Appendix B: pPHP Token — CBDC Model with CentralBank
+# Appendix B: pPHP Token - CBDC Model with CentralBank
 
 How PoPV uses a CentralBank-gated Soroban token to simulate CBDC settlement, with mint and redeem controlled by a dedicated central bank role - not the Administrator.
 

@@ -76,7 +76,7 @@ export function AIDashboard() {
           { label: "Fraud Alerts", value: fraudResults.filter((f) => f.risk_score >= 50).length, color: "text-red-600" },
           { label: "Total Scans", value: fraudResults.length, color: "text-gray-900" },
           { label: "High Risk", value: fraudResults.filter((f) => f.risk_score >= 75).length, color: "text-orange-600" },
-          { label: "Avg Confidence", value: fraudResults.length > 0 ? `${Math.round(fraudResults.reduce((s, r) => s + r.confidence, 0) / fraudResults.length)}%` : "—", color: "text-purple-600" },
+          { label: "Avg Confidence", value: fraudResults.length > 0 ? `${Math.round(fraudResults.reduce((s, r) => s + r.confidence, 0) / fraudResults.length)}%` : "-", color: "text-purple-600" },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-gray-200 rounded-lg p-4">
             <dt className="text-sm text-gray-500">{stat.label}</dt>
@@ -342,7 +342,7 @@ function GeoRiskTab({ pvoId }: { pvoId: number }) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="font-semibold mb-4">Geographic Risk — {risk.region}</h3>
+      <h3 className="font-semibold mb-4">Geographic Risk - {risk.region}</h3>
       <p className="text-sm text-gray-400 mb-6">Flood, seismic, and landslide risk assessment.</p>
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[

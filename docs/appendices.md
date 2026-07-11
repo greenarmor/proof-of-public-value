@@ -149,7 +149,7 @@ A **soulbound reputation token** that tracks citizen trustworthiness. Properties
 
 ### Access Control (access_control)
 
-The **role-based permission system**. Every action in PoPV checks the caller's role before allowing execution. 13 roles:
+The **role-based permission system**. Every action in PoPV checks the caller's role before allowing execution. 14 roles:
 
 | Role | Can Do |
 |------|--------|
@@ -166,6 +166,7 @@ The **role-based permission system**. Every action in PoPV checks the caller's r
 | InternationalDonor | Commit grants, pledge funds |
 | Administrator | System management, role assignment |
 | AIAuditor | Run AI validation on evidence |
+| CentralBank | Mint CBDC pPHP, redeem pPHP, mark grants disbursed |
 
 The access control contract is the **first contract deployed**  -  all other contracts depend on it for role verification.
 
@@ -292,7 +293,7 @@ The **pre-qualification registry**. Contractors and suppliers must register here
 
 ### Deployment Scripts
 
-**Lean Reset** (`.dev-logs/lean-reset.js`): Deploys all 12 contracts fresh, assigns all 13 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.
+**Lean Reset** (`.dev-logs/lean-reset.js`): Deploys all 12 contracts fresh, assigns all 14 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.
 
 **Partial Deploy** (`.dev-logs/partial-deploy.js`): Deploys only the contracts you specify, keeping all others untouched. Calls `update_*_address` admin functions on unchanged contracts to rewire cross-contract references. Roles, reputation scores, and entity registrations on unchanged contracts survive.
 
@@ -455,25 +456,25 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 
 ---
 
-## Provenance Chain — Immutable Audit Trail
+## Provenance Chain - Immutable Audit Trail
 
-> ⚠️ **Optional — Experimental Extension.** The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking — all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.
+> ⚠️ **Optional - Experimental Extension.** The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking - all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.
 
 ### What It Is
 
-The **Provenance Chain** is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its **Stellar transaction hash** — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.
+The **Provenance Chain** is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its **Stellar transaction hash** - an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.
 
 **Think of it as a blockchain-powered paper trail.** Every peso's journey from budget allocation to contractor payment is recorded, timestamped, and linked to a permanent on-chain receipt that can never be altered or deleted.
 
 ### Why It Matters
 
-For **COA auditors**: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction — who approved, when, on which ledger.
+For **COA auditors**: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction - who approved, when, on which ledger.
 
 For **Funding Agencies**: They can verify that escrows they funded actually went through proper verification. No more "trust us, we checked." The proof is on-chain.
 
-For **Citizens**: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public — no wallet, no login needed.
+For **Citizens**: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public - no wallet, no login needed.
 
-For **Anti-Corruption Agencies**: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer — all linked to tx hashes.
+For **Anti-Corruption Agencies**: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer - all linked to tx hashes.
 
 ### Architecture
 
@@ -508,7 +509,7 @@ The data model is hierarchical, matching exactly how public works projects are s
 ```
 PVO #3: Davao Coastal Road (parent)
 ├── Milestone #4: Engineering & Mobilization (child)
-│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
+│   ├── Escrow #1  -  ₱50,000,000 (CompliancePassed)
 │   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
 │   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
 │   ├── Gate 3: Community Oracle       ⬜ pending
@@ -516,7 +517,7 @@ PVO #3: Davao Coastal Road (parent)
 │   └── Gate 5: AI Risk Check          ⬜ pending
 │
 ├── Milestone #5: Structural Base (child)
-│   └── Escrow #2  —  ₱50,000,000 (Created)
+│   └── Escrow #2  -  ₱50,000,000 (Created)
 │       └── ... 5 gates (all pending, no escrow funded yet)
 │
 └── Timeline (chronological events with tx hashes)
@@ -530,7 +531,7 @@ PVO #3: Davao Coastal Road (parent)
 
 ### How Events Are Captured
 
-The indexer calls `server.getEvents()` against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects — the indexer decodes these to extract:
+The indexer calls `server.getEvents()` against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects - the indexer decodes these to extract:
 
 | Event | Source Contract | Key Data Extracted |
 |-------|----------------|-------------------|
@@ -550,10 +551,10 @@ Events are limited to the last ~10,000 ledgers (~19 hours on testnet). For histo
 | Endpoint | Response | Use Case |
 |----------|----------|----------|
 | `GET /api/health` | `{ status, pvoCount, eventCount, lastLedger }` | Monitoring |
-| `GET /api/provenance` | `PVOProvenance[]` — all PVOs | Full overview |
+| `GET /api/provenance` | `PVOProvenance[]` - all PVOs | Full overview |
 | `GET /api/provenance/:pvoId` | Single `PVOProvenance` with milestones + timeline | Detail view |
-| `GET /api/provenance/:pvoId/timeline` | `TimelineEntry[]` — chronological events | Event log |
-| `GET /api/events` | `CapturedEvent[]` — all raw events | Debugging |
+| `GET /api/provenance/:pvoId/timeline` | `TimelineEntry[]` - chronological events | Event log |
+| `GET /api/events` | `CapturedEvent[]` - all raw events | Debugging |
 | `GET /api/events/:contractName` | Events filtered by contract | Targeted audit |
 
 ### Running the Provenance System
@@ -578,8 +579,8 @@ The indexer must be running for the Provenance Explorer to display data. If the 
 
 The Provenance Indexer follows the same principles as the AI Oracle: **no backend, no database, runs anywhere.**
 
-- **No backend** — it's a standalone script that reads from the Stellar blockchain
-- **No database** — stores to a local JSON file that can be wiped and rebuilt
-- **Runs anywhere** — VPS, Raspberry Pi, cron job, or alongside `npm run prod`
-- **Public by default** — the Explorer page has no wallet requirement
-- **Immutable proof** — every tx hash link opens Stellar Expert showing the permanent on-chain record
+- **No backend** - it's a standalone script that reads from the Stellar blockchain
+- **No database** - stores to a local JSON file that can be wiped and rebuilt
+- **Runs anywhere** - VPS, Raspberry Pi, cron job, or alongside `npm run prod`
+- **Public by default** - the Explorer page has no wallet requirement
+- **Immutable proof** - every tx hash link opens Stellar Expert showing the permanent on-chain record

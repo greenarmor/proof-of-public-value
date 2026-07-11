@@ -179,7 +179,7 @@ export function EscrowMonitor() {
                     <span className="text-xs text-red-500 font-medium">↩ Refunded to funder</span>
                   )}
                   {e.status === "Disputed" && (
-                    <span className="text-xs text-red-500 font-medium">⚠ Disputed — funds frozen</span>
+                    <span className="text-xs text-red-500 font-medium">⚠ Disputed - funds frozen</span>
                   )}
                   {e.status === "Ready" && (
                     <span className="text-xs text-brand-600 font-medium">🔓 Ready for release</span>

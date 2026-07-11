@@ -1,17 +1,17 @@
 /**
- * PoPV AI Oracle — Vercel Serverless Function (TypeScript)
+ * PoPV AI Oracle - Vercel Serverless Function (TypeScript)
  *
  * Triggered by Vercel Cron every 5 minutes.
  * Queries Stellar testnet, runs fraud detection, submits results on-chain.
  *
- * Vercel supports .ts serverless functions natively — no build step needed.
+ * Vercel supports .ts serverless functions natively - no build step needed.
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
 
-// Contract IDs — synced with src/config.ts
+// Contract IDs - synced with src/config.ts
 const PVO_CORE = "CCFBBSDV2KEVO4EIEFL5QNS3QZP4VH24RSBWLKANWBC5SYRVCCWM4AVR";
 
 // Set in Vercel Dashboard → Settings → Environment Variables
@@ -145,7 +145,7 @@ async function submitValidation(
     // In production: build, sign, and send the actual transaction
     // using @stellar/stellar-sdk with the AI Auditor secret key
     console.log(
-      `pvo=${pvoId} m#=${milestoneId} passed=${passed} risk=${riskScore} — simulated`
+      `pvo=${pvoId} m#=${milestoneId} passed=${passed} risk=${riskScore} - simulated`
     );
 
     return true;

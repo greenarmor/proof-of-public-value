@@ -7,7 +7,7 @@
 
 ## 🏆 Why This Hackathon Project Exists
 
-The **APAC Stellar Hackathon** challenges builders to create financial infrastructure powered by Stellar's payment rails. The **DeFi & Ecosystem Composability** category asks: how can stablecoins and Soroban smart contracts be combined to build real-world financial systems that don't just move money  -  but enforce accountability?
+The **APAC Stellar Hackathon** challenges builders to create financial infrastructure powered by Stellar's payment rails. The **DeFi & Ecosystem Composability** category asks: how can stablecoins and Soroban smart contracts be combined to build real-world financial systems? We believe they should not just move money  -  they should enforce accountability.
 
 **PoPV answers that question with a system that uses Stellar as the backbone of government transparency.**
 
@@ -71,9 +71,9 @@ pphp_token.redeem() → access_control.has_role(caller, CentralBank)
 grant_commitment.admin_mark_disbursed() → access_control.has_role(caller, CentralBank)
 ```
 
-**Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet IS the production environment.
+**Result:** Anyone can clone the repo, run `npm run build && npm start`, and have a fully functional government accountability platform. No server provisioning. No database setup. No infrastructure. The Stellar testnet serves as the development and demonstration environment for the live demo at www.popv.quest.
 
-### AI Oracle & Provenance Indexer — Independent Services, Every Frontend
+### AI Oracle & Provenance Indexer - Independent Services, Every Frontend
 
 The AI Oracle and Provenance Indexer are the **only off-chain components**. These standalone TypeScript services run independently:
 
@@ -86,9 +86,9 @@ The AI Oracle and Provenance Indexer are the **only off-chain components**. Thes
 
 **Provenance Indexer** (`provenance-indexer/service.ts`):
 
-> ⚠️ **Optional — Experimental Extension.** The Provenance Chain is not required for core PoPV functionality. All gate verification, fund locking, and release logic runs entirely on Stellar Soroban. The provenance indexer was built as an experiment to explore how we can offload query and indexing work from the blockchain, helping Stellar's performance by handling read-heavy audit requests off-chain.  
+> ⚠️ **Optional - Experimental Extension.** The Provenance Chain is not required for core PoPV functionality. All gate verification, fund locking, and release logic runs entirely on Stellar Soroban. The provenance indexer was built as an experiment to explore how we can offload query and indexing work from the blockchain, helping Stellar's performance by handling read-heavy audit requests off-chain.  
 >
-> **Goal:** Eventually run serverless via scheduled functions or edge workers. Right now it runs on a background server reading from Stellar — a stepping stone toward a fully serverless audit trail.
+> **Goal:** Eventually run serverless via scheduled functions or edge workers. Right now it runs on a background server reading from Stellar - a stepping stone toward a fully serverless audit trail.
 
 - Polls Stellar testnet for contract events via SDK `getEvents()`
 - Reads contract state (PVOs, milestones, escrows, audit entries) to build full provenance trees
@@ -188,7 +188,7 @@ Every public project becomes a **Public Value Object (PVO)**  -  a programmable 
 | 2. Compliance | Auditor / COA | Procurement law, budget rules, safety regulations |
 | 3. Community Oracle | Citizens | Verified GPS field reports confirm project exists on the ground |
 | 4. Community Confirmations | Citizens | Must reach the threshold set at escrow creation  -  multiple independent witnesses |
-| 5. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification  —  runs last for maximum data |
+| 5. AI Risk | AI Oracle | Fraud detection, anomaly scanning, metadata verification  -  runs last for maximum data |
 
 If any gate fails, funds remain locked. No single person can release money.
 
@@ -229,7 +229,7 @@ The Government Agency creates a tender from the Agency Dashboard's **"Tender"** 
 
 ### 4. Funding Path A: National Budget (Direct Fund)
 
-For PVOs with fund source "National Budget", the Administrator uses the **Admin Panel's "Direct Fund"** button. This mints pPHP directly to the Funding Agency wallet - no donor needed. Skip to step 6.
+For PVOs with fund source "National Budget", the **CentralBank** uses the **Central Bank Dashboard's "Direct Fund"** tab. This mints CBDC pPHP directly to the Funding Agency wallet - no donor needed. Skip to step 6.
 
 ### 5. Funding Path B: International Donor Pledges Exact PVO Budget
 
@@ -237,11 +237,11 @@ Donors (World Bank, JICA, ADB, etc.) commit grants through the Donor Dashboard. 
 
 The grant status is **Committed**.
 
-### 6. Admin Mints pPHP & Marks Disbursed (Donor Path Only)
+### 6. CentralBank Mints pPHP & Marks Disbursed (Donor Path Only)
 
-From the **Admin/System Panel**, the administrator clicks **"Mint & Disburse"** on a Committed grant. This:
+From the **Central Bank Dashboard**, the CentralBank wallet clicks **"Approve & Mint"** on a Committed grant in the Pledges tab. This:
 
-1. Mints the exact pPHP SAC amount to the Funding Agency's wallet (Transaction 1)
+1. Mints the exact CBDC pPHP amount to the Funding Agency's wallet (Transaction 1)
 2. Marks the grant as **Disbursed** on-chain (Transaction 2)
 
 These are two separate transactions because Freighter only supports one operation per transaction.
@@ -273,8 +273,8 @@ The funding agency deposits the milestone amount into the escrow contract. The e
 
 Each gate is an independent on-chain verification.
 
-**Before the gates — Evidence + Inspector:**
-The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The **Inspector** independently reviews this evidence for quality, clarity, and completeness — submitting an `InspectionReport` on-chain. This report strengthens the Engineer's decision at Gate 1.
+**Before the gates - Evidence + Inspector:**
+The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The **Inspector** independently reviews this evidence for quality, clarity, and completeness - submitting an `InspectionReport` on-chain. This report strengthens the Engineer's decision at Gate 1.
 
 **Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications. References contractor evidence AND the Inspector's independent quality report.
 
@@ -303,12 +303,12 @@ Steps 7-10 repeat for each remaining milestone. After all milestones are release
 
 **National Budget path:**
 ```
-PVO Created → Milestones Defined → Tender → Bids → Award → Direct Fund → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
+PVO Created → Milestones Defined → Tender → Bids → Award → CentralBank Direct Fund → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
 ```
 
 **Donor path:**
 ```
-PVO Created → Milestones Defined → Tender → Bids → Award → Donor Pledges → Admin Mints & Disburses → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
+PVO Created → Milestones Defined → Tender → Bids → Award → Donor Pledges → CentralBank Mints & Disburses → Escrows Created → Funded → 5 Gates → Released → PVO InProgress → All Milestones Released → PVO Completed
 ```
 
 ---
@@ -428,7 +428,7 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 │                                                              │
 │  ┌─────────────────┐     ┌─────────────────────────────┐   │
 │  │  access_control  │────▶│        pvo_core              │   │
-│  │  13 roles        │     │  PVO + Milestones + Budget   │   │
+│  │  14 roles        │     │  PVO + Milestones + Budget   │   │
 │  └─────────────────┘     │  + Evidence + Status Flow    │   │
 │                           └──────────┬──────────────────┘   │
 │                                      │                       │
@@ -478,7 +478,7 @@ Citizens need RPT tokens (minimum balance: 1) to submit field reports. This is a
 | `pPHP SAC` | `CCJRB...A32X` | 8 | 8 |
 | `grant_commitment` | See config.ts | 8 | 15 |
 
-**62 tests (pvo_core + escrow + procurement_market + grant_commitment) all passing.**
+**74 tests (pvo_core + escrow + procurement_market + grant_commitment + access_control) all passing.**
 
 Contract IDs are in `frontend/src/config.ts` and auto-updated by the lean-reset or partial-deploy scripts.
 
@@ -518,6 +518,7 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the lean-reset 
 | 11 | InternationalDonor | international_donor | `GBUI4XJKULCT25R4TVDYFIJXV74FTR65WYCP3F4XYAC6DQ4LHUYBEV44` |
 | 12 | AIAuditor | ai_auditor | `GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW` |
 | 13 | Citizen | citizen | `GCLKPYQALOM6WKX3LSJ3OA2STGPZIOZY4B6NUDPWJHTFRSMBLJEJE4ES` |
+| 14 | CentralBank | central_bank | `GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO` |
 
 All wallets funded via Friendbot. Roles assigned on-chain via `access_control`. Citizens 1–4 receive 100 RPT tokens each.
 
@@ -536,7 +537,7 @@ npx tsx provenance-indexer/service.ts   # → API on http://127.0.0.1:3111
 stellar contract build
 
 # Run all tests
-cargo test -p pvo_core -p escrow -p procurement_market -p grant_commitment   # 62 tests
+cargo test -p pvo_core -p escrow -p procurement_market -p grant_commitment -p access_control   # 74 tests
 
 # Full system reset (all 12 contracts)
 node .dev-logs/lean-reset.js     # ~8 min
@@ -549,11 +550,12 @@ node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 
 ## Roles & Responsibilities
 
-PoPV uses 13 on-chain roles managed by the `access_control` contract. Every action requires the correct role  -  no role can bypass another's gate.
+PoPV uses 14 on-chain roles managed by the `access_control` contract. Every action requires the correct role  -  no role can bypass another's gate.
 
 | Role | Dashboard | Core Actions | Purpose |
 |------|-----------|-------------|---------|
-| **Administrator** | System Panel | Assign roles, mint RPT, mint pPHP, mark grants disbursed | System governance, token issuance |
+| **Administrator** | System Panel | Assign roles, system governance | System management, role assignment |
+| **CentralBank** | Central Bank Dashboard | Mint CBDC pPHP (national budget + donor pledges), redeem pPHP for contractor cash-out, mark grants disbursed | Monetary authority, CBDC supply control |
 | **GovernmentAgency** | Agency Dashboard | Create PVOs, define milestones with budgets + evidence types | Project definition, budget planning |
 | **FundingAgency** | Funding Agency Dashboard | Create escrows, fund escrows, view donor commitments, provenance explorer | Lock funds behind 5-gate verification |
 | **InternationalDonor** | Donor Dashboard | Pledge grants (exact-match PVO budget), commit pPHP | Fund projects conditionally |
@@ -563,20 +565,20 @@ PoPV uses 13 on-chain roles managed by the `access_control` contract. Every acti
 | **CommissionOnAudit** | COA Dashboard | Final compliance sign-off, audit trail review, provenance explorer | Government audit oversight |
 | **AIAuditor** | AI Dashboard | Run AI validation on evidence, assign risk scores | Fraud/anomaly detection gate |
 | **Citizen** | Citizen Report Form | Submit GPS-tagged field reports, verify others' reports | Community verification gate |
-| **Inspector** | Inspector Panel | Submit independent InspectionReports, verify drone/GPS/photo quality, flag substandard evidence | Independent evidence quality — strengthens Engineer's Gate 1 decision |
+| **Inspector** | Inspector Panel | Submit independent InspectionReports, verify drone/GPS/photo quality, flag substandard evidence | Independent evidence quality - strengthens Engineer's Gate 1 decision |
 
-### The Inspector Role — Independent Evidence Verification
+### The Inspector Role - Independent Evidence Verification
 
 The **Inspector** is a unique role: they are part of the verification system but do **not** hold a dedicated escrow gate. Instead, they provide **independent evidence quality assurance** that strengthens the Engineer's decision at Gate 1.
 
 **What the Inspector does:**
 - Reviews contractor-submitted evidence (drone imagery, GPS coordinates, timestamped photos, engineering reports)
 - Validates evidence quality: image clarity, GPS precision, report completeness
-- Submits `InspectionReport` evidence to the `pvo_core` contract — an independent, timestamped, on-chain record
+- Submits `InspectionReport` evidence to the `pvo_core` contract - an independent, timestamped, on-chain record
 - Flags substandard or suspicious evidence for further investigation
 
 **Why no dedicated gate?**
-The Inspector's reports are **advisory** — they inform the Engineer's decision but don't independently lock/unlock funds. This is by design:
+The Inspector's reports are **advisory** - they inform the Engineer's decision but don't independently lock/unlock funds. This is by design:
 - **Engineer (Gate 1)**: has the authority to approve/reject based on physical inspection PLUS Inspector reports
 - **Inspector**: provides the evidence baseline the Engineer needs to make an informed decision
 
@@ -589,7 +591,7 @@ Step 9b: Inspector reviews and submits InspectionReport        ← independent a
 Step 10: Engineer reviews contractor evidence + Inspector's report → Approves or Rejects (Gate 1)
 ```
 
-This creates a **two-layer technical verification**: the Inspector provides the objective evidence assessment, and the Engineer provides the professional judgment. Together they prevent rubber-stamping — the Engineer can't just "approve everything" when there's an independent Inspector report on file showing quality issues.
+This creates a **two-layer technical verification**: the Inspector provides the objective evidence assessment, and the Engineer provides the professional judgment. Together they prevent rubber-stamping - the Engineer can't just "approve everything" when there's an independent Inspector report on file showing quality issues.
 | **Supplier** | Procurement Market | Register in pre-qualification registry | Supply chain transparency |
 | **AntiCorruptionAgency** | Anti-Corruption Dashboard | Raise disputes, investigate flagged projects, review audit trails | Corruption investigation |
 
@@ -639,14 +641,28 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 | Step | Action | Tab | Notes |
 |------|--------|-----|-------|
 | 1 | Connect alice wallet |  -  | |
-| 2 | Go to System Panel → **Roles** | Roles | See all 13 roles with assigned wallets |
+| 2 | Go to System Panel -> **Roles** | Roles | See all 14 roles with assigned wallets |
 | 3 | Assign a new role | Click "Assign Role" | Enter wallet + select role |
-| 4 | Go to **Pledges** | Pledges | See Committed donor grants |
-| 5 | Click **"Mint & Disburse"** on a grant |  -  | Sign 2 Freighter popups: mint pPHP + mark disbursed |
-| 6 | Go to **Health** | Health | System health dashboard |
-| 7 | Go to **Settings** | Settings | Change currency symbol |
+| 4 | Go to **Health** | Health | System health dashboard |
+| 5 | Go to **Settings** | Settings | Change currency symbol |
 
-**What happens:** The admin mints pPHP into existence and sends it to the Funding Agency wallet. The grant moves from Committed → Disbursed. The Funding Agency can now create escrows.
+> **Note:** Pledge approval and pPHP minting have moved to the **CentralBank** role (Exercise 2b below). The Administrator manages roles and system config only.
+
+### Exercise 2b: CentralBank  -  Mint CBDC pPHP & Approve Pledges
+
+**Role:** CentralBank  
+**Wallet:** central_bank (`GBRDP6...BBBHO`)  
+**Dashboard:** Central Bank Dashboard (`/central-bank`)
+
+| Step | Action | Tab | Notes |
+|------|--------|-----|-------|
+| 1 | Connect central_bank wallet |  -  | |
+| 2 | Go to Central Bank Dashboard -> **Direct Fund** | Direct Fund | Mint CBDC pPHP to Funding Agency (national budget) |
+| 3 | Go to **Pledges** | Pledges | See Committed donor grants |
+| 4 | Click **"Approve & Mint"** on a grant |  -  | Sign 2 Freighter popups: mint pPHP + mark disbursed |
+| 5 | Go to **Redeem** | Redeem | Burn pPHP when contractor cashes out |
+
+**What happens:** The CentralBank mints CBDC pPHP into existence and sends it to the Funding Agency wallet. The grant moves from Committed -> Disbursed. The Funding Agency can now create escrows.
 
 ---
 
@@ -876,7 +892,7 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 | 3 | GovernmentAgency | Create Tender when milestones cover full budget ("Tender" button replaces "+ Add") |
 | 4 | Contractor | Browse tenders at `/procurement`, submit a bid (price, quality, timeline) |
 | 5 | GovernmentAgency | Award tender from the Award tab (auto-picks highest bid, assigns contractor) |
-| 6 | Administrator | Direct Fund: mint pPHP to Funding Agency (Admin Panel, "Direct Fund" button) |
+| 6 | CentralBank | Direct Fund: mint CBDC pPHP to Funding Agency (Central Bank Dashboard, "Direct Fund" tab) |
 | 7 | FundingAgency | Go to "Awarded PVOs" tab, expand the PVO, click "Escrow" on milestone 1 |
 | 8 | FundingAgency | Fund the escrow (Escrows tab, "Fund Escrow" button) |
 | 9 | Contractor | Submit evidence for milestone 1 |
@@ -897,14 +913,14 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 |---|------|--------|
 | 1-5 | Same as Path A | Create PVO, milestones, tender, bid, award |
 | 6 | InternationalDonor | Pledge exact PVO budget (Donor Dashboard) |
-| 7 | Administrator | Mint & Disburse the grant (Admin Panel, "Mint & Disburse") |
+| 7 | CentralBank | Approve & Mint the grant (Central Bank Dashboard, "Pledges" tab) |
 | 8-16 | Same as Path A steps 7-16 | Create escrows, fund, pass 5 gates, release, repeat |
 
 **Key verification:** After step 14, the PVO status is **InProgress**  -  NOT Completed. The budget check prevents premature completion. Only when all milestones are released and their budgets fully cover the PVO budget does it transition to Completed.
 
 ---
 
-### Exercise 14: Provenance Explorer  —  Complete Audit Trail with TX Hashes
+### Exercise 14: Provenance Explorer  -  Complete Audit Trail with TX Hashes
 
 **Roles:** FundingAgency, CommissionOnAudit, Auditor, Administrator  
 **Dashboards:** Provenance Explorer (`/provenance`)  
@@ -929,14 +945,14 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 ```
 PVO (parent)
 ├── Milestone 1 (child)
-│   ├── Escrow #1  —  ₱50M (CompliancePassed)
+│   ├── Escrow #1  -  ₱50M (CompliancePassed)
 │   ├── Gate 1: Engineer Approval      ✅ passed  tx=f64a0a72...  🔗 View on Stellar Expert
 │   ├── Gate 2: Compliance Check       ✅ passed  tx=8d38e2b0...  🔗 View on Stellar Expert
 │   ├── Gate 3: Community Oracle       ⬜ pending
 │   ├── Gate 4: Community Confirm      ⬜ pending
 │   └── Gate 5: AI Risk Check          ⬜ pending
 ├── Milestone 2 (child)
-│   └── Escrow #2  —  ₱50M (Created)
+│   └── Escrow #2  -  ₱50M (Created)
 │       └── ... 5 gates (all pending)
 └── Timeline
     ├── PVO created                    tx=3d54e07b...  🔗
@@ -946,9 +962,9 @@ PVO (parent)
     └── Escrow #1 → EngineerApproved   tx=f64a0a72...  🔗
 ```
 
-**What happens:** Every decision in the system is recorded on-chain with a Stellar transaction hash. The Provenance Indexer builds the complete audit trail independently  —  no backend, no database, just Stellar events and contract state. COA auditors, funding agencies, and administrators can trace every peso from budget allocation through all 5 gates to final release, with immutable tx hash proof.
+**What happens:** Every decision in the system is recorded on-chain with a Stellar transaction hash. The Provenance Indexer builds the complete audit trail independently  -  no backend, no database, just Stellar events and contract state. COA auditors, funding agencies, and administrators can trace every peso from budget allocation through all 5 gates to final release, with immutable tx hash proof.
 
-**If the service is offline:** A yellow warning box shows the exact command to start it. The Provenance Explorer respects the "no backend, no database" philosophy  —  the indexer just reads from the blockchain, which is always available.
+**If the service is offline:** A yellow warning box shows the exact command to start it. The Provenance Explorer respects the "no backend, no database" philosophy  -  the indexer just reads from the blockchain, which is always available.
 
 ---
 

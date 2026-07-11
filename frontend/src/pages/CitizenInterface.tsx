@@ -187,7 +187,7 @@ function CitizenBrowse() {
       try {
         await server.sendTransaction(signedTx);
       } catch (e: any) {
-        // Ignore result parsing errors — transaction was submitted
+        // Ignore result parsing errors - transaction was submitted
         if (!e.message?.includes("switch") && !e.message?.includes("undefined")) throw e;
       }
       setVmsg(`Report #${reportId} verified with weight ${weight}! ✅`);

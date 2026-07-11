@@ -118,7 +118,7 @@ function AuditTrailTab() {
                 </span>
               </td>
               <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={e.actor} chars={4}/></td>
-              <td className="px-4 py-3 text-xs text-slate-600 max-w-[300px] truncate">{e.rationale || "—"}</td>
+              <td className="px-4 py-3 text-xs text-slate-600 max-w-[300px] truncate">{e.rationale || "-"}</td>
             </tr>
           ))}
         </tbody>
@@ -340,7 +340,7 @@ function ViolationsTab() {
                 <span className="text-xs text-slate-400">PVO #{Number(v.pvo_id)}</span>
               </div>
               <p className="font-medium text-slate-900">{v.description || "Compliance violation"}</p>
-              <p className="text-xs text-slate-400 mt-1">Rule: {v.rule_id || "—"}</p>
+              <p className="text-xs text-slate-400 mt-1">Rule: {v.rule_id || "-"}</p>
             </div>
             <span className="badge badge-red">Active</span>
           </div>

@@ -66,7 +66,7 @@ export function AgencyDashboard() {
       <Modal open={milestoneModal} onClose={() => { setMilestoneModal(false); setRefreshKey(k => k + 1); }} title="Define Milestone">
         <CreateMilestoneForm address={address!} prefillPvoId={prefillMilestonePvoId || undefined} onDone={() => { setMilestoneModal(false); setPrefillMilestonePvoId(0); setRefreshKey(k => k + 1); }} />
       </Modal>
-      <Modal open={tenderModal} onClose={() => setTenderModal(false)} title="Create Tender — All Milestones">
+      <Modal open={tenderModal} onClose={() => setTenderModal(false)} title="Create Tender - All Milestones">
         {tenderPvoId > 0 && <TenderForm pvoId={tenderPvoId} address={address!} onDone={() => { setTenderModal(false); setTenderPvoId(0); }} />}
       </Modal>
     </div>
@@ -78,6 +78,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
   const [loading, setLoading] = useState(true);
   const [pvoFunding, setPvoFunding] = useState<Record<number, { funded: number; escrowed: number; released: number }>>({});
   const [pvoMilestoneBudgets, setPvoMilestoneBudgets] = useState<Record<number, number>>({});
+  const [pvoCompleted, setPvoCompleted] = useState<Record<number, boolean>>({});
   const [selectedPvo, setSelectedPvo] = useState<number | null>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [mlLoading, setMlLoading] = useState(false);
@@ -97,6 +98,28 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
           } catch {}
         }
         setPvos(list);
+
+        // Check escrow release status per PVO to compute Completed
+        const { Client: EscrowClient } = await import("../contracts/escrow/src");
+        const escClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const completedMap: Record<number, boolean> = {};
+        for (const pvo of list) {
+          const pid = Number(pvo.id);
+          try {
+            const milestones = (await client.get_pvo_milestones({ pvo_id: pid })).result || [];
+            let escList: any[] = [];
+            try { escList = ((await escClient.get_escrows_by_pvo({ pvo_id: pid })).result || []) as any[]; } catch {}
+            let releasedCount = 0;
+            for (const m of milestones) {
+              const esc = escList.find((e: any) => Number(e.milestone_id) === Number(m.id));
+              if (esc && (esc.status?.tag === "Released" || esc.status === "Released")) {
+                releasedCount++;
+              }
+            }
+            completedMap[pid] = releasedCount > 0 && releasedCount === milestones.length;
+          } catch {}
+        }
+        setPvoCompleted(completedMap);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     })();
@@ -209,7 +232,12 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
                     return null;
                   })()}
                 </td>
-                <td className="px-4 py-3"><span className="badge badge-blue text-xs">{statusToString(p.status)}</span></td>
+                <td className="px-4 py-3">{(() => {
+                    const isCompleted = pvoCompleted[Number(p.id)] === true;
+                    const displayStatus = isCompleted ? "Completed" : statusToString(p.status);
+                    const badgeColor = isCompleted ? "badge-green" : "badge-blue";
+                    return <span className={`badge ${badgeColor} text-xs`}>{displayStatus}</span>;
+                  })()}</td>
               </tr>
               {selectedPvo === Number(p.id) && (
                 <tr key={`ml-${p.id}`}>
@@ -397,7 +425,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Contractor</label>
-          <input type="text" value="TBD — assigned after bidding" readOnly className="input text-slate-400 cursor-not-allowed" />
+          <input type="text" value="TBD - assigned after bidding" readOnly className="input text-slate-400 cursor-not-allowed" />
           <p className="text-xs text-amber-600 mt-1">Contractor will be assigned on-chain after the bidding process is complete.</p>
         </div>
         <div>
@@ -449,7 +477,7 @@ function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string
         new Address(address).toScVal(),
         nativeToScVal(pvoId, { type: "u32" }),
         nativeToScVal(0, { type: "u32" }), // milestone_id=0 = all milestones
-        xdr.ScVal.scvString(`PVO #${pvoId} — ${pvoTitle}`),
+        xdr.ScVal.scvString(`PVO #${pvoId} - ${pvoTitle}`),
         xdr.ScVal.scvString(desc || "Whole project tender for PVO #" + pvoId),
         new ScInt(Number(pvoBudget) || 1).toI128(),
         nativeToScVal(dl, { type: "u64" }),
@@ -475,8 +503,8 @@ function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {txMsg && <div className={`p-3 rounded-lg text-sm ${txState === "done" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{txState === "done" ? "✅ " : "❌ "}{txMsg}</div>}
-      <div><p className="text-xs text-amber-600 mb-2">Tender for PVO #{pvoId} — covers all milestones. Contractors bid on the whole project.</p></div>
-      <div><label className="block text-sm font-medium text-gray-700 mb-1">Tender Title</label><input type="text" value={`PVO #${pvoId} — ${pvoTitle}`} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
+      <div><p className="text-xs text-amber-600 mb-2">Tender for PVO #{pvoId} - covers all milestones. Contractors bid on the whole project.</p></div>
+      <div><label className="block text-sm font-medium text-gray-700 mb-1">Tender Title</label><input type="text" value={`PVO #${pvoId} - ${pvoTitle}`} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed" /></div>
       <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={desc} onChange={e => setDesc(e.target.value)} className="input" rows={2} placeholder="Describe the scope of work..." /></div>
       <div className="grid grid-cols-2 gap-4">
         <div><label className="block text-sm font-medium text-gray-700 mb-1">Est. Budget (SAC units)</label><input type="text" value={pvoBudget} readOnly className="input bg-gray-50 text-gray-500 cursor-not-allowed font-mono" />

@@ -125,18 +125,31 @@ const ROLES = [
     ],
   },
   {
+    id: "central_bank",
+    title: "Central Bank (CBDC)",
+    icon: "🏦",
+    color: "bg-amber-600",
+    desc: "Control the CBDC (Central Bank Digital Currency) monetary supply. pPHP is the on-chain Philippine Peso. Mint it for national budgets and donor pledges. Redeem it when contractors cash out. You are the monetary authority.",
+    steps: [
+      "Connect the Central Bank wallet in Freighter",
+      "Go to Central Bank Dashboard",
+      "Direct Fund tab: mint CBDC pPHP to Funding Agency for national budget allocation",
+      "Pledges tab: approve donor pledges by minting CBDC pPHP and marking grants as disbursed",
+      "Redeem tab: burn CBDC pPHP when contractors cash out their escrow payments",
+      "Every CBDC mint, transfer, and burn is recorded on-chain for full monetary transparency",
+    ],
+  },
+  {
     id: "admin",
     title: "Administrator",
     icon: "👑",
     color: "bg-red-500",
-    desc: "Manage the system. Assign roles. Mint RPT tokens. Mark grants as disbursed. System governance.",
+    desc: "Manage the system. Assign roles. System governance.",
     steps: [
       "Connect the Administrator (alice) wallet in Freighter",
-      "Go to System Panel → Roles tab",
+      "Go to System Panel -> Roles tab",
       "Assign roles to wallet addresses",
-      "Go to Pledges tab  -  click Mint & Disburse on Committed grants",
-      "Sign two Freighter transactions: mint pPHP + mark disbursed",
-      "Go to Health tab  -  monitor system status",
+      "Go to Health tab -> monitor system status",
     ],
   },
 ];
@@ -175,6 +188,10 @@ const DEMO_WALLETS: Record<string, { public: string; label: string }> = {
     public: "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
     label: "Administrator (alice)",
   },
+  central_bank: {
+    public: "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO",
+    label: "Central Bank",
+  },
 };
 
 export function RolePlayOnboarding() {
@@ -191,8 +208,9 @@ export function RolePlayOnboarding() {
         <h1 className="text-4xl font-extrabold text-slate-900 mb-3">🏛️ Role-Play PoPV</h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto">
           Governments are custodians of public wealth - not owners. Proof of Public Value proves
-          that with the right tools, accountability becomes the default, not the exception. Built on
-          Stellar. The Philippines is our case study. Any government can use it.
+          that with the right tools, accountability becomes the default, not the exception. Powered
+          by CBDC (Central Bank Digital Currency) on Stellar. The Philippines is our case study. Any
+          government can use it.
         </p>
         <div className="flex items-center justify-center gap-3 mt-6">
           <a
@@ -514,6 +532,12 @@ export function RolePlayOnboarding() {
                       className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
                     >
                       📸 Citizen Report
+                    </a>
+                    <a
+                      href="/central-bank"
+                      className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                    >
+                      🏦 Central Bank
                     </a>
                     <a
                       href="/admin"

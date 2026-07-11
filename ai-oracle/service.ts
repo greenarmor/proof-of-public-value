@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PoPV AI Oracle v2 — LLM-Powered Fraud Detection Engine
+ * PoPV AI Oracle v2 - LLM-Powered Fraud Detection Engine
  *
  * Watches Stellar testnet for escrows that need AI validation (Gate 5).
  * Sends PVO + milestone + evidence data to an LLM for fraud analysis.
@@ -11,13 +11,13 @@
  *   npx tsx ai-oracle/service.ts              # poll every 60s
  *
  * LLM Config (env vars):
- *   AI_LLM_API_KEY      — API key (OpenAI, Groq, DeepSeek, etc.)
- *   AI_LLM_BASE_URL     — defaults to https://api.openai.com/v1
- *   AI_LLM_MODEL        — defaults to gpt-4o-mini
+ *   AI_LLM_API_KEY      - API key (DeepSeek, OpenAI, Groq, etc.)
+ *   AI_LLM_BASE_URL     - defaults to https://api.deepseek.com/v1
+ *   AI_LLM_MODEL        - defaults to deepseek-chat
  *
  * Wallet Config:
- *   AI_AUDITOR_SECRET    — AI Auditor wallet secret key
- *   AI_AUDITOR_SOURCE    — read-only account for contract queries
+ *   AI_AUDITOR_SECRET    - AI Auditor wallet secret key
+ *   AI_AUDITOR_SOURCE    - read-only account for contract queries
  *
  * Falls back to rule-based analysis if LLM is unavailable.
  */
@@ -58,8 +58,8 @@ const CREDS_PATH = join(__dirname, "..", ".dev-logs", "newrolecreden.md");
 
 // LLM config
 const LLM_API_KEY = process.env.AI_LLM_API_KEY ?? "";
-const LLM_BASE_URL = process.env.AI_LLM_BASE_URL ?? "https://api.openai.com/v1";
-const LLM_MODEL = process.env.AI_LLM_MODEL ?? "gpt-4o-mini";
+const LLM_BASE_URL = process.env.AI_LLM_BASE_URL ?? "https://api.deepseek.com/v1";
+const LLM_MODEL = process.env.AI_LLM_MODEL ?? "deepseek-chat";
 
 // ── Types ───────────────────────────────────────────────
 interface Evidence {
@@ -271,13 +271,13 @@ async function poll(): Promise<void> {
         if (!escrow) continue;
 
         const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
-        // AI risk check is Gate 5 — run after CommunityVerified or when escrow is Ready
+        // AI risk check is Gate 5 - run after CommunityVerified or when escrow is Ready
         if (escrow.conditions?.ai_risk_check === true) continue;
         if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") continue;
 
         const pvoId = Number(escrow.pvo_id);
         const milestoneId = Number(escrow.milestone_id);
-        console.log(`  🎯 Escrow #${escrowId} — PVO #${pvoId} M#${milestoneId} (${status})`);
+        console.log(`  🎯 Escrow #${escrowId} - PVO #${pvoId} M#${milestoneId} (${status})`);
 
         const pvoRaw = cli(
           `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${READ_SOURCE} --network testnet -- get_pvo --pvo_id ${pvoId}`
@@ -328,7 +328,7 @@ async function poll(): Promise<void> {
             result = await analyzeWithLLM(
               pvoTitle, m.title ?? "", m.description ?? "", budget, evidence
             );
-            console.log(`  🤖 LLM: risk=${result.riskScore} flags=${result.flags.join(",") || "none"} — ${result.reasoning}`);
+            console.log(`  🤖 LLM: risk=${result.riskScore} flags=${result.flags.join(",") || "none"} - ${result.reasoning}`);
           } catch {
             result = analyzeRuleBased(evidence);
             console.log(`  📏 Rule: risk=${result.riskScore} flags=${result.flags.join(",") || "none"}`);
@@ -340,7 +340,7 @@ async function poll(): Promise<void> {
 
         submitValidation(pvoId, milestoneId, escrowId, result.passed);
       } catch {
-        // Malformed escrow data — skip
+        // Malformed escrow data - skip
       }
     }
   } catch (e: unknown) {

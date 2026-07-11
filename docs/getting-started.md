@@ -28,13 +28,14 @@ Every infrastructure project has exactly one PVO.
 
 ### Roles
 
-PoPV uses 13 roles. Different roles can do different things:
+PoPV uses 14 roles. Different roles can do different things:
 
 ➡️ **See the [Role Guide](role-guide.md)** for detailed information about each role's dashboard, contracts, and capabilities.
 
 | Role | What They Do |
 |------|-------------|
 | Administrator | Manage role assignments, system config |
+| CentralBank | Mint CBDC pPHP, redeem pPHP, mark grants disbursed |
 | GovernmentAgency | Create PVOs, allocate budget, manage procurement |
 | Contractor | Execute projects, submit evidence |
 | Engineer | Approve milestone completion |
@@ -60,7 +61,7 @@ List your configured identities:
 stellar keys ls
 ```
 
-You should see all 13 role identities (pre-configured for this manual):
+You should see all 14 role identities (pre-configured for this manual):
 
 ??? success "Expected Output"
     ```
@@ -77,11 +78,12 @@ You should see all 13 role identities (pre-configured for this manual):
     international_donor
     ai_auditor
     citizen
+    central_bank
     ```
 
 ### Exercise 1.2: Testnet Demo Wallets
 
-All 13 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in `.dev-logs/role-credentials.md` (gitignored).
+All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in `.dev-logs/role-credentials.md` (gitignored).
 
 | # | Alias | Role | Public Key |
 |---|-------|------|-----------|

@@ -374,7 +374,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
             </button>
             {pphpBalance !== null && !hasEnough && (
               <span className="text-xs text-red-500 self-center">
-                ⚠️ Insufficient pPHP — you have {(balanceUnits! / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})} pPHP
+                ⚠️ Insufficient pPHP - you have {(balanceUnits! / 10_000_000).toLocaleString(undefined, {maximumFractionDigits: 2})} pPHP
               </span>
             )}
           </>
@@ -650,7 +650,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
           )}
           {pvoId && budget > 0 && !isDonorFunded && (
             <div className="bg-blue-50 rounded-xl p-3 text-xs">
-              <span className="text-blue-600"><strong>National Budget PVO</strong> — funded directly by the government, no donor pledges needed.</span>
+              <span className="text-blue-600"><strong>National Budget PVO</strong> - funded directly by the government, no donor pledges needed.</span>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
@@ -925,7 +925,7 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
         <div className="text-5xl mb-4">📋</div>
         <h3 className="font-semibold text-slate-700 mb-1">No donor commitments yet</h3>
         <p className="text-sm text-slate-400">When international donors commit grant funding, their pledges appear here.</p>
-        <p className="text-xs text-amber-600 mt-2">For National Budget PVOs, use the <strong>Awarded PVOs</strong> tab instead — funding comes directly from the Administrator.</p>
+        <p className="text-xs text-amber-600 mt-2">For National Budget PVOs, use the <strong>Awarded PVOs</strong> tab instead - funding comes directly from the Administrator.</p>
       </div>
     );
   }
@@ -973,10 +973,10 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
                   <div className="flex items-center gap-3 w-full">
                     <div>
                       {status === "Committed" && (
-                        <p className="text-xs text-purple-600 font-medium">Donor pledged — awaiting admin mint</p>
+                        <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting admin mint</p>
                       )}
                       {status === "Disbursed" && (
-                        <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency — ready for escrow</p>
+                        <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency - ready for escrow</p>
                       )}
                       <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Est. Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
                     </div>
@@ -1011,18 +1011,18 @@ function EscrowGuide() {
     { n: 0, title: "Funding Arrives at FA", icon: "🏦", desc: "Donor path: Donor pledges → transfers foreign currency to CentralBank → CentralBank mints pPHP to FA + marks disbursed. National Budget path: GovernmentAgency creates PVO → CentralBank Direct Fund mints pPHP to FA directly.", actor: "CentralBank" },
     { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with awarded contractor (auto-filled, read-only), PVO, milestone, amount (auto-filled from winning bid divided by milestone count), and sets Community Confirmations threshold.", actor: "FundingAgency" },
     { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
-    { n: 3, title: "Gate 1 — Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
-    { n: 4, title: "Gate 2 — Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
-    { n: 5, title: "Gate 3 — Community Oracle", icon: "📊", desc: "Citizen submits GPS-tagged field report. Report must be verified through the Community Oracle to prove real-world project existence.", actor: "Citizens" },
-    { n: 6, title: "Gate 4 — Community Confirm", icon: "📸", desc: "Citizens confirm the milestone. Each verified confirmation increments the counter. Must reach the threshold set at escrow creation.", actor: "Citizens" },
-    { n: 7, title: "Gate 5 — AI Risk Check", icon: "🤖", desc: "AI oracle runs LAST for maximum data analysis. Validates evidence and assigns a risk score. Must pass for release.", actor: "AIAuditor" },
+    { n: 3, title: "Gate 1 - Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
+    { n: 4, title: "Gate 2 - Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
+    { n: 5, title: "Gate 3 - Community Oracle", icon: "📊", desc: "Citizen submits GPS-tagged field report. Report must be verified through the Community Oracle to prove real-world project existence.", actor: "Citizens" },
+    { n: 6, title: "Gate 4 - Community Confirm", icon: "📸", desc: "Citizens confirm the milestone. Each verified confirmation increments the counter. Must reach the threshold set at escrow creation.", actor: "Citizens" },
+    { n: 7, title: "Gate 5 - AI Risk Check", icon: "🤖", desc: "AI oracle runs LAST for maximum data analysis. Validates evidence and assigns a risk score. Must pass for release.", actor: "AIAuditor" },
     { n: 8, title: "Release or Dispute", icon: "🔓", desc: "Once all 5 gates pass (Ready), anyone can trigger release. Contractor receives pPHP visible in Freighter. Dispute can be raised anytime before release.", actor: "Any Role" },
   ];
 
   return (
     <div className="max-w-2xl">
       <div className="card p-6 mb-4">
-        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System — Two Funding Paths</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">5-Gate Escrow System - Two Funding Paths</h2>
         <p className="text-sm text-slate-500 mb-3">
           Every escrow passes through 5 independent verification gates before funds can be released.
           There are two ways pPHP reaches the Funding Agency wallet:
@@ -1053,7 +1053,7 @@ function EscrowGuide() {
         <p className="text-sm text-amber-700">
           When creating an escrow, the funding agency sets how many <strong>verified citizen GPS field reports</strong> are required to unlock the final gate.
           Each citizen must visit the project site, submit a report with GPS coordinates and evidence, and have it verified by the Community Oracle.
-          Only verified reports count. Set a higher number for projects in high-corruption areas — this forces multiple independent on-the-ground verifications before any peso is released.
+          Only verified reports count. Set a higher number for projects in high-corruption areas - this forces multiple independent on-the-ground verifications before any peso is released.
         </p>
       </div>
       <div className="space-y-3">
