@@ -691,9 +691,10 @@ export function ProvenanceExplorer() {
         >
           ↻ Refresh
         </button>
-        <label className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-          📂 Import Store
-          <input type="file" accept=".json" className="hidden" onChange={(e) => {
+        {(typeof window !== "undefined" && window.location.hostname === "localhost") && (
+          <label className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+            📂 Import Store
+            <input type="file" accept=".json" className="hidden" onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
             const reader = new FileReader();
@@ -712,6 +713,7 @@ export function ProvenanceExplorer() {
             reader.readAsText(file);
           }} />
         </label>
+        )}
       </div>
 
       <div className="space-y-3">
