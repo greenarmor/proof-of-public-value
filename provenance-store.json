@@ -1,6 +1,6 @@
 {
-  "lastUpdated": 1783769760036,
-  "lastLedger": 3550715,
+  "lastUpdated": 1783770679344,
+  "lastLedger": 3550899,
   "earliestLedger": 3429104,
   "pvoCount": 15,
   "escrowCount": 2,
@@ -1159,8 +1159,8 @@
   ],
   "events": [
     {
-      "ledger": 3550621,
-      "ledgerClosedAt": "2026-07-11T11:27:19Z",
+      "ledger": 3550896,
+      "ledgerClosedAt": "2026-07-11T11:50:16Z",
       "contract": "ai_oracle",
       "contractId": {
         "_id": {
@@ -1202,10 +1202,10 @@
         }
       },
       "eventName": "risk_predicted_event",
-      "txHash": "0f6c99550d251de36122a92d3d73120ac6208e9d59ad5bca6c9bf935b18f4a97",
+      "txHash": "08f51f6eb0028bfbc806bfdb9c202de1eb4cd1e8e3a814ae8d6ce7601e842710",
       "data": {
         "contractor": "[object Object]",
-        "risk_category": 2
+        "risk_category": 3
       }
     },
     {
