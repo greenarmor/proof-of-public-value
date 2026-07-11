@@ -115,7 +115,7 @@ export function AIDashboard() {
       {activeTab === "risk" && <RiskTab />}
       {activeTab === "image" && <ImageTab />}
       {activeTab === "twin" && <DigitalTwinTab />}
-      {activeTab === "geo" && <GeoRiskTab pvoId={1} />}
+      {activeTab === "geo" && <GeoRiskTab pvoId={0} />}
       {activeTab === "gps" && <GpsValidationTab />}
       {activeTab === "gate" && <EscrowGateTab address={address} connected={connected} onConnect={connect} />}
     </div>
@@ -181,17 +181,61 @@ function RiskTab() {
       setLoading(true);
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        // Read PVOs to get contractor addresses
         const { Client: PvoClient } = await import("../contracts/pvo_core/src");
         const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pvoClient.get_pvo_count();
+        const seen = new Set<string>();
         const results: any[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {
           try {
             const r = await pvoClient.get_pvo({ pvo_id: i });
             if (r.result) {
-              const risk = await client.get_latest_risk_prediction({ contractor: (r.result as any).contractor });
-              if (risk.result) results.push({ ...risk.result, pvoId: Number((r.result as any).id), contractor: (r.result as any).contractor });
+              const contractor = (r.result as any).contractor;
+              if (seen.has(contractor)) continue;
+              seen.add(contractor);
+
+              // Gather all PVOs for this contractor
+              const pvoData = (r.result as any);
+              const milestones = pvoData.milestones || [];
+              const msResult = await pvoClient.get_pvo_milestones({ pvo_id: i });
+              const msList = (msResult.result || []) as any[];
+              const releasedCount = msList.filter((m: any) => {
+                const st = typeof m.status === "string" ? m.status : m.status?.tag ?? "";
+                return st === "Released";
+              }).length;
+              const withEvidence = msList.filter((m: any) => (m.submitted_evidence ?? []).length > 0).length;
+
+              // Compute reasoning
+              const factors: string[] = [];
+              const budgetPesos = Number(pvoData.total_budget ?? 0) / PPHP_SCALE;
+              if (budgetPesos > 1_000_000_000) factors.push("Large-scale project (>1B)");
+              const pendingRatio = msList.length > 0 ? (msList.length - releasedCount) / msList.length : 1;
+              if (pendingRatio > 0.5) factors.push(`${pendingRatio > 0.75 ? "Majority" : "Half"} of milestones still pending`);
+              if (msList.length > 0 && withEvidence / msList.length < 0.5) factors.push("Low evidence submission rate");
+              factors.push(`Funded by ${pvoData.fund_source || "unknown source"}`);
+
+              // Fetch geo risk for reasoning
+              let geoInfo = "";
+              try {
+                const geo = await client.get_geo_risk({ pvo_id: i });
+                if (geo.result) {
+                  const g = geo.result as any;
+                  if (Number(g.flood_risk) > 60) geoInfo += `High flood risk (${g.flood_risk}%). `;
+                  if (Number(g.landslide_risk) > 60) geoInfo += `High landslide risk (${g.landslide_risk}%). `;
+                }
+              } catch {}
+              if (geoInfo) factors.push(geoInfo.trim());
+
+              const risk = await client.get_latest_risk_prediction({ contractor });
+              if (risk.result) {
+                results.push({
+                  ...risk.result,
+                  pvoId: Number(pvoData.id),
+                  pvoTitle: pvoData.title,
+                  contractor,
+                  reasoning: factors,
+                });
+              }
             }
           } catch {}
         }
@@ -202,23 +246,57 @@ function RiskTab() {
   }, []);
 
   if (loading) return <div className="card p-12 skeleton h-48" />;
-  if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No risk predictions yet. AI auditors can submit via ai_oracle.</div>;
+  if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No risk predictions yet. The AI Oracle submits these automatically.</div>;
+
+  const catLabels = ["Low", "Medium", "High", "Critical"];
+  const catColors = ["badge-green", "badge-amber", "badge-red", "badge-red"];
 
   return (
     <div className="card p-6">
       <h3 className="font-semibold mb-4">Contractor Risk Predictions</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {risks.map((r, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-600">PVO #{r.pvoId}</span>
-              <span className={`badge ${Number(r.risk_level) <= 2 ? "badge-green" : Number(r.risk_level) <= 3 ? "badge-amber" : "badge-red"}`}>
-                Risk Level {Number(r.risk_level || 0)}/5
-              </span>
+        {risks.map((r, i) => {
+          const cat = Number(r.risk_category ?? 0);
+          return (
+            <div key={i} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">{r.pvoTitle}</span>
+                  <span className="text-xs text-gray-400 ml-2">PVO #{r.pvoId}</span>
+                </div>
+                <span className={`badge ${catColors[cat] ?? "badge-blue"}`}>{catLabels[cat] ?? "Unknown"}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
+                <div>
+                  <p className="text-xs text-gray-400">Delay</p>
+                  <p className="font-medium text-gray-700">{Number(r.delay_probability ?? 0)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Overrun</p>
+                  <p className="font-medium text-gray-700">{Number(r.overrun_probability ?? 0)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Confidence</p>
+                  <p className="font-medium text-gray-700">{Number(r.confidence ?? 0)}%</p>
+                </div>
+              </div>
+              {r.reasoning && Array.isArray(r.reasoning) && r.reasoning.length > 0 && (
+                <div className="border-t pt-2 mt-2">
+                  <p className="text-xs font-medium text-gray-500 mb-1">Risk Factors:</p>
+                  <ul className="space-y-1">
+                    {r.reasoning.map((factor: string, idx: number) => (
+                      <li key={idx} className="text-xs text-gray-500 flex items-start gap-1">
+                        <span className="text-orange-400 mt-0.5">-</span>
+                        <span>{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="text-[10px] text-gray-300 font-mono mt-2">{String(r.contractor).slice(0, 16)}...</p>
             </div>
-            <p className="text-sm text-gray-500">{r.reason || 'No details'}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -234,7 +312,7 @@ function ImageTab() {
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const items: any[] = [];
-        for (let i = 1; i <= 20; i++) {
+        for (let i = 1; i <= 50; i++) {
           try {
             const r = await client.get_image_verification({ id: i });
             if (r.result) items.push(r.result);
@@ -253,17 +331,25 @@ function ImageTab() {
     <div className="card p-6">
       <h3 className="font-semibold mb-4">Image Verification Results</h3>
       <div className="space-y-4">
-        {results.map((v, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-gray-900">Verification #{Number(v.id)}</span>
-              <span className={`badge ${v.verified === true ? "badge-green" : "badge-red"}`}>
-                {v.verified === true ? "Authentic" : "Tampered"}
-              </span>
+        {results.map((v, i) => {
+          const auth = Number(v.authenticity_score ?? 0);
+          const isAuthentic = auth >= 70;
+          return (
+            <div key={i} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-900">Evidence #{Number(v.evidence_id)}</span>
+                <span className={`badge ${isAuthentic ? "badge-green" : "badge-red"}`}>
+                  {isAuthentic ? "Authentic" : "Suspicious"}
+                </span>
+              </div>
+              <div className="space-y-1 text-sm text-gray-500">
+                <p>Authenticity Score: <span className="font-medium text-gray-700">{auth}%</span></p>
+                <p>Progress Estimate: <span className="font-medium text-gray-700">{Number(v.progress_percent ?? 0)}%</span></p>
+                {v.summary && <p className="text-xs text-gray-400 mt-1">{String(v.summary).slice(0, 120)}</p>}
+              </div>
             </div>
-            <p className="text-sm text-gray-500">Confidence: {Number(v.confidence || 0)}%</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -301,67 +387,85 @@ function DigitalTwinTab() {
     <div className="card p-6">
       <h3 className="font-semibold mb-4">Digital Twins</h3>
       <div className="space-y-4">
-        {twins.map((t, i) => (
-          <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-gray-900">PVO #{Number(t.pvo_id)}</span>
-              <span className="badge badge-purple">Twin #{Number(t.id)}</span>
+        {twins.map((t, i) => {
+          const cost = Number(t.expected_cost ?? 0) / PPHP_SCALE;
+          const deviation = t.deviation_alert === true;
+          return (
+            <div key={i} className={`border rounded-lg p-4 ${deviation ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-900">PVO #{Number(t.pvo_id)}</span>
+                {deviation && <span className="badge badge-red">Deviation Alert</span>}
+              </div>
+              <div className="space-y-1 text-sm text-gray-500">
+                <p>Expected Cost: <span className="font-medium text-gray-700">{cost.toLocaleString()}</span></p>
+                <p>Material Cost Index: <span className="font-medium text-gray-700">{Number(t.material_cost_index ?? 0)}</span></p>
+                <p>Labor Cost Index: <span className="font-medium text-gray-700">{Number(t.labor_cost_index ?? 0)}</span></p>
+              </div>
             </div>
-            <p className="text-sm text-gray-500">Expected Cost: {Number(t.expected_cost || 0)} · Actual: {Number(t.actual_cost || 0)}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
 function GeoRiskTab({ pvoId }: { pvoId: number }) {
-  const [risk, setRisk] = useState<any>(null);
+  const [risks, setRisks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
-        const client = new AIOracleClient({
-          contractId: CONTRACT_IDS.ai_oracle,
-          networkPassphrase: NETWORK_PASSPHRASE,
-          rpcUrl: RPC_URL,
-        });
-        const r = await client.get_geo_risk({ pvo_id: pvoId });
-        setRisk(r.result);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+        const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
+        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const cnt = await pvoClient.get_pvo_count();
+        const items: any[] = [];
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await client.get_geo_risk({ pvo_id: i });
+            if (r.result) {
+              const pvo = await pvoClient.get_pvo({ pvo_id: i });
+              items.push({ ...r.result, pvoTitle: (pvo.result as any)?.title ?? `PVO #${i}` });
+            }
+          } catch {}
+        }
+        setRisks(items);
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     })();
-  }, [pvoId]);
+  }, []);
 
-  if (loading) return <div className="text-center py-10 text-gray-400">Loading...</div>;
-  if (!risk) return <div className="text-center py-10 text-gray-400">No geo risk data for PVO #{pvoId}.</div>;
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No geo risk assessments yet.</div>;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="font-semibold mb-4">Geographic Risk - {risk.region}</h3>
-      <p className="text-sm text-gray-400 mb-6">Flood, seismic, and landslide risk assessment.</p>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: "Flood", val: risk.flood_risk, c: "bg-blue-500" },
-          { label: "Seismic", val: risk.seismic_risk, c: "bg-orange-500" },
-          { label: "Landslide", val: risk.landslide_risk, c: "bg-amber-700" },
-        ].map((r) => (
-          <div key={r.label} className="border rounded-lg p-4">
-            <div className="flex justify-between text-sm text-gray-500 mb-2">{r.label}<span>{r.val}%</span></div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className={`h-full ${r.c} rounded-full`} style={{ width: `${r.val}%` }} />
-            </div>
+    <div className="space-y-4">
+      {risks.map((risk, idx) => (
+        <div key={idx} className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="font-semibold mb-1">Geographic Risk - {risk.region}</h3>
+          <p className="text-xs text-gray-400 mb-4">{risk.pvoTitle}</p>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {[
+              { label: "Flood", val: Number(risk.flood_risk ?? 0), c: "bg-blue-500" },
+              { label: "Seismic", val: Number(risk.seismic_risk ?? 0), c: "bg-orange-500" },
+              { label: "Landslide", val: Number(risk.landslide_risk ?? 0), c: "bg-amber-700" },
+            ].map((r) => (
+              <div key={r.label} className="border rounded-lg p-4">
+                <div className="flex justify-between text-sm text-gray-500 mb-2">{r.label}<span>{r.val}%</span></div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full ${r.c} rounded-full`} style={{ width: `${r.val}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="flex items-center justify-between border-t pt-4">
-        <span className="text-sm text-gray-500">Overall Score</span>
-        <span className="font-bold text-lg">{risk.overall_risk_score}/100</span>
-      </div>
+          <div className="flex items-center justify-between border-t pt-4">
+            <span className="text-sm text-gray-500">Overall Score</span>
+            <span className="font-bold text-lg">{Number(risk.overall_risk_score ?? 0)}/100</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -394,7 +498,7 @@ function GpsValidationTab() {
     return (
       <div className="card p-6 text-center text-slate-400">
         <h3 className="font-semibold mb-4 text-slate-700">GPS Validation</h3>
-        No GPS validations yet. AI auditors submit via ai_oracle.
+        No GPS validations yet. The AI Oracle submits these automatically.
       </div>
     );
   }
@@ -403,17 +507,26 @@ function GpsValidationTab() {
     <div className="card p-6">
       <h3 className="font-semibold mb-4">GPS Coordinate Validation</h3>
       <div className="space-y-4">
-        {results.map((v, i) => (
-          <div key={i} className={`border rounded-lg p-4 ${v.valid === true ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-medium">Validation #{Number(v.id)}</span>
-              <span className={`badge ${v.valid === true ? "badge-green" : "badge-red"}`}>
-                {v.valid === true ? "In Range" : "Out of Range"}
-              </span>
+        {results.map((v, i) => {
+          const within = v.within_range === true;
+          const dist = Number(v.distance_meters ?? 0);
+          const fmtCoord = (raw: any) => (Number(raw) / 1_000_000).toFixed(6);
+          return (
+            <div key={i} className={`border rounded-lg p-4 ${within ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-medium">Evidence #{Number(v.evidence_id)}</span>
+                <span className={`badge ${within ? "badge-green" : "badge-red"}`}>
+                  {within ? "In Range" : "Out of Range"}
+                </span>
+              </div>
+              <div className="space-y-1 text-sm text-gray-500">
+                <p>Reported: <span className="font-mono text-gray-700">[{fmtCoord(v.reported_lat)}, {fmtCoord(v.reported_lon)}]</span></p>
+                <p>Expected: <span className="font-mono text-gray-700">[{fmtCoord(v.expected_lat)}, {fmtCoord(v.expected_lon)}]</span></p>
+                <p>Distance: <span className="font-medium text-gray-700">{dist.toLocaleString()}m</span></p>
+              </div>
             </div>
-            <p className="text-sm text-gray-500">PVO #{Number(v.pvo_id || 0)}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
