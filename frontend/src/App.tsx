@@ -116,7 +116,7 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["AntiCorruptionAgency", "Administrator"],
     group: "oversight",
   },
-  { to: "/ai", label: "AI Monitor", icon: "🤖", roles: ["Administrator"], group: "public" },
+  { to: "/ai", label: "AI Monitor", icon: "🤖", roles: ["AIAuditor", "Administrator"], group: "public" },
 
   {
     to: "/funder",
@@ -644,7 +644,7 @@ function App() {
                 <ProtectedRoute element={<ProvenanceExplorer />} roles={["Administrator"]} />
               } />
               <Route path="/ai" element={
-                <ProtectedRoute element={<AIDashboard />} roles={["Administrator"]} />
+                <ProtectedRoute element={<AIDashboard />} roles={["AIAuditor", "Administrator"]} />
               } />
               <Route path="/escrows" element={
                 <ProtectedRoute element={<EscrowMonitor />} roles={["Administrator"]} />
