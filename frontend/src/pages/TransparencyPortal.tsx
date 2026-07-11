@@ -15,7 +15,6 @@ const PROVENANCE_API_BASE =
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   PROVENANCE_API;
 
-import { BlockchainLoader } from "../components/BlockchainLoader";
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
 interface PVOData {
