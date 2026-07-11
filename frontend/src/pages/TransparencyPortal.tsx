@@ -6,6 +6,8 @@ import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } fr
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { useWallet } from "../wallet";
+import { BlockchainLoader } from "../components/BlockchainLoader";
+import { getCached, setCached } from "../dataCache";
 
 const PROVENANCE_API = "https://provenance.chain.popv.quest";
 const PROVENANCE_API_BASE =
@@ -78,7 +80,15 @@ export function TransparencyPortal() {
   const [bidMap, setBidMap] = useState<Record<number, number>>({});
 
   const loadPVOs = useCallback(async () => {
-    setLoading(true);
+    // Try cache first for instant navigation
+    const cached = getCached<PVOData[]>("transparency_pvos");
+    if (cached.data) {
+      setPvos(cached.data);
+      setLoading(false);
+      if (!cached.stale) return; // Fresh cache, no need to fetch
+    }
+
+    if (!cached.data) setLoading(true);
     try {
       const client = new PvoCoreClient({
         contractId: CONTRACT_IDS.pvo_core,
@@ -205,6 +215,7 @@ export function TransparencyPortal() {
         } catch {}
       }
       setPvos(list);
+      setCached("transparency_pvos", list);
     } catch {
     } finally {
       setLoading(false);

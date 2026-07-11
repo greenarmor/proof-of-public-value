@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { formatAddress } from "../helpers";
 import { BlockchainLoader } from "../components/BlockchainLoader";
+import { getCached, setCached } from "../dataCache";
 
 // ── Types (mirrors provenance-indexer) ───────────────────
 type GateStatus = "pending" | "passed" | "failed";
@@ -559,6 +560,14 @@ export function ProvenanceExplorer() {
   const PAGE_SIZE = 10;
 
   const fetchData = useCallback(async () => {
+    // Check cache first for instant navigation
+    const cached = getCached<any[]>("provenance_pvos");
+    if (cached.data) {
+      setPvos(cached.data);
+      setLoading(false);
+      if (!cached.stale) return;
+    }
+
     try {
       const [healthResp, pvoResp] = await Promise.all([
         fetch(`${API_BASE}/api/health`).then((r) => r.json()).catch(() => null),
@@ -567,6 +576,7 @@ export function ProvenanceExplorer() {
       setHealth(healthResp);
       if (Array.isArray(pvoResp)) {
         setPvos(pvoResp);
+        setCached("provenance_pvos", pvoResp);
         setError(null);
       } else if (pvoResp?.error) {
         setError(pvoResp.error);
