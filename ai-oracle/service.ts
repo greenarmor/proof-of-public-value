@@ -1010,11 +1010,13 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
 }
 
 // ── Cross-PVO Collusion Detection ───────────────────────
-function detectCollusion(allPvoData: { pvoId: number; contractor: string }[]): string[] {
+function detectCollusion(allPvoData: { pvoId: number; contractor: string; wonTender: boolean }[]): string[] {
   const flags: string[] = [];
   const contractorPvos: Record<string, number[]> = {};
   for (const d of allPvoData) {
     if (!d.contractor || d.contractor.length < 5) continue;
+    // Only count PVOs where this contractor actually won a tender (not placeholder)
+    if (!d.wonTender) continue;
     if (!contractorPvos[d.contractor]) contractorPvos[d.contractor] = [];
     contractorPvos[d.contractor].push(d.pvoId);
   }
@@ -1075,9 +1077,22 @@ async function poll(): Promise<void> {
 
     console.log(`  Found ${pvoCount} PVOs. Building forensic case files...`);
 
-    // First pass: collect all PVO data for cross-PVO collusion detection
-    const allPvoBasic: { pvoId: number; contractor: string }[] = [];
+    // First pass: collect all PVO data + tender winners for cross-PVO collusion detection
+    const allPvoBasic: { pvoId: number; contractor: string; wonTender: boolean }[] = [];
     const pvoDataCache: { pvo: any; milestones: any[] }[] = [];
+
+    // Quick scan of tenders to find awarded winners per PVO
+    const pvoWinners: Record<number, string> = {};
+    const tCount = queryContract("procurement_market", "get_tender_count") || 0;
+    for (let t = 1; t <= Number(tCount); t++) {
+      const tender = queryContract("procurement_market", "get_tender", `--id ${t}`);
+      if (!tender) continue;
+      const pvoId = Number(tender.pvo_id || 0);
+      const status = typeof tender.status === "string" ? tender.status : tender.status?.tag ?? "";
+      if ((status === "Awarded" || tender.winner) && pvoId > 0) {
+        pvoWinners[pvoId] = String(tender.winner || "");
+      }
+    }
 
     for (let pvoId = 1; pvoId <= pvoCount; pvoId++) {
       try {
@@ -1097,8 +1112,12 @@ async function poll(): Promise<void> {
           milestones = Array.isArray(mParsed) ? mParsed : (mParsed.result || []);
         }
 
+        const contractor = String(pvo.contractor || "");
+        // Only count if this contractor actually won a tender for this PVO
+        const wonTender = pvoWinners[pvoId] ? contractor === pvoWinners[pvoId] || pvoWinners[pvoId].length < 5 : false;
+
         pvoDataCache.push({ pvo, milestones });
-        allPvoBasic.push({ pvoId, contractor: String(pvo.contractor || "") });
+        allPvoBasic.push({ pvoId, contractor, wonTender });
       } catch {
         pvoDataCache.push({ pvo: null, milestones: [] });
       }

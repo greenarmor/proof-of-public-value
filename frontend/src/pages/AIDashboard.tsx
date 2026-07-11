@@ -983,10 +983,33 @@ function ForensicCaseTab() {
           pvoCache.push(r.result);
           if (r.result) allPvos.push({ pvoId: i, contractor: String((r.result as any).contractor || "") });
         }
+
+        // Quick scan of awarded tenders to find actual winning contractors per PVO
+        const pvoWinners: Record<number, string> = {};
+        try {
+          const tCnt = await procClient.get_tender_count();
+          for (let t = 1; t <= Number(tCnt.result); t++) {
+            const tender = await procClient.get_tender({ id: t });
+            if (tender.result) {
+              const td = tender.result as any;
+              const tStatus = typeof td.status === "string" ? td.status : td.status?.tag ?? "";
+              if ((tStatus === "Awarded" || td.winner) && td.pvo_id > 0) {
+                pvoWinners[Number(td.pvo_id)] = String(td.winner || "");
+              }
+            }
+          }
+        } catch {}
+
+        // Only count contractors who actually won a tender (not placeholders)
         const contractorCounts: Record<string, number> = {};
         for (const p of allPvos) {
           if (p.contractor && p.contractor.length > 5) {
-            contractorCounts[p.contractor] = (contractorCounts[p.contractor] || 0) + 1;
+            const wonTender = pvoWinners[p.pvoId]
+              ? p.contractor === pvoWinners[p.pvoId]
+              : false;
+            if (wonTender) {
+              contractorCounts[p.contractor] = (contractorCounts[p.contractor] || 0) + 1;
+            }
           }
         }
 
