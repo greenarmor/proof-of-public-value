@@ -204,15 +204,15 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { icon: "🔗", title: "Serverless", desc: "No backend. No database. Stellar is the infrastructure." },
-              { icon: "🤖", title: "AI-Powered", desc: "Automated fraud detection, risk prediction, and verification." },
+              { icon: "🤖", title: "AI Forensic Engine", desc: "13-flag cross-contract analysis: fraud, risk, geo, digital twin, GPS. Zero random data." },
               { icon: "📡", title: "IPFS Evidence", desc: "Photos, drone imagery, documents stored immutably on IPFS." },
               { icon: "🔐", title: "Multi-Gate", desc: "No single party can release funds. Five independent verifications required." },
-              { icon: "💰", title: "Real Tokens", desc: "Escrow holds actual on-chain assets via pPHP, USDC, or GovPHP." },
+              { icon: "💰", title: "Real Settlement", desc: "Testnet uses pPHP simulation token. Mainnet supports USDC, GovPHP, XLM, or any Stellar asset." },
               { icon: "📊", title: "Public Index", desc: "Department rankings measuring value per peso spent." },
               { icon: "🏗️", title: "Integrity Bidding", desc: "Contractors scored on reputation, not just lowest price." },
               { icon: "🌍", title: "Cross-Border", desc: "International donors commit on-chain with full traceability." },
               { icon: "📋", title: "Immutable Audit", desc: "Every decision recorded permanently on Stellar with tx hash links." },
-              { icon: "🔍", title: "Provenance Explorer", desc: "Full audit trail: PVO → Milestone → Gates → TX hashes. Public access." },
+              { icon: "🔍", title: "Provenance Chain", desc: "Append-only audit trail: every event permanently linked to its Stellar transaction hash." },
             ].map((feature, i) => (
               <div key={i} className="group p-8 rounded-3xl bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-500 text-center"
                 style={{ transitionDelay: `${i * 60}ms` }}>
