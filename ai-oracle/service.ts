@@ -286,7 +286,6 @@ function mapFlagsToIndicators(flags: string[]): string[] {
     const mapped = FRAUD_INDICATOR_MAP[f];
     if (mapped) indicators.add(mapped);
   }
-  if (indicators.size === 0) indicators.add("AbnormalBudgetGrowth");
   return [...indicators];
 }
 
@@ -733,7 +732,6 @@ function forensicFlagsToIndicators(flags: string[]): string[] {
     if (lower.includes("inflation") || lower.includes("material")) indicators.add("MaterialCostInflation");
     if (lower.includes("repeated") || lower.includes("contractor")) indicators.add("RepeatedContractorWin");
   }
-  if (indicators.size === 0) indicators.add("AbnormalBudgetGrowth");
   return [...indicators];
 }
 
@@ -971,7 +969,11 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
       // Merge forensic flags into fraud indicators
       const ruleIndicators = mapFlagsToIndicators(result.flags);
       const forensicIndicators = forensicFlagsToIndicators(flags);
-      const indicators = [...new Set([...ruleIndicators, ...forensicIndicators])];
+      let indicators = [...new Set([...ruleIndicators, ...forensicIndicators])];
+      // Only flag AbnormalBudgetGrowth if there's an actual budget mismatch or gap
+      if (indicators.length === 0 && flags.some(f => f.includes("mismatch") || f.includes("gap"))) {
+        indicators = ["AbnormalBudgetGrowth"];
+      }
 
       // Adjust risk score based on forensic flags
       let forensicRiskAdjust = 0;
