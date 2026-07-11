@@ -208,7 +208,7 @@ function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
-  const publicItems = NAV_ITEMS.filter((i) => i.group === "public");
+  const publicItems = NAV_ITEMS.filter((i) => i.group === "public" && (!i.roles || i.roles.some((r) => hasRole(r))));
   const landingItems = NAV_ITEMS.filter((i) => i.group === "landing");
   const roleItems = NAV_ITEMS.filter((i) => i.group !== "public" && i.group !== "system");
   const systemItems = NAV_ITEMS.filter((i) => i.group === "system");
