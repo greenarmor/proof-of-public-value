@@ -1,35 +1,26 @@
 # Appendix C: How the AI Oracle Works
 
-A comprehensive guide to PoPV's fraud detection, risk prediction, and verification engine.
+A comprehensive guide to PoPV's AI forensic engine - fraud detection, risk prediction, image/GPS verification, digital twin simulation, geo-risk assessment, and forensic case analysis.
 
 ---
 
-## What the AI Is (and Isn't)
+## What the AI Is
 
-The AI Oracle is a **deterministic heuristic engine**, not a machine learning model. It does not call OpenAI, Anthropic, or any external API. There is zero network access, zero API keys, and zero recurring costs.
+The AI Oracle is a **forensic analysis engine** that cross-references on-chain data across 10 Soroban contracts to detect fraud, predict risk, verify evidence, and trace the full project transaction journey from creation to release.
 
-Instead, it cross-references on-chain data across all contracts using mathematical rules:
+It operates as an **off-chain Node.js service** (`ai-oracle/service.ts`) that reads from all contracts, builds forensic case files per PVO, and submits analysis results to the on-chain `ai_oracle` contract. The frontend then reads from the contract to display findings.
 
 ```
-PVOs + Escrows + Reputation + Audit Trail + Community Reports + Compliance
-                              │
-                              ▼
-                    Heuristic analysis engine
-                              │
-                              ▼
-                    Findings submitted to ai_oracle
-                              │
-                              ▼
-                    Public dashboard at /ai
+10 Contracts → Forensic Analysis Engine → ai_oracle contract → Public Dashboard
 ```
 
-### Why no actual ML?
+The engine is deterministic and data-driven - zero random values, zero mock data. Every metric derives from real on-chain state.
 
-Soroban smart contracts cannot access the internet, load models, or run floating-point math. All computation happens off-chain in the analysis script, and only the **results** are stored on-chain. This is the same architecture used by Chainlink oracles, price feeds, and every production blockchain oracle.
+## Six Analysis Categories (v3 Forensic Engine)
 
-## Five Analysis Categories
+The engine scans 10 contracts to build a per-PVO forensic case file containing timeline events, anomaly flags, and cross-contract analysis.
 
-### 1. Fraud Detection (8 indicators)
+### 1. Fraud Detection (8 indicators + forensic adjustment)
 
 The engine scans for 8 fraud patterns defined in the `ai_oracle` contract:
 
@@ -275,6 +266,32 @@ stellar contract invoke --source alice --network testnet --send=yes \
   --admin GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV \
   --auditor GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW
 ```
+
+## 6. Forensic Case Analysis
+
+The v3 forensic engine builds a complete **ForensicCaseFile** per PVO by querying all 10 contracts:
+
+| Data Source | What's Collected |
+|-------------|-----------------|
+| `pvo_core` | PVO lifecycle, milestones, evidence |
+| `escrow` | All escrows, their amounts, gate progression |
+| `grant_commitment` | Donor pledges, funding gaps |
+| `procurement_market` | Tenders, bids, bid clustering |
+| `compliance_engine` | Violations, compliant status |
+| `community_oracle` | Citizen reports, verified count |
+| `reputation` | Contractor score, complaints, violations |
+| `value_score` | Public value ratings |
+| `audit_trail` | Decision history |
+| `ai_oracle` | Prior fraud/risk submissions |
+
+**Forensic Flags Detected (13 types):**
+GhostProject, CollusionPattern, EscrowBudgetMismatch, FundingGap, UnregisteredContractor, LowReputation, SafetyViolations, MultipleAuditFindings, CriticalViolation, SingleBidTender, SuspiciousBidClustering, EscrowDisputed, HighDelayRate
+
+Each flag has a severity (critical/high/medium/low) and contributes to the overall fraud risk score via forensic risk adjustment.
+
+The case file is built by `collectForensicData()` in `ai-oracle/service.ts:425-672` and displayed in the **Forensic Cases** tab of the AI Dashboard.
+
+These findings feed into the **Provenance Chain** (`provenance-indexer/service.ts`) which links every event to its Stellar transaction hash, creating an immutable, append-only audit trail served at `/provenance-store.json`.
 
 ## Production Deployment
 

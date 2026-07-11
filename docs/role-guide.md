@@ -591,11 +591,11 @@ Suppliers browse procurement tenders and submit bids on-chain. They participate 
 | Dashboard | AI Monitor (public) |
 | Contracts | `ai_oracle` |
 
-The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is **Gate 5** in the 5-gate escrow system.
+The AI Oracle performs automated cross-contract analysis across 10 contracts for fraud detection, risk prediction, GPS validation, digital twin simulation, image verification, and forensic case analysis. This is **Gate 5** in the 5-gate escrow system.
 
 The dashboard is **public** - anyone can view AI findings at `/ai` without a wallet. See **[Appendix C: How the AI Oracle Works](ai-oracle.md)** for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.
 
-**Dashboard tabs:**
+**Dashboard tabs (8 total):**
 
 | Tab | What's wired | Data source | Write actions |
 |-----|-------------|-------------|--------------|
@@ -605,15 +605,18 @@ The dashboard is **public** - anyone can view AI findings at `/ai` without a wal
 | Digital Twin | Cost simulation per PVO | `ai_oracle.get_digital_twin` per PVO | None (read-only) |
 | Geo Risk | Geo-risk assessments per PVO | `ai_oracle.get_geo_risk` per PVO | None (read-only) |
 | GPS | GPS coordinate validations | `ai_oracle.get_gps_validation` looped | None (read-only) |
+| Forensic Cases | Full lifecycle analysis (10 contracts): 13 flag types, colored timeline, collusion detection | Reads from 10 contracts per PVO in-browser | None (read-only) |
+| Escrow Gate | Escrow gate status + oracle recommendation, submit AI pass/reject on-chain | `escrow` + `ai_oracle` | `escrow.ai_validate` (Gate 5) |
 
 **What they do:**
 
 1. View fraud detection results with risk scores and indicator flags
-2. Check contractor risk predictions (delay risk, budget overrun)
+2. Check contractor risk predictions (delay risk, budget overrun) using 6-8 data-driven factors
 3. Verify drone/satellite imagery authenticity
-4. Monitor digital twin cost simulations
+4. Monitor digital twin cost simulations with deviation alerts
 5. Validate GPS coordinates against expected project locations
-6. Submit fraud detections, risk predictions, and validations via `ai_oracle` contract functions
+6. Browse forensic case files: per-PVO timeline, cross-contract anomaly flags, collusion detection
+7. Review AI oracle recommendation for Gate 5 escrows and submit pass/reject on-chain
 
 ---
 
@@ -709,7 +712,7 @@ Step 6: DONOR UPDATES STATUS
 | `escrow` | `CBZPT5NLMKVVV2FA3QDDZXXGFOI6D4KYVAO6QC5N2YFPWZ3DHJZV6S6X` |
 | `grant_commitment` | `CDTJ5YY4VX6UA6YMKSSPDLIUXKXENUV6JYKMOBM6762XTBGGNQXFFWRK` |
 | `community_oracle` | `CBPOFXY2W6XGT4SHLSTJHPCV7VIQH3Z4ZSUOZA2CVYBUV7XQVUPZVQGS` |
-| `ai_oracle` | `CAVD64WSZLOVV35RFKPG2OFVRCR3F3LGXQYSFR2JTDSGIBYKBXKUBP25` |
+| `ai_oracle` | `CAVOYO6RPO3P6WRTD73Y4EQCWZVSCY6JCWELG3MFKNIIQ7IJCGNRWR7G` |
 | `compliance_engine` | `CBUKSKFM26BMIMC7H7SSJ2A4LUDX5IREANPWCHWR54R5T7BDHUUCWPBH` |
 | `audit_trail` | `CBQPQ5ISUYF37RM23G4UJB3RAEAT2F74PZHLNW7ZVCGAGEXZFL2E4LTO` |
 | `procurement_market` | `CBKTM7F32KJJWVGYRCNNJQNXK5DHEISJMFESXAAJJYDSDSJYMRKJSHUW` |

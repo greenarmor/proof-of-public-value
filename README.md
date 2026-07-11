@@ -19,9 +19,24 @@ PVO → Milestones → Tender → Bids → Award → Escrow → Fund →
 
 ## Deployed Contracts (Testnet)
 
+**Total: 74 tests, 14 contracts, 10 indexed by provenance**
 
-
-**Total: 176 tests, 127 functions, ~145 KB WASM**
+| Contract | Testnet ID | Role |
+|-----------|-----------|------|
+| `access_control` | `CCZ3IE...W7YI` | 14-role authorization |
+| `pvo_core` | `CAWILX...WMMF` | PVO lifecycle + milestones + evidence |
+| `escrow` | `CC4SC2...NRXX` | Dynamic 5-gate conditional escrow |
+| `community_oracle` | `CCMVMF...PUP3` | Citizen verification network |
+| `reputation` | `CD7FFW...3BG` | Contractor integrity graph |
+| `audit_trail` | `CB6AXO...BV6` | Immutable decision log |
+| `value_score` | `CB6YOD...UVU` | Public value measurement |
+| `ai_oracle` | `CAVOYO...R7G` | AI fraud/risk/forensic analysis |
+| `public_index` | `CDC66L...RYF` | National department rankings |
+| `compliance_engine` | `CAB4BR...SCB` | Auto-pause on violations |
+| `procurement_market` | `CALDZK...SZD` | Integrity-weighted bidding |
+| `grant_commitment` | `CAVRWE...WRS` | Donor pledge recording |
+| `pphp_token` | `CDABOK...L5` | Philippine Peso (CBDC) testnet token |
+| `popv_router` | (orchestrator) | Cross-contract workflow |
 
 ---
 
@@ -116,7 +131,8 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 | 11 | InternationalDonor | `/donor` | International Donor Dashboard |
 | 12 | AIAuditor | `/ai` | AI Monitor |
 | 13 | Citizen | `/citizen` | Citizen Interface |
-| - | No role | `/`, `/index`, `/memory` | Public pages only |
+| 14 | CentralBank | `/central-bank` | Central Bank Dashboard (CBDC token) |
+| - | No role | `/`, `/index`, `/memory`, `/ai` | Public pages, AI Monitoring |
 
 ---
 
@@ -142,7 +158,7 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 
 ### Path A: Frontend Only (reuse existing testnet contracts)
 
-No Rust, no contracts, no Stellar CLI. Just the UI.
+No Rust, no contracts. Just the UI with live testnet data.
 
 ```bash
 git clone https://github.com/greenarmor/proof-of-public-value.git
@@ -152,7 +168,13 @@ cd frontend && npm install --include=dev && cd ..
 npm run dev   # -> http://localhost:5174
 ```
 
-➡️ **[Full Local Deploy Guide](docs/local-frontend-runbook.md)** - Node.js setup, Freighter wallet import, 15-step role-play walkthrough, troubleshooting.
+This includes:
+- **14 role-based dashboards** (Agency, Contractor, Engineer, Auditor, CentralBank, etc.)
+- **AI Monitoring Dashboard** (fraud, risk, forensic cases, escrow gate)
+- **Provenance Explorer** (immutable timeline, tx-linked audit trail)
+- **Public Transparency Portal** (community verification, citizen reports)
+
+➡️ **[Full Local Deploy Guide](docs/local-frontend-runbook.md)**
 
 ### Path B: Full System (deploy your own contracts)
 
@@ -174,12 +196,15 @@ node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 ## Features
 
 - **5-Gate Payment Release** - Funds unlock only after engineer, AI, compliance, community, and evidence verification
-- **AI Fraud Detection** - 8 indicator types (ghost projects, duplicate invoices, collusion, etc.)
-- **Citizen Verification** - GPS-tagged photo reports via IPFS with RPT token staking
+- **AI Forensic Engine** - Full lifecycle analysis across 10 contracts: fraud detection, risk prediction, geo risk, digital twin, GPS validation, image verification
+- **Forensic Cases Dashboard** - Live cross-contract analysis: 13 flag types, colored timeline, collusion detection
+- **Provenance Chain** - Immutable, append-only audit trail: every PVO → milestone → gate → transaction hash linked
+- **Citizen Verification** - GPS-tagged photo reports via community oracle with verified reports
 - **Immutable Audit Trail** - Every decision permanently recorded on-chain
 - **Public Value Index** - Department rankings measuring value per peso spent
 - **Procurement Marketplace** - Integrity-weighted bidding with reputation scoring
 - **Autonomous Compliance** - Auto-pause funds on regulatory violations
+- **CBDC Token (pPHP)** - Custom Soroban token for escrow settlement, CentralBank-gated minting
 - **Serverless** - No backend, no database - blockchain is the infrastructure
 
 ---
@@ -189,7 +214,7 @@ node .dev-logs/partial-deploy.js pvo_core escrow procurement_market
 ```
 stellar/
 ├── contracts/
-│   ├── access_control/    # 13-role authorization
+│   ├── access_control/    # 14-role authorization
 │   ├── pvo_core/          # PVO lifecycle + milestones + evidence
 │   ├── escrow/            # Dynamic conditional escrow
 │   ├── community_oracle/  # Citizen verification network
@@ -201,9 +226,10 @@ stellar/
 │   ├── compliance_engine/ # Auto-pause on violations
 │   ├── procurement_market/# Integrity-weighted bidding
 │   └── grant_commitment/ # Donor pledge recording
-├── frontend/              # React + TypeScript (18 dashboards, 13 role-based + 3 public + admin + 2 finance)
+├── frontend/              # React + TypeScript (15+ dashboards, 14 role-based + 3 public + provenance explorer)
 ├── mobile/                # Flutter (11 screens)
-├── services/event-indexer/# Stellar event monitoring
+├── ai-oracle/             # AI Forensic Engine (off-chain Node.js service)
+├── provenance-indexer/   # Provenance chain scanner (event-to-tx hash linker)
 ├── scripts/deploy.sh      # Deployment automation
 └── docs/                  # MkDocs user manual
 ```

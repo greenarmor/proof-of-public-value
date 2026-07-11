@@ -44,16 +44,16 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 | Auth server (JWT/OAuth) | ❌ None  -  Freighter wallet signs transactions |
 | File storage (S3) | ❌ None  -  IPFS for evidence, Soroban events for audit trail |
 | Deployment server (EC2/VPS) | ❌ None  -  Static HTML/CSS/JS on Vercel (free) |
-| Off-chain services | Provenance Indexer (optional, experimental) + AI Oracle  -  standalone TS services |
+| Off-chain services | Provenance Indexer + AI Oracle  -  standalone TS services, optional |
 
-**13 Soroban smart contracts** execute every business rule on-chain:
+**14 Soroban smart contracts** execute every business rule on-chain:
 - `access_control`  -  14 role-based permissions
 - `pvo_core`  -  PVO lifecycle, milestones, evidence, budget validation
 - `escrow`  -  5-gate conditional fund lock + InProgress auto-transition
 - `grant_commitment`  -  Donor pledges with CentralBank-gated disbursement
 - `community_oracle`  -  Citizen report verification
 - `reputation`  -  RPT soulbound token gatekeeper (anti-Sybil)
-- `ai_oracle`  -  Fraud detection engine
+- `ai_oracle`  -  AI forensic engine (fraud, risk, geo, digital twin, GPS, image)
 - `compliance_engine`  -  Regulatory validation
 - `audit_trail`  -  Immutable decision log
 - `value_score`  -  0-100 public value rating
