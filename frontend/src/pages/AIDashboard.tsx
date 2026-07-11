@@ -1160,8 +1160,18 @@ function ForensicCaseTab() {
             }
           }
 
-          if (milestones.length > 0 && escrowCount === 0 && evidenceCount === 0 && communityReportCount === 0) {
-            flags.push({ flag: "GhostProject: has milestones but no activity", severity: "critical" });
+          // Ghost project: funded escrows exist but zero progress after deadline
+          const hasFundedEscrows = escrows.some((e: any) => {
+            const st = typeof e.status === "string" ? e.status : e.status?.tag ?? "";
+            return st === "Funded" || st === "EngineerApproved" || st === "AIValidated"
+              || st === "CompliancePassed" || st === "OracleValidated" || st === "CommunityVerified"
+              || st === "Ready" || st === "Released" || st === "Disputed";
+          });
+          const pvoDeadline = Number(pvo.deadline || 0);
+          const now = Math.floor(Date.now() / 1000);
+          if (milestones.length > 0 && hasFundedEscrows && evidenceCount === 0 && communityReportCount === 0
+              && pvoDeadline > 0 && now > pvoDeadline) {
+            flags.push({ flag: "GhostProject: funded but no progress after deadline", severity: "critical" });
           }
 
           let valueScore: number | null = null;

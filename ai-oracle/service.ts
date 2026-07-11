@@ -674,11 +674,20 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     }
   }
 
-  // Ghost project: has milestones but zero escrows, zero evidence, zero community reports
-  if (milestones.length > 0 && escrows.length === 0
-      && milestones.every((m: any) => (m.submitted_evidence || []).length === 0)
-      && communityReports.length === 0) {
-    flags.push("GhostProject");
+  // Ghost project: funded escrows exist but zero progress after deadline passed
+  const now = Math.floor(Date.now() / 1000);
+  const pvoDeadline = Number(pvo.deadline || 0);
+  const hasFundedEscrows = escrows.some((e: any) => {
+    const st = typeof e.status === "string" ? e.status : e.status?.tag ?? "";
+    return st === "Funded" || st === "EngineerApproved" || st === "AIValidated"
+      || st === "CompliancePassed" || st === "OracleValidated" || st === "CommunityVerified"
+      || st === "Ready" || st === "Released" || st === "Disputed";
+  });
+  const hasAnyEvidence = milestones.some((m: any) => (m.submitted_evidence || []).length > 0);
+  if (milestones.length > 0 && hasFundedEscrows
+      && !hasAnyEvidence && communityReports.length === 0
+      && pvoDeadline > 0 && now > pvoDeadline) {
+    flags.push("GhostProject:funded_but_no_progress_after_deadline");
   }
 
   // Collusion: same contractor across multiple PVOs
