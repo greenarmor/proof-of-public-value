@@ -1348,7 +1348,7 @@
 </ul>
 <p>Every infrastructure project has exactly one PVO.</p>
 <h3 id="roles">Roles<a class="headerlink" href="#roles" title="Permanent link">&para;</a></h3>
-<p>PoPV uses 13 roles. Different roles can do different things:</p>
+<p>PoPV uses 14 roles. Different roles can do different things:</p>
 <p>➡️ <strong>See the <a href="../role-guide/">Role Guide</a></strong> for detailed information about each role's dashboard, contracts, and capabilities.</p>
 <table>
 <thead>
@@ -1361,6 +1361,10 @@
 <tr>
 <td>Administrator</td>
 <td>Manage role assignments, system config</td>
+</tr>
+<tr>
+<td>CentralBank</td>
+<td>Mint CBDC pPHP, redeem pPHP, mark grants disbursed</td>
 </tr>
 <tr>
 <td>GovernmentAgency</td>
@@ -1418,7 +1422,7 @@
 <p>List your configured identities:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>stellar<span class="w"> </span>keys<span class="w"> </span>ls
 </code></pre></div>
-<p>You should see all 13 role identities (pre-configured for this manual):</p>
+<p>You should see all 14 role identities (pre-configured for this manual):</p>
 <details class="success">
 <summary>Expected Output</summary>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>alice
@@ -1434,10 +1438,11 @@
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>international_donor
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>ai_auditor
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>citizen
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>central_bank
 </code></pre></div>
 </details>
 <h3 id="exercise-12-testnet-demo-wallets">Exercise 1.2: Testnet Demo Wallets<a class="headerlink" href="#exercise-12-testnet-demo-wallets" title="Permanent link">&para;</a></h3>
-<p>All 13 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in <code>.dev-logs/role-credentials.md</code> (gitignored).</p>
+<p>All 14 wallets are funded on testnet and assigned roles on-chain. Public keys only - secret keys are in <code>.dev-logs/role-credentials.md</code> (gitignored).</p>
 <table>
 <thead>
 <tr>

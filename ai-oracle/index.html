@@ -1500,7 +1500,7 @@
 </tr>
 </tbody>
 </table>
-<p>Each detection is submitted with a <strong>risk score (0-100)</strong> and <strong>confidence percentage</strong>. The risk score is NOT random — it's derived from the severity of the anomaly.</p>
+<p>Each detection is submitted with a <strong>risk score (0-100)</strong> and <strong>confidence percentage</strong>. The risk score is NOT random - it's derived from the severity of the anomaly.</p>
 <h3 id="2-risk-prediction">2. Risk Prediction<a class="headerlink" href="#2-risk-prediction" title="Permanent link">&para;</a></h3>
 <p>Reputation-driven contractor risk model. Predicts the probability of delays and budget overruns based on the contractor's on-chain track record.</p>
 <p><strong>Contract struct:</strong></p>
@@ -1522,7 +1522,7 @@
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>Risk Level 2 (Medium): delay 30-60%  
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>Risk Level 3 (High):   delay &gt; 60%
 </code></pre></div>
-<p>The reputation score comes from the <code>reputation</code> contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data — not self-reported.</p>
+<p>The reputation score comes from the <code>reputation</code> contract, which tracks completed projects, audit findings, safety violations, and community complaints. This is real on-chain data - not self-reported.</p>
 <p><strong>Gate 5 impact:</strong> Risk Category 3 (High) triggers a Gate 5 rejection. The AI auditor won't approve an escrow for a contractor with a high risk profile unless other analysis categories override the concern.</p>
 <h3 id="3-gps-validation">3. GPS Validation<a class="headerlink" href="#3-gps-validation" title="Permanent link">&para;</a></h3>
 <p>Compares GPS coordinates submitted by contractors/inspectors against the project's expected location. Uses the <strong>Haversine formula</strong> to compute great-circle distance.</p>
@@ -1549,17 +1549,17 @@
 <tbody>
 <tr>
 <td>&lt; 5 km</td>
-<td>Within municipality — likely valid</td>
+<td>Within municipality - likely valid</td>
 <td>✅ Pass</td>
 </tr>
 <tr>
 <td>5-50 km</td>
-<td>Nearby — needs review</td>
+<td>Nearby - needs review</td>
 <td>⚠️ Warning</td>
 </tr>
 <tr>
 <td>&gt; 50 km</td>
-<td>Suspicious — possible fake coordinates</td>
+<td>Suspicious - possible fake coordinates</td>
 <td>❌ Reject</td>
 </tr>
 </tbody>
@@ -1611,7 +1611,7 @@
 <tr>
 <td>&gt; 120</td>
 <td>Cost inflation</td>
-<td>Significantly over budget — red flag</td>
+<td>Significantly over budget - red flag</td>
 </tr>
 <tr>
 <td>&gt; 130</td>
@@ -1652,7 +1652,7 @@
 <p><strong>What it does NOT do:</strong> No computer vision. No image recognition. No AI-powered content analysis. It only verifies that the file the contractor claimed to upload actually exists on IPFS and is accessible.</p>
 <p><strong>Gate 5 impact:</strong> Low authenticity scores (&lt; 30%) from inaccessible IPFS content contribute to fraud risk. Multiple failed verifications across a PVO's evidence chain can trigger a Gate 5 rejection.</p>
 <h3 id="6-geo-risk-assessment">6. Geo Risk Assessment<a class="headerlink" href="#6-geo-risk-assessment" title="Permanent link">&para;</a></h3>
-<p>Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards — flooding, landslides, and seismic activity.</p>
+<p>Evaluates environmental risk factors for the project location. Modeled after Philippine geographical hazards - flooding, landslides, and seismic activity.</p>
 <p><strong>Contract struct:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">GeoRiskAssessment</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">pvo_id</span><span class="p">:</span><span class="w"> </span><span class="kt">u32</span><span class="p">,</span>
@@ -1812,14 +1812,14 @@
 <li>Zero API keys, zero subscriptions, zero paid services</li>
 </ul>
 <h2 id="why-this-approach">Why This Approach<a class="headerlink" href="#why-this-approach" title="Permanent link">&para;</a></h2>
-<p>Real-time AI inference on blockchains is not possible — smart contracts are deterministic enclaves with no I/O. Every production oracle (Chainlink, Pyth, Band Protocol) uses the same architecture:</p>
+<p>Real-time AI inference on blockchains is not possible - smart contracts are deterministic enclaves with no I/O. Every production oracle (Chainlink, Pyth, Band Protocol) uses the same architecture:</p>
 <ol>
 <li>Off-chain service reads data / runs model</li>
 <li>Signs transaction with authorized key</li>
 <li>Submits results to on-chain contract</li>
 <li>Smart contracts reference the stored results</li>
 </ol>
-<p>Our AI Oracle does exactly this, but with deterministic heuristics instead of black-box ML. Every finding is <strong>reproducible</strong> — anyone can re-run the analysis and get identical results. This is important for auditability: an auditor can verify that a fraud flag was raised because the same contractor appeared in 5 PVOs, not because "the model said so."</p>
+<p>Our AI Oracle does exactly this, but with deterministic heuristics instead of black-box ML. Every finding is <strong>reproducible</strong> - anyone can re-run the analysis and get identical results. This is important for auditability: an auditor can verify that a fraud flag was raised because the same contractor appeared in 5 PVOs, not because "the model said so."</p>
 
 
 

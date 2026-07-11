@@ -1354,12 +1354,12 @@
   <a href="#provenance-chain-immutable-audit-trail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provenance Chain — Immutable Audit Trail
+        Provenance Chain - Immutable Audit Trail
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Provenance Chain — Immutable Audit Trail">
+    <nav class="md-nav" aria-label="Provenance Chain - Immutable Audit Trail">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2072,12 +2072,12 @@
   <a href="#provenance-chain-immutable-audit-trail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provenance Chain — Immutable Audit Trail
+        Provenance Chain - Immutable Audit Trail
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Provenance Chain — Immutable Audit Trail">
+    <nav class="md-nav" aria-label="Provenance Chain - Immutable Audit Trail">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2352,7 +2352,7 @@
 <hr />
 <h2 id="contracts">Contracts<a class="headerlink" href="#contracts" title="Permanent link">&para;</a></h2>
 <h3 id="access-control-access_control">Access Control (access_control)<a class="headerlink" href="#access-control-access_control" title="Permanent link">&para;</a></h3>
-<p>The <strong>role-based permission system</strong>. Every action in PoPV checks the caller's role before allowing execution. 13 roles:</p>
+<p>The <strong>role-based permission system</strong>. Every action in PoPV checks the caller's role before allowing execution. 14 roles:</p>
 <table>
 <thead>
 <tr>
@@ -2412,6 +2412,10 @@
 <tr>
 <td>AIAuditor</td>
 <td>Run AI validation on evidence</td>
+</tr>
+<tr>
+<td>CentralBank</td>
+<td>Mint CBDC pPHP, redeem pPHP, mark grants disbursed</td>
 </tr>
 </tbody>
 </table>
@@ -2500,7 +2504,7 @@
 <hr />
 <h2 id="governance-flow">Governance Flow<a class="headerlink" href="#governance-flow" title="Permanent link">&para;</a></h2>
 <h3 id="deployment-scripts">Deployment Scripts<a class="headerlink" href="#deployment-scripts" title="Permanent link">&para;</a></h3>
-<p><strong>Lean Reset</strong> (<code>.dev-logs/lean-reset.js</code>): Deploys all 12 contracts fresh, assigns all 13 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.</p>
+<p><strong>Lean Reset</strong> (<code>.dev-logs/lean-reset.js</code>): Deploys all 12 contracts fresh, assigns all 14 roles, mints RPT tokens. Wipes all on-chain state. Use for a clean start.</p>
 <p><strong>Partial Deploy</strong> (<code>.dev-logs/partial-deploy.js</code>): Deploys only the contracts you specify, keeping all others untouched. Calls <code>update_*_address</code> admin functions on unchanged contracts to rewire cross-contract references. Roles, reputation scores, and entity registrations on unchanged contracts survive.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Redeploy just 3 contracts (keeps access_control, reputation, etc.)</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>node<span class="w"> </span>.dev-logs/partial-deploy.js<span class="w"> </span>pvo_core<span class="w"> </span>escrow<span class="w"> </span>procurement_market
@@ -2660,18 +2664,18 @@ A: The oracle gate (gate 3) checks that the <strong>oracle contract itself</stro
 <p><strong>Q: How is this different from a traditional escrow?</strong>
 A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawyer approval). PoPV escrow releases funds based on <strong>cryptographic proof of work completed</strong>  -  not who signed what, but whether the work was actually done and verified by independent parties with no financial interest in the outcome.</p>
 <hr />
-<h2 id="provenance-chain-immutable-audit-trail">Provenance Chain — Immutable Audit Trail<a class="headerlink" href="#provenance-chain-immutable-audit-trail" title="Permanent link">&para;</a></h2>
+<h2 id="provenance-chain-immutable-audit-trail">Provenance Chain - Immutable Audit Trail<a class="headerlink" href="#provenance-chain-immutable-audit-trail" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p>⚠️ <strong>Optional — Experimental Extension.</strong> The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking — all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.</p>
+<p>⚠️ <strong>Optional - Experimental Extension.</strong> The Provenance Chain is a separate indexing service that runs alongside PoPV. It is not required for escrow releases, gate verification, or fund locking - all core logic is on-chain. The provenance indexer was built to explore offloading query and audit workloads from Stellar, reducing read pressure on the blockchain and moving toward a fully serverless audit trail. Right now it runs on a background server; the goal is to make it serverless via scheduled functions or edge workers.</p>
 </blockquote>
 <h3 id="what-it-is">What It Is<a class="headerlink" href="#what-it-is" title="Permanent link">&para;</a></h3>
-<p>The <strong>Provenance Chain</strong> is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its <strong>Stellar transaction hash</strong> — an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.</p>
+<p>The <strong>Provenance Chain</strong> is a complete, verifiable record of every decision made on every PVO, from creation through all 5 gates to final release. It links each on-chain action to its <strong>Stellar transaction hash</strong> - an immutable, publicly verifiable cryptographic proof that can be independently confirmed on any Stellar explorer.</p>
 <p><strong>Think of it as a blockchain-powered paper trail.</strong> Every peso's journey from budget allocation to contractor payment is recorded, timestamped, and linked to a permanent on-chain receipt that can never be altered or deleted.</p>
 <h3 id="why-it-matters">Why It Matters<a class="headerlink" href="#why-it-matters" title="Permanent link">&para;</a></h3>
-<p>For <strong>COA auditors</strong>: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction — who approved, when, on which ledger.</p>
+<p>For <strong>COA auditors</strong>: Instead of digging through paper records and spreadsheets, they open the Provenance Explorer and see every gate transition with a clickable tx hash link. One click opens Stellar Expert showing the exact on-chain transaction - who approved, when, on which ledger.</p>
 <p>For <strong>Funding Agencies</strong>: They can verify that escrows they funded actually went through proper verification. No more "trust us, we checked." The proof is on-chain.</p>
-<p>For <strong>Citizens</strong>: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public — no wallet, no login needed.</p>
-<p>For <strong>Anti-Corruption Agencies</strong>: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer — all linked to tx hashes.</p>
+<p>For <strong>Citizens</strong>: Public access to the full provenance chain means anyone can audit government spending without permission. The Explorer page is public - no wallet, no login needed.</p>
+<p>For <strong>Anti-Corruption Agencies</strong>: If a project is disputed, the provenance chain provides a complete, tamper-proof history of who did what and when. Every gate approval, every evidence submission, every fund transfer - all linked to tx hashes.</p>
 <h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
 <p>The provenance system has two components that run independently:</p>
 <p><strong>1. Provenance Indexer</strong> (<code>provenance-indexer/service.ts</code>)</p>
@@ -2696,7 +2700,7 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 <p>The data model is hierarchical, matching exactly how public works projects are structured in the real world:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PVO #3: Davao Coastal Road (parent)
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── Milestone #4: Engineering &amp; Mobilization (child)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>│   ├── Escrow #1  —  ₱50,000,000 (CompliancePassed)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>│   ├── Escrow #1  -  ₱50,000,000 (CompliancePassed)
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>│   ├── Gate 1: Engineer Approval      ✅ passed   tx=f64a0a722dbc...  🔗
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>│   ├── Gate 2: Compliance Check       ✅ passed   tx=8d38e2b0f969...  🔗
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>│   ├── Gate 3: Community Oracle       ⬜ pending
@@ -2704,7 +2708,7 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>│   └── Gate 5: AI Risk Check          ⬜ pending
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>│
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>├── Milestone #5: Structural Base (child)
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>│   └── Escrow #2  —  ₱50,000,000 (Created)
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>│   └── Escrow #2  -  ₱50,000,000 (Created)
 <a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>│       └── ... 5 gates (all pending, no escrow funded yet)
 <a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>│
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>└── Timeline (chronological events with tx hashes)
@@ -2716,7 +2720,7 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 <a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    └── Escrow #1 status→EngineerApproved   tx=f64a0a72...  🔗
 </code></pre></div>
 <h3 id="how-events-are-captured">How Events Are Captured<a class="headerlink" href="#how-events-are-captured" title="Permanent link">&para;</a></h3>
-<p>The indexer calls <code>server.getEvents()</code> against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects — the indexer decodes these to extract:</p>
+<p>The indexer calls <code>server.getEvents()</code> against the Stellar RPC with contract ID filters. The Soroban SDK v16 returns events with already-decoded ScVal objects - the indexer decodes these to extract:</p>
 <table>
 <thead>
 <tr>
@@ -2786,7 +2790,7 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 </tr>
 <tr>
 <td><code>GET /api/provenance</code></td>
-<td><code>PVOProvenance[]</code> — all PVOs</td>
+<td><code>PVOProvenance[]</code> - all PVOs</td>
 <td>Full overview</td>
 </tr>
 <tr>
@@ -2796,12 +2800,12 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 </tr>
 <tr>
 <td><code>GET /api/provenance/:pvoId/timeline</code></td>
-<td><code>TimelineEntry[]</code> — chronological events</td>
+<td><code>TimelineEntry[]</code> - chronological events</td>
 <td>Event log</td>
 </tr>
 <tr>
 <td><code>GET /api/events</code></td>
-<td><code>CapturedEvent[]</code> — all raw events</td>
+<td><code>CapturedEvent[]</code> - all raw events</td>
 <td>Debugging</td>
 </tr>
 <tr>
@@ -2828,11 +2832,11 @@ A: Traditional escrow releases funds based on signatures (2-of-3 multisig, lawye
 <h3 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h3>
 <p>The Provenance Indexer follows the same principles as the AI Oracle: <strong>no backend, no database, runs anywhere.</strong></p>
 <ul>
-<li><strong>No backend</strong> — it's a standalone script that reads from the Stellar blockchain</li>
-<li><strong>No database</strong> — stores to a local JSON file that can be wiped and rebuilt</li>
-<li><strong>Runs anywhere</strong> — VPS, Raspberry Pi, cron job, or alongside <code>npm run prod</code></li>
-<li><strong>Public by default</strong> — the Explorer page has no wallet requirement</li>
-<li><strong>Immutable proof</strong> — every tx hash link opens Stellar Expert showing the permanent on-chain record</li>
+<li><strong>No backend</strong> - it's a standalone script that reads from the Stellar blockchain</li>
+<li><strong>No database</strong> - stores to a local JSON file that can be wiped and rebuilt</li>
+<li><strong>Runs anywhere</strong> - VPS, Raspberry Pi, cron job, or alongside <code>npm run prod</code></li>
+<li><strong>Public by default</strong> - the Explorer page has no wallet requirement</li>
+<li><strong>Immutable proof</strong> - every tx hash link opens Stellar Expert showing the permanent on-chain record</li>
 </ul>
 
 

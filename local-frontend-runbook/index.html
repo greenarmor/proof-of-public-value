@@ -1950,7 +1950,7 @@
 <blockquote>
 <p>Connect to the existing deployed contracts on Stellar testnet.<br />
 No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br />
-<strong>Live version:</strong> <a href="https://www.popv.quest">www.popv.quest</a> — no setup needed. Just connect Freighter.</p>
+<strong>Live version:</strong> <a href="https://www.popv.quest">www.popv.quest</a> - no setup needed. Just connect Freighter.</p>
 </blockquote>
 <hr />
 <h2 id="what-you-need">What You Need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
@@ -2056,7 +2056,7 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <li>Copy the wallet's public key (starts with <code>G</code>, 56 characters)</li>
 <li>Go to: https://laboratory.stellar.org/#account-creator</li>
 <li>Paste the public key</li>
-<li>Click <strong>"Create Account"</strong> — funded with 10,000 testnet XLM</li>
+<li>Click <strong>"Create Account"</strong> - funded with 10,000 testnet XLM</li>
 </ol>
 <hr />
 <h2 id="step-4-clone-the-repo">Step 4: Clone the Repo<a class="headerlink" href="#step-4-clone-the-repo" title="Permanent link">&para;</a></h2>
@@ -2154,7 +2154,12 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <tr>
 <td>Administrator</td>
 <td><code>/admin</code></td>
-<td>Assign roles, mint RPT and pPHP</td>
+<td>Assign roles, mint RPT</td>
+</tr>
+<tr>
+<td>CentralBank</td>
+<td><code>/central-bank</code></td>
+<td>Mint CBDC pPHP, redeem pPHP, mark grants disbursed</td>
 </tr>
 <tr>
 <td>GovernmentAgency</td>
@@ -2264,9 +2269,9 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 </tr>
 <tr>
 <td>6</td>
-<td><code>alice</code> (admin)</td>
-<td>Admin Panel</td>
-<td>Click "Direct Fund" - mint pPHP to Funding Agency</td>
+<td><code>central_bank</code></td>
+<td>Central Bank Dashboard</td>
+<td>Click "Direct Fund" - mint CBDC pPHP to Funding Agency</td>
 <td>✅ Yes</td>
 </tr>
 <tr>
@@ -2383,7 +2388,7 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 </ul>
 <h3 id="trustline-entry-is-missing-rpt-error">"trustline entry is missing" (RPT error)<a class="headerlink" href="#trustline-entry-is-missing-rpt-error" title="Permanent link">&para;</a></h3>
 <ul>
-<li>As citizen, go to Citizen Report Form first — it auto-creates the RPT trustline</li>
+<li>As citizen, go to Citizen Report Form first - it auto-creates the RPT trustline</li>
 </ul>
 <hr />
 <h2 id="thats-it">That's It<a class="headerlink" href="#thats-it" title="Permanent link">&para;</a></h2>

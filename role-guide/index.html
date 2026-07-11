@@ -1882,13 +1882,13 @@
 <tr>
 <td>New PVO</td>
 <td>Form with all PVO fields</td>
-<td>—</td>
+<td>-</td>
 <td><code>pvo_core.create_pvo</code> via raw TransactionBuilder + Freighter</td>
 </tr>
 <tr>
 <td>Define Milestone</td>
 <td>Form with evidence type picker</td>
-<td>—</td>
+<td>-</td>
 <td><code>pvo_core.create_milestone</code> with <code>Vec&lt;EvidenceType&gt;</code> encoding via TransactionBuilder</td>
 </tr>
 </tbody>
@@ -1968,7 +1968,7 @@
 <tr>
 <td>Submit Evidence</td>
 <td>IPFS upload + form</td>
-<td>—</td>
+<td>-</td>
 <td><code>pvo_core.submit_evidence</code> via TransactionBuilder + Freighter (Gate 1)</td>
 </tr>
 <tr>
@@ -2115,7 +2115,7 @@
 <tr>
 <td>Submit Inspection</td>
 <td>IPFS upload + form</td>
-<td>—</td>
+<td>-</td>
 <td><code>pvo_core.submit_evidence</code> (InspectionReport) via TransactionBuilder + Freighter</td>
 </tr>
 <tr>
@@ -2176,8 +2176,8 @@
 </tr>
 <tr>
 <td><strong>Escrow gate</strong></td>
-<td>✅ Gate 1 — <strong>required for payment</strong></td>
-<td>❌ No gate — supporting evidence</td>
+<td>✅ Gate 1 - <strong>required for payment</strong></td>
+<td>❌ No gate - supporting evidence</td>
 </tr>
 <tr>
 <td><strong>Effect on money</strong></td>
@@ -2196,7 +2196,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Why both?</strong> The engineer is paid by the contractor and signs off on payment release — a potential conflict of interest. The inspector works for the government and provides independent evidence. If an engineer approves shoddy work, the inspector's field report with photos creates an audit trail. The engineer can be penalized via the reputation contract for false approvals.</p>
+<p><strong>Why both?</strong> The engineer is paid by the contractor and signs off on payment release - a potential conflict of interest. The inspector works for the government and provides independent evidence. If an engineer approves shoddy work, the inspector's field report with photos creates an audit trail. The engineer can be penalized via the reputation contract for false approvals.</p>
 <p><strong>In the escrow flow:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Contractor submits evidence
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    │
@@ -2207,7 +2207,7 @@
 </code></pre></div>
 <p>The inspector's report is <strong>evidence</strong>, not a gate. It documents what the inspector found so that if the engineer wrongly approves, there's a permanent on-chain record proving otherwise.</p>
 <h3 id="why-the-engineer-gate-is-intentionally-the-weakest">Why the Engineer Gate Is Intentionally the Weakest<a class="headerlink" href="#why-the-engineer-gate-is-intentionally-the-weakest" title="Permanent link">&para;</a></h3>
-<p>In Philippine public works, the engineer is paid by the contractor. This is <strong>not a bug in PoPV — it's a reality</strong> that the system is designed around:</p>
+<p>In Philippine public works, the engineer is paid by the contractor. This is <strong>not a bug in PoPV - it's a reality</strong> that the system is designed around:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Contractor pays Engineer → Engineer reviews Contractor&#39;s work → CONFLICT
 </code></pre></div>
 <p>PoPV does not try to prevent this conflict. Instead, it <strong>assumes it exists</strong> and layers independent verification on top:</p>
@@ -2269,8 +2269,8 @@
 </tr>
 <tr>
 <td><strong>Level</strong></td>
-<td>Physical — site conditions</td>
-<td>Financial / regulatory — procurement law, budget rules</td>
+<td>Physical - site conditions</td>
+<td>Financial / regulatory - procurement law, budget rules</td>
 </tr>
 <tr>
 <td><strong>What they check</strong></td>
@@ -2289,8 +2289,8 @@
 </tr>
 <tr>
 <td><strong>Escrow gate</strong></td>
-<td>❌ No gate — supporting evidence</td>
-<td>✅ Gate 2 — <strong>required for payment</strong></td>
+<td>❌ No gate - supporting evidence</td>
+<td>✅ Gate 2 - <strong>required for payment</strong></td>
 </tr>
 <tr>
 <td><strong>Effect on money</strong></td>
@@ -2612,7 +2612,7 @@
 <tr>
 <td>Submit Bid</td>
 <td>Tender selector + amount form</td>
-<td>—</td>
+<td>-</td>
 <td><code>procurement_market.submit_bid</code> via TransactionBuilder + Freighter</td>
 </tr>
 <tr>
@@ -2658,7 +2658,7 @@
 </tbody>
 </table>
 <p>The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is <strong>Gate 5</strong> in the 5-gate escrow system.</p>
-<p>The dashboard is <strong>public</strong> — anyone can view AI findings at <code>/ai</code> without a wallet. See <strong><a href="../ai-oracle/">Appendix C: How the AI Oracle Works</a></strong> for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.</p>
+<p>The dashboard is <strong>public</strong> - anyone can view AI findings at <code>/ai</code> without a wallet. See <strong><a href="../ai-oracle/">Appendix C: How the AI Oracle Works</a></strong> for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.</p>
 <p><strong>Dashboard tabs:</strong></p>
 <table>
 <thead>
