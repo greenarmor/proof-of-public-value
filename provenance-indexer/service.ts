@@ -700,10 +700,56 @@ async function buildProvenance(
 
     allEvents.sort((a, b) => b.ledger - a.ledger);
 
-    if (allEvents.length > 50000) {
-      // Only trim oldest events if store grows unreasonably large
-      // But preserve at least 10000 to cover full project timelines
-      allEvents = allEvents.slice(0, 50000);
+    // Smarter dedup: for high-frequency event types, keep only latest per entity
+    // This prevents store bloat from repetitive submissions (risk_predicted, geo_risk, etc.)
+    const DEDUP_EVENT_TYPES = new Set([
+      "risk_predicted_event",
+      "geo_risk_assessed_event",
+      "digital_twin_updated_event",
+      "fraud_detected_event",
+      "image_verified_event",
+    ]);
+    const seen = new Set<string>();
+    const dedupedEvents: CapturedEvent[] = [];
+    let dedupedCount = 0;
+    for (const e of allEvents) {
+      if (DEDUP_EVENT_TYPES.has(e.eventName)) {
+        // Dedup by event type + contract (already unique per contract)
+        // For risk_predicted: keep latest per contractor (from data)
+        // For geo_risk/twin: keep latest per pvo_id
+        let key = `${e.eventName}:${e.contract}:`;
+        const d = e.data || {};
+        if (d.contractor) key += String(d.contractor).slice(0, 20);
+        else if (d.pvo_id) key += `pvo_${d.pvo_id}`;
+        else key += e.txHash.slice(-8);
+        if (seen.has(key)) { dedupedCount++; continue; }
+        seen.add(key);
+      }
+      dedupedEvents.push(e);
+    }
+    if (dedupedCount > 0) {
+      console.log(`  💾 Deduplicated ${dedupedCount} redundant events (${dedupedEvents.length} kept)`);
+    }
+    allEvents = dedupedEvents;
+
+    // Hard cap with structured fallback: prioritize pvo_core/escrow over ai_oracle
+    const MAX_EVENTS = 50000;
+    if (allEvents.length > MAX_EVENTS) {
+      const priority = (e: CapturedEvent) => 
+        e.contract === "pvo_core" ? 0 : e.contract === "escrow" ? 1 :
+        e.contract === "audit_trail" ? 2 : e.contract === "compliance_engine" ? 3 : 4;
+      allEvents.sort((a, b) => {
+        const pa = priority(a) - priority(b);
+        if (pa !== 0) return pa;
+        return b.ledger - a.ledger;
+      });
+      const trimmed = allEvents.length - MAX_EVENTS;
+      allEvents = allEvents.slice(0, MAX_EVENTS);
+      console.log(`  ⚠ Store capped at ${MAX_EVENTS} events (trimmed ${trimmed} low-priority)`);
+    }
+
+    if (allEvents.length > 10000) {
+      console.log(`  ⚠ Store size: ${allEvents.length} events (${(allEvents.length / MAX_EVENTS * 100).toFixed(0)}% of capacity)`);
     }
 
     if (earliestScanned === 0 || startLedger < earliestScanned) {
@@ -847,6 +893,29 @@ function saveStore(store: ProvenanceStore): void {
   }
 }
 
+// ── Rate Limiter ────────────────────────────────────────
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 120;
+const rateTracker = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateTracker.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateTracker.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateTracker) {
+    if (now > entry.resetAt) rateTracker.delete(ip);
+  }
+}, RATE_LIMIT_WINDOW_MS);
+
 // ── HTTP Server ─────────────────────────────────────────
 let currentStore: ProvenanceStore | null = null;
 
@@ -870,6 +939,13 @@ function sendHTML(res: ServerResponse, html: string): void {
 
 function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   const url = new URL(req.url ?? "/", `http://localhost:${HTTP_PORT}`);
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim()
+    || req.socket.remoteAddress || "unknown";
+
+  if (!checkRateLimit(ip)) {
+    sendJSON(res, { error: "Rate limit exceeded" }, 429);
+    return;
+  }
 
   if (req.method === "OPTIONS") {
     sendJSON(res, {});
