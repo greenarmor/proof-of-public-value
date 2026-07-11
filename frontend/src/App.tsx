@@ -37,8 +37,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/portal", label: "Public Portal", icon: "🏛️", group: "public" },
-  { to: "/provenance", label: "Explorer", icon: "📋", group: "public" },
-  { to: "/escrows", label: "Escrows", icon: "🔒", group: "public" },
+  { to: "/provenance", label: "Explorer", icon: "📋", roles: ["Administrator"], group: "public" },
+  { to: "/escrows", label: "Escrows", icon: "🔒", roles: ["Administrator"], group: "public" },
   { to: "/#features", label: "How It Works", icon: "🔄", group: "landing" },
   { to: "/#capabilities", label: "Capabilities", icon: "✨", group: "landing" },
   { to: "/#connect", label: "Connect", icon: "🔗", group: "landing" },
@@ -116,7 +116,7 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["AntiCorruptionAgency", "Administrator"],
     group: "oversight",
   },
-  { to: "/ai", label: "AI Monitor", icon: "🤖", group: "public" },
+  { to: "/ai", label: "AI Monitor", icon: "🤖", roles: ["Administrator"], group: "public" },
 
   {
     to: "/funder",
@@ -586,7 +586,6 @@ function App() {
               <Route path="/onboarding" element={<RolePlayOnboarding />} />
               <Route path="/index" element={<IndexLeaderboard />} />
               <Route path="/memory" element={<EconomicMemory />} />
-              <Route path="/escrows" element={<EscrowMonitor />} />
               <Route
                 path="/citizen"
                 element={
@@ -641,8 +640,15 @@ function App() {
                   />
                 }
               />
-              <Route path="/provenance" element={<ProvenanceExplorer />} />
-              <Route path="/ai" element={<AIDashboard />} />
+              <Route path="/provenance" element={
+                <ProtectedRoute element={<ProvenanceExplorer />} roles={["Administrator"]} />
+              } />
+              <Route path="/ai" element={
+                <ProtectedRoute element={<AIDashboard />} roles={["Administrator"]} />
+              } />
+              <Route path="/escrows" element={
+                <ProtectedRoute element={<EscrowMonitor />} roles={["Administrator"]} />
+              } />
               <Route
                 path="/compliance"
                 element={
