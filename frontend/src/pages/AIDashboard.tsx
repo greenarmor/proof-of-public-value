@@ -1081,6 +1081,7 @@ function ForensicCaseTab() {
           } catch {}
 
           let tenderCount = 0;
+          let awardedTenders = 0;
           try {
             const tCnt = await procClient.get_tender_count();
             for (let t = 1; t <= Number(tCnt.result); t++) {
@@ -1088,6 +1089,8 @@ function ForensicCaseTab() {
               if (tender.result && Number((tender.result as any).pvo_id) === i) {
                 tenderCount++;
                 const td = tender.result as any;
+                const tStatus = typeof td.status === "string" ? td.status : td.status?.tag ?? "";
+                if (tStatus === "Awarded" || td.winner) awardedTenders++;
                 timeline.push({ timestamp: Number(td.created_at || 0), event: "Tender Created", detail: `${td.title}: ${Number(td.budget || 0) / PPHP_SCALE}`, category: "procurement" });
                 const bids = ((await procClient.get_bids_by_tender({ tender_id: t })).result || []) as any[];
                 if (bids.length === 1) flags.push({ flag: "SingleBidTender", severity: "low" });
@@ -1133,6 +1136,11 @@ function ForensicCaseTab() {
                 flags.push({ flag: `EscrowBudgetMismatch: escrow ${Math.round(ratio * 100)}% of actual per-MS (${(actualBudgetPerMs / PPHP_SCALE).toLocaleString()})`, severity: "medium" });
               }
             }
+          }
+
+          // Shell company: won tenders but zero evidence
+          if (awardedTenders > 0 && evidenceCount === 0 && milestones.length > 0) {
+            flags.push({ flag: "ShellCompanyRisk: won tender but no evidence submitted", severity: "high" });
           }
 
           let violationCount = 0;

@@ -527,6 +527,17 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     }
   }
 
+  // Shell company: contractor won tenders but submitted zero evidence ever
+  const awardedTenders = tenders.filter((t: any) => {
+    const st = typeof t.status === "string" ? t.status : t.status?.tag ?? "";
+    return st === "Awarded" || !!t.winner;
+  });
+  const totalEvidenceAll = milestones.reduce((s: number, m: any) => s + (m.submitted_evidence || []).length, 0);
+  if (awardedTenders.length > 0 && totalEvidenceAll === 0 && milestones.length > 0) {
+    // Has at least one milestone defined, won a tender, but zero evidence
+    flags.push("ShellCompanyRisk:won_tender_but_zero_evidence");
+  }
+
   // 4. Compliance violations
   const violations = queryContract("compliance_engine", "get_violations_by_pvo", `--pvo_id ${pvoId}`) || [];
   const isCompliant = queryContract("compliance_engine", "is_pvo_compliant", `--pvo_id ${pvoId}`);
