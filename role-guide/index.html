@@ -2657,9 +2657,9 @@
 </tr>
 </tbody>
 </table>
-<p>The AI Oracle performs automated cross-contract analysis for fraud detection, risk prediction, GPS validation, digital twin simulation, and image verification. This is <strong>Gate 5</strong> in the 5-gate escrow system.</p>
+<p>The AI Oracle performs automated cross-contract analysis across 10 contracts for fraud detection, risk prediction, GPS validation, digital twin simulation, image verification, and forensic case analysis. This is <strong>Gate 5</strong> in the 5-gate escrow system.</p>
 <p>The dashboard is <strong>public</strong> - anyone can view AI findings at <code>/ai</code> without a wallet. See <strong><a href="../ai-oracle/">Appendix C: How the AI Oracle Works</a></strong> for a comprehensive explanation of the heuristic engine, architecture, and production deployment options.</p>
-<p><strong>Dashboard tabs:</strong></p>
+<p><strong>Dashboard tabs (8 total):</strong></p>
 <table>
 <thead>
 <tr>
@@ -2706,16 +2706,29 @@
 <td><code>ai_oracle.get_gps_validation</code> looped</td>
 <td>None (read-only)</td>
 </tr>
+<tr>
+<td>Forensic Cases</td>
+<td>Full lifecycle analysis (10 contracts): 13 flag types, colored timeline, collusion detection</td>
+<td>Reads from 10 contracts per PVO in-browser</td>
+<td>None (read-only)</td>
+</tr>
+<tr>
+<td>Escrow Gate</td>
+<td>Escrow gate status + oracle recommendation, submit AI pass/reject on-chain</td>
+<td><code>escrow</code> + <code>ai_oracle</code></td>
+<td><code>escrow.ai_validate</code> (Gate 5)</td>
+</tr>
 </tbody>
 </table>
 <p><strong>What they do:</strong></p>
 <ol>
 <li>View fraud detection results with risk scores and indicator flags</li>
-<li>Check contractor risk predictions (delay risk, budget overrun)</li>
+<li>Check contractor risk predictions (delay risk, budget overrun) using 6-8 data-driven factors</li>
 <li>Verify drone/satellite imagery authenticity</li>
-<li>Monitor digital twin cost simulations</li>
+<li>Monitor digital twin cost simulations with deviation alerts</li>
 <li>Validate GPS coordinates against expected project locations</li>
-<li>Submit fraud detections, risk predictions, and validations via <code>ai_oracle</code> contract functions</li>
+<li>Browse forensic case files: per-PVO timeline, cross-contract anomaly flags, collusion detection</li>
+<li>Review AI oracle recommendation for Gate 5 escrows and submit pass/reject on-chain</li>
 </ol>
 <hr />
 <h3 id="citizen">Citizen<a class="headerlink" href="#citizen" title="Permanent link">&para;</a></h3>
@@ -2937,7 +2950,7 @@
 </tr>
 <tr>
 <td><code>ai_oracle</code></td>
-<td><code>CAVD64WSZLOVV35RFKPG2OFVRCR3F3LGXQYSFR2JTDSGIBYKBXKUBP25</code></td>
+<td><code>CAVOYO6RPO3P6WRTD73Y4EQCWZVSCY6JCWELG3MFKNIIQ7IJCGNRWR7G</code></td>
 </tr>
 <tr>
 <td><code>compliance_engine</code></td>

@@ -973,50 +973,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-the-ai-is-and-isnt" class="md-nav__link">
+  <a href="#what-the-ai-is" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the AI Is (and Isn't)
+        What the AI Is
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="What the AI Is (and Isn&#39;t)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-no-actual-ml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why no actual ML?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#five-analysis-categories" class="md-nav__link">
+  <a href="#six-analysis-categories-v3-forensic-engine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Five Analysis Categories
+        Six Analysis Categories (v3 Forensic Engine)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Five Analysis Categories">
+    <nav class="md-nav" aria-label="Six Analysis Categories (v3 Forensic Engine)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-fraud-detection-8-indicators" class="md-nav__link">
+  <a href="#1-fraud-detection-8-indicators-forensic-adjustment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Fraud Detection (8 indicators)
+        1. Fraud Detection (8 indicators + forensic adjustment)
       
     </span>
   </a>
@@ -1130,6 +1113,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-forensic-case-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Forensic Case Analysis
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1225,50 +1219,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-the-ai-is-and-isnt" class="md-nav__link">
+  <a href="#what-the-ai-is" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the AI Is (and Isn't)
+        What the AI Is
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="What the AI Is (and Isn&#39;t)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-no-actual-ml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why no actual ML?
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#five-analysis-categories" class="md-nav__link">
+  <a href="#six-analysis-categories-v3-forensic-engine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Five Analysis Categories
+        Six Analysis Categories (v3 Forensic Engine)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Five Analysis Categories">
+    <nav class="md-nav" aria-label="Six Analysis Categories (v3 Forensic Engine)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-fraud-detection-8-indicators" class="md-nav__link">
+  <a href="#1-fraud-detection-8-indicators-forensic-adjustment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Fraud Detection (8 indicators)
+        1. Fraud Detection (8 indicators + forensic adjustment)
       
     </span>
   </a>
@@ -1386,6 +1363,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#6-forensic-case-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Forensic Case Analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#production-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1428,26 +1416,17 @@
 
 
 <h1 id="appendix-c-how-the-ai-oracle-works">Appendix C: How the AI Oracle Works<a class="headerlink" href="#appendix-c-how-the-ai-oracle-works" title="Permanent link">&para;</a></h1>
-<p>A comprehensive guide to PoPV's fraud detection, risk prediction, and verification engine.</p>
+<p>A comprehensive guide to PoPV's AI forensic engine - fraud detection, risk prediction, image/GPS verification, digital twin simulation, geo-risk assessment, and forensic case analysis.</p>
 <hr />
-<h2 id="what-the-ai-is-and-isnt">What the AI Is (and Isn't)<a class="headerlink" href="#what-the-ai-is-and-isnt" title="Permanent link">&para;</a></h2>
-<p>The AI Oracle is a <strong>deterministic heuristic engine</strong>, not a machine learning model. It does not call OpenAI, Anthropic, or any external API. There is zero network access, zero API keys, and zero recurring costs.</p>
-<p>Instead, it cross-references on-chain data across all contracts using mathematical rules:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>PVOs + Escrows + Reputation + Audit Trail + Community Reports + Compliance
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                              ▼
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                    Heuristic analysis engine
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                              │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                              ▼
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                    Findings submitted to ai_oracle
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                              │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                              ▼
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                    Public dashboard at /ai
+<h2 id="what-the-ai-is">What the AI Is<a class="headerlink" href="#what-the-ai-is" title="Permanent link">&para;</a></h2>
+<p>The AI Oracle is a <strong>forensic analysis engine</strong> that cross-references on-chain data across 10 Soroban contracts to detect fraud, predict risk, verify evidence, and trace the full project transaction journey from creation to release.</p>
+<p>It operates as an <strong>off-chain Node.js service</strong> (<code>ai-oracle/service.ts</code>) that reads from all contracts, builds forensic case files per PVO, and submits analysis results to the on-chain <code>ai_oracle</code> contract. The frontend then reads from the contract to display findings.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>10 Contracts → Forensic Analysis Engine → ai_oracle contract → Public Dashboard
 </code></pre></div>
-<h3 id="why-no-actual-ml">Why no actual ML?<a class="headerlink" href="#why-no-actual-ml" title="Permanent link">&para;</a></h3>
-<p>Soroban smart contracts cannot access the internet, load models, or run floating-point math. All computation happens off-chain in the analysis script, and only the <strong>results</strong> are stored on-chain. This is the same architecture used by Chainlink oracles, price feeds, and every production blockchain oracle.</p>
-<h2 id="five-analysis-categories">Five Analysis Categories<a class="headerlink" href="#five-analysis-categories" title="Permanent link">&para;</a></h2>
-<h3 id="1-fraud-detection-8-indicators">1. Fraud Detection (8 indicators)<a class="headerlink" href="#1-fraud-detection-8-indicators" title="Permanent link">&para;</a></h3>
+<p>The engine is deterministic and data-driven - zero random values, zero mock data. Every metric derives from real on-chain state.</p>
+<h2 id="six-analysis-categories-v3-forensic-engine">Six Analysis Categories (v3 Forensic Engine)<a class="headerlink" href="#six-analysis-categories-v3-forensic-engine" title="Permanent link">&para;</a></h2>
+<p>The engine scans 10 contracts to build a per-PVO forensic case file containing timeline events, anomaly flags, and cross-contract analysis.</p>
+<h3 id="1-fraud-detection-8-indicators-forensic-adjustment">1. Fraud Detection (8 indicators + forensic adjustment)<a class="headerlink" href="#1-fraud-detection-8-indicators-forensic-adjustment" title="Permanent link">&para;</a></h3>
 <p>The engine scans for 8 fraud patterns defined in the <code>ai_oracle</code> contract:</p>
 <table>
 <thead>
@@ -1771,6 +1750,63 @@
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--admin<span class="w"> </span>GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>--auditor<span class="w"> </span>GATLFXDNY2OIRX437GHRWR5CWFV7EQ7ORNYIND7APGNGU3HCNYI45AWW
 </code></pre></div>
+<h2 id="6-forensic-case-analysis">6. Forensic Case Analysis<a class="headerlink" href="#6-forensic-case-analysis" title="Permanent link">&para;</a></h2>
+<p>The v3 forensic engine builds a complete <strong>ForensicCaseFile</strong> per PVO by querying all 10 contracts:</p>
+<table>
+<thead>
+<tr>
+<th>Data Source</th>
+<th>What's Collected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pvo_core</code></td>
+<td>PVO lifecycle, milestones, evidence</td>
+</tr>
+<tr>
+<td><code>escrow</code></td>
+<td>All escrows, their amounts, gate progression</td>
+</tr>
+<tr>
+<td><code>grant_commitment</code></td>
+<td>Donor pledges, funding gaps</td>
+</tr>
+<tr>
+<td><code>procurement_market</code></td>
+<td>Tenders, bids, bid clustering</td>
+</tr>
+<tr>
+<td><code>compliance_engine</code></td>
+<td>Violations, compliant status</td>
+</tr>
+<tr>
+<td><code>community_oracle</code></td>
+<td>Citizen reports, verified count</td>
+</tr>
+<tr>
+<td><code>reputation</code></td>
+<td>Contractor score, complaints, violations</td>
+</tr>
+<tr>
+<td><code>value_score</code></td>
+<td>Public value ratings</td>
+</tr>
+<tr>
+<td><code>audit_trail</code></td>
+<td>Decision history</td>
+</tr>
+<tr>
+<td><code>ai_oracle</code></td>
+<td>Prior fraud/risk submissions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Forensic Flags Detected (13 types):</strong>
+GhostProject, CollusionPattern, EscrowBudgetMismatch, FundingGap, UnregisteredContractor, LowReputation, SafetyViolations, MultipleAuditFindings, CriticalViolation, SingleBidTender, SuspiciousBidClustering, EscrowDisputed, HighDelayRate</p>
+<p>Each flag has a severity (critical/high/medium/low) and contributes to the overall fraud risk score via forensic risk adjustment.</p>
+<p>The case file is built by <code>collectForensicData()</code> in <code>ai-oracle/service.ts:425-672</code> and displayed in the <strong>Forensic Cases</strong> tab of the AI Dashboard.</p>
+<p>These findings feed into the <strong>Provenance Chain</strong> (<code>provenance-indexer/service.ts</code>) which links every event to its Stellar transaction hash, creating an immutable, append-only audit trail served at <code>/provenance-store.json</code>.</p>
 <h2 id="production-deployment">Production Deployment<a class="headerlink" href="#production-deployment" title="Permanent link">&para;</a></h2>
 <p>The analysis script can be scheduled as:</p>
 <table>
