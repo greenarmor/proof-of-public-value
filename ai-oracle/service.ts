@@ -802,9 +802,9 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     console.log(`  [Digital Twin] Already exists, skipping`);
   }
 
-  // 3. Submit Risk Prediction (cross-contract, data-driven)
+  // 3. Submit Risk Prediction (updates every scan to reflect current project state)
   const existingFraud = getFraudByPvo(pvoId);
-  if (existingFraud.length === 0) {
+  {
     const factors: string[] = [...flags];
     let delayProb = 10;
     let overrunProb = 8;
@@ -910,8 +910,6 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     } else {
       console.error(`  [Risk] Failed`);
     }
-  } else {
-    console.log(`  [Risk] Fraud detection exists, skipping risk prediction`);
   }
 
   // 4. Analyze each milestone with evidence
