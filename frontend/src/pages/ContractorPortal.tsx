@@ -4,6 +4,7 @@ import { uploadToIPFS } from "../ipfs";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
+import { Client as RepClient } from "../contracts/reputation/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
@@ -44,6 +45,41 @@ export function ContractorPortal() {
   const [evidenceModal, setEvidenceModal] = useState(false);
   const [prefillPvoId, setPrefillPvoId] = useState(0);
   const [prefillMilestoneId, setPrefillMilestoneId] = useState(0);
+  const [reputation, setReputation] = useState<any | null>(null);
+  const [repLoading, setRepLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!address) return;
+    (async () => {
+      setRepLoading(true);
+      try {
+        const repClient = new RepClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const r = await repClient.get_reputation({ entity: address });
+        setReputation(r.result || null);
+      } catch { setReputation(null); }
+      finally { setRepLoading(false); }
+    })();
+  }, [address]);
+
+  const confirmRegistration = async () => {
+    setConfirming(true);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address!);
+      const contract = new Contract(CONTRACT_IDS.reputation);
+      const op = contract.call("register_entity", new Address(address!).toScVal(), xdr.ScVal.scvSymbol("Contractor"));
+      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
+      setReputation({ reputation_score: 100, completed_projects: 0, success_rate: 100 });
+    } catch (e: any) { console.error(e); alert("Confirmation failed: " + (e.message?.slice(0, 80) || "Unknown")); }
+    finally { setConfirming(false); }
+  };
 
   const openEvidence = (pvoId: number, milestoneId: number) => {
     setPrefillPvoId(pvoId);
@@ -67,6 +103,34 @@ export function ContractorPortal() {
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Contractor Portal</h1>
       <p className="text-gray-500 mb-2">Manage your assigned projects, submit evidence on-chain, and track payments.</p>
+
+      {!repLoading && (
+        <div className={`card p-4 mb-4 border ${reputation ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+          {reputation ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-700">✓ Contractor Confirmed</p>
+                <p className="text-xs text-green-600 mt-0.5">Reputation: {reputation.reputation_score}/100 · {reputation.completed_projects || 0} projects · {reputation.success_rate || 100}% success</p>
+              </div>
+              <button onClick={confirmRegistration} disabled={confirming}
+                className="text-xs px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">
+                ↻ Refresh
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-700">Contractor Confirmation Required</p>
+                <p className="text-xs text-amber-600 mt-0.5">Confirm your identity on-chain to build your reputation and track record. This is required before your projects are considered verified.</p>
+              </div>
+              <button onClick={confirmRegistration} disabled={confirming}
+                className="btn-primary text-xs px-4 py-2 whitespace-nowrap">
+                {confirming ? "Confirming..." : "✓ Confirm Contractor"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="card p-3 mb-4 bg-purple-50 border-purple-200 flex items-center justify-between">
         <p className="text-sm text-purple-700">Looking for projects to bid on? Browse open tenders and submit your proposal.</p>
         <a href="/procurement" className="btn-primary text-xs px-3 py-1.5 whitespace-nowrap">🏗️ Procurement Marketplace</a>
