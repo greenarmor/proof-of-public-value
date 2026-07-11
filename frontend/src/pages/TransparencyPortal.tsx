@@ -916,7 +916,7 @@ function ExpandableProvenance({ data }: { data: any }) {
       {open && (
         <div className="card p-4 bg-slate-50/50 border-slate-200">
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(data.timeline || []).slice(0, 15).map((e: any, i: number) => (
+            {(data.timeline || []).map((e: any, i: number) => (
               <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
                 <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -934,9 +934,6 @@ function ExpandableProvenance({ data }: { data: any }) {
                 )}
               </div>
             ))}
-            {(data.timeline || []).length > 15 && (
-              <p className="text-xs text-slate-400 text-center">+{(data.timeline.length - 15)} more events</p>
-            )}
           </div>
           {(data.milestones || []).filter((m: any) => m.gates?.length > 0).map((m: any) => (
             <div key={m.milestone_id} className="mt-3 pt-3 border-t border-slate-200">
