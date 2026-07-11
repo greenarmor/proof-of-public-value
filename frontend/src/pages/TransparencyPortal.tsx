@@ -601,53 +601,8 @@ export function TransparencyPortal() {
               {provenanceLoading ? (
                 <div className="mt-4 card p-4 text-center text-sm text-slate-400">Loading provenance chain...</div>
               ) : provenanceData ? (
-                <div className="mt-4 space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-700">🔗 Provenance Chain ({provenanceData.timeline?.length || 0} events)</h3>
-                  <div className="card p-4 bg-slate-50/50 border-slate-200">
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {(provenanceData.timeline || []).slice(0, 15).map((e: any, i: number) => (
-                        <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
-                          <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-slate-700">{e.description}</p>
-                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                              <span>{e.contract}</span>
-                              {e.ledger && <span>ledger #{e.ledger}</span>}
-                            </div>
-                          </div>
-                          {e.tx_hash && (
-                            <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
-                              🔗 {e.tx_hash.slice(0, 6)}…
-                            </a>
-                          )}
-                        </div>
-                      ))}
-                      {(provenanceData.timeline || []).length > 15 && (
-                        <p className="text-xs text-slate-400 text-center">+{(provenanceData.timeline.length - 15)} more events</p>
-                      )}
-                    </div>
-                    {(provenanceData.milestones || []).filter((m: any) => m.gates?.length > 0).map((m: any) => (
-                      <div key={m.milestone_id} className="mt-3 pt-3 border-t border-slate-200">
-                        <p className="text-xs font-medium text-slate-500 mb-2">{m.milestone_title}</p>
-                        <div className="grid grid-cols-5 gap-1">
-                          {(m.gates || []).map((g: any) => (
-                            <div key={g.gate_number} className={`rounded px-1.5 py-1 text-center text-[10px] font-medium ${g.tx_hash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
-                              <div>{g.gate_name}</div>
-                              {g.tx_hash && (
-                                <a href={`https://stellar.expert/explorer/testnet/tx/${g.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-700">
-                                  {g.status === 'passed' ? '✓' : g.status}
-                                </a>
-                              )}
-                              {!g.tx_hash && <div>{g.status}</div>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                <ExpandableProvenance data={provenanceData} />
+              ) : null}
 
               {/* Escrow Cards */}
               {escrowsLoading ? (
@@ -944,6 +899,65 @@ export function TransparencyPortal() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Expandable Provenance Card ──────────────────────────
+function ExpandableProvenance({ data }: { data: any }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-4 space-y-3">
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors">
+        <span>{open ? "▼" : "▶"}</span>
+        🔗 Provenance Chain ({data.timeline?.length || 0} events)
+      </button>
+      {open && (
+        <div className="card p-4 bg-slate-50/50 border-slate-200">
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {(data.timeline || []).slice(0, 15).map((e: any, i: number) => (
+              <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-700">{e.description}</p>
+                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                    <span>{e.contract}</span>
+                    {e.ledger && <span>ledger #{e.ledger}</span>}
+                  </div>
+                </div>
+                {e.tx_hash && (
+                  <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
+                    🔗 {e.tx_hash.slice(0, 6)}…
+                  </a>
+                )}
+              </div>
+            ))}
+            {(data.timeline || []).length > 15 && (
+              <p className="text-xs text-slate-400 text-center">+{(data.timeline.length - 15)} more events</p>
+            )}
+          </div>
+          {(data.milestones || []).filter((m: any) => m.gates?.length > 0).map((m: any) => (
+            <div key={m.milestone_id} className="mt-3 pt-3 border-t border-slate-200">
+              <p className="text-xs font-medium text-slate-500 mb-2">{m.milestone_title}</p>
+              <div className="grid grid-cols-5 gap-1">
+                {(m.gates || []).map((g: any) => (
+                  <div key={g.gate_number} className={`rounded px-1.5 py-1 text-center text-[10px] font-medium ${g.tx_hash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
+                    <div>{g.gate_name}</div>
+                    {g.tx_hash && (
+                      <a href={`https://stellar.expert/explorer/testnet/tx/${g.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-700">
+                        {g.status === 'passed' ? '✓' : g.status}
+                      </a>
+                    )}
+                    {!g.tx_hash && <div>{g.status}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
