@@ -1300,7 +1300,7 @@ function ForensicCard({ pvoId, contractor }: { pvoId: number; contractor: string
                 </div>
                 <span className="font-mono text-xs font-medium">{Number(data.fraud.risk_score)}/100</span>
               </div>
-              <p className="text-xs text-gray-400">Confidence: {Number(data.fraud.confidence || 0)}%</p>
+              <p className="text-xs text-gray-400">Data Coverage: {Number(data.fraud.confidence || 0)}%</p>
               {(data.fraud.indicators || []).length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {(data.fraud.indicators || []).map((ind: any, i: number) => (
