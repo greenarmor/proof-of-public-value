@@ -726,7 +726,7 @@ function forensicFlagsToIndicators(flags: string[]): string[] {
     const lower = f.toLowerCase();
     if (lower.includes("ghost")) indicators.add("GhostProject");
     if (lower.includes("collusion") || lower.includes("clustering") || lower.includes("singlebid")) indicators.add("CollusionPattern");
-    if (lower.includes("budget") || lower.includes("deviation") || lower.includes("mismatch")) indicators.add("AbnormalBudgetGrowth");
+    if (lower.includes("mismatch") || lower.includes("gap")) indicators.add("AbnormalBudgetGrowth");
     if (lower.includes("duplicate")) indicators.add("DuplicateInvoice");
     if (lower.includes("timing") || lower.includes("unusual")) indicators.add("UnusualPaymentTiming");
     if (lower.includes("noreputation") || lower.includes("shell")) indicators.add("ShellCompanyRisk");
