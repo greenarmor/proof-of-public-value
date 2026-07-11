@@ -844,8 +844,8 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
                 <p className="text-xs font-medium text-slate-500 mb-2">Geo Risk - {data.geoData?.region || data.pvoMunicipality}</p>
                 <div className="grid grid-cols-3 gap-1 text-xs">
                   <div><p className="text-gray-400">Flood</p><p className={`font-medium ${geoFlood > 60 ? "text-red-600" : "text-gray-700"}`}>{geoFlood}%</p></div>
-                  <div><p className="text-gray-400">Seismic</p><p className={`font-medium ${geoSeismic > 60 ? "text-red-600" : "text-gray-700"}`}>{geoSeismic}%</p></div>
-                  <div><p className="text-gray-400">Landslide</p><p className={`font-medium ${geoLandslide > 60 ? "text-red-600" : "text-gray-700"}`}>{geoLandslide}%</p></div>
+                  <div><p className="text-gray-400">Seismic</p><p className={`font-medium ${geoSeismic! > 60 ? "text-red-600" : "text-gray-700"}`}>{geoSeismic}%</p></div>
+                  <div><p className="text-gray-400">Landslide</p><p className={`font-medium ${geoLandslide! > 60 ? "text-red-600" : "text-gray-700"}`}>{geoLandslide}%</p></div>
                 </div>
               </div>
             )}
