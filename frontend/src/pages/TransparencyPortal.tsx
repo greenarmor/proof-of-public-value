@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
+import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -594,6 +595,9 @@ export function TransparencyPortal() {
                     </div>
                   );
                 })()}
+
+              {/* AI Forensic Analysis */}
+              <ForensicCard pvoId={Number(selected.id)} contractor={selected.contractor} />
 
               {/* Escrow Cards */}
               {escrowsLoading ? (
@@ -1238,5 +1242,105 @@ function ReleaseButton({ escrowId }: { escrowId: number }) {
     >
       {releasing ? "..." : "💸 Release"}
     </button>
+  );
+}
+
+// ── AI Forensic Analysis Card ───────────────────────────
+function ForensicCard({ pvoId, contractor }: { pvoId: number; contractor: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result: any = {};
+        try {
+          const fr = await aiClient.get_fraud_by_pvo({ pvo_id: pvoId });
+          const frauds = (fr.result || []) as any[];
+          if (frauds.length > 0) result.fraud = frauds[frauds.length - 1];
+        } catch {}
+        try {
+          if (contractor) {
+            const rr = await aiClient.get_latest_risk_prediction({ contractor });
+            result.risk = rr.result;
+          }
+        } catch {}
+        try {
+          const gr = await aiClient.get_geo_risk({ pvo_id: pvoId });
+          result.geo = gr.result;
+        } catch {}
+        try {
+          const tr = await aiClient.get_digital_twin({ pvo_id: pvoId });
+          result.twin = tr.result;
+        } catch {}
+        setData(result);
+      } catch {}
+      finally { setLoading(false); }
+    })();
+  }, [pvoId, contractor]);
+
+  if (loading) return <div className="card p-4 mt-4 skeleton h-24" />;
+  if (!data || (!data.fraud && !data.risk && !data.geo && !data.twin)) return null;
+
+  const catLabels = ["Low", "Medium", "High", "Critical"];
+
+  return (
+    <div className="mt-4 space-y-3">
+      <h3 className="text-sm font-semibold text-slate-700">🤖 AI Forensic Analysis</h3>
+      <div className="card p-4 bg-purple-50/30 border-purple-100">
+        <div className="grid grid-cols-2 gap-3">
+          {data.fraud && (
+            <div className="border border-gray-200 bg-white rounded-lg p-3">
+              <p className="text-xs font-medium text-slate-500 mb-2">Fraud Detection</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${Number(data.fraud.risk_score) >= 75 ? "bg-red-500" : Number(data.fraud.risk_score) >= 50 ? "bg-orange-500" : "bg-green-500"}`} style={{ width: `${Number(data.fraud.risk_score)}%` }} />
+                </div>
+                <span className="font-mono text-xs font-medium">{Number(data.fraud.risk_score)}/100</span>
+              </div>
+              <p className="text-xs text-gray-400">Confidence: {Number(data.fraud.confidence || 0)}%</p>
+              {(data.fraud.indicators || []).length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {(data.fraud.indicators || []).map((ind: any, i: number) => (
+                    <span key={i} className="px-1.5 py-0.5 text-xs rounded bg-red-50 text-red-700">{(typeof ind === "string" ? ind : ind?.tag ?? "").replace(/([A-Z])/g, " $1").trim()}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {data.risk && (
+            <div className="border border-gray-200 bg-white rounded-lg p-3">
+              <p className="text-xs font-medium text-slate-500 mb-2">Risk Prediction</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><p className="text-gray-400">Delay</p><p className="font-medium text-gray-700">{Number(data.risk.delay_probability)}%</p></div>
+                <div><p className="text-gray-400">Overrun</p><p className="font-medium text-gray-700">{Number(data.risk.overrun_probability)}%</p></div>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Category: <span className="font-medium">{catLabels[Number(data.risk.risk_category)] ?? "Unknown"}</span></p>
+            </div>
+          )}
+          {data.geo && (
+            <div className="border border-gray-200 bg-white rounded-lg p-3">
+              <p className="text-xs font-medium text-slate-500 mb-2">Geo Risk - {data.geo.region || ""}</p>
+              <div className="grid grid-cols-3 gap-1 text-xs">
+                <div><p className="text-gray-400">Flood</p><p className={`font-medium ${Number(data.geo.flood_risk) > 60 ? "text-red-600" : "text-gray-700"}`}>{Number(data.geo.flood_risk)}%</p></div>
+                <div><p className="text-gray-400">Seismic</p><p className={`font-medium ${Number(data.geo.seismic_risk) > 60 ? "text-red-600" : "text-gray-700"}`}>{Number(data.geo.seismic_risk)}%</p></div>
+                <div><p className="text-gray-400">Landslide</p><p className={`font-medium ${Number(data.geo.landslide_risk) > 60 ? "text-red-600" : "text-gray-700"}`}>{Number(data.geo.landslide_risk)}%</p></div>
+              </div>
+            </div>
+          )}
+          {data.twin && (
+            <div className={`border rounded-lg p-3 ${data.twin.deviation_alert === true ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}`}>
+              <p className="text-xs font-medium text-slate-500 mb-2">Digital Twin {data.twin.deviation_alert === true && <span className="badge badge-red ml-1">Deviation</span>}</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><p className="text-gray-400">Material Idx</p><p className="font-medium text-gray-700">{Number(data.twin.material_cost_index)}</p></div>
+                <div><p className="text-gray-400">Labor Idx</p><p className="font-medium text-gray-700">{Number(data.twin.labor_cost_index)}</p></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
