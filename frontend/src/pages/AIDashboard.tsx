@@ -249,7 +249,7 @@ function RiskTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading analysis data..." />;
   if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No risk predictions yet. The AI Oracle submits these automatically.</div>;
 
   const catLabels = ["Low", "Medium", "High", "Critical"];
@@ -328,7 +328,7 @@ function ImageTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading analysis data..." />;
   if (results.length === 0) return <div className="card p-6 text-center text-slate-400">No image verifications yet.</div>;
 
   return (
@@ -384,7 +384,7 @@ function DigitalTwinTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading analysis data..." />;
   if (twins.length === 0) return <div className="card p-6 text-center text-slate-400">No digital twins generated yet.</div>;
 
   return (
@@ -441,7 +441,7 @@ function GeoRiskTab({ pvoId }: { pvoId: number }) {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading analysis data..." />;
   if (risks.length === 0) return <div className="card p-6 text-center text-slate-400">No geo risk assessments yet.</div>;
 
   return (
@@ -496,7 +496,7 @@ function GpsValidationTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading analysis data..." />;
 
   if (results.length === 0) {
     return (
@@ -652,7 +652,7 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
     );
   }
 
-  if (loading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-32" />)}</div>;
+  if (loading) return <BlockchainLoader text="Loading escrow data from Stellar testnet..." />;
 
   const currency = getCurrency();
 
