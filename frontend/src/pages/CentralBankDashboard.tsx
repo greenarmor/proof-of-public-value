@@ -108,9 +108,11 @@ function PledgeManager({ address }: { address: string }) {
   const [busy, setBusy] = useState<number | null>(null);
   const [busyStep, setBusyStep] = useState<string>("");
   const [completed, setCompleted] = useState<Set<number>>(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
         const { Client } = await import("../contracts/grant_commitment/src");
         const gc = new Client({
@@ -131,7 +133,7 @@ function PledgeManager({ address }: { address: string }) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [refreshKey]);
 
   const handleConvert = async (pledge: any) => {
     setBusy(pledge.id);
@@ -199,15 +201,16 @@ function PledgeManager({ address }: { address: string }) {
       signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
 
-      // Mark completed regardless of mark_disbursed outcome - mint already succeeded
+      // Show done state, then re-fetch to remove from list
       setCompleted((prev) => new Set(prev).add(pledge.id));
+      setTimeout(() => setRefreshKey(k => k + 1), 1500);
       const pesos = pphpAmount / PPHP_SCALE;
       alert(`Minted ₱${pesos.toLocaleString()} pPHP to Funding Agency`);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
-      // Only mark completed if mint succeeded (prevent re-minting)
+      // Re-fetch even on partial success (mint may have succeeded, mark may have failed)
       if (mintSucceeded) {
-        setCompleted((prev) => new Set(prev).add(pledge.id));
+        setRefreshKey(k => k + 1);
       }
     } finally {
       setBusy(null);
