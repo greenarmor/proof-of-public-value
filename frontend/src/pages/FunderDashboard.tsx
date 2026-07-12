@@ -917,8 +917,17 @@ function DonorCommitmentsTab() {
     return "Unknown";
   };
 
+  // Track total disbursed amount per PVO (Central Bank has funded up to this amount)
+  const disbursedByPvo: Record<number, number> = {};
+  for (const g of grants) {
+    const pvoId = Number(g.pvo_id);
+    if (statusTag(g.status) === "Disbursed") {
+      disbursedByPvo[pvoId] = (disbursedByPvo[pvoId] || 0) + Number(g.amount);
+    }
+  }
+
   // Track which PVOs have been funded by Central Bank (at least one disbursed grant)
-  const fundedPvos = new Set(grants.filter((g: any) => statusTag(g.status) === "Disbursed").map((g: any) => Number(g.pvo_id)));
+  const fundedPvos = new Set(Object.keys(disbursedByPvo).map(Number));
 
   if (loading) return <div className="card p-12 skeleton h-48" />;
 
@@ -976,9 +985,18 @@ function DonorCommitmentsTab() {
                   <div>
                     {status === "Committed" && (
                       <p className="text-xs text-purple-600 font-medium">
-                        {fundedPvos.has(Number(g.pvo_id))
-                          ? "Donor pledged - Central Bank has funded this PVO"
-                          : "Donor pledged - awaiting Central Bank funding"}
+                        {(() => {
+                          const pvoId = Number(g.pvo_id);
+                          const disbursed = disbursedByPvo[pvoId] || 0;
+                          const grantAmount = Number(g.amount);
+                          if (disbursed >= grantAmount) {
+                            return "Donor pledged - Central Bank has funded this PVO";
+                          } else if (disbursed > 0) {
+                            return `Donor pledged - Central Bank funded ${(disbursed / PPHP_SCALE).toLocaleString()} of ${(grantAmount / PPHP_SCALE).toLocaleString()}`;
+                          } else {
+                            return "Donor pledged - awaiting Central Bank funding";
+                          }
+                        })()}
                       </p>
                     )}
                     {status === "Disbursed" && (
