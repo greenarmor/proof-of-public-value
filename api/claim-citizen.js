@@ -1,14 +1,10 @@
 /**
  * Citizen Role Assignment API - Vercel Serverless Function
+ * Assigns "Citizen" role to wallets holding 1+ RPT.
+ * Admin secret key is server-side only.
  *
- * Auto-assigns "Citizen" role to wallets that hold 1+ RPT.
- * Admin secret key is server-side only - never exposed to frontend.
- *
- * GET/POST /api/claim-citizen?address=GXXXX  or  {"address":"GXXXX"}
+ * GET/POST /api/claim-citizen?address=GXXXX
  */
-
-type VercelRequest = any;
-type VercelResponse = any;
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -16,15 +12,13 @@ const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
 const ACCESS_CONTROL = "CCZ3IEI6QUGRCVVN5BKVHNVI3UV3Y7J6FDXHFM2W75CMKNZNX3Q7W7YI";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const address =
-    req.method === "GET"
-      ? (req.query.address as string)
-      : (req.body?.address as string);
+    req.method === "GET" ? req.query.address : req.body?.address;
 
   if (!address || !address.startsWith("G")) {
     return res.status(400).json({ error: "Valid wallet address required" });
@@ -36,63 +30,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { Keypair, Address, Contract, TransactionBuilder, Networks, Horizon, rpc, xdr } =
-      await import("@stellar/stellar-sdk");
+    const { Keypair, Address, Contract, TransactionBuilder, Horizon, rpc, xdr } =
+      require("@stellar/stellar-sdk");
 
-    // 1. Verify wallet has 1+ RPT
+    // 1. Verify 1+ RPT
     const horizonServer = new Horizon.Server(HORIZON_URL);
     let hasRpt = false;
     try {
       const acctData = await horizonServer.loadAccount(address);
       const rptBalance = acctData.balances.find(
-        (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+        (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
       );
-      if (rptBalance && Number(rptBalance.balance) >= 1) {
-        hasRpt = true;
-      }
+      if (rptBalance && Number(rptBalance.balance) >= 1) hasRpt = true;
     } catch {
       return res.status(400).json({ error: "Wallet not found on testnet" });
     }
 
     if (!hasRpt) {
-      return res.status(403).json({ error: "Wallet must hold 1+ RPT to become a citizen" });
+      return res.status(403).json({ error: "Must hold 1+ RPT to become a citizen" });
     }
 
-    // 2. Check if already has Citizen role via Soroban RPC
+    // 2. Assign Citizen role via Soroban
     const sorobanServer = new rpc.Server(RPC_URL);
     const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
     const adminAddr = adminKeypair.publicKey();
-    const targetAddr = new Address(address);
 
-    // Try reading current roles
-    try {
-      const acContract = new Contract(ACCESS_CONTROL);
-      const checkTx = new TransactionBuilder(
-        await sorobanServer.getAccount(adminAddr),
-        { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE },
-      )
-        .addOperation(
-          acContract.call("get_role", targetAddr.toScVal()),
-        )
-        .setTimeout(30)
-        .build();
-
-      const sim = await sorobanServer.simulateTransaction(checkTx);
-      if (sim.result) {
-        const simStr = JSON.stringify(sim);
-        if (simStr.includes("Citizen")) {
-          return res.status(200).json({
-            success: true,
-            message: "Already a citizen",
-            alreadyCitizen: true,
-          });
-        }
-      }
-    } catch {}
-
-    // 3. Assign Citizen role
     const adminAccount = await sorobanServer.getAccount(adminAddr);
     const adminAddress = new Address(adminAddr);
+    const targetAddr = new Address(address);
     const acContract = new Contract(ACCESS_CONTROL);
 
     const tx = new TransactionBuilder(adminAccount, {
@@ -112,20 +77,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const prepared = await sorobanServer.prepareTransaction(tx);
     prepared.sign(adminKeypair);
-
     const result = await sorobanServer.sendTransaction(prepared);
 
     if (result.status === "PENDING" || result.status === "DUPLICATE") {
-      return res.status(200).json({
-        success: true,
-        message: "Citizen role assigned",
-        txHash: result.hash,
-        alreadyCitizen: false,
-      });
+      return res.status(200).json({ success: true, txHash: result.hash, alreadyCitizen: false });
     } else {
       return res.status(500).json({ error: `Transaction status: ${result.status}` });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error("Citizen role error:", err.message || err);
     const msg =
       err.response?.data?.extras?.result_codes?.transaction ||
@@ -133,4 +92,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       "Unknown error";
     return res.status(500).json({ error: msg });
   }
-}
+};
