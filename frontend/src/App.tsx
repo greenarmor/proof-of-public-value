@@ -22,6 +22,7 @@ import { AntiCorruptionDashboard } from "./pages/AntiCorruptionDashboard";
 import { FunderDashboard } from "./pages/FunderDashboard";
 import { DonorDashboard } from "./pages/DonorDashboard";
 import { LandingPage } from "./pages/LandingPage";
+import { CitizenOnboarding } from "./pages/CitizenOnboarding";
 import { ProvenanceExplorer } from "./pages/ProvenanceExplorer";
 import { formatAddress } from "./helpers";
 import { Client as PvoCoreClient } from "./contracts/pvo_core/src";
@@ -151,8 +152,7 @@ const GROUP_ORDER = ["engagement", "government", "delivery", "oversight", "finan
 function Home() {
   const { connected, connect, roles } = useWallet();
   if (!connected) return <LandingPage />;
-  // Show landing page for wallets without any assigned role
-  if (roles.length === 0) return <LandingPage />;
+  if (roles.length === 0) return <CitizenOnboarding />;
   return <TransparencyPortal />;
 }
 
