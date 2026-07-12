@@ -3,12 +3,16 @@
  * In production (Vercel), handled by /api/*.ts serverless functions.
  */
 import type { Plugin } from "vite";
+import { join } from "path";
+import { readFileSync } from "fs";
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
 const ACCESS_CONTROL = "CCZ3IEI6QUGRCVVN5BKVHNVI3UV3Y7J6FDXHFM2W75CMKNZNX3Q7W7YI";
+
+const PROVENANCE_PATH = join(process.cwd(), "provenance-store.json");
 
 export function claimRptPlugin(): Plugin {
   return {
@@ -18,7 +22,6 @@ export function claimRptPlugin(): Plugin {
         res.setHeader("Content-Type", "application/json");
 
         try {
-          // Parse address from GET query or POST body
           let address: string | null = null;
 
           if (req.method === "GET") {
@@ -27,8 +30,7 @@ export function claimRptPlugin(): Plugin {
           } else if (req.method === "POST") {
             const body = await readBody(req);
             try {
-              const parsed = JSON.parse(body);
-              address = parsed.address;
+              address = JSON.parse(body).address;
             } catch {
               res.statusCode = 400;
               res.end(JSON.stringify({ error: "Invalid JSON body" }));
@@ -55,18 +57,25 @@ export function claimRptPlugin(): Plugin {
           const stellarServer = new Horizon.Server(HORIZON_URL);
           const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
 
-          // Check existing RPT balance
-          const acctData = await stellarServer.loadAccount(address);
-          const rptBalance = acctData.balances.find(
-            (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
-          );
+          let alreadyHasRpt = false;
+          try {
+            const acctData = await stellarServer.loadAccount(address);
+            const rptBalance = acctData.balances.find(
+              (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+            );
+            if (rptBalance && Number(rptBalance.balance) >= 1) alreadyHasRpt = true;
+          } catch {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Wallet not found or no trustline" }));
+            return;
+          }
 
-          if (rptBalance && Number(rptBalance.balance) >= 1) {
+          if (alreadyHasRpt) {
             res.end(JSON.stringify({ success: true, alreadyOwned: true, message: "Already has RPT" }));
             return;
           }
 
-          // Check trustline
+          const acctData = await stellarServer.loadAccount(address);
           const hasTrustline = acctData.balances.some(
             (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
           );
@@ -76,7 +85,6 @@ export function claimRptPlugin(): Plugin {
             return;
           }
 
-          // Mint 1 RPT
           const adminAccount = await stellarServer.loadAccount(adminKeypair.publicKey());
           const rptAsset = new Asset("RPT", RPT_ISSUER);
 
@@ -84,9 +92,7 @@ export function claimRptPlugin(): Plugin {
             fee: "100000",
             networkPassphrase: Networks.TESTNET,
           })
-            .addOperation(
-              Operation.payment({ destination: address, asset: rptAsset, amount: "1" }),
-            )
+            .addOperation(Operation.payment({ destination: address, asset: rptAsset, amount: "1" }))
             .setTimeout(30)
             .build();
 
@@ -142,7 +148,6 @@ export function claimRptPlugin(): Plugin {
           const { Keypair, Address, Contract, TransactionBuilder, Horizon, rpc, xdr } =
             await import("@stellar/stellar-sdk");
 
-          // 1. Verify 1+ RPT
           const horizonServer = new Horizon.Server(HORIZON_URL);
           let hasRpt = false;
           try {
@@ -163,7 +168,6 @@ export function claimRptPlugin(): Plugin {
             return;
           }
 
-          // 2. Assign Citizen role via Soroban
           const sorobanServer = new rpc.Server(RPC_URL);
           const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
           const adminAddr = adminKeypair.publicKey();
@@ -207,6 +211,23 @@ export function claimRptPlugin(): Plugin {
             }),
           );
         }
+      });
+
+      // ── Provenance data ──
+      server.middlewares.use("/api/provenance", (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        try {
+          const raw = readFileSync(PROVENANCE_PATH, "utf-8");
+          const parsed = JSON.parse(raw);
+          res.end(JSON.stringify(parsed.pvOs || []));
+        } catch {
+          res.end(JSON.stringify([]));
+        }
+      });
+
+      server.middlewares.use("/api/health", (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ status: "ok", version: "dev", uptime: process.uptime() }));
       });
     },
   };
