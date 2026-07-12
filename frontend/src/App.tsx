@@ -248,8 +248,8 @@ function Header() {
 
           {/* Desktop: primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
-            {/* Landing page nav - hidden when wallet connected */}
-            {!connected &&
+            {/* Landing page nav - hidden when wallet connected with role */}
+            {(!connected || roles.length === 0) &&
               landingItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -274,7 +274,7 @@ function Header() {
                 {item.label}
               </NavLink>
             ))}
-            {!connected && (
+            {(!connected || roles.length === 0) && (
               <NavLink
                 to="/onboarding"
                 className={({ isActive }) =>
@@ -441,7 +441,7 @@ function Header() {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                 Public
               </p>
-              {!connected &&
+              {(!connected || roles.length === 0) &&
                 landingItems.map((item) => (
                   <NavLink
                     key={item.to}
@@ -467,7 +467,7 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
-              {!connected && (
+              {(!connected || roles.length === 0) && (
                 <NavLink
                   to="/onboarding"
                   onClick={() => setMobileOpen(false)}
