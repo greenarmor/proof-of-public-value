@@ -146,7 +146,7 @@ export function FunderDashboard() {
 
       {activeTab === "escrows" && <EscrowList escrows={escrows} loading={loading} address={address!} onAction={refresh} onCreate={() => { setPrefillPvoId(0); setPrefillMilestoneId(0); setPrefillAmount(""); setPrefillRecipient(""); setCreateModal(true); }} />}
       {activeTab === "awarded" && <AwardedPvosTab key={refreshKey} onCreateEscrow={(pvoId, milestoneId, amount, recipient) => { setPrefillPvoId(pvoId); setPrefillMilestoneId(milestoneId); setPrefillAmount(amount); setPrefillRecipient(recipient); setCreateModal(true); }} existingEscrows={escrows} />}
-      {activeTab === "commitments" && <DonorCommitmentsTab key={refreshKey} onCreateEscrow={(pvoId: number) => { setPrefillPvoId(pvoId); setPrefillMilestoneId(0); setPrefillAmount(""); setPrefillRecipient(""); setCreateModal(true); }} />}
+      {activeTab === "commitments" && <DonorCommitmentsTab key={refreshKey} />}
       {activeTab === "guide" && <EscrowGuide />}
 
       <Modal open={createModal} onClose={() => setCreateModal(false)} title="Create Escrow">
@@ -880,7 +880,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
   );
 }
 
-function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: number) => void }) {
+function DonorCommitmentsTab() {
   const currency = getCurrency();
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -970,19 +970,14 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
                 {(status === "Committed" || status === "Disbursed") && (
-                  <div className="flex items-center gap-3 w-full">
-                    <div>
-                      {status === "Committed" && (
-                        <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting admin mint</p>
-                      )}
-                      {status === "Disbursed" && (
-                        <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency - ready for escrow</p>
-                      )}
-                      <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Est. Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
-                    </div>
-                    <button onClick={() => onCreateEscrow(Number(g.pvo_id))} className="btn-primary text-xs px-3 py-1 ml-auto">
-                      ➕ Create Escrow
-                    </button>
+                  <div>
+                    {status === "Committed" && (
+                      <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting admin mint</p>
+                    )}
+                    {status === "Disbursed" && (
+                      <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency - escrows created from Awarded PVOs tab</p>
+                    )}
+                    <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Est. Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
                   </div>
                 )}
                 {status === "Completed" && (
@@ -1009,7 +1004,7 @@ function DonorCommitmentsTab({ onCreateEscrow }: { onCreateEscrow: (pvoId: numbe
 function EscrowGuide() {
   const steps = [
     { n: 0, title: "Funding Arrives at FA", icon: "🏦", desc: "Donor path: Donor pledges → transfers foreign currency to CentralBank → CentralBank mints pPHP to FA + marks disbursed. National Budget path: GovernmentAgency creates PVO → CentralBank Direct Fund mints pPHP to FA directly.", actor: "CentralBank" },
-    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates an escrow with awarded contractor (auto-filled, read-only), PVO, milestone, amount (auto-filled from winning bid divided by milestone count), and sets Community Confirmations threshold.", actor: "FundingAgency" },
+    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates escrows from Awarded PVOs tab - only after a winning bid is assigned and contractor confirmed. The escrow amount comes from the winning bid divided by milestone count.", actor: "FundingAgency" },
     { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
     { n: 3, title: "Gate 1 - Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
     { n: 4, title: "Gate 2 - Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },
