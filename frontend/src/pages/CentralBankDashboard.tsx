@@ -323,6 +323,7 @@ function GrantsOverview() {
 
   const statusTag = (s: any) => (s && typeof s === "object" && s.tag) ? s.tag : (typeof s === "string" ? s : "?");
   const statusColor = (s: string) => s === "Disbursed" ? "badge-blue" : s === "Completed" ? "badge-green" : s === "Cancelled" ? "badge-red" : "badge-purple";
+  const statusLabel = (s: string) => s === "Disbursed" ? "Funded" : s; // Disbursed = funds released to Funding Agency
   const totals = { committed: 0, disbursed: 0, completed: 0 };
   for (const g of grants) {
     const st = statusTag(g.status);
@@ -357,9 +358,8 @@ function GrantsOverview() {
                     </div>
                     <p className="text-sm text-slate-500 mt-0.5">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} · {g.currency || "pPHP"}</p>
                   </div>
-                  <span className={`badge ${statusColor(st)}`}>{st}</span>
+                  <span className={`badge ${statusColor(st)}`}>{statusLabel(st)}</span>
                 </div>
-                {g.donor && <p className="text-xs text-slate-400">Donor: <code className="text-[10px]">{String(g.donor).slice(0, 16)}...</code></p>}
                 {g.created_at > 0 && <p className="text-xs text-slate-400 mt-1">Created: {new Date(Number(g.created_at) * 1000).toLocaleString()}</p>}
               </div>
             );
