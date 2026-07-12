@@ -1,10 +1,10 @@
 {
-  "lastUpdated": 1783854439526,
-  "lastLedger": 3567624,
+  "lastUpdated": 1783858633908,
+  "lastLedger": 3568462,
   "earliestLedger": 3565087,
   "pvoCount": 15,
-  "escrowCount": 1,
-  "eventCount": 25,
+  "escrowCount": 4,
+  "eventCount": 34,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -13,7 +13,7 @@
       "municipality": "Manila, NCR",
       "description": "[14.5842,120.9571] Rehabilitate 8km of Manila Bay coastline including seawall reinforcement, mangrove reforestation, promenade construction, and water quality improvement systems.",
       "total_budget": 440000000,
-      "status": "Approved",
+      "status": "InProgress",
       "funding_agency": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
       "contractor": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
       "project_manager": "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
@@ -34,10 +34,10 @@
             "pvo_id": 1,
             "milestone_id": 16,
             "amount": 180000000,
-            "status": "Created",
+            "status": "Funded",
             "funder": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
             "recipient": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
-            "funded": false,
+            "funded": true,
             "released": false
           },
           "gates": [
@@ -81,7 +81,49 @@
           "status": "Pending",
           "evidence_count": 0,
           "evidence_types": [],
-          "gates": []
+          "escrow": {
+            "escrow_id": 2,
+            "pvo_id": 1,
+            "milestone_id": 17,
+            "amount": 60000000,
+            "status": "Funded",
+            "funder": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
+            "recipient": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
+            "funded": true,
+            "released": false
+          },
+          "gates": [
+            {
+              "gate_number": 1,
+              "gate_name": "Engineer Approval",
+              "contract_fn": "engineer_approve",
+              "status": "pending"
+            },
+            {
+              "gate_number": 2,
+              "gate_name": "Compliance Check",
+              "contract_fn": "compliance_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 3,
+              "gate_name": "Community Oracle",
+              "contract_fn": "community_oracle_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 4,
+              "gate_name": "Community Confirmation",
+              "contract_fn": "add_community_confirmation",
+              "status": "pending"
+            },
+            {
+              "gate_number": 5,
+              "gate_name": "AI Risk Check",
+              "contract_fn": "ai_validate",
+              "status": "pending"
+            }
+          ]
         },
         {
           "milestone_id": 18,
@@ -91,7 +133,49 @@
           "status": "Pending",
           "evidence_count": 0,
           "evidence_types": [],
-          "gates": []
+          "escrow": {
+            "escrow_id": 3,
+            "pvo_id": 1,
+            "milestone_id": 18,
+            "amount": 120000000,
+            "status": "Funded",
+            "funder": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
+            "recipient": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
+            "funded": true,
+            "released": false
+          },
+          "gates": [
+            {
+              "gate_number": 1,
+              "gate_name": "Engineer Approval",
+              "contract_fn": "engineer_approve",
+              "status": "pending"
+            },
+            {
+              "gate_number": 2,
+              "gate_name": "Compliance Check",
+              "contract_fn": "compliance_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 3,
+              "gate_name": "Community Oracle",
+              "contract_fn": "community_oracle_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 4,
+              "gate_name": "Community Confirmation",
+              "contract_fn": "add_community_confirmation",
+              "status": "pending"
+            },
+            {
+              "gate_number": 5,
+              "gate_name": "AI Risk Check",
+              "contract_fn": "ai_validate",
+              "status": "pending"
+            }
+          ]
         },
         {
           "milestone_id": 19,
@@ -101,7 +185,49 @@
           "status": "Pending",
           "evidence_count": 0,
           "evidence_types": [],
-          "gates": []
+          "escrow": {
+            "escrow_id": 4,
+            "pvo_id": 1,
+            "milestone_id": 19,
+            "amount": 90000000,
+            "status": "Funded",
+            "funder": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
+            "recipient": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
+            "funded": true,
+            "released": false
+          },
+          "gates": [
+            {
+              "gate_number": 1,
+              "gate_name": "Engineer Approval",
+              "contract_fn": "engineer_approve",
+              "status": "pending"
+            },
+            {
+              "gate_number": 2,
+              "gate_name": "Compliance Check",
+              "contract_fn": "compliance_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 3,
+              "gate_name": "Community Oracle",
+              "contract_fn": "community_oracle_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 4,
+              "gate_name": "Community Confirmation",
+              "contract_fn": "add_community_confirmation",
+              "status": "pending"
+            },
+            {
+              "gate_number": 5,
+              "gate_name": "AI Risk Check",
+              "contract_fn": "ai_validate",
+              "status": "pending"
+            }
+          ]
         }
       ],
       "timeline": [
@@ -176,14 +302,95 @@
           "tx_hash": "2f9ec4feb60094570fc7048800222fd313b7809fcbb84316c732cc764179417a",
           "ledger": 3567484,
           "contract": "escrow"
+        },
+        {
+          "order": 8,
+          "timestamp": 1783855422000,
+          "type": "escrow_funded_event",
+          "description": "Escrow #1 funded (180,000,000 PHP)",
+          "tx_hash": "1616de5e8800e3e739dbf53056ebde2ad16ff62221ed15af225e24627c958cc1",
+          "ledger": 3567830,
+          "contract": "escrow"
+        },
+        {
+          "order": 9,
+          "timestamp": 1783855422000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: Approved → InProgress",
+          "tx_hash": "1616de5e8800e3e739dbf53056ebde2ad16ff62221ed15af225e24627c958cc1",
+          "ledger": 3567830,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 10,
+          "timestamp": 1783855578000,
+          "type": "escrow_created_event",
+          "description": "Escrow #2 created - 60,000,000 PHP",
+          "tx_hash": "e4b3ef162fdf7360ec589dec834aebc3782ccfbd99e1225ff67d3cbecc864d88",
+          "ledger": 3567861,
+          "contract": "escrow"
+        },
+        {
+          "order": 11,
+          "timestamp": 1783855608000,
+          "type": "escrow_funded_event",
+          "description": "Escrow #2 funded (60,000,000 PHP)",
+          "tx_hash": "b4800f3e57188c27e0962ca9ef13812205303bb4e9bea6708a5198a63fee1bba",
+          "ledger": 3567867,
+          "contract": "escrow"
+        },
+        {
+          "order": 12,
+          "timestamp": 1783855608000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "b4800f3e57188c27e0962ca9ef13812205303bb4e9bea6708a5198a63fee1bba",
+          "ledger": 3567867,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 13,
+          "timestamp": 1783855668000,
+          "type": "escrow_created_event",
+          "description": "Escrow #3 created - 120,000,000 PHP",
+          "tx_hash": "a79ec4fe0418d7ac8f9500e360240d44a50a3517259f7ffbcec0e22a5accd1d2",
+          "ledger": 3567879,
+          "contract": "escrow"
+        },
+        {
+          "order": 14,
+          "timestamp": 1783855728000,
+          "type": "escrow_created_event",
+          "description": "Escrow #4 created - 90,000,000 PHP",
+          "tx_hash": "0bc27aa42a0b022bc0cd387d83dc5337d899f51701af35787692580e1aa191cb",
+          "ledger": 3567891,
+          "contract": "escrow"
+        },
+        {
+          "order": 15,
+          "timestamp": 1783855743000,
+          "type": "escrow_funded_event",
+          "description": "Escrow #4 funded (90,000,000 PHP)",
+          "tx_hash": "c8d293c6cf99052dcfed4dd3b1e53634735a6c94e8fefdae4a50c5075d45fccd",
+          "ledger": 3567894,
+          "contract": "escrow"
+        },
+        {
+          "order": 16,
+          "timestamp": 1783855743000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "c8d293c6cf99052dcfed4dd3b1e53634735a6c94e8fefdae4a50c5075d45fccd",
+          "ledger": 3567894,
+          "contract": "pvo_core"
         }
       ],
       "stats": {
-        "total_escrowed": 180000000,
+        "total_escrowed": 450000000,
         "total_released": 0,
-        "total_funded": 0,
+        "total_funded": 4,
         "gates_passed": 0,
-        "gates_total": 5,
+        "gates_total": 20,
         "evidence_submitted": 0
       }
     },
@@ -679,6 +886,480 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3567894,
+      "ledgerClosedAt": "2026-07-12T11:29:03Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_funded_event",
+      "txHash": "c8d293c6cf99052dcfed4dd3b1e53634735a6c94e8fefdae4a50c5075d45fccd",
+      "data": {
+        "amount": 900000000000000,
+        "id": 4
+      }
+    },
+    {
+      "ledger": 3567894,
+      "ledgerClosedAt": "2026-07-12T11:29:03Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "c8d293c6cf99052dcfed4dd3b1e53634735a6c94e8fefdae4a50c5075d45fccd",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
+    {
+      "ledger": 3567891,
+      "ledgerClosedAt": "2026-07-12T11:28:48Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_created_event",
+      "txHash": "0bc27aa42a0b022bc0cd387d83dc5337d899f51701af35787692580e1aa191cb",
+      "data": {
+        "amount": 900000000000000,
+        "id": 4,
+        "milestone_id": 19,
+        "pvo_id": 1,
+        "recipient": "[object Object]"
+      }
+    },
+    {
+      "ledger": 3567879,
+      "ledgerClosedAt": "2026-07-12T11:27:48Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_created_event",
+      "txHash": "a79ec4fe0418d7ac8f9500e360240d44a50a3517259f7ffbcec0e22a5accd1d2",
+      "data": {
+        "amount": 1200000000000000,
+        "id": 3,
+        "milestone_id": 18,
+        "pvo_id": 1,
+        "recipient": "[object Object]"
+      }
+    },
+    {
+      "ledger": 3567867,
+      "ledgerClosedAt": "2026-07-12T11:26:48Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_funded_event",
+      "txHash": "b4800f3e57188c27e0962ca9ef13812205303bb4e9bea6708a5198a63fee1bba",
+      "data": {
+        "amount": 600000000000000,
+        "id": 2
+      }
+    },
+    {
+      "ledger": 3567867,
+      "ledgerClosedAt": "2026-07-12T11:26:48Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "b4800f3e57188c27e0962ca9ef13812205303bb4e9bea6708a5198a63fee1bba",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
+    {
+      "ledger": 3567861,
+      "ledgerClosedAt": "2026-07-12T11:26:18Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_created_event",
+      "txHash": "e4b3ef162fdf7360ec589dec834aebc3782ccfbd99e1225ff67d3cbecc864d88",
+      "data": {
+        "amount": 600000000000000,
+        "id": 2,
+        "milestone_id": 17,
+        "pvo_id": 1,
+        "recipient": "[object Object]"
+      }
+    },
+    {
+      "ledger": 3567830,
+      "ledgerClosedAt": "2026-07-12T11:23:42Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_funded_event",
+      "txHash": "1616de5e8800e3e739dbf53056ebde2ad16ff62221ed15af225e24627c958cc1",
+      "data": {
+        "amount": 1800000000000000,
+        "id": 1
+      }
+    },
+    {
+      "ledger": 3567830,
+      "ledgerClosedAt": "2026-07-12T11:23:42Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "1616de5e8800e3e739dbf53056ebde2ad16ff62221ed15af225e24627c958cc1",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "Approved"
+        ]
+      }
+    },
     {
       "ledger": 3567484,
       "ledgerClosedAt": "2026-07-12T10:54:50Z",
@@ -1977,10 +2658,10 @@
     }
   ],
   "stats": {
-    "totalEscrowed": 180000000,
+    "totalEscrowed": 450000000,
     "totalReleased": 0,
-    "totalFunded": 0,
+    "totalFunded": 4,
     "totalGatesPassed": 0,
-    "totalGatesPending": 5
+    "totalGatesPending": 20
   }
 }

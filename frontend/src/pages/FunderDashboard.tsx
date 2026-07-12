@@ -421,6 +421,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
   const [contractors, setContractors] = useState<string[]>([]);
   const [milestones, setMilestones] = useState<{id:number;title:string;budget:number}[]>([]);
   const [milestoneBidPrices, setMilestoneBidPrices] = useState<Record<number, number>>({});
+  const [tenderOriginalBudget, setTenderOriginalBudget] = useState<number>(0);
   const [showRecipientDd, setShowRecipientDd] = useState(false);
   const [showPvoDd, setShowPvoDd] = useState(false);
   const [showMilestoneDd, setShowMilestoneDd] = useState(false);
@@ -467,11 +468,13 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
           const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
           const tCount = await pm.get_tender_count();
           let totalBid = 0;
+          let tenderBudget = 0;
           const maxScan = Number(tCount.result) + 10;
           for (let i = 1; i <= maxScan; i++) {
             try {
               const tr = await pm.get_tender({ id: i });
               if (tr.result && tr.result.status?.tag === "Awarded" && Number(tr.result.pvo_id) === Number(pvoId)) {
+                tenderBudget = Number(tr.result.budget);
                 const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
                 const bids = bidsResult.result || [];
                 let bestBid: any = null;
@@ -487,6 +490,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
             } catch {}
           }
           if (totalBid > 0) setMilestoneBidPrices({ [Number(pvoId)]: totalBid });
+          if (tenderBudget > 0) setTenderOriginalBudget(tenderBudget);
         } catch {}
       } catch { setMilestones([]); setMilestoneBidPrices({}); }
     })();
@@ -608,12 +612,16 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
               {showMilestoneDd && filteredMilestones.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => {
+                    const totalBid = milestoneBidPrices[Number(pvoId)] || 0;
+                    const estBudget = tenderOriginalBudget || 0;
+                    const ratio = totalBid > 0 && estBudget > 0 ? totalBid / estBudget : 1;
+                    const adjustedBudget = Math.round(m.budget * ratio);
                     return (
-                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget / PPHP_SCALE)); }}
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (adjustedBudget > 0) setAmount(String(adjustedBudget / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
                       <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
                       <span className="text-xs text-slate-400 ml-2">
-                        {m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}
+                        {adjustedBudget > 0 ? `${currency}${(adjustedBudget / PPHP_SCALE).toLocaleString()}` : ""}
                       </span>
                     </button>
                     );
@@ -681,6 +689,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [milestoneCache, setMilestoneCache] = useState<Record<number, any[]>>({});
   const [bidPriceMap, setBidPriceMap] = useState<Record<number, number>>({});
+  const [tenderBudgetMap, setTenderBudgetMap] = useState<Record<number, number>>({});
 
   useEffect(() => {
     (async () => {
@@ -691,6 +700,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
         const awardedPvoIds = new Set<number>();
         const contractorMap: Record<number, string> = {};
         const tenderByPvo: Record<number, number[]> = {};
+        const tenderBudgetByPvo: Record<number, number> = {};
         const maxScan = Number(tCount.result) + 10;
         for (let i = 1; i <= maxScan; i++) {
           try {
@@ -699,6 +709,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
               const pid = Number(tr.result.pvo_id);
               awardedPvoIds.add(pid);
               contractorMap[pid] = tr.result.winner;
+              tenderBudgetByPvo[pid] = Number(tr.result.budget);
               if (!tenderByPvo[pid]) tenderByPvo[pid] = [];
               tenderByPvo[pid].push(Number(tr.result.id));
             }
@@ -727,6 +738,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
           if (totalBid > 0) bpMap[pid] = totalBid;
         }
         setBidPriceMap(bpMap);
+        setTenderBudgetMap(tenderBudgetByPvo);
         if (awardedPvoIds.size === 0) { setAwardedPvos([]); return; }
         const { Client: PC } = await import("../contracts/pvo_core/src");
         const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
@@ -821,7 +833,11 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                   <div className="divide-y divide-slate-100">
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
-                      const escrowAmount = String(m.budget / PPHP_SCALE);
+                      const totalBid = bidPriceMap[pvoId] || 0;
+                      const estBudget = tenderBudgetMap[pvoId] || 0;
+                      const ratio = totalBid > 0 && estBudget > 0 ? totalBid / estBudget : 1;
+                      const adjustedBudget = Math.round(m.budget * ratio);
+                      const escrowAmount = String(adjustedBudget / PPHP_SCALE);
                       return (
                         <div key={m.id} className="flex items-center justify-between p-4">
                           <div className="flex-1">
@@ -831,7 +847,15 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                             </div>
                             <span className="text-xs text-slate-400">
                               {m.description && `${m.description} · `}
-                              {currency}{(m.budget / PPHP_SCALE).toLocaleString()}
+                              {ratio < 1 ? (
+                                <>
+                                  <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
+                                  {" \u2192 "}
+                                  <span className="text-emerald-600 font-medium">{currency}{(adjustedBudget / PPHP_SCALE).toLocaleString()}</span>
+                                </>
+                              ) : (
+                                <>{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</>
+                              )}
                             </span>
                           </div>
                           <button
