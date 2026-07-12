@@ -273,7 +273,7 @@ function Header() {
                 {item.label}
               </NavLink>
             ))}
-            {(!connected || roles.length === 0) && (
+            {!connected && (
               <NavLink
                 to="/onboarding"
                 className={({ isActive }) =>
@@ -472,7 +472,7 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
-              {(!connected || roles.length === 0) && (
+              {!connected && (
                 <NavLink
                   to="/onboarding"
                   onClick={() => setMobileOpen(false)}
