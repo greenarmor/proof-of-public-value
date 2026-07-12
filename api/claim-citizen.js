@@ -2,10 +2,7 @@
  * Citizen Role Assignment API - Vercel Serverless Function
  * Assigns "Citizen" role to wallets holding 1+ RPT.
  * Admin secret key is server-side only.
- *
- * GET/POST /api/claim-citizen?address=GXXXX
  */
-
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
@@ -17,9 +14,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const address =
-    req.method === "GET" ? req.query.address : req.body?.address;
-
+  const address = req.method === "GET" ? req.query.address : req.body?.address;
   if (!address || !address.startsWith("G")) {
     return res.status(400).json({ error: "Valid wallet address required" });
   }
@@ -31,9 +26,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const { Keypair, Address, Contract, TransactionBuilder, Horizon, rpc, xdr } =
-      require("@stellar/stellar-sdk");
+      await import("@stellar/stellar-sdk");
 
-    // 1. Verify 1+ RPT
     const horizonServer = new Horizon.Server(HORIZON_URL);
     let hasRpt = false;
     try {
@@ -50,7 +44,6 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: "Must hold 1+ RPT to become a citizen" });
     }
 
-    // 2. Assign Citizen role via Soroban
     const sorobanServer = new rpc.Server(RPC_URL);
     const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
     const adminAddr = adminKeypair.publicKey();
@@ -85,11 +78,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: `Transaction status: ${result.status}` });
     }
   } catch (err) {
-    console.error("Citizen role error:", err.message || err);
-    const msg =
-      err.response?.data?.extras?.result_codes?.transaction ||
-      err.message ||
-      "Unknown error";
-    return res.status(500).json({ error: msg });
+    const msg = err.response?.data?.extras?.result_codes?.transaction || err.message || "Unknown";
+    return res.status(500).json({ error: `API error: ${msg}` });
   }
 };
