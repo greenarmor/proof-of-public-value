@@ -1,0 +1,17 @@
+{
+  "name": "Proof of Public Value",
+  "short_name": "PoPV",
+  "description": "No Proof. No Payment. Government spending accountability on Stellar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
