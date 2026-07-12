@@ -54,10 +54,13 @@ export function DonorDashboard() {
         try {
           const r = await pc.get_pvo({ pvo_id: i });
           if (r.result) {
+            const pvo = r.result as any;
+            // Only show PVOs with a winning contractor (tender awarded)
+            if (!pvo.contractor_assigned) continue;
             list.push({
-              id: r.result.id, title: r.result.title, department: r.result.department,
-              municipality: r.result.municipality, totalBudget: String(r.result.total_budget),
-              status: String((r.result.status as any)?.tag || r.result.status || "Proposed"),
+              id: pvo.id, title: pvo.title, department: pvo.department,
+              municipality: pvo.municipality, totalBudget: String(pvo.total_budget),
+              status: String((pvo.status as any)?.tag || pvo.status || "Proposed"),
               remaining: "0",
             });
           }
