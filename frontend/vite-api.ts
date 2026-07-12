@@ -139,7 +139,7 @@ export function claimRptPlugin(): Plugin {
             return;
           }
 
-          const { Keypair, Address, Contract, TransactionBuilder, Networks, Horizon, rpc, xdr } =
+          const { Keypair, Address, Contract, TransactionBuilder, Horizon, rpc, xdr } =
             await import("@stellar/stellar-sdk");
 
           // 1. Verify 1+ RPT
