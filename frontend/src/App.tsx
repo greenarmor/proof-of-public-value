@@ -292,7 +292,7 @@ function Header() {
             )}
 
             {/* Dashboards dropdown */}
-            {(visibleRoleItems.length > 0 || visibleSystemItems.length > 0) && (
+            {connected && (
               <div className="relative"
                 onMouseEnter={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); setDashboardsOpen(true); }}
                 onMouseLeave={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); closeTimerRef.current = setTimeout(() => setDashboardsOpen(false), 150); }}
@@ -321,6 +321,12 @@ function Header() {
                 </button>
                 {dashboardsOpen && (
                   <div className="absolute top-full left-0 mt-1 w-[420px] bg-white rounded-xl shadow-xl border border-slate-200 p-2 grid grid-cols-2 gap-x-1 gap-y-0.5">
+                    {visibleRoleItems.length === 0 && visibleSystemItems.length === 0 ? (
+                      <NavLink to="/" onClick={() => setDashboardsOpen(false)}
+                        className="col-span-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-brand-50">
+                        <span>🤝</span>My Dashboard — Get Started as a Citizen
+                      </NavLink>
+                    ) : null}
                     {grouped.map(({ group, items }) => (
                       <div
                         key={group}
