@@ -3,6 +3,7 @@ import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { uploadToIPFS } from "../ipfs";
+import { IpfsLink } from "../components/IpfsLink";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
@@ -426,7 +427,11 @@ function MyReports({ address }: { address: string }) {
             <span className={`badge ${r.verified ? "badge-green" : "badge-amber"}`}>{r.verified ? "Verified" : "Pending"}</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-400">
-            <span>Hash: {r.hash ? r.hash.slice(0, 16) + "..." : "-"}</span>
+            {r.hash && r.hash.length >= 10 ? (
+              <IpfsLink hash={r.hash} short />
+            ) : (
+              <span>Hash: -</span>
+            )}
             {r.metadata && <span>Notes: {r.metadata.slice(0, 60)}</span>}
           </div>
         </div>

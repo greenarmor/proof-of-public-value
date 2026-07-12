@@ -5,6 +5,7 @@ import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
+import { ipfsGatewayUrl } from "../ipfs";
 
 interface MilestoneData {
   id: number; pvoId: number; pvoTitle: string;
@@ -326,7 +327,18 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-gray-500 font-mono mt-1">{ev.data_hash ? ev.data_hash.slice(0, 30) + "..." : "No IPFS hash"}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-1">
+                    {ev.data_hash ? (
+                      <a
+                        href={ipfsGatewayUrl(ev.data_hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:text-indigo-800 underline"
+                      >
+                        📄 IPFS: {ev.data_hash.slice(0, 20)}...
+                      </a>
+                    ) : "No IPFS hash"}
+                  </p>
                   {ev.metadata && <p className="text-xs text-gray-400 mt-0.5 truncate">{String(ev.metadata).slice(0, 100)}</p>}
                 </>
               )}
