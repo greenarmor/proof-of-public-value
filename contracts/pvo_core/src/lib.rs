@@ -305,6 +305,19 @@ impl PVOCore {
         storage.set(&PVOS, &pvos);
     }
 
+    pub fn update_fund_source(env: Env, caller: Address, pvo_id: u32, fund_source: String) {
+        caller.require_auth();
+
+        let storage = env.storage().persistent();
+        let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
+        let mut pvo = pvos.get(pvo_id).expect("PVO not found");
+
+        pvo.fund_source = fund_source;
+        pvo.updated_at = env.ledger().timestamp();
+        pvos.set(pvo_id, pvo);
+        storage.set(&PVOS, &pvos);
+    }
+
     pub fn create_milestone(
         env: Env,
         creator: Address,

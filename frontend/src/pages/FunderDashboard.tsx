@@ -505,7 +505,8 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
   const budget = pvBudgets[Number(pvoId)] || 0;
   const pct = budget > 0 ? Math.min(100, Math.round((pledged / budget) * 100)) : 0;
   const fundSource = pvFundSources[Number(pvoId)] || "";
-  const isDonorFunded = fundSource.toLowerCase().includes("donor") || fundSource.toLowerCase().includes("international");
+  const hasDonorGrants = pvoGrants.length > 0;
+  const isDonorFunded = hasDonorGrants || fundSource.toLowerCase().includes("donor") || fundSource.toLowerCase().includes("international");
   const amountSAC = Number(amount) * PPHP_SCALE;
 
   const handleSubmit = async (e: React.FormEvent) => {
