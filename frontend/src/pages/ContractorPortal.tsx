@@ -65,20 +65,22 @@ export function ContractorPortal() {
   const confirmRegistration = async () => {
     setConfirming(true);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
-      const account = await server.getAccount(address!);
-      const contract = new Contract(CONTRACT_IDS.reputation);
-      const op = contract.call("register_entity", new Address(address!).toScVal(), xdr.ScVal.scvSymbol("Contractor"));
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
-      const prepared = await server.prepareTransaction(tx);
-      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
+      const repClient = new RepClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const tx = await repClient.register_entity({ entity: address!, entity_type: { tag: "Contractor", values: void 0 } });
+      await tx.signAndSend();
       setReputation({ reputation_score: 100, completed_projects: 0, success_rate: 100 });
     } catch (e: any) { console.error(e); alert("Confirmation failed: " + (e.message?.slice(0, 80) || "Unknown")); }
     finally { setConfirming(false); }
+  };
+
+  const refreshReputation = async () => {
+    setRepLoading(true);
+    try {
+      const repClient = new RepClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const r = await repClient.get_reputation({ entity: address! });
+      setReputation(r.result || null);
+    } catch { setReputation(null); }
+    finally { setRepLoading(false); }
   };
 
   const openEvidence = (pvoId: number, milestoneId: number) => {
@@ -112,7 +114,7 @@ export function ContractorPortal() {
                 <p className="text-sm font-medium text-green-700">✓ Contractor Confirmed</p>
                 <p className="text-xs text-green-600 mt-0.5">Reputation: {reputation.reputation_score}/100 · {reputation.completed_projects || 0} projects · {reputation.success_rate || 100}% success</p>
               </div>
-              <button onClick={confirmRegistration} disabled={confirming}
+              <button onClick={refreshReputation} disabled={confirming}
                 className="text-xs px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">
                 ↻ Refresh
               </button>
