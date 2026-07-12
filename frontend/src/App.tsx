@@ -260,13 +260,6 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
-            {connected && roles.length === 0 && (
-              <NavLink to="/" end className={({ isActive }) =>
-                `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`
-              }>
-                <span className="mr-1">🏠</span>Home
-              </NavLink>
-            )}
             {publicItems.map((item) => (
               <NavLink
                 key={item.to}
