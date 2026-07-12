@@ -117,7 +117,13 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["AntiCorruptionAgency", "Administrator"],
     group: "oversight",
   },
-  { to: "/ai", label: "AI Monitor", icon: "🤖", roles: ["AIAuditor", "Administrator"], group: "public" },
+  {
+    to: "/ai",
+    label: "AI Monitor",
+    icon: "🤖",
+    roles: ["AIAuditor", "Administrator"],
+    group: "public",
+  },
 
   {
     to: "/funder",
@@ -134,7 +140,13 @@ const NAV_ITEMS: NavItem[] = [
     group: "finance",
   },
 
-  { to: "/central-bank", label: "Central Bank", icon: "🏦", roles: ["CentralBank"], group: "system" },
+  {
+    to: "/central-bank",
+    label: "Central Bank",
+    icon: "🏦",
+    roles: ["CentralBank"],
+    group: "system",
+  },
   { to: "/admin", label: "System Panel", icon: "⚙️", roles: ["Administrator"], group: "system" },
 ];
 
@@ -196,8 +208,10 @@ function AccessDenied() {
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
-    setMobile(/Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || 
-      (navigator.maxTouchPoints > 0 && window.innerWidth < 768));
+    setMobile(
+      /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 0 && window.innerWidth < 768),
+    );
   }, []);
   return mobile;
 }
@@ -210,7 +224,9 @@ function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
-  const publicItems = NAV_ITEMS.filter((i) => i.group === "public" && (!i.roles || i.roles.some((r) => hasRole(r))));
+  const publicItems = NAV_ITEMS.filter(
+    (i) => i.group === "public" && (!i.roles || i.roles.some((r) => hasRole(r))),
+  );
   const landingItems = NAV_ITEMS.filter((i) => i.group === "landing");
   const roleItems = NAV_ITEMS.filter((i) => i.group !== "public" && i.group !== "system");
   const systemItems = NAV_ITEMS.filter((i) => i.group === "system");
@@ -251,11 +267,7 @@ function Header() {
             {/* Landing page nav - hidden when wallet connected with role */}
             {(!connected || roles.length === 0) &&
               landingItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className="nav-link nav-link-inactive"
-                >
+                <NavLink key={item.to} to={item.to} className="nav-link nav-link-inactive">
                   <span className="mr-1">{item.icon}</span>
                   {item.label}
                 </NavLink>
@@ -286,9 +298,16 @@ function Header() {
 
             {/* Dashboards dropdown */}
             {connected && (
-              <div className="relative"
-                onMouseEnter={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); setDashboardsOpen(true); }}
-                onMouseLeave={() => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); closeTimerRef.current = setTimeout(() => setDashboardsOpen(false), 150); }}
+              <div
+                className="relative"
+                onMouseEnter={() => {
+                  if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+                  setDashboardsOpen(true);
+                }}
+                onMouseLeave={() => {
+                  if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+                  closeTimerRef.current = setTimeout(() => setDashboardsOpen(false), 150);
+                }}
               >
                 <button
                   onClick={() => setDashboardsOpen((o) => !o)}
@@ -315,9 +334,12 @@ function Header() {
                 {dashboardsOpen && (
                   <div className="absolute top-full left-0 mt-1 w-[420px] bg-white rounded-xl shadow-xl border border-slate-200 p-2 grid grid-cols-2 gap-x-1 gap-y-0.5">
                     {visibleRoleItems.length === 0 && visibleSystemItems.length === 0 ? (
-                      <NavLink to="/onboarding" onClick={() => setDashboardsOpen(false)}
-                        className="col-span-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-brand-50">
-                        <span>🤝</span>My Dashboard — Get Started as a Citizen
+                      <NavLink
+                        to="/onboarding"
+                        onClick={() => setDashboardsOpen(false)}
+                        className="col-span-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-brand-50"
+                      >
+                        <span>🤝</span>My Dashboard
                       </NavLink>
                     ) : null}
                     {grouped.map(({ group, items }) => (
@@ -395,7 +417,10 @@ function Header() {
           ) : (
             <div className="flex items-center gap-2">
               {isMobile ? (
-                <button onClick={connectMobile} className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700">
+                <button
+                  onClick={connectMobile}
+                  className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700"
+                >
                   📱 Connect Wallet
                 </button>
               ) : (
@@ -548,7 +573,10 @@ function DevBanner() {
       const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_IDS.pvo_core);
       const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
-      const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      const tx = new TransactionBuilder(account, {
+        fee: "100",
+        networkPassphrase: NETWORK_PASSPHRASE,
+      })
         .addOperation(contract.call("get_pvo_count"))
         .setTimeout(30)
         .build();
@@ -573,7 +601,8 @@ function DevBanner() {
     <div className="sticky bottom-0 z-40 bg-amber-50 border-t border-amber-200 overflow-hidden">
       <div className="py-2 whitespace-nowrap" style={{ animation: "marquee 18s linear infinite" }}>
         <span className="text-sm text-amber-800 font-medium px-4">
-          Smart contracts may be redeployed when gaps are found and fixed during active development - only affected contracts are reset while the rest keep their state
+          Smart contracts may be redeployed when gaps are found and fixed during active development
+          - only affected contracts are reset while the rest keep their state
         </span>
       </div>
     </div>
@@ -648,15 +677,25 @@ function App() {
                   />
                 }
               />
-              <Route path="/provenance" element={
-                <ProtectedRoute element={<ProvenanceExplorer />} roles={["Administrator"]} />
-              } />
-              <Route path="/ai" element={
-                <ProtectedRoute element={<AIDashboard />} roles={["AIAuditor", "Administrator"]} />
-              } />
-              <Route path="/escrows" element={
-                <ProtectedRoute element={<EscrowMonitor />} roles={["Administrator"]} />
-              } />
+              <Route
+                path="/provenance"
+                element={
+                  <ProtectedRoute element={<ProvenanceExplorer />} roles={["Administrator"]} />
+                }
+              />
+              <Route
+                path="/ai"
+                element={
+                  <ProtectedRoute
+                    element={<AIDashboard />}
+                    roles={["AIAuditor", "Administrator"]}
+                  />
+                }
+              />
+              <Route
+                path="/escrows"
+                element={<ProtectedRoute element={<EscrowMonitor />} roles={["Administrator"]} />}
+              />
               <Route
                 path="/compliance"
                 element={
@@ -714,9 +753,12 @@ function App() {
               <Route
                 path="/admin"
                 element={<ProtectedRoute element={<AdminPanel />} roles={["Administrator"]} />}
-      />
-      <Route path="/central-bank"
-      element={<ProtectedRoute element={<CentralBankDashboard />} roles={["CentralBank"]} />}
+              />
+              <Route
+                path="/central-bank"
+                element={
+                  <ProtectedRoute element={<CentralBankDashboard />} roles={["CentralBank"]} />
+                }
               />
             </Routes>
           </main>
