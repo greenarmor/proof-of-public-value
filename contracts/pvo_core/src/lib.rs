@@ -290,6 +290,21 @@ impl PVOCore {
         ValueScoreUpdatedEvent { pvo_id, score }.publish(&env);
     }
 
+    /// Update PVO total_budget to the winning bid amount after tender is awarded.
+    /// Called by procurement_market after awarding a tender.
+    pub fn update_budget(env: Env, caller: Address, pvo_id: u32, new_budget: i128) {
+        caller.require_auth();
+
+        let storage = env.storage().persistent();
+        let mut pvos: Map<u32, PublicValueObject> = storage.get(&PVOS).unwrap_or_else(|| Map::new(&env));
+        let mut pvo = pvos.get(pvo_id).expect("PVO not found");
+
+        pvo.total_budget = new_budget;
+        pvo.updated_at = env.ledger().timestamp();
+        pvos.set(pvo_id, pvo);
+        storage.set(&PVOS, &pvos);
+    }
+
     pub fn create_milestone(
         env: Env,
         creator: Address,

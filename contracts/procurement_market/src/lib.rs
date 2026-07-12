@@ -302,6 +302,7 @@ impl ProcurementMarket {
 
         let mut best_score = 0u32;
         let mut winner: Option<Address> = None;
+        let mut winning_price: i128 = 0;
 
         for i in 0..ids.len() {
             if let Some(bid_id) = ids.get(i) {
@@ -309,6 +310,7 @@ impl ProcurementMarket {
                     if bid.final_score > best_score {
                         best_score = bid.final_score;
                         winner = Some(bid.contractor);
+                        winning_price = bid.price;
                     }
                 }
             }
@@ -324,7 +326,7 @@ impl ProcurementMarket {
 
         TenderAwardedEvent { tender_id, winner: w.clone(), final_score: best_score }.publish(&env);
 
-        // Auto-assign winner as contractor on the PVO
+        // Auto-assign winner as contractor on the PVO + update budget to winning bid
         if pvo_id > 0 {
             if let Some(pvo_core_addr) = storage.get::<Symbol, Address>(&PVO_CORE_ADDR) {
                 let _: () = env.invoke_contract(
@@ -335,6 +337,17 @@ impl ProcurementMarket {
                         env.current_contract_address().into_val(&env),
                         pvo_id.into(),
                         w.into_val(&env),
+                    ],
+                );
+                // Update PVO budget to winning bid amount
+                let _: () = env.invoke_contract(
+                    &pvo_core_addr,
+                    &Symbol::new(&env, "update_budget"),
+                    soroban_sdk::vec![
+                        &env,
+                        env.current_contract_address().into_val(&env),
+                        pvo_id.into(),
+                        winning_price.into_val(&env),
                     ],
                 );
             }
