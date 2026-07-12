@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { claimRptPlugin } from './vite-api'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), claimRptPlugin()],
   server: { port: 5174, strictPort: true },
   preview: { port: 5174, strictPort: true },
   define: {

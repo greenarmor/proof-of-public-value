@@ -694,6 +694,8 @@ export function TransparencyPortal() {
                                   pvoId={Number(selected.id)}
                                   milestoneId={e.milestoneId}
                                   escrowId={e.id}
+                                  projectLat={selected.latitude}
+                                  projectLng={selected.longitude}
                                 />
                               ) : (
                                 <span
@@ -950,10 +952,14 @@ function CitizenReportBadge({
   pvoId,
   milestoneId,
   escrowId,
+  projectLat,
+  projectLng,
 }: {
   pvoId: number;
   milestoneId: number;
   escrowId: number;
+  projectLat?: number;
+  projectLng?: number;
 }) {
   const { address } = useWallet();
   const [open, setOpen] = useState(false);
@@ -962,27 +968,76 @@ function CitizenReportBadge({
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsChecked, setGpsChecked] = useState(false);
+  const [withinRange, setWithinRange] = useState(false);
+  const [distance, setDistance] = useState<number | null>(null);
   const [reportDone, setReportDone] = useState(false);
   const [gate3Done, setGate3Done] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
+  const MAX_DISTANCE_KM = 2;
+
+  const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
   const useGps = () => {
+    if (!navigator.geolocation) {
+      setMessage({ text: "GPS not supported on this device.", ok: false });
+      return;
+    }
     setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLat(pos.coords.latitude.toFixed(7));
-        setLng(pos.coords.longitude.toFixed(7));
+        const glat = pos.coords.latitude;
+        const glng = pos.coords.longitude;
+        setLat(glat.toFixed(7));
+        setLng(glng.toFixed(7));
+        setGpsChecked(true);
+        if (projectLat != null && projectLng != null) {
+          const dist = haversineKm(glat, glng, projectLat, projectLng);
+          setDistance(dist);
+          setWithinRange(dist <= MAX_DISTANCE_KM);
+          if (dist > MAX_DISTANCE_KM) {
+            setMessage({ text: `You are ${dist.toFixed(2)} km away. Must be within ${MAX_DISTANCE_KM} km of project site.`, ok: false });
+          } else {
+            setMessage({ text: `Within ${dist.toFixed(2)} km of project. Report enabled.`, ok: true });
+          }
+        } else {
+          setWithinRange(true);
+          setMessage({ text: "Location captured.", ok: true });
+        }
         setGpsLoading(false);
       },
-      () => {
+      (err) => {
         setGpsLoading(false);
-        setMessage({ text: "GPS unavailable. Enter manually.", ok: false });
+        setGpsChecked(false);
+        const msgs: Record<number, string> = {
+          1: "Location permission denied. Enable GPS to report.",
+          2: "Position unavailable. Check your GPS settings.",
+          3: "GPS timeout. Try again.",
+        };
+        setMessage({ text: msgs[err.code] || "GPS failed.", ok: false });
       },
-      { enableHighAccuracy: true, timeout: 5000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 
+  const canSubmit = gpsChecked && withinRange && !!lat && !!lng;
+
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address) return;
+    if (!canSubmit) {
+      setMessage({ text: "Must verify your location first.", ok: false });
+      return;
+    }
     e.preventDefault();
     if (!address) return;
     setSubmitting(true);
@@ -1148,38 +1203,38 @@ function CitizenReportBadge({
                   className="input text-xs bg-gray-50 text-gray-500 cursor-not-allowed"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-slate-500">Latitude</label>
-                  <input
-                    type="text"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    className="input text-xs"
-                    placeholder="6.9217"
-                    required
-                  />
+              {projectLat != null && projectLng != null && (
+                <div className="bg-slate-50 rounded-lg p-2 text-[10px] text-slate-500">
+                  Project site: {projectLat.toFixed(4)}, {projectLng.toFixed(4)}
+                  {distance != null && <span className="ml-2 text-slate-600 font-medium">({distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(2)} km`} away)</span>}
                 </div>
-                <div>
-                  <label className="text-[10px] text-slate-500">Longitude</label>
-                  <input
-                    type="text"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                    className="input text-xs"
-                    placeholder="122.0789"
-                    required
-                  />
-                </div>
-              </div>
+              )}
               <button
                 type="button"
                 onClick={useGps}
                 disabled={gpsLoading}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                className={`w-full py-2 rounded-lg text-xs font-medium border transition-colors ${
+                  withinRange
+                    ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                    : gpsChecked
+                    ? "bg-red-50 border-red-300 text-red-700"
+                    : "bg-indigo-50 border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
-                {gpsLoading ? "📍 Locating..." : "📍 Use my current location"}
+                {gpsLoading
+                  ? "📍 Locating..."
+                    : withinRange
+                    ? "✅ Verified on-site"
+                    : gpsChecked
+                    ? "❌ Too far from project"
+                    : "📍 Verify My Location"}
               </button>
+              {!gpsChecked && (
+                <p className="text-[10px] text-amber-600 text-center">GPS required. You must be within {MAX_DISTANCE_KM} km of the project to report.</p>
+              )}
+              {gpsChecked && !withinRange && (
+                <p className="text-[10px] text-red-600 text-center">You are outside the {MAX_DISTANCE_KM} km reporting radius. Move closer to the project site.</p>
+              )}
               <div>
                 <label className="text-[10px] text-slate-500">What did you observe?</label>
                 <textarea
@@ -1193,10 +1248,10 @@ function CitizenReportBadge({
               </div>
               <button
                 type="submit"
-                disabled={submitting}
-                className="btn-primary w-full text-xs py-2"
+                disabled={submitting || !canSubmit}
+                className="btn-primary w-full text-xs py-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {submitting ? "Signing..." : "📤 Submit On-Chain"}
+                {submitting ? "Signing..." : canSubmit ? "📤 Submit On-Chain" : "🔒 Verify location first"}
               </button>
             </form>
           ) : (

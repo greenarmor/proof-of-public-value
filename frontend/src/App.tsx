@@ -39,6 +39,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/portal", label: "Public Portal", icon: "🏛️", group: "public" },
+  { to: "/onboarding", label: "Role-Play", icon: "🎭", group: "public" },
   { to: "/provenance", label: "Explorer", icon: "📋", roles: ["Administrator"], group: "public" },
   { to: "/escrows", label: "Escrows", icon: "🔒", roles: ["Administrator"], group: "public" },
   { to: "/#features", label: "How It Works", icon: "🔄", group: "landing" },
@@ -226,7 +227,10 @@ function Header() {
   const navigate = useNavigate();
 
   const publicItems = NAV_ITEMS.filter(
-    (i) => i.group === "public" && (!i.roles || i.roles.some((r) => hasRole(r))),
+    (i) =>
+      i.group === "public" &&
+      (!i.roles || i.roles.some((r) => hasRole(r))) &&
+      !(connected && roles.length > 0 && i.to === "/onboarding"),
   );
   const landingItems = NAV_ITEMS.filter((i) => i.group === "landing");
   const roleItems = NAV_ITEMS.filter((i) => i.group !== "public" && i.group !== "system");
@@ -286,16 +290,6 @@ function Header() {
                 {item.label}
               </NavLink>
             ))}
-            {!connected && (
-              <NavLink
-                to="/onboarding"
-                className={({ isActive }) =>
-                  `nav-link ${isActive ? "nav-link-active" : "nav-link-inactive"}`
-                }
-              >
-                <span className="mr-1">🎭</span>Role-Play
-              </NavLink>
-            )}
 
             {/* Dashboards dropdown */}
             {connected && (
@@ -336,7 +330,7 @@ function Header() {
                   <div className="absolute top-full left-0 mt-1 w-[400px] bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 grid grid-cols-2 gap-x-1 gap-y-0">
                     {visibleRoleItems.length === 0 && visibleSystemItems.length === 0 ? (
                       <NavLink
-                        to="/onboarding"
+                        to="/citizen-onboarding"
                         onClick={() => setDashboardsOpen(false)}
                         className="col-span-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-brand-50"
                       >
@@ -492,17 +486,6 @@ function Header() {
                   {item.label}
                 </NavLink>
               ))}
-              {!connected && (
-                <NavLink
-                  to="/onboarding"
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
-                  }
-                >
-                  <span>🎭</span>Role-Play
-                </NavLink>
-              )}
             </div>
             {grouped.map(({ group, items }) => (
               <div key={group}>
@@ -613,7 +596,7 @@ function App() {
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/onboarding" element={<CitizenOnboarding />} />
+              <Route path="/citizen-onboarding" element={<CitizenOnboarding />} />
               <Route path="/portal" element={<TransparencyPortal />} />
               <Route path="/onboarding" element={<RolePlayOnboarding />} />
               <Route path="/index" element={<IndexLeaderboard />} />

@@ -1,10 +1,10 @@
 {
-  "lastUpdated": 1783860999501,
-  "lastLedger": 3568934,
+  "lastUpdated": 1783869104752,
+  "lastLedger": 3570552,
   "earliestLedger": 3565087,
   "pvoCount": 15,
   "escrowCount": 4,
-  "eventCount": 38,
+  "eventCount": 41,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -922,6 +922,156 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3570252,
+      "ledgerClosedAt": "2026-07-12T14:45:52Z",
+      "contract": "community_oracle",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            153,
+            86,
+            23,
+            89,
+            77,
+            40,
+            184,
+            20,
+            121,
+            182,
+            172,
+            14,
+            154,
+            142,
+            136,
+            149,
+            77,
+            65,
+            9,
+            118,
+            69,
+            249,
+            169,
+            79,
+            123,
+            147,
+            73,
+            198,
+            106,
+            110,
+            210,
+            250
+          ]
+        }
+      },
+      "eventName": "report_verified_event",
+      "txHash": "8dd2438d5affc05e7b9caff0f1bc3adcc29feba74a132a955d6b7d013e51c568",
+      "data": {
+        "confidence_score": 60,
+        "id": 11
+      }
+    },
+    {
+      "ledger": 3570250,
+      "ledgerClosedAt": "2026-07-12T14:45:42Z",
+      "contract": "community_oracle",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            153,
+            86,
+            23,
+            89,
+            77,
+            40,
+            184,
+            20,
+            121,
+            182,
+            172,
+            14,
+            154,
+            142,
+            136,
+            149,
+            77,
+            65,
+            9,
+            118,
+            69,
+            249,
+            169,
+            79,
+            123,
+            147,
+            73,
+            198,
+            106,
+            110,
+            210,
+            250
+          ]
+        }
+      },
+      "eventName": "report_verified_event",
+      "txHash": "1fddb603d796f17ac8130b8eaaf10e1ca5ee63420478af34d49e96226703329b",
+      "data": {
+        "confidence_score": 30,
+        "id": 11
+      }
+    },
+    {
+      "ledger": 3570245,
+      "ledgerClosedAt": "2026-07-12T14:45:17Z",
+      "contract": "community_oracle",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            153,
+            86,
+            23,
+            89,
+            77,
+            40,
+            184,
+            20,
+            121,
+            182,
+            172,
+            14,
+            154,
+            142,
+            136,
+            149,
+            77,
+            65,
+            9,
+            118,
+            69,
+            249,
+            169,
+            79,
+            123,
+            147,
+            73,
+            198,
+            106,
+            110,
+            210,
+            250
+          ]
+        }
+      },
+      "eventName": "report_verified_event",
+      "txHash": "95fb169212df4f5401b2323c1afaf015a7e6fffe49201d6b6054a3334204b456",
+      "data": {
+        "confidence_score": 30,
+        "id": 6
+      }
+    },
     {
       "ledger": 3568520,
       "ledgerClosedAt": "2026-07-12T12:21:18Z",

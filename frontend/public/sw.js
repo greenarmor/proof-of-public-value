@@ -30,8 +30,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache Stellar RPC or provenance API - always go to network
-  if (url.hostname.includes('stellar.org') || url.hostname.includes('popv.quest')) {
+  // Never cache Stellar RPC, API endpoints, or provenance API - always go to network
+  if (
+    url.hostname.includes('stellar.org') ||
+    url.hostname.includes('popv.quest') ||
+    url.pathname.startsWith('/api/')
+  ) {
     return; // Let browser handle normally
   }
 

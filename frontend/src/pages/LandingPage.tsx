@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, NavLink } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
 function useIsMobile() {
@@ -239,15 +239,23 @@ export function LandingPage() {
             Connect your wallet to access all 13 role dashboards. Browse projects,
             commit grants, approve milestones, and verify public value.
           </p>
-          <button onClick={connect}
-            className="px-10 py-5 rounded-2xl gradient-brand text-white font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-200">
-            <span className="flex items-center gap-3">
-              Connect Wallet
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button onClick={connect}
+              className="px-10 py-5 rounded-2xl gradient-brand text-white font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-200">
+              <span className="flex items-center gap-3">
+                Connect Wallet
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </span>
+            </button>
+            <NavLink to="/onboarding"
+              className="px-8 py-5 rounded-2xl bg-white border-2 border-brand-200 text-brand-700 font-semibold text-lg hover:border-brand-400 hover:bg-brand-50 transition-all duration-300">
+              <span className="flex items-center gap-2">
+                <span>🎭</span> Role-Play Demo
+              </span>
+            </NavLink>
+          </div>
           <p className="mt-6 text-sm text-slate-400">
             Available on Stellar Testnet · Open source · Serverless · 40 contract tests passing
           </p>

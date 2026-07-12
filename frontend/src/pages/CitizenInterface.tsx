@@ -5,16 +5,10 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
-import CitizenReportForm from "./CitizenReportForm";
-import { ReportType } from "../contracts/community_oracle/src";
-import { Modal } from "../components/Modal";
-
-const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
 export function CitizenInterface() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"browse"|"my">("browse");
-  const [reportModal, setReportModal] = useState(false);
   if (!connected) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
       <div className="text-7xl mb-6">📸</div>
@@ -37,16 +31,9 @@ export function CitizenInterface() {
             {tab==="browse"?"🗺️ Browse":"⭐ Reputation"}
           </button>
         ))}
-        <button onClick={() => setReportModal(true)} className="flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700">
-          📸 Report
-        </button>
       </div>
       {activeTab==="browse" && <CitizenBrowse />}
       {activeTab==="my" && <CitizenReputation />}
-
-      <Modal open={reportModal} onClose={() => setReportModal(false)} title="Submit Community Report">
-        <CitizenReportForm onDone={() => setReportModal(false)} />
-      </Modal>
     </div>
   );
 }
@@ -146,8 +133,8 @@ function CitizenDashboard() {
       <div className="card p-4">
         <span className="font-semibold text-sm">⚡ Quick Actions</span>
         <div className="mt-3 space-y-2">
-          <a href="#report" className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">📸 Submit Report</a>
-          <a href="#browse" className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-700">🗺️ Browse Projects</a>
+          <a href="/portal" className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 font-medium">🏛️ Browse Projects & Report</a>
+          <a href="#browse" className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-700">⭐ My Reports</a>
         </div>
       </div>
     </div>
