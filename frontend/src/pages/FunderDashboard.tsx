@@ -917,6 +917,9 @@ function DonorCommitmentsTab() {
     return "Unknown";
   };
 
+  // Track which PVOs have been funded by Central Bank (at least one disbursed grant)
+  const fundedPvos = new Set(grants.filter((g: any) => statusTag(g.status) === "Disbursed").map((g: any) => Number(g.pvo_id)));
+
   if (loading) return <div className="card p-12 skeleton h-48" />;
 
   if (grants.length === 0) {
@@ -972,7 +975,11 @@ function DonorCommitmentsTab() {
                 {(status === "Committed" || status === "Disbursed") && (
                   <div>
                     {status === "Committed" && (
-                      <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting Central Bank funding</p>
+                      <p className="text-xs text-purple-600 font-medium">
+                        {fundedPvos.has(Number(g.pvo_id))
+                          ? "Donor pledged - Central Bank has funded this PVO"
+                          : "Donor pledged - awaiting Central Bank funding"}
+                      </p>
                     )}
                     {status === "Disbursed" && (
                       <p className="text-xs text-emerald-600 font-medium">✓ Central Bank funded - ready for escrow</p>
