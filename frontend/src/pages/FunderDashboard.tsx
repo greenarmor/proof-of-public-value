@@ -972,7 +972,7 @@ function DonorCommitmentsTab() {
                 {(status === "Committed" || status === "Disbursed") && (
                   <div>
                     {status === "Committed" && (
-                      <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting admin mint</p>
+                      <p className="text-xs text-purple-600 font-medium">Donor pledged - Central Bank funded the project</p>
                     )}
                     {status === "Disbursed" && (
                       <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency - escrows created from Awarded PVOs tab</p>
