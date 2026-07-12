@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
-import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
+import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE, FUNDING_AGENCY } from "../config";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";
@@ -885,7 +885,29 @@ function DonorCommitmentsTab() {
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [fundingBalance, setFundingBalance] = useState<number>(0);
   const refresh = () => setRefreshKey(k => k + 1);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { rpc, Contract, Address, xdr } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.pphp);
+        const result = await server.simulateTransaction(
+          new (await import("@stellar/stellar-sdk")).TransactionBuilder(
+            await server.getAccount(FUNDING_AGENCY),
+            { fee: "1000", networkPassphrase: NETWORK_PASSPHRASE }
+          ).addOperation(contract.call("balance", new Address(FUNDING_AGENCY).toScVal())).setTimeout(30).build()
+        );
+        if (result.result?.retval) {
+          setFundingBalance(Number(xdr.ScVal.fromXDR(result.result.retval.toXDR(), "i128") || 0));
+        }
+      } catch (e) {
+        // Fallback: balance unknown, keep 0
+      }
+    })();
+  }, [refreshKey]);
 
   useEffect(() => {
     (async () => {
@@ -923,6 +945,16 @@ function DonorCommitmentsTab() {
     const pvoId = Number(g.pvo_id);
     if (statusTag(g.status) === "Disbursed") {
       disbursedByPvo[pvoId] = (disbursedByPvo[pvoId] || 0) + Number(g.amount);
+    }
+  }
+
+  // For committed grants, check if pPHP balance covers them (minting may have happened separately)
+  // We track committed amounts per PVO and subtract from disbursed
+  const committedByPvo: Record<number, number> = {};
+  for (const g of grants) {
+    const pvoId = Number(g.pvo_id);
+    if (statusTag(g.status) === "Committed") {
+      committedByPvo[pvoId] = (committedByPvo[pvoId] || 0) + Number(g.amount);
     }
   }
 
@@ -988,9 +1020,13 @@ function DonorCommitmentsTab() {
                         {(() => {
                           const pvoId = Number(g.pvo_id);
                           const disbursed = disbursedByPvo[pvoId] || 0;
+                          const committed = committedByPvo[pvoId] || 0;
                           const grantAmount = Number(g.amount);
-                          if (disbursed >= grantAmount) {
+                          // Check if balance covers this grant's amount
+                          if (fundingBalance >= committed) {
                             return "Donor pledged - Central Bank has funded this PVO";
+                          } else if (fundingBalance > 0 && fundingBalance >= grantAmount) {
+                            return "Donor pledged - Central Bank has funded this grant";
                           } else if (disbursed > 0) {
                             return `Donor pledged - Central Bank funded ${(disbursed / PPHP_SCALE).toLocaleString()} of ${(grantAmount / PPHP_SCALE).toLocaleString()}`;
                           } else {
