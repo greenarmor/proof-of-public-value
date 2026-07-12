@@ -972,10 +972,10 @@ function DonorCommitmentsTab() {
                 {(status === "Committed" || status === "Disbursed") && (
                   <div>
                     {status === "Committed" && (
-                      <p className="text-xs text-purple-600 font-medium">Donor pledged - Central Bank funded the project</p>
+                      <p className="text-xs text-purple-600 font-medium">Donor pledged - awaiting Central Bank funding</p>
                     )}
                     {status === "Disbursed" && (
-                      <p className="text-xs text-blue-600 font-medium">pPHP minted to funding agency - escrows created from Awarded PVOs tab</p>
+                      <p className="text-xs text-emerald-600 font-medium">✓ Central Bank funded - ready for escrow</p>
                     )}
                     <p className="text-xs text-slate-500">Pledged: {currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} / Est. Budget: {pvoBudgets[Number(g.pvo_id)] ? currency + (Number(pvoBudgets[Number(g.pvo_id)]) / PPHP_SCALE).toLocaleString() : "..."}</p>
                   </div>
