@@ -32,7 +32,7 @@ export function CitizenOnboarding() {
           <p className="text-xs text-slate-400 mt-1">Soulbound Token Required</p>
         </div>
         <div className="card p-4 text-center">
-          <p className="text-2xl font-bold text-slate-900">Gate 4+5</p>
+          <p className="text-2xl font-bold text-slate-900">Gate 4 & 5</p>
           <p className="text-xs text-slate-400 mt-1">Your Verification Gates</p>
         </div>
         <div className="card p-4 text-center">
