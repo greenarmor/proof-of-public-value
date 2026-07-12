@@ -303,8 +303,29 @@ function RedeemPanel({ address }: { address: string }) {
 // ── Grants Overview ──────────────────────────────────────
 function GrantsOverview() {
   const currency = getCurrency();
+  const { address } = useWallet();
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState<number | null>(null);
+
+  const handleComplete = async (grantId: number) => {
+    if (!address) return;
+    setCompleting(grantId);
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(CONTRACT_IDS.grant_commitment);
+      const op = contract.call("update_status", new Address(address).toScVal(), xdr.ScVal.scvU32(grantId), xdr.ScVal.scvSymbol("Completed"));
+      const tx = new TransactionBuilder(await server.getAccount(address), { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
+      const prepared = await server.prepareTransaction(tx);
+      const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      await server.sendTransaction(TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE));
+      setGrants(prev => prev.map(g => Number(g.id) === grantId ? {...g, status: "Completed"} : g));
+    } catch (e: any) { alert("Only admin or donor can complete grants.\n" + (e.message?.slice(0, 100) || "Unknown")); }
+    finally { setCompleting(null); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -360,7 +381,14 @@ function GrantsOverview() {
                   </div>
                   <span className={`badge ${statusColor(st)}`}>{statusLabel(st)}</span>
                 </div>
+                {g.donor && <p className="text-xs text-slate-400">Donor: <code className="text-[10px]">{String(g.donor).slice(0, 16)}...</code></p>}
                 {g.created_at > 0 && <p className="text-xs text-slate-400 mt-1">Created: {new Date(Number(g.created_at) * 1000).toLocaleString()}</p>}
+                {st === "Disbursed" && (
+                  <button onClick={() => handleComplete(Number(g.id))} disabled={completing === Number(g.id)}
+                    className="mt-2 text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">
+                    {completing === Number(g.id) ? "..." : "✓ Mark Complete"}
+                  </button>
+                )}
               </div>
             );
           })}

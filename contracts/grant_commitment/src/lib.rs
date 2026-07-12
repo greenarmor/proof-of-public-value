@@ -149,8 +149,11 @@ impl GrantCommitment {
         let mut grants: Map<u32, Grant> = storage.get(&GRANTS).unwrap_or_else(|| Map::new(&env));
         let mut grant = grants.get(grant_id).expect("grant not found");
 
-        if grant.donor != donor {
-            panic!("only the original donor can update this grant");
+        let admin: Address = storage.get(&ADMIN).expect("admin not set");
+        let is_admin = donor == admin;
+        let is_donor = grant.donor == donor;
+        if !is_admin && !is_donor {
+            panic!("only the original donor or admin can update this grant");
         }
 
         let old_status = grant.status.clone();
