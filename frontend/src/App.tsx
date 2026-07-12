@@ -149,8 +149,10 @@ const GROUP_LABELS: Record<string, string> = {
 const GROUP_ORDER = ["engagement", "government", "delivery", "oversight", "finance", "system"];
 
 function Home() {
-  const { connected, connect } = useWallet();
+  const { connected, connect, roles } = useWallet();
   if (!connected) return <LandingPage />;
+  // Show landing page for wallets without any assigned role
+  if (roles.length === 0) return <LandingPage />;
   return <TransparencyPortal />;
 }
 
