@@ -6,7 +6,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function CentralBankDashboard() {
   const { address, connected, connect, hasRole } = useWallet();
-  const [activeTab, setActiveTab] = useState<"direct" | "pledges" | "overview" | "redeem">("direct");
+  const [activeTab, setActiveTab] = useState<"overview" | "direct" | "pledges" | "redeem">("overview");
 
   if (!connected) {
     return (
@@ -35,26 +35,26 @@ export function CentralBankDashboard() {
       <p className="text-slate-500 mb-6">Monetary operations: mint, disburse pledges, and redeem pPHP.</p>
 
       <div className="flex gap-1 mb-6 border-b border-slate-200">
-        {(["direct", "pledges", "overview", "redeem"] as const).map((tab) => (
+        {(["overview", "direct", "pledges", "redeem"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-amber-600 text-amber-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
+            {tab === "overview" && "📊 Overview"}
             {tab === "direct" && "💰 Direct Fund"}
             {tab === "pledges" && "💸 Pledges"}
-            {tab === "overview" && "📊 Overview"}
             {tab === "redeem" && "💱 Redeem"}
           </button>
         ))}
       </div>
 
+      {activeTab === "overview" && <GrantsOverview />}
       {activeTab === "direct" && (
         <div>
           <DirectFundForm address={address!} />
         </div>
       )}
       {activeTab === "pledges" && <PledgeManager address={address!} />}
-      {activeTab === "overview" && <GrantsOverview />}
       {activeTab === "redeem" && <RedeemPanel address={address!} />}
 
     </div>
