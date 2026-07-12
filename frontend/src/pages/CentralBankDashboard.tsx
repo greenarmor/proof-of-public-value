@@ -6,7 +6,7 @@ type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
 export function CentralBankDashboard() {
   const { address, connected, connect, hasRole } = useWallet();
-  const [activeTab, setActiveTab] = useState<"direct" | "pledges" | "redeem">("direct");
+  const [activeTab, setActiveTab] = useState<"direct" | "pledges" | "overview" | "redeem">("direct");
 
   if (!connected) {
     return (
@@ -35,13 +35,14 @@ export function CentralBankDashboard() {
       <p className="text-slate-500 mb-6">Monetary operations: mint, disburse pledges, and redeem pPHP.</p>
 
       <div className="flex gap-1 mb-6 border-b border-slate-200">
-        {(["direct", "pledges", "redeem"] as const).map((tab) => (
+        {(["direct", "pledges", "overview", "redeem"] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
               activeTab === tab ? "border-amber-600 text-amber-700" : "border-transparent text-slate-500 hover:text-slate-700"
             }`}>
             {tab === "direct" && "💰 Direct Fund"}
             {tab === "pledges" && "💸 Pledges"}
+            {tab === "overview" && "📊 Overview"}
             {tab === "redeem" && "💱 Redeem"}
           </button>
         ))}
@@ -53,6 +54,7 @@ export function CentralBankDashboard() {
         </div>
       )}
       {activeTab === "pledges" && <PledgeManager address={address!} />}
+      {activeTab === "overview" && <GrantsOverview />}
       {activeTab === "redeem" && <RedeemPanel address={address!} />}
 
     </div>
@@ -292,5 +294,75 @@ function RedeemPanel({ address }: { address: string }) {
       </div>
       <button type="submit" disabled={isBusy} className="btn-primary w-full py-3 bg-amber-600 hover:bg-amber-700">{isBusy ? "Signing..." : "Redeem & Burn"}</button>
     </form>
+  );
+}
+
+// ── Grants Overview ──────────────────────────────────────
+function GrantsOverview() {
+  const currency = getCurrency();
+  const [grants, setGrants] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const { Client } = await import("../contracts/grant_commitment/src");
+        const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const result = await gc.get_all_grants();
+        const all = (result.result || []).sort((a: any, b: any) => Number(b.id) - Number(a.id));
+        setGrants(all);
+      } catch {} finally { setLoading(false); }
+    })();
+  }, []);
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  const statusTag = (s: any) => (s && typeof s === "object" && s.tag) ? s.tag : (typeof s === "string" ? s : "?");
+  const statusColor = (s: string) => s === "Disbursed" ? "badge-blue" : s === "Completed" ? "badge-green" : s === "Cancelled" ? "badge-red" : "badge-purple";
+  const totals = { committed: 0, disbursed: 0, completed: 0 };
+  for (const g of grants) {
+    const st = statusTag(g.status);
+    if (st === "Committed") totals.committed++;
+    else if (st === "Disbursed") totals.disbursed++;
+    else if (st === "Completed") totals.completed++;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-3">
+        <div className="card p-3 text-center"><p className="text-xs text-slate-400">Total Grants</p><p className="text-xl font-bold text-slate-900">{grants.length}</p></div>
+        <div className="card p-3 text-center"><p className="text-xs text-slate-400">Awaiting</p><p className="text-xl font-bold text-purple-600">{totals.committed}</p></div>
+        <div className="card p-3 text-center"><p className="text-xs text-slate-400">Funded</p><p className="text-xl font-bold text-blue-600">{totals.disbursed}</p></div>
+        <div className="card p-3 text-center"><p className="text-xs text-slate-400">Completed</p><p className="text-xl font-bold text-green-600">{totals.completed}</p></div>
+      </div>
+
+      {grants.length === 0 ? (
+        <div className="card p-12 text-center"><p className="text-slate-400">No grants yet.</p></div>
+      ) : (
+        <div className="space-y-3">
+          {grants.map((g: any) => {
+            const st = statusTag(g.status);
+            return (
+              <div key={Number(g.id)} className="card p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-900">{g.org_name || "Donor"}</span>
+                      <span className="text-xs text-slate-400">Grant #{Number(g.id)}</span>
+                      <span className="text-xs text-slate-400">· PVO #{Number(g.pvo_id)}</span>
+                    </div>
+                    <p className="text-sm text-slate-500 mt-0.5">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} · {g.currency || "pPHP"}</p>
+                  </div>
+                  <span className={`badge ${statusColor(st)}`}>{st}</span>
+                </div>
+                {g.donor && <p className="text-xs text-slate-400">Donor: <code className="text-[10px]">{String(g.donor).slice(0, 16)}...</code></p>}
+                {g.created_at > 0 && <p className="text-xs text-slate-400 mt-1">Created: {new Date(Number(g.created_at) * 1000).toLocaleString()}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
