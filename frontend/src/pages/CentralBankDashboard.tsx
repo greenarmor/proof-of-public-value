@@ -422,7 +422,6 @@ function GrantsOverview() {
                 {g.created_at > 0 && <p className="text-xs text-slate-400 mt-1">Created: {new Date(Number(g.created_at) * 1000).toLocaleString()}</p>}
                 {st === "Disbursed" && (
                   <button onClick={() => handleComplete(Number(g.id))} disabled={completing === Number(g.id)}
-                  <button onClick={() => handleComplete(Number(g.id))} disabled={completing === Number(g.id)}
                     className="mt-2 text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">
                     {completing === Number(g.id) ? "..." : "✓ Mark Complete"}
                   </button>
