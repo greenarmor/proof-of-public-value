@@ -186,7 +186,7 @@ function PledgeManager({ address }: { address: string }) {
         const markDisbursedOp = gcContract.call(
           "admin_mark_disbursed",
           new Address(address).toScVal(),
-          xdr.ScVal.scvU32(pledge.id),
+          nativeToScVal(pledge.id, { type: "u32" }),
         );
         let tx2 = new TransactionBuilder(await server.getAccount(address), {
           fee: "100000",
