@@ -114,6 +114,10 @@ function RoleManagement() {
   const { address } = useWallet();
   const [assignments, setAssignments] = useState<{ address: string; role: string }[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [rolePage, setRolePage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const loadAssignments = useCallback(async () => {
     setLoadingAssignments(true);
@@ -188,52 +192,97 @@ function RoleManagement() {
     }
   };
 
+  const filtered = assignments.filter((a) => {
+    const mAddr = a.address.toLowerCase().includes(search.toLowerCase());
+    const mRole = !roleFilter || a.role === roleFilter;
+    return mAddr && mRole;
+  });
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paged = filtered.slice((rolePage - 1) * ITEMS_PER_PAGE, rolePage * ITEMS_PER_PAGE);
+
+  const uniqueRoles = [...new Set(assignments.map((a) => a.role))].sort();
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between">
         <h3 className="font-semibold">Current Role Assignments</h3>
-        <button onClick={loadAssignments} className="text-sm text-purple-600 hover:underline">
+        <button onClick={() => { loadAssignments(); setRolePage(1); }} className="text-sm text-purple-600 hover:underline">
           Refresh
         </button>
       </div>
       {loadingAssignments ? (
         <div className="text-center py-8 text-gray-400">Loading...</div>
-      ) : assignments.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          No roles assigned yet. Use the Assign Role button above.
-        </div>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Role</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-500">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {assignments.map((a, i) => (
-              <tr key={i} className="border-t border-gray-100">
-                <td className="px-4 py-3 font-mono text-xs text-gray-600">
-                  <WalletAddress addr={a.address} chars={8} />
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">
-                    {a.role.replace(/([A-Z])/g, " $1").trim()}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => handleRevoke(a.address, a.role)}
-                    className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100"
-                  >
-                    Revoke
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          <div className="p-3 border-b border-gray-100 flex gap-3">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setRolePage(1); }}
+              placeholder="Search address..."
+              className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-purple-500"
+            />
+            <select
+              value={roleFilter}
+              onChange={(e) => { setRoleFilter(e.target.value); setRolePage(1); }}
+              className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg"
+            >
+              <option value="">All Roles</option>
+              {uniqueRoles.map((r) => (
+                <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>
+              ))}
+            </select>
+            <span className="text-xs text-gray-400 self-center whitespace-nowrap">
+              {filtered.length} of {assignments.length}
+            </span>
+          </div>
+          {filtered.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">No matching assignments.</div>
+          ) : (
+            <>
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500">Address</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-500">Role</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-500">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.map((a, i) => (
+                    <tr key={i} className="border-t border-gray-100">
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">
+                        <WalletAddress addr={a.address} chars={8} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 text-xs rounded bg-purple-50 text-purple-700">
+                          {a.role.replace(/([A-Z])/g, " $1").trim()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleRevoke(a.address, a.role)}
+                          className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100"
+                        >
+                          Revoke
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-1 p-3 border-t border-gray-100">
+                  <button onClick={() => setRolePage((p) => Math.max(1, p - 1))} disabled={rolePage === 1} className="px-2 py-1 text-xs rounded hover:bg-gray-100 disabled:opacity-30">◀</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <button key={p} onClick={() => setRolePage(p)} className={`px-2 py-1 text-xs rounded ${p === rolePage ? "bg-purple-100 text-purple-700 font-medium" : "hover:bg-gray-100"}`}>{p}</button>
+                  ))}
+                  <button onClick={() => setRolePage((p) => Math.min(totalPages, p + 1))} disabled={rolePage === totalPages} className="px-2 py-1 text-xs rounded hover:bg-gray-100 disabled:opacity-30">▶</button>
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
@@ -521,6 +570,8 @@ function MintRPTForm({ onDone }: { onDone: () => void }) {
 function DisputeResolution() {
   const [escrows, setEscrows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [disputePage, setDisputePage] = useState(1);
+  const DPAGE = 10;
 
   useEffect(() => {
     (async () => {
@@ -552,6 +603,9 @@ function DisputeResolution() {
   }, []);
 
   if (loading) return <div className="card p-12 skeleton h-48" />;
+
+  const dPages = Math.ceil(escrows.length / DPAGE);
+  const dPaged = escrows.slice((disputePage - 1) * DPAGE, disputePage * DPAGE);
 
   return (
     <div>
@@ -594,7 +648,7 @@ function DisputeResolution() {
               </tr>
             </thead>
             <tbody>
-              {escrows.map((e: any) => (
+              {dPaged.map((e: any) => (
                 <tr key={Number(e.id)} className="border-t border-gray-100">
                   <td className="px-4 py-3 font-mono text-xs">#{Number(e.id)}</td>
                   <td className="px-4 py-3">#{Number(e.pvo_id)}</td>
@@ -612,6 +666,15 @@ function DisputeResolution() {
               ))}
             </tbody>
           </table>
+          {dPages > 1 && (
+            <div className="flex items-center justify-center gap-1 p-3 border-t border-gray-100">
+              <button onClick={() => setDisputePage((p) => Math.max(1, p - 1))} disabled={disputePage === 1} className="px-2 py-1 text-xs rounded hover:bg-gray-100 disabled:opacity-30">◀</button>
+              {Array.from({ length: dPages }, (_, i) => i + 1).map((p) => (
+                <button key={p} onClick={() => setDisputePage(p)} className={`px-2 py-1 text-xs rounded ${p === disputePage ? "bg-purple-100 text-purple-700 font-medium" : "hover:bg-gray-100"}`}>{p}</button>
+              ))}
+              <button onClick={() => setDisputePage((p) => Math.min(dPages, p + 1))} disabled={disputePage === dPages} className="px-2 py-1 text-xs rounded hover:bg-gray-100 disabled:opacity-30">▶</button>
+            </div>
+          )}
         </div>
       )}
     </div>
