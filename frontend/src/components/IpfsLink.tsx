@@ -2,6 +2,8 @@ import { ipfsGatewayUrl } from "../ipfs";
 
 export function IpfsLink({ hash, short = false }: { hash?: string; short?: boolean }) {
   if (!hash || hash === "0" || hash.length < 10) return null;
+  const isIpfs = hash.startsWith("Qm") || hash.startsWith("baf");
+  if (!isIpfs) return null;
   return (
     <a
       href={ipfsGatewayUrl(hash)}
