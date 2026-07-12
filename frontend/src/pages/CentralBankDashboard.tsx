@@ -307,6 +307,32 @@ function GrantsOverview() {
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<number | null>(null);
+  const [pvoEscrowStatus, setPvoEscrowStatus] = useState<Record<number, { escrowCount: number; releasedCount: number }>>({});
+
+  // Check escrow activity per PVO to show accurate project status
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Client: EscrowClient } = await import("../contracts/escrow/src");
+        const ec = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const statusMap: Record<number, { escrowCount: number; releasedCount: number }> = {};
+        const cnt = await ec.get_escrow_count();
+        for (let i = 1; i <= Number(cnt.result); i++) {
+          try {
+            const r = await ec.get_escrow({ escrow_id: i });
+            if (r.result) {
+              const st = typeof r.result.status === "string" ? r.result.status : r.result.status?.tag ?? "";
+              const pvoId = Number(r.result.pvo_id);
+              if (!statusMap[pvoId]) statusMap[pvoId] = { escrowCount: 0, releasedCount: 0 };
+              statusMap[pvoId].escrowCount++;
+              if (st === "Released") statusMap[pvoId].releasedCount++;
+            }
+          } catch {}
+        }
+        setPvoEscrowStatus(statusMap);
+      } catch {}
+    })();
+  }, []);
 
   const handleComplete = async (grantId: number) => {
     if (!address) return;
@@ -344,7 +370,18 @@ function GrantsOverview() {
 
   const statusTag = (s: any) => (s && typeof s === "object" && s.tag) ? s.tag : (typeof s === "string" ? s : "?");
   const statusColor = (s: string) => s === "Disbursed" ? "badge-blue" : s === "Completed" ? "badge-green" : s === "Cancelled" ? "badge-red" : "badge-purple";
-  const statusLabel = (s: string) => s === "Disbursed" ? "Funded" : s; // Disbursed = funds released to Funding Agency
+  const statusLabel = (g: any) => {
+    const st = statusTag(g.status);
+    if (st === "Disbursed") {
+      const pvoId = Number(g.pvo_id);
+      const esc = pvoEscrowStatus[pvoId];
+      if (esc && esc.releasedCount > 0 && esc.releasedCount >= esc.escrowCount) return "Completed";
+      if (esc && esc.releasedCount > 0) return "Partially Released";
+      if (esc && esc.escrowCount > 0) return "Active";
+      return "Funded";
+    }
+    return st;
+  };
   const totals = { committed: 0, disbursed: 0, completed: 0 };
   for (const g of grants) {
     const st = statusTag(g.status);
@@ -379,11 +416,12 @@ function GrantsOverview() {
                     </div>
                     <p className="text-sm text-slate-500 mt-0.5">{currency}{(Number(g.amount) / PPHP_SCALE).toLocaleString()} · {g.currency || "pPHP"}</p>
                   </div>
-                  <span className={`badge ${statusColor(st)}`}>{statusLabel(st)}</span>
+                  <span className={`badge ${statusColor(st)}`}>{statusLabel(g)}</span>
                 </div>
                 {g.donor && <p className="text-xs text-slate-400">Donor: <code className="text-[10px]">{String(g.donor).slice(0, 16)}...</code></p>}
                 {g.created_at > 0 && <p className="text-xs text-slate-400 mt-1">Created: {new Date(Number(g.created_at) * 1000).toLocaleString()}</p>}
                 {st === "Disbursed" && (
+                  <button onClick={() => handleComplete(Number(g.id))} disabled={completing === Number(g.id)}
                   <button onClick={() => handleComplete(Number(g.id))} disabled={completing === Number(g.id)}
                     className="mt-2 text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50">
                     {completing === Number(g.id) ? "..." : "✓ Mark Complete"}
