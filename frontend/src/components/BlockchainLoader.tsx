@@ -46,13 +46,13 @@ export function BlockchainLoader({ text = "Syncing with Stellar testnet..." }: {
   });
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-6">
+    <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4 sm:space-y-6 px-2">
       {/* Blockchain block animation */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 sm:gap-1.5">
         {blocks.map((block) => (
-          <div key={block.i} className="flex items-center gap-1.5">
+          <div key={block.i} className="flex items-center gap-1 sm:gap-1.5">
             <div
-              className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xs font-mono transition-all duration-500 ${
+              className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg border-2 flex items-center justify-center text-[10px] sm:text-xs font-mono transition-all duration-500 ${
                 block.state === "verified"
                   ? "bg-emerald-100 border-emerald-300 text-emerald-700"
                   : block.state === "scanning"
@@ -64,7 +64,7 @@ export function BlockchainLoader({ text = "Syncing with Stellar testnet..." }: {
             </div>
             {block.i < 5 && (
               <div
-                className={`w-6 h-0.5 transition-colors duration-500 ${
+                className={`w-3 h-0.5 sm:w-6 sm:h-0.5 transition-colors duration-500 ${
                   block.i < Math.floor(progress / 2)
                     ? "bg-emerald-400"
                     : "bg-slate-200"
@@ -77,15 +77,15 @@ export function BlockchainLoader({ text = "Syncing with Stellar testnet..." }: {
 
       {/* Status text */}
       <div className="text-center space-y-1">
-        <p className="text-sm font-medium text-slate-600">{text}</p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs sm:text-sm font-medium text-slate-600">{text}</p>
+        <p className="text-[10px] sm:text-xs text-slate-400">
           {blocks.filter((b) => b.state === "verified").length} of {blocks.length} blocks verified
         </p>
       </div>
 
       {/* Rotating fact */}
-      <div className="bg-white/80 backdrop-blur border border-slate-200 rounded-xl px-5 py-3 max-w-md text-center transition-all duration-500 ease-in-out">
-        <p className="text-xs text-slate-500 leading-relaxed">💡 {FACTS[fact % FACTS.length]}</p>
+      <div className="bg-white/80 backdrop-blur border border-slate-200 rounded-xl px-3 py-2 sm:px-5 sm:py-3 max-w-[90vw] sm:max-w-md text-center transition-all duration-500 ease-in-out">
+        <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">💡 {FACTS[fact % FACTS.length]}</p>
       </div>
     </div>
   );
