@@ -66,13 +66,38 @@ export function DonorDashboard() {
           }
         } catch {}
       }
-      // Fetch remaining funding for each PVO
+      // Fetch remaining funding + winning bid for each PVO
       for (const pvo of list) {
         try {
           const rem = await gc.get_pvo_remaining({ pvo_id: pvo.id });
           pvo.remaining = String(rem.result || 0);
         } catch {}
       }
+      // Look up winning bid amounts
+      try {
+        const { Client: PM } = await import("../contracts/procurement_market/src");
+        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const tCount = await pm.get_tender_count();
+        const maxScan = Number(tCount.result) + 10;
+        for (let i = 1; i <= maxScan; i++) {
+          try {
+            const tr = await pm.get_tender({ id: i });
+            if (tr.result && tr.result.status?.tag === "Awarded" && tr.result.winner) {
+              const pid = Number(tr.result.pvo_id);
+              const bidsResult = await pm.get_bids_by_tender({ tender_id: Number(tr.result.id) });
+              const bids = bidsResult.result || [];
+              let best: any = null;
+              for (const b of bids) {
+                if (!best || Number(b.final_score) > Number(best.final_score)) best = b;
+              }
+              if (best) {
+                const pvo = list.find(p => p.id === pid);
+                if (pvo) (pvo as any).winningBid = String(best.price);
+              }
+            }
+          } catch {}
+        }
+      } catch {}
       setPvos(list);
     } catch (e) { console.error("DonorDashboard loadAll:", e); } finally { setLoading(false); }
   }, []);
@@ -136,7 +161,14 @@ export function DonorDashboard() {
                   <span className={`badge text-xs ${pvo.status === "Completed" ? "badge-green" : pvo.status === "Proposed" ? "badge-blue" : "badge-purple"}`}>{pvo.status}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Est. Budget: {currency}{formatBudget(pvo.totalBudget)}</span>
+                  <span className="text-slate-500">
+                    Budget: {currency}{(Number(pvo.totalBudget) / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                    {(pvo as any).winningBid && Number((pvo as any).winningBid) !== Number(pvo.totalBudget) && (
+                      <span className="text-emerald-600 ml-1">
+                        → Winning: {currency}{(Number((pvo as any).winningBid) / PPHP_SCALE / 1_000_000).toFixed(1)}M
+                      </span>
+                    )}
+                  </span>
                   <span className={`text-xs font-medium ${fullyFunded ? "text-emerald-600" : "text-brand-600"}`}>
                     {fullyFunded ? "✅ Fully Funded" : `Needed: ${currency}${formatBudget(pvo.remaining)}`}
                   </span>
