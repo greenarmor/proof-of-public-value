@@ -608,24 +608,12 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
               {showMilestoneDd && filteredMilestones.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                   {filteredMilestones.slice(0, 10).map(m => {
-                    const totalBid = milestoneBidPrices[Number(pvoId)] || 0;
-                    const msCount = milestones.length || 1;
-                    const hasBids = totalBid > 0;
-                    const perMsAmount = hasBids ? Math.round(totalBid / msCount) : m.budget;
                     return (
-                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (perMsAmount > 0) setAmount(String(perMsAmount / PPHP_SCALE)); }}
+                    <button key={m.id} type="button" onMouseDown={() => { setMilestoneId(String(m.id)); setShowMilestoneDd(false); if (m.budget > 0) setAmount(String(m.budget / PPHP_SCALE)); }}
                       className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-100 last:border-b-0">
                       <span className="text-sm font-medium text-slate-900">#{m.id} {m.title}</span>
                       <span className="text-xs text-slate-400 ml-2">
-                        {hasBids ? (
-                          <>
-                            <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
-                            {" → "}
-                            <span className="text-emerald-600">{currency}{(perMsAmount / PPHP_SCALE).toLocaleString()}</span>
-                          </>
-                        ) : (
-                          <>{m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}</>
-                        )}
+                        {m.budget > 0 ? `${currency}${(m.budget / PPHP_SCALE).toLocaleString()}` : ""}
                       </span>
                     </button>
                     );
@@ -656,8 +644,8 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Amount (in Pesos)</label>
-              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="input"
-                placeholder="e.g. 5000000 for ₱5,000,000" required />
+              <input type="number" value={amount} readOnly className="input bg-slate-100"
+                placeholder="Select milestone to auto-fill" required />
               <p className="text-xs text-slate-400 mt-1">{amount && Number(amount) > 0 ? `${currency}${Number(amount).toLocaleString()} = ${(Number(amount) * PPHP_SCALE).toLocaleString(undefined, {maximumFractionDigits: 0})} SAC units` : "Enter amount in pesos"}</p>
             </div>
             <div>
@@ -833,12 +821,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                   <div className="divide-y divide-slate-100">
                     {milestones.map((m: any) => {
                       const escrowed = hasEscrow(pvoId, m.id);
-                      const totalBid = bidPriceMap[pvoId] || 0;
-                      const msCount = milestones.length || 1;
-                      const hasBids = totalBid > 0;
-                      const escrowAmount = hasBids
-                        ? String(Math.round(totalBid / msCount / PPHP_SCALE))
-                        : String(m.budget / PPHP_SCALE);
+                      const escrowAmount = String(m.budget / PPHP_SCALE);
                       return (
                         <div key={m.id} className="flex items-center justify-between p-4">
                           <div className="flex-1">
@@ -848,16 +831,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
                             </div>
                             <span className="text-xs text-slate-400">
                               {m.description && `${m.description} · `}
-                              {hasBids ? (
-                                <>
-                                  <span className="line-through text-slate-300">{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</span>
-                                  {" → "}
-                                  <span className="text-emerald-600 font-medium">{currency}{(Math.round(totalBid / msCount / PPHP_SCALE)).toLocaleString()}</span>
-                                  <span className="text-emerald-500 ml-1">(bid ÷{msCount})</span>
-                                </>
-                              ) : (
-                                <>{currency}{(m.budget / PPHP_SCALE).toLocaleString()}</>
-                              )}
+                              {currency}{(m.budget / PPHP_SCALE).toLocaleString()}
                             </span>
                           </div>
                           <button
@@ -1036,7 +1010,7 @@ function DonorCommitmentsTab() {
 function EscrowGuide() {
   const steps = [
     { n: 0, title: "Funding Arrives at FA", icon: "🏦", desc: "Donor path: Donor pledges → transfers foreign currency to CentralBank → CentralBank mints pPHP to FA + marks disbursed. National Budget path: GovernmentAgency creates PVO → CentralBank Direct Fund mints pPHP to FA directly.", actor: "CentralBank" },
-    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates escrows from Awarded PVOs tab - only after a winning bid is assigned and contractor confirmed. The escrow amount comes from the winning bid divided by milestone count.", actor: "FundingAgency" },
+    { n: 1, title: "Create Escrow", icon: "📝", desc: "Funder creates escrows from Awarded PVOs tab - only after a winning bid is assigned and contractor confirmed. The escrow amount is the milestone's budget amount.", actor: "FundingAgency" },
     { n: 2, title: "Fund Escrow", icon: "💰", desc: "Funder deposits the exact amount from their pPHP balance. Escrow status changes to Funded. Cannot proceed through gates without funding.", actor: "FundingAgency" },
     { n: 3, title: "Gate 1 - Engineer Approve", icon: "🔧", desc: "Assigned engineer verifies structural quality and approves the milestone.", actor: "Engineer" },
     { n: 4, title: "Gate 2 - Compliance Validate", icon: "⚖️", desc: "Auditor or COA checks regulatory and legal compliance.", actor: "Auditor / COA" },

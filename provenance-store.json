@@ -1,10 +1,10 @@
 {
-  "lastUpdated": 1783851649943,
-  "lastLedger": 3567067,
+  "lastUpdated": 1783854439526,
+  "lastLedger": 3567624,
   "earliestLedger": 3565087,
   "pvoCount": 15,
-  "escrowCount": 0,
-  "eventCount": 21,
+  "escrowCount": 1,
+  "eventCount": 25,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -12,14 +12,14 @@
       "department": "DPWH",
       "municipality": "Manila, NCR",
       "description": "[14.5842,120.9571] Rehabilitate 8km of Manila Bay coastline including seawall reinforcement, mangrove reforestation, promenade construction, and water quality improvement systems.",
-      "total_budget": 450000000,
-      "status": "Proposed",
+      "total_budget": 440000000,
+      "status": "Approved",
       "funding_agency": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
-      "contractor": "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
+      "contractor": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
       "project_manager": "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV",
       "fund_source": "National Budget",
       "public_value_score": 0,
-      "contractor_assigned": false,
+      "contractor_assigned": true,
       "milestones": [
         {
           "milestone_id": 16,
@@ -29,7 +29,49 @@
           "status": "Pending",
           "evidence_count": 0,
           "evidence_types": [],
-          "gates": []
+          "escrow": {
+            "escrow_id": 1,
+            "pvo_id": 1,
+            "milestone_id": 16,
+            "amount": 180000000,
+            "status": "Created",
+            "funder": "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO",
+            "recipient": "GDH34DMJZ6UH6267LPTCPE4HZH3TDAL54THUZZHMKDPCWNGK6N62VDRF",
+            "funded": false,
+            "released": false
+          },
+          "gates": [
+            {
+              "gate_number": 1,
+              "gate_name": "Engineer Approval",
+              "contract_fn": "engineer_approve",
+              "status": "pending"
+            },
+            {
+              "gate_number": 2,
+              "gate_name": "Compliance Check",
+              "contract_fn": "compliance_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 3,
+              "gate_name": "Community Oracle",
+              "contract_fn": "community_oracle_validate",
+              "status": "pending"
+            },
+            {
+              "gate_number": 4,
+              "gate_name": "Community Confirmation",
+              "contract_fn": "add_community_confirmation",
+              "status": "pending"
+            },
+            {
+              "gate_number": 5,
+              "gate_name": "AI Risk Check",
+              "contract_fn": "ai_validate",
+              "status": "pending"
+            }
+          ]
         },
         {
           "milestone_id": 17,
@@ -107,14 +149,41 @@
           "tx_hash": "5e15711290707348848396a9dc5bf8fab7424b74acd525227758907d942f935c",
           "ledger": 3566620,
           "contract": "pvo_core"
+        },
+        {
+          "order": 5,
+          "timestamp": 1783852007000,
+          "type": "contractor_assigned_event",
+          "description": "Contractor assigned",
+          "tx_hash": "b8c0a0798efcdd176669a1ad638e3326bf99151155a2b4acb062ca12bafd54e8",
+          "ledger": 3567148,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 6,
+          "timestamp": 1783852007000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: Proposed → Approved",
+          "tx_hash": "b8c0a0798efcdd176669a1ad638e3326bf99151155a2b4acb062ca12bafd54e8",
+          "ledger": 3567148,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 7,
+          "timestamp": 1783853690000,
+          "type": "escrow_created_event",
+          "description": "Escrow #1 created - 180,000,000 PHP",
+          "tx_hash": "2f9ec4feb60094570fc7048800222fd313b7809fcbb84316c732cc764179417a",
+          "ledger": 3567484,
+          "contract": "escrow"
         }
       ],
       "stats": {
-        "total_escrowed": 0,
+        "total_escrowed": 180000000,
         "total_released": 0,
         "total_funded": 0,
         "gates_passed": 0,
-        "gates_total": 0,
+        "gates_total": 5,
         "evidence_submitted": 0
       }
     },
@@ -610,6 +679,215 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3567484,
+      "ledgerClosedAt": "2026-07-12T10:54:50Z",
+      "contract": "escrow",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            191,
+            177,
+            11,
+            96,
+            190,
+            170,
+            23,
+            67,
+            4,
+            178,
+            215,
+            54,
+            128,
+            95,
+            142,
+            51,
+            104,
+            26,
+            233,
+            44,
+            138,
+            224,
+            20,
+            39,
+            234,
+            9,
+            161,
+            21,
+            107,
+            127,
+            238,
+            11
+          ]
+        }
+      },
+      "eventName": "escrow_created_event",
+      "txHash": "2f9ec4feb60094570fc7048800222fd313b7809fcbb84316c732cc764179417a",
+      "data": {
+        "amount": 1800000000000000,
+        "id": 1,
+        "milestone_id": 16,
+        "pvo_id": 1,
+        "recipient": "[object Object]"
+      }
+    },
+    {
+      "ledger": 3567148,
+      "ledgerClosedAt": "2026-07-12T10:26:47Z",
+      "contract": "procurement_market",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            41,
+            6,
+            236,
+            209,
+            207,
+            101,
+            12,
+            202,
+            236,
+            247,
+            88,
+            6,
+            133,
+            158,
+            125,
+            113,
+            24,
+            210,
+            226,
+            205,
+            212,
+            123,
+            25,
+            14,
+            25,
+            16,
+            198,
+            99,
+            252,
+            131,
+            135,
+            230
+          ]
+        }
+      },
+      "eventName": "tender_awarded_event",
+      "txHash": "b8c0a0798efcdd176669a1ad638e3326bf99151155a2b4acb062ca12bafd54e8",
+      "data": {
+        "final_score": 45,
+        "tender_id": 1,
+        "winner": "[object Object]"
+      }
+    },
+    {
+      "ledger": 3567148,
+      "ledgerClosedAt": "2026-07-12T10:26:47Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "contractor_assigned_event",
+      "txHash": "b8c0a0798efcdd176669a1ad638e3326bf99151155a2b4acb062ca12bafd54e8",
+      "data": {
+        "contractor": "[object Object]",
+        "pvo_id": 1
+      }
+    },
+    {
+      "ledger": 3567148,
+      "ledgerClosedAt": "2026-07-12T10:26:47Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "b8c0a0798efcdd176669a1ad638e3326bf99151155a2b4acb062ca12bafd54e8",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "Approved"
+        ],
+        "old_status": [
+          "Proposed"
+        ]
+      }
+    },
     {
       "ledger": 3567025,
       "ledgerClosedAt": "2026-07-12T10:16:31Z",
@@ -1699,10 +1977,10 @@
     }
   ],
   "stats": {
-    "totalEscrowed": 0,
+    "totalEscrowed": 180000000,
     "totalReleased": 0,
     "totalFunded": 0,
     "totalGatesPassed": 0,
-    "totalGatesPending": 0
+    "totalGatesPending": 5
   }
 }

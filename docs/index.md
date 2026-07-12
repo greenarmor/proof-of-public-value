@@ -11,7 +11,7 @@ The **APAC Stellar Hackathon** challenges builders to create financial infrastru
 
 **PoPV answers that question with a system that uses Stellar as the backbone of government transparency.**
 
-Stablecoins like USDC are the settlement layer  -  real value locked in escrow, released only when work is proven. Soroban smart contracts are the enforcement layer  -  13 contracts that verify, validate, and gatekeep every peso before it moves. The result is composable infrastructure: any government can plug in their own stablecoin, their own validators, their own citizens, and the system works the same way.
+Stablecoins like USDC are the settlement layer  -  real value locked in escrow, released only when work is proven. Soroban smart contracts are the enforcement layer  -  14 contracts that verify, validate, and gatekeep every peso before it moves. The result is composable infrastructure: any government can plug in their own stablecoin, their own validators, their own citizens, and the system works the same way.
 
 This is not just a hackathon entry. It is a statement: **the technology to end government corruption already exists.** Stellar provides the rails. Soroban provides the logic. PoPV provides the proof.
 
