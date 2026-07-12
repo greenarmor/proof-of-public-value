@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
+import { Fragment } from "react";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
 import { RolePlayOnboarding } from "./pages/RolePlayOnboarding";
@@ -79,14 +80,14 @@ const NAV_ITEMS: NavItem[] = [
     label: "Engineer",
     icon: "🔧",
     roles: ["Engineer", "Administrator"],
-    group: "delivery",
+    group: "government",
   },
   {
     to: "/inspector",
     label: "Inspector",
     icon: "🔎",
     roles: ["Inspector", "Administrator"],
-    group: "delivery",
+    group: "government",
   },
   {
     to: "/supplier",
@@ -130,7 +131,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Funding Agency",
     icon: "💰",
     roles: ["FundingAgency", "Administrator"],
-    group: "finance",
+    group: "government",
   },
   {
     to: "/donor",
@@ -332,7 +333,7 @@ function Header() {
                   </svg>
                 </button>
                 {dashboardsOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-[420px] bg-white rounded-xl shadow-xl border border-slate-200 p-2 grid grid-cols-2 gap-x-1 gap-y-0.5">
+                  <div className="absolute top-full left-0 mt-1 w-[400px] bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 grid grid-cols-2 gap-x-1 gap-y-0">
                     {visibleRoleItems.length === 0 && visibleSystemItems.length === 0 ? (
                       <NavLink
                         to="/onboarding"
@@ -343,48 +344,42 @@ function Header() {
                       </NavLink>
                     ) : null}
                     {grouped.map(({ group, items }) => (
-                      <div
-                        key={group}
-                        className={
-                          group === "system" ? "col-span-2 mt-1 pt-1 border-t border-slate-100" : ""
-                        }
-                      >
-                        {group !== "system" && (
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 py-1">
-                            {GROUP_LABELS[group]}
-                          </p>
-                        )}
+                      <Fragment key={group}>
+                        <p className="col-span-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-3 pt-1.5 pb-0.5">
+                          {GROUP_LABELS[group]}
+                        </p>
                         {items.map((item) => (
                           <NavLink
                             key={item.to}
                             to={item.to}
                             onClick={() => setDashboardsOpen(false)}
                             className={({ isActive }) =>
-                              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
+                              `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
                             }
                           >
-                            <span className="text-base">{item.icon}</span>
+                            <span className="text-sm">{item.icon}</span>
                             <span>{item.label}</span>
                           </NavLink>
                         ))}
-                      </div>
+                      </Fragment>
                     ))}
                     {visibleSystemItems.length > 0 && (
-                      <div className="col-span-2 mt-1 pt-1 border-t border-slate-100">
+                      <>
+                        <div className="col-span-2 border-t border-slate-100 mt-1" />
                         {visibleSystemItems.map((item) => (
                           <NavLink
                             key={item.to}
                             to={item.to}
                             onClick={() => setDashboardsOpen(false)}
                             className={({ isActive }) =>
-                              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
+                              `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${isActive ? "bg-brand-50 text-brand-700 font-medium" : "text-slate-600 hover:bg-slate-50"}`
                             }
                           >
-                            <span className="text-base">{item.icon}</span>
+                            <span className="text-sm">{item.icon}</span>
                             <span>{item.label}</span>
                           </NavLink>
                         ))}
-                      </div>
+                      </>
                     )}
                   </div>
                 )}

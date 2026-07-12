@@ -1,10 +1,10 @@
 {
-  "lastUpdated": 1783858633908,
-  "lastLedger": 3568462,
+  "lastUpdated": 1783860999501,
+  "lastLedger": 3568934,
   "earliestLedger": 3565087,
   "pvoCount": 15,
   "escrowCount": 4,
-  "eventCount": 34,
+  "eventCount": 38,
   "pvOs": [
     {
       "pvo_id": 1,
@@ -382,6 +382,42 @@
           "description": "Status: InProgress → InProgress",
           "tx_hash": "c8d293c6cf99052dcfed4dd3b1e53634735a6c94e8fefdae4a50c5075d45fccd",
           "ledger": 3567894,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 17,
+          "timestamp": 1783858823000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "c115aadc003867c4ecc5fa56d169dff86268913afb55ce3030b3fb51cdd93ced",
+          "ledger": 3568509,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 18,
+          "timestamp": 1783858833000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "08e0ca76d7192253dbf526ecc7ee5cc6bd7b63b0d4d4db33bd519272ce17891c",
+          "ledger": 3568511,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 19,
+          "timestamp": 1783858858000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "670ed98c680f30b9d42b0171db41f4b935f92059c307ca125763dcdceb46ee02",
+          "ledger": 3568516,
+          "contract": "pvo_core"
+        },
+        {
+          "order": 20,
+          "timestamp": 1783858878000,
+          "type": "pvo_status_changed_event",
+          "description": "Status: InProgress → InProgress",
+          "tx_hash": "b59ea6a1320f16407ee079b50d90c63602940e1f92516624d97150e78825c84a",
+          "ledger": 3568520,
           "contract": "pvo_core"
         }
       ],
@@ -886,6 +922,226 @@
     }
   ],
   "events": [
+    {
+      "ledger": 3568520,
+      "ledgerClosedAt": "2026-07-12T12:21:18Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "b59ea6a1320f16407ee079b50d90c63602940e1f92516624d97150e78825c84a",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
+    {
+      "ledger": 3568516,
+      "ledgerClosedAt": "2026-07-12T12:20:58Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "670ed98c680f30b9d42b0171db41f4b935f92059c307ca125763dcdceb46ee02",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
+    {
+      "ledger": 3568511,
+      "ledgerClosedAt": "2026-07-12T12:20:33Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "08e0ca76d7192253dbf526ecc7ee5cc6bd7b63b0d4d4db33bd519272ce17891c",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
+    {
+      "ledger": 3568509,
+      "ledgerClosedAt": "2026-07-12T12:20:23Z",
+      "contract": "pvo_core",
+      "contractId": {
+        "_id": {
+          "type": "Buffer",
+          "data": [
+            165,
+            240,
+            108,
+            56,
+            49,
+            222,
+            88,
+            248,
+            82,
+            237,
+            33,
+            121,
+            82,
+            192,
+            7,
+            242,
+            170,
+            134,
+            180,
+            220,
+            70,
+            242,
+            6,
+            232,
+            11,
+            99,
+            215,
+            121,
+            22,
+            238,
+            215,
+            136
+          ]
+        }
+      },
+      "eventName": "pvo_status_changed_event",
+      "txHash": "c115aadc003867c4ecc5fa56d169dff86268913afb55ce3030b3fb51cdd93ced",
+      "data": {
+        "id": 1,
+        "new_status": [
+          "InProgress"
+        ],
+        "old_status": [
+          "InProgress"
+        ]
+      }
+    },
     {
       "ledger": 3567894,
       "ledgerClosedAt": "2026-07-12T11:29:03Z",

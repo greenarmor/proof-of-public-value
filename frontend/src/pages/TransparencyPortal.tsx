@@ -770,9 +770,6 @@ export function TransparencyPortal() {
                         <span className="text-emerald-600 font-medium">
                           Winning Bid: {currency}{(bidMap[pvo.id] / PPHP_SCALE / 1_000_000).toFixed(1)}M
                         </span>
-                        <span className="text-green-600">
-                          Savings: {currency}{((Number(pvo.total_budget) - bidMap[pvo.id]) / PPHP_SCALE / 1_000_000).toFixed(1)}M
-                        </span>
                       </div>
                     )}
                     {/* PVO Progress - released / budget */}
