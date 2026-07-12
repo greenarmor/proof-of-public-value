@@ -179,31 +179,34 @@ function PledgeManager({ address }: { address: string }) {
       setBusyStep("Awaiting Freighter (step 2/2)...");
       await new Promise((r) => setTimeout(r, 1500));
 
-      // 2) Mark grant as Disbursed on-chain (second tx)
-      const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
-      const markDisbursedOp = gcContract.call(
-        "admin_mark_disbursed",
-        new Address(address).toScVal(),
-        nativeToScVal(pledge.id, { type: "u32" }),
-      );
+      // Step 2) Mark grant as Disbursed on-chain
+      setBusyStep("Marking grant disbursed...");
+      try {
+        const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
+        const markDisbursedOp = gcContract.call(
+          "admin_mark_disbursed",
+          new Address(address).toScVal(),
+          xdr.ScVal.scvU32(pledge.id),
+        );
+        let tx2 = new TransactionBuilder(await server.getAccount(address), {
+          fee: "100000",
+          networkPassphrase: NETWORK_PASSPHRASE,
+        })
+          .addOperation(markDisbursedOp)
+          .setTimeout(30)
+          .build();
+        tx2 = await server.prepareTransaction(tx2);
+        signedResp = await signTransaction(tx2.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+        if (signedResp?.error) throw new Error(signedResp.error.message);
+        signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+        await server.sendTransaction(signedTx);
+      } catch (markErr: any) {
+        console.error("mark_disbursed failed:", markErr.message);
+        // Mint succeeded but mark failed - show warning so user can retry
+        alert(`pPHP minted but grant status update failed. Use the retry button or CLI:\nstellar contract invoke --send=yes --source central_bank --network testnet --id ${CONTRACT_IDS.grant_commitment} -- admin_mark_disbursed --caller ${address} --grant_id ${pledge.id}`);
+      }
 
-      const account2 = await server.getAccount(address);
-      let tx2 = new TransactionBuilder(account2, {
-        fee: "100000",
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .addOperation(markDisbursedOp)
-        .setTimeout(30)
-        .build();
-      tx2 = await server.prepareTransaction(tx2);
-      signedResp = await signTransaction(tx2.toXDR(), {
-        networkPassphrase: NETWORK_PASSPHRASE,
-      });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
-
-      // Show done state, then re-fetch to remove from list
+      // Mint succeeded - show done state, then re-fetch to remove from list
       setCompleted((prev) => new Set(prev).add(pledge.id));
       setTimeout(() => setRefreshKey(k => k + 1), 1500);
       const pesos = pphpAmount / PPHP_SCALE;
