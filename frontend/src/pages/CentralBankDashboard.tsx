@@ -72,14 +72,14 @@ function DirectFundForm({ address }: { address: string }) {
     setIsBusy(true);
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
+      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const FA = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
       const sacAmt = Math.round(Number(amount) * PPHP_SCALE);
-      const op = tokenContract.call("mint", new Address(FA).toScVal(), nativeToScVal(sacAmt, { type: "i128" } as any));
+      const op = tokenContract.call("mint", new Address(FA).toScVal(), new ScInt(sacAmt).toI128());
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
       const prepared = await server.prepareTransaction(tx);
       const signedResp: any = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
@@ -141,7 +141,7 @@ function PledgeManager({ address }: { address: string }) {
     setBusyStep("Minting pPHP...");
     let mintSucceeded = false;
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
+      const { TransactionBuilder, Contract, Address, rpc, ScInt } =
         await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
@@ -155,7 +155,7 @@ function PledgeManager({ address }: { address: string }) {
       const mintOp = tokenContract.call(
         "mint",
         new Address(FUNDING).toScVal(),
-        nativeToScVal(pphpAmount, { type: "i128" } as any),
+        new ScInt(pphpAmount).toI128(),
       );
 
       let tx1 = new TransactionBuilder(account, {
@@ -170,17 +170,11 @@ function PledgeManager({ address }: { address: string }) {
         networkPassphrase: NETWORK_PASSPHRASE,
       });
       if (signedResp?.error) throw new Error(signedResp.error.message);
-      const result = await server.sendTransaction(signedResp.signedTxXdr);
-      if (result.status === "PENDING" || result.status === "DUPLICATE") {
-        mintSucceeded = true;
-        localStorage.setItem(`pledge_${pledge.id}_minted`, "true");
-        setRefreshKey(k => k + 1);
-      } else if (result.errorResult) {
-        const msg =
-          result.errorResult.result?.results?.[0]?.error ||
-          JSON.stringify(result.errorResult).slice(0, 200);
-        throw new Error(msg);
-      }
+      let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      mintSucceeded = true;
+      localStorage.setItem(`pledge_${pledge.id}_minted`, "true");
+      setRefreshKey(k => k + 1);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
       // Re-fetch even on partial success (mint may have succeeded, mark may have failed)
