@@ -125,19 +125,85 @@ export default async function handler(req, res) {
       6: "Terminated",
     };
 
-    const formatted = pvos.map((p) => ({
-      id: p.id ?? 0,
-      title: p.title ?? "Untitled",
-      description: p.description ?? "",
-      department: p.department ?? "",
-      municipality: p.municipality ?? "",
-      total_budget: String(p.total_budget ?? 0),
-      status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
-      fund_source: p.fund_source ?? "",
-      milestone_count: p.milestones ?? 0,
-      milestones_released: 0,
-      public_value_score: p.public_value_score ?? 0,
-    }));
+    // Fetch escrow gate status per PVO
+    const ESCROW = "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7";
+    const escContract = new Contract(ESCROW);
+
+    function makeEscTx(fnName, ...args) {
+      const tx = new TransactionBuilder(
+        { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} },
+        { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }
+      ).addOperation(escContract.call(fnName, ...args)).setTimeout(30).build();
+      return tx;
+    }
+
+    async function simEsc(fnName, ...args) {
+      const tx = makeEscTx(fnName, ...args);
+      const sim = await server.simulateTransaction(tx);
+      if (sim.error) return null;
+      return sim.result?.retval;
+    }
+
+    function parseEscrowVec(sv) {
+      const list = [];
+      const vec = sv.vec();
+      for (let i = 0; i < vec.length; i++) {
+        const entry = vec.get(i);
+        const map = parseScValMap(entry);
+        list.push(map);
+      }
+      return list;
+    }
+
+    const escrowGates = {};
+
+    for (const p of pvos) {
+      const pid = p.id;
+      try {
+        const escRv = await simEsc("get_escrows_by_pvo", nativeToScVal(pid, { type: "u32" }));
+        if (escRv && escRv.switch().name === "scvVec") {
+          const escList = parseEscrowVec(escRv);
+          let g1 = false, g2 = false, g3 = false, g4 = false, g5 = false;
+          let g4Count = 0, g4Required = 0;
+          for (const e of escList) {
+            if (e.engineer_approval) g1 = true;
+            if (e.compliance_validation) g2 = true;
+            if (e.community_oracle_validation) g3 = true;
+            g4Count = Math.max(g4Count, e.community_confirmation || 0);
+            g4Required = Math.max(g4Required, e.community_required || 0);
+            if ((e.community_confirmation || 0) >= (e.community_required || 1)) g4 = true;
+            if (e.ai_risk_check) g5 = true;
+          }
+          escrowGates[pid] = { g1, g2, g3, g4, g5, g4Count, g4Required };
+        }
+      } catch {}
+    }
+
+    const formatted = pvos.map((p) => {
+      const gates = escrowGates[p.id] || {};
+      return {
+        id: p.id ?? 0,
+        title: p.title ?? "Untitled",
+        description: p.description ?? "",
+        department: p.department ?? "",
+        municipality: p.municipality ?? "",
+        total_budget: String(p.total_budget ?? 0),
+        status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
+        fund_source: p.fund_source ?? "",
+        milestone_count: p.milestones ?? 0,
+        milestones_released: 0,
+        public_value_score: p.public_value_score ?? 0,
+        gates: {
+          engineer: gates.g1 || false,
+          compliance: gates.g2 || false,
+          oracle: gates.g3 || false,
+          community: gates.g4 || false,
+          ai: gates.g5 || false,
+          community_count: gates.g4Count || 0,
+          community_required: gates.g4Required || 0,
+        },
+      };
+    });
 
     res.setHeader("Cache-Control", "s-maxage=10, stale-while-revalidate=5");
     return res.status(200).json({ pvos: formatted, count: formatted.length });

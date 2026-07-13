@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { pvoId, milestoneId, lat, lng, notes, citizenAddress, challenge, signature } = req.body || {};
+  const { pvoId, milestoneId, lat, lng, notes, citizenAddress, ipfsHash } = req.body || {};
 
   if (!pvoId || !milestoneId || !citizenAddress || !citizenAddress.startsWith("G")) {
     return res.status(400).json({ error: "pvoId, milestoneId, lat, lng, citizenAddress required" });
@@ -52,7 +52,8 @@ export default async function handler(req, res) {
     const server = new rpc.Server(RPC_URL);
     const account = await server.getAccount(adminKp.publicKey());
 
-    const dataHash = `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
+    // Use IPFS hash if provided, otherwise generate a placeholder
+    const dataHash = ipfsHash || `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
     const latMicro = Math.round((lat || 0) * 1_000_000);
     const lngMicro = Math.round((lng || 0) * 1_000_000);
 
