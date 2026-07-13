@@ -229,23 +229,21 @@ function PvoHunter() {
         setPosition({ lat: userLat, lng: userLng });
 
         // Cross-check GPS vs IP geolocation (VPN/GPS spoof detection)
-        let ipLocation: { lat: number; lng: number; city: string } | null = null;
         try {
-          const ipResp = await fetch("http://ip-api.com/json/?fields=lat,lon,city");
+          const ipResp = await fetch("https://ipwhois.app/json/", { signal: AbortSignal.timeout(5000) });
           if (ipResp.ok) {
-            const ipData = await ipResp.json();
-            if (ipData.lat && ipData.lon) {
-              ipLocation = { lat: ipData.lat, lng: ipData.lon, city: ipData.city };
-              const ipDist = haversine(userLat, userLng, ipData.lat, ipData.lon);
+            const d = await ipResp.json();
+            const ipLat = d.latitude; const ipLng = d.longitude; const ipCity = d.city || "Unknown";
+            if (ipLat && ipLng) {
+              const loc = { lat: ipLat, lng: ipLng, city: ipCity };
+              setIpLocation(loc);
+              const ipDist = haversine(userLat, userLng, ipLat, ipLng);
               if (ipDist > 100) {
-                console.warn(`⚠️ GPS/IP mismatch: ${ipDist.toFixed(0)}km away. IP says ${ipData.city}. Possible VPN or GPS spoofing.`);
+                console.warn(`⚠️ GPS/IP mismatch: ${ipDist.toFixed(0)}km away. IP says ${loc.city}. Possible VPN or GPS spoofing.`);
               }
             }
           }
         } catch { /* IP geolocation unavailable */ }
-        if (ipLocation) {
-          console.log(`  IP geolocation: ${ipLocation.city} (${ipLocation.lat}, ${ipLocation.lng})`);
-        }
         try {
           const { Client: PC } = await import("../contracts/pvo_core/src");
           const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
