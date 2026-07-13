@@ -416,9 +416,192 @@ export function claimRptPlugin(): Plugin {
         }
       });
 
+      // ── Send Payment (mobile wallet) ──
+      server.middlewares.use("/api/send-payment", async (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: "Method not allowed" }));
+          return;
+        }
+        try {
+          const body = await readBody(req);
+          const { secretKey, destination, amount, asset } = JSON.parse(body);
+
+          if (!secretKey?.startsWith("S") || secretKey.length < 55) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid secret key required" }));
+            return;
+          }
+          if (!destination?.startsWith("G") || destination.length !== 56) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid destination required" }));
+            return;
+          }
+          const amt = Number(amount);
+          if (!amt || amt <= 0) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid amount required" }));
+            return;
+          }
+          if (!["XLM", "RPT", "pPHP"].includes(asset)) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Asset must be XLM, RPT, or pPHP" }));
+            return;
+          }
+
+          const { Keypair, Asset, Operation, TransactionBuilder, Networks } =
+            await import("@stellar/stellar-sdk");
+
+          const HORIZON = "https://horizon-testnet.stellar.org";
+          const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
+          const PPHP_ISSUER = "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO";
+
+          const walletKp = Keypair.fromSecret(secretKey);
+          const walletAddr = walletKp.publicKey();
+
+          const acctR = await fetch(`${HORIZON}/accounts/${walletAddr}`);
+          if (!acctR.ok) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Wallet not funded on testnet" }));
+            return;
+          }
+          const acct: any = await acctR.json();
+
+          let paymentAsset: any;
+          if (asset === "RPT") paymentAsset = new Asset("RPT", RPT_ISSUER);
+          else if (asset === "pPHP") paymentAsset = new Asset("pPHP", PPHP_ISSUER);
+          else paymentAsset = Asset.native();
+
+          const source = {
+            accountId: () => walletAddr,
+            sequenceNumber: () => acct.sequence,
+            incrementSequenceNumber: () => {},
+          };
+
+          const tx = new TransactionBuilder(source as any, {
+            fee: "100000",
+            networkPassphrase: Networks.TESTNET,
+          })
+            .addOperation(Operation.payment({ destination, asset: paymentAsset, amount: String(amt) }))
+            .setTimeout(30)
+            .build();
+
+          tx.sign(walletKp);
+
+          const subR = await fetch(`${HORIZON}/transactions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `tx=${encodeURIComponent(tx.toXDR())}`,
+          });
+          const sub: any = await subR.json();
+          if (!subR.ok) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({
+              error: sub.extras?.result_codes?.transaction || sub.extras?.result_codes?.operations?.[0] || "Transaction failed",
+            }));
+            return;
+          }
+
+          res.end(JSON.stringify({ success: true, txHash: sub.hash }));
+        } catch (err: any) {
+          console.error("Send payment error:", err.message);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message?.slice(0, 200) || "Unknown error" }));
+        }
+      });
+
       server.middlewares.use("/api/health", (_req, res) => {
         res.setHeader("Content-Type", "application/json");
         res.end(JSON.stringify({ status: "ok", version: "dev", uptime: process.uptime() }));
+      });
+
+      server.middlewares.use("/api/pvos", async (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        try {
+          const { Contract, rpc, nativeToScVal } = await import("@stellar/stellar-sdk");
+          const server = new rpc.Server(RPC_URL);
+          const PVO_CORE = "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B";
+          const contract = new Contract(PVO_CORE);
+          const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+          const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
+
+          async function sim(fnName: string, ...args: any[]) {
+            const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+              .addOperation(contract.call(fnName, ...args)).setTimeout(30).build();
+            const s = await server.simulateTransaction(tx);
+            if (s.error) return null;
+            return (s as any).result?.retval;
+          }
+
+          function parseMap(sv: any): Record<string, any> {
+            const result: Record<string, any> = {};
+            for (const entry of sv.map()) {
+              const key = entry.key().sym().toString();
+              const val = entry.val();
+              switch (val.switch().name) {
+                case "scvU32": result[key] = val.u32(); break;
+                case "scvU64": result[key] = Number(val.u64().toString()); break;
+                case "scvI128": result[key] = val.i128().lo().toString(); break;
+                case "scvString": result[key] = val.str().toString(); break;
+                case "scvBool": result[key] = val.b(); break;
+                case "scvVec": result[key] = val.vec().length; break;
+                default: result[key] = null;
+              }
+            }
+            return result;
+          }
+
+          const cntVal = await sim("get_pvo_count");
+          if (!cntVal) { res.statusCode = 500; res.end(JSON.stringify({ error: "Failed to get count" })); return; }
+          const count = Number(cntVal.u32().toString());
+
+          const pvos: any[] = [];
+          for (let i = 1; i <= count; i++) {
+            try {
+              const rv = await sim("get_pvo", nativeToScVal(i, { type: "u32" }));
+              if (!rv || rv.switch().name === "scvVoid") continue;
+              const parsed = parseMap(rv);
+              if (parsed.title) pvos.push(parsed);
+            } catch {}
+          }
+
+          let scanId = count + 1;
+          let misses = 0;
+          while (misses < 15) {
+            try {
+              const rv = await sim("get_pvo", nativeToScVal(scanId, { type: "u32" }));
+              if (!rv || rv.switch().name === "scvVoid") { misses++; }
+              else {
+                const parsed = parseMap(rv);
+                if (parsed.title) { pvos.push(parsed); misses = 0; }
+                else misses++;
+              }
+            } catch { misses++; }
+            scanId++;
+          }
+
+          const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
+          const formatted = pvos.map((p: any) => ({
+            id: p.id ?? 0,
+            title: p.title ?? "Untitled",
+            description: p.description ?? "",
+            department: p.department ?? "",
+            municipality: p.municipality ?? "",
+            total_budget: String(p.total_budget ?? 0),
+            status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
+            fund_source: p.fund_source ?? "",
+            milestone_count: p.milestones ?? 0,
+            milestones_released: 0,
+            public_value_score: p.public_value_score ?? 0,
+          }));
+
+          res.end(JSON.stringify({ pvos: formatted, count: formatted.length }));
+        } catch (err: any) {
+          console.error("PVO list error:", err.message);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message?.slice(0, 200) || "Unknown error" }));
+        }
       });
     },
   };
