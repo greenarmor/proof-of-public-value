@@ -781,7 +781,7 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     });
     // Reward verified citizen reports
     if (cr.verified && cr.citizen) {
-      const rewardBudget = caseFile.actualBudget ?? Number(pvo.total_budget || 0);
+      const rewardBudget = Number(pvo.total_budget || 0);
       if (rewardBudget > 0) {
         rewardCitizenForReport(
           String(cr.citizen),
