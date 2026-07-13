@@ -29,7 +29,18 @@ export default async function handler(req, res) {
 
     const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
     const RPC_URL = "https://soroban-testnet.stellar.org:443";
+    const HORIZON = "https://horizon-testnet.stellar.org";
+    const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
     const NETWORK = "Test SDF Network ; September 2015";
+
+    // Verify citizen has RPT — prevents random address spoofing
+    const rptResp = await fetch(`${HORIZON}/accounts/${citizenAddress}`);
+    if (!rptResp.ok) return res.status(403).json({ error: "Wallet not found" });
+    const rptData = await rptResp.json();
+    const hasRpt = rptData.balances?.some(
+      (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
+    );
+    if (!hasRpt) return res.status(403).json({ error: "Wallet must hold 1+ RPT to submit reports" });
 
     const adminKp = Keypair.fromSecret(ADMIN_SECRET);
     const server = new rpc.Server(RPC_URL);

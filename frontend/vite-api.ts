@@ -242,6 +242,17 @@ export function claimRptPlugin(): Plugin {
           const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
           const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
           const RPC_URL = "https://soroban-testnet.stellar.org:443";
+          const HORIZON = "https://horizon-testnet.stellar.org";
+          const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
+
+          // Verify citizen has RPT
+          const rptResp = await fetch(`${HORIZON}/accounts/${citizenAddress}`);
+          if (!rptResp.ok) { res.statusCode = 403; res.end(JSON.stringify({ error: "Wallet not found" })); return; }
+          const rptData = await rptResp.json();
+          const hasRpt = rptData.balances?.some(
+            (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
+          );
+          if (!hasRpt) { res.statusCode = 403; res.end(JSON.stringify({ error: "Wallet must hold 1+ RPT" })); return; }
 
           const adminKp = Keypair.fromSecret(ADMIN_SECRET);
           const server = new rpc.Server(RPC_URL);
