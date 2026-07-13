@@ -124,6 +124,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             setAddress(pk);
             setWalletType("walletconnect");
             fetchRoles(pk);
+            // Register session listener for auto-restored sessions too
+            client.on("session_delete", () => {
+              wcSession = null;
+              setAddress(null);
+              setWalletType(null);
+              setRoles([]);
+            });
           }
         }
       } catch {}
