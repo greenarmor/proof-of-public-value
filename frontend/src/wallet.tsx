@@ -181,7 +181,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         fetchRoles(pk);
 
         // Listen for session events
+        let lastConnected = Date.now();
         client.on("session_delete", () => {
+          // Ignore if just connected (prevent flash logout)
+          if (Date.now() - lastConnected < 10000) return;
           wcSession = null;
           setAddress(null);
           setWalletType(null);
