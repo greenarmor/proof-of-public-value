@@ -1,20 +1,8 @@
 // Service Worker for PoPV
-// Caches static assets for fast loading and offline access.
-// NEVER caches API data (Stellar RPC, provenance) - those are dynamic blockchain data.
+// Network-first for localhost, cache-first for production.
+const CACHE_NAME = 'popv-v2';
 
-const CACHE_NAME = 'popv-v1';
-
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -30,26 +18,26 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache Stellar RPC, API endpoints, or provenance API - always go to network
+  // Always bypass cache for localhost, API calls, and Stellar
   if (
+    url.hostname === 'localhost' ||
     url.hostname.includes('stellar.org') ||
     url.hostname.includes('popv.quest') ||
     url.pathname.startsWith('/api/')
   ) {
-    return; // Let browser handle normally
+    return;
   }
 
-  // Cache-first for static assets
+  // Network-first for all other assets
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request).then((response) => {
-        if (response.ok) {
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok && response.type === 'basic') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      });
-      return cached || fetchPromise;
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
