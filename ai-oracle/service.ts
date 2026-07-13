@@ -694,6 +694,31 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
     });
   }
 
+  // 5b. Cross-check: inspector approvals vs community ground truth
+  // If engineer approved a milestone but no citizen verified it, flag for possible collusion
+  for (const e of escrows) {
+    const escrowMilestone = Number(e.milestone_id || 0);
+    const engineerApproved = e.conditions?.engineer_approval || false;
+    if (engineerApproved) {
+      // Count verified community reports for this milestone
+      const reportsForMs = communityReports.filter((cr: any) =>
+        Number(cr.milestone_id || 0) === escrowMilestone && cr.verified
+      );
+      if (reportsForMs.length === 0) {
+        flags.push(`InspectorApprovedButZeroCitizenConfirmations:MS${escrowMilestone}`);
+      }
+      // If inspector approved but community report count is suspiciously low
+      const totalReportsForMs = communityReports.filter((cr: any) =>
+        Number(cr.milestone_id || 0) === escrowMilestone
+      );
+      if (engineerApproved && totalReportsForMs.length === 0 && verifiedReportCount === 0) {
+        if (!flags.some(f => f.startsWith("GhostProject"))) {
+          flags.push("InspectorApprovalWithoutCommunityVerification:potential_false_report");
+        }
+      }
+    }
+  }
+
   // 6. Contractor reputation
   let contractorReputation: any = null;
   let contractorComplaints: any[] = [];
