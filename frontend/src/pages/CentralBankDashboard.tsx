@@ -72,7 +72,7 @@ function DirectFundForm({ address }: { address: string }) {
     setIsBusy(true);
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
+      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
@@ -170,10 +170,16 @@ function PledgeManager({ address }: { address: string }) {
         networkPassphrase: NETWORK_PASSPHRASE,
       });
       if (signedResp?.error) throw new Error(signedResp.error.message);
-      let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
-      mintSucceeded = true;
-      setRefreshKey(k => k + 1);
+      const result = await server.sendTransaction(signedResp.signedTxXdr);
+      if (result.status === "PENDING" || result.status === "DUPLICATE") {
+        mintSucceeded = true;
+        setRefreshKey(k => k + 1);
+      } else if (result.errorResult) {
+        const msg =
+          result.errorResult.result?.results?.[0]?.error ||
+          JSON.stringify(result.errorResult).slice(0, 200);
+        throw new Error(msg);
+      }
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
       // Re-fetch even on partial success (mint may have succeeded, mark may have failed)
