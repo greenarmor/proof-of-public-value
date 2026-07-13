@@ -109,7 +109,6 @@ function PledgeManager({ address }: { address: string }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<number | null>(null);
   const [busyStep, setBusyStep] = useState<string>("");
-  const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -206,11 +205,8 @@ function PledgeManager({ address }: { address: string }) {
         alert(`pPHP minted but grant status update failed. Use the retry button or CLI:\nstellar contract invoke --send=yes --source central_bank --network testnet --id ${CONTRACT_IDS.grant_commitment} -- admin_mark_disbursed --caller ${address} --grant_id ${pledge.id}`);
       }
 
-      // Mint succeeded - show done state, then re-fetch to remove from list
-      setCompleted((prev) => new Set(prev).add(pledge.id));
-      setTimeout(() => setRefreshKey(k => k + 1), 1500);
-      const pesos = pphpAmount / PPHP_SCALE;
-      alert(`Minted ₱${pesos.toLocaleString()} pPHP to Funding Agency`);
+      // Mint succeeded - re-fetch to remove from list
+      setTimeout(() => setRefreshKey(k => k + 1), 2000);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
       // Re-fetch even on partial success (mint may have succeeded, mark may have failed)
@@ -245,9 +241,9 @@ function PledgeManager({ address }: { address: string }) {
                 </div>
                 <button
                   onClick={() => handleConvert(p)}
-                  disabled={busy === p.id || completed.has(p.id)}
-                  className={`text-sm px-4 py-2 ${completed.has(p.id) ? "bg-emerald-100 text-emerald-700 cursor-not-allowed border border-emerald-200 rounded-lg" : busy === p.id ? "btn-primary opacity-60" : "btn-primary"}`}>
-                  {completed.has(p.id) ? "✓ Done" : busy === p.id ? busyStep || "Processing..." : "Approve & Mint"}
+                  disabled={busy === p.id}
+                  className={`text-sm px-4 py-2 ${busy === p.id ? "btn-primary opacity-60" : "btn-primary"}`}>
+                  {busy === p.id ? busyStep || "Processing..." : "Approve & Mint"}
                 </button>
               </div>
             );
