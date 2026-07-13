@@ -922,8 +922,8 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     if (flags.some(f => f.toLowerCase().includes("deviation") || f.toLowerCase().includes("mismatch"))) {
       deviation = true;
     }
-    console.log(`  [Digital Twin] Expected cost: ${(totalBudget / 10_000_000).toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx} | deviation: ${deviation}`);
-    if (submitDigitalTwin(pvoId, totalBudget, materialIdx, laborIdx, deviation)) {
+    console.log(`  [Digital Twin] Expected cost: ${totalBudgetPesos.toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx} | deviation: ${deviation}`);
+    if (submitDigitalTwin(pvoId, budgetForTwin, materialIdx, laborIdx, deviation)) {
       console.log(`  [Digital Twin] Submitted`);
     } else {
       console.error(`  [Digital Twin] Failed`);
