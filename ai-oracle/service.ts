@@ -939,9 +939,11 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     let delayProb = 10;
     let overrunProb = 8;
 
-    // Factor: Budget scale
-    const totalBudgetPesos = milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0) / 10_000_000;
-    if (totalBudgetPesos > 1_000_000_000) {
+    // Factor: Budget scale - use winning bid if available, else milestone sum
+    const riskBudget = caseFile.actualBudget
+      ?? milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
+    const riskBudgetPesos = riskBudget / 10_000_000;
+    if (riskBudgetPesos > 1_000_000_000) {
       delayProb += 20;
       overrunProb += 15;
       factors.push("Large-scale project (>1B)");
