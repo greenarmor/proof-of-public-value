@@ -152,8 +152,19 @@ impl GrantCommitment {
         let admin: Address = storage.get(&ADMIN).expect("admin not set");
         let is_admin = donor == admin;
         let is_donor = grant.donor == donor;
-        if !is_admin && !is_donor {
-            panic!("only the original donor or admin can update this grant");
+        // CentralBank can also update (admin/donor check first to avoid cross-contract call)
+        let is_central = if is_admin || is_donor {
+            false
+        } else {
+            let ac_address: Address = storage.get(&ACCESS_CONTROL).expect("access_control not set");
+            env.invoke_contract(
+                &ac_address,
+                &Symbol::new(&env, "has_role"),
+                soroban_sdk::vec![&env, donor.to_val(), AccessRole::CentralBank.into_val(&env)],
+            )
+        };
+        if !is_admin && !is_donor && !is_central {
+            panic!("only the original donor, admin, or central bank can update this grant");
         }
 
         let old_status = grant.status.clone();
