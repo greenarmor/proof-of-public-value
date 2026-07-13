@@ -208,6 +208,7 @@ function PvoHunter() {
   const [nearby, setNearby] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
+  const [ipLocation, setIpLocation] = useState<{ lat: number; lng: number; city: string } | null>(null);
   const HUNT_RADIUS_KM = 10;
 
   const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
@@ -226,6 +227,25 @@ function PvoHunter() {
         const userLat = pos.coords.latitude;
         const userLng = pos.coords.longitude;
         setPosition({ lat: userLat, lng: userLng });
+
+        // Cross-check GPS vs IP geolocation (VPN/GPS spoof detection)
+        let ipLocation: { lat: number; lng: number; city: string } | null = null;
+        try {
+          const ipResp = await fetch("http://ip-api.com/json/?fields=lat,lon,city");
+          if (ipResp.ok) {
+            const ipData = await ipResp.json();
+            if (ipData.lat && ipData.lon) {
+              ipLocation = { lat: ipData.lat, lng: ipData.lon, city: ipData.city };
+              const ipDist = haversine(userLat, userLng, ipData.lat, ipData.lon);
+              if (ipDist > 100) {
+                console.warn(`⚠️ GPS/IP mismatch: ${ipDist.toFixed(0)}km away. IP says ${ipData.city}. Possible VPN or GPS spoofing.`);
+              }
+            }
+          }
+        } catch { /* IP geolocation unavailable */ }
+        if (ipLocation) {
+          console.log(`  IP geolocation: ${ipLocation.city} (${ipLocation.lat}, ${ipLocation.lng})`);
+        }
         try {
           const { Client: PC } = await import("../contracts/pvo_core/src");
           const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
@@ -275,7 +295,17 @@ function PvoHunter() {
       </div>
       {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
       {position && !scanning && (
-        <p className="text-xs text-slate-400 mb-2">Your position: {position.lat.toFixed(4)}, {position.lng.toFixed(4)} · Radius: {HUNT_RADIUS_KM}km</p>
+        <p className="text-xs text-slate-400 mb-2">
+          GPS: {position.lat.toFixed(4)}, {position.lng.toFixed(4)} · Radius: {HUNT_RADIUS_KM}km
+          {ipLocation && (
+            <span className="ml-2 text-slate-300">
+              · IP: {ipLocation.city}
+              {haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 100
+                ? <span className="text-amber-600 ml-1">⚠️ possible VPN</span>
+                : <span className="text-emerald-600 ml-1">✓</span>}
+            </span>
+          )}
+        </p>
       )}
       {nearby.length === 0 && position && !scanning && (
         <div className="text-center py-6 text-slate-400">
