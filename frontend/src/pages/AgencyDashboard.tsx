@@ -4,6 +4,7 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } fr
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Modal } from "../components/Modal";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
@@ -158,7 +159,7 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
     else { setSelectedPvo(pvoId); loadMilestones(pvoId); }
   };
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading PVOs from Stellar testnet..." />;
 
   if (pvos.length === 0) {
     return (
@@ -265,7 +266,9 @@ function MilestoneList({ pvoId, milestones, loading, onRefresh }: {
         <span className="text-xs font-semibold text-gray-600">🏗️ Milestones for PVO #{pvoId}</span>
       </div>
       {loading ? (
-        <div className="text-xs text-gray-400 py-2">Loading...</div>
+        <div className="space-y-1 py-2">
+          {[1,2,3].map(i => <div key={i} className="skeleton-shimmer h-8 rounded" />)}
+        </div>
       ) : milestones.length === 0 ? (
         <div className="text-xs text-gray-400 py-2">No milestones defined yet. Click "+ Add Milestone" to create one.</div>
       ) : (
