@@ -146,7 +146,7 @@ const NAV_ITEMS: NavItem[] = [
     to: "/central-bank",
     label: "Central Bank",
     icon: "🏦",
-    roles: ["CentralBank"],
+    roles: ["CentralBank", "Administrator"],
     group: "system",
   },
   { to: "/admin", label: "System Panel", icon: "⚙️", roles: ["Administrator"], group: "system" },
@@ -735,7 +735,7 @@ function App() {
               <Route
                 path="/central-bank"
                 element={
-                  <ProtectedRoute element={<CentralBankDashboard />} roles={["CentralBank"]} />
+                  <ProtectedRoute element={<CentralBankDashboard />} roles={["CentralBank", "Administrator"]} />
                 }
               />
             </Routes>

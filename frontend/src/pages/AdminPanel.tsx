@@ -62,7 +62,7 @@ export function AdminPanel() {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-1 border-b border-gray-200">
-          {(["roles", "disputes", "health", "upgrade", "settings"] as const).map(
+          {(["roles", "pledges", "disputes", "health", "upgrade", "settings"] as const).map(
             (tab) => (
               <button
                 key={tab}
@@ -74,6 +74,7 @@ export function AdminPanel() {
                 }`}
               >
                 {tab === "roles" && "👥 Roles"}
+                {tab === "pledges" && "💰 Pledges"}
                 {tab === "disputes" && "⚖️ Dispute Resolution"}
                 {tab === "health" && "📊 Health"}
                 {tab === "upgrade" && "🔄 Upgrade"}
@@ -95,6 +96,7 @@ export function AdminPanel() {
       </div>
 
       {activeTab === "roles" && <RoleManagement />}
+      {activeTab === "pledges" && <AdminPledgeManager />}
       {activeTab === "disputes" && <DisputeResolution />}
       {activeTab === "health" && <SystemHealthMonitor />}
       {activeTab === "upgrade" && <ContractUpgrade />}
@@ -564,6 +566,81 @@ function MintRPTForm({ onDone }: { onDone: () => void }) {
         </div>
       )}
     </>
+  );
+}
+
+function AdminPledgeManager() {
+  const { address } = useWallet();
+  const [pledges, setPledges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [busyStep, setBusyStep] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { Client: GC } = await import("../contracts/grant_commitment/src");
+      const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const raw = ((await gc.get_all_grants()).result || [];
+      const committed = raw.filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed");
+      setPledges(committed);
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleConvert = async (pledge: any) => {
+    setBusy(pledge.id);
+    setBusyStep("Minting pPHP...");
+    try {
+      const { TransactionBuilder, Contract, Address, rpc, ScInt, xdr } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
+      const pphpAmount = Number(pledge.amount);
+      const server = new rpc.Server(RPC_URL);
+      const account = await server.getAccount(address);
+      const tokenContract = new Contract(CONTRACT_IDS.pphp);
+      const mintOp = tokenContract.call("mint", new Address(FUNDING).toScVal(), new ScInt(pphpAmount).toI128());
+      let tx1 = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(mintOp).setTimeout(30).build();
+      tx1 = await server.prepareTransaction(tx1);
+      let signedResp: any = await signTransaction(tx1.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+
+      setBusyStep("Marking disbursed...");
+      await new Promise((r) => setTimeout(r, 1500));
+      const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
+      const markOp = gcContract.call("update_status", new Address(address).toScVal(), xdr.ScVal.scvU32(pledge.id), xdr.ScVal.scvSymbol("Disbursed"));
+      let tx2 = new TransactionBuilder(await server.getAccount(address), { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(markOp).setTimeout(30).build();
+      tx2 = await server.prepareTransaction(tx2);
+      signedResp = await signTransaction(tx2.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      if (signedResp?.error) throw new Error(signedResp.error.message);
+      signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      load();
+    } catch (e: any) { alert("Error: " + (e.message || e).slice(0, 200)); }
+    finally { setBusy(null); setBusyStep(""); }
+  };
+
+  if (loading) return <div className="card p-12 skeleton h-48" />;
+  return (
+    <div>
+      <div className="mb-4"><h3 className="font-semibold text-lg">💰 Pledge Approval & Minting</h3><p className="text-sm text-slate-500">Mint pPHP and mark grants as disbursed.</p></div>
+      {pledges.length === 0 ? (<div className="card p-8 text-center text-slate-400">No committed pledges to process.</div>) : (
+        <div className="space-y-3">
+          {pledges.map((p: any) => {
+            const pesos = Number(p.amount) / 10_000_000;
+            return (
+              <div key={p.id} className="card p-4 flex items-center justify-between">
+                <div><p className="font-semibold">{p.org_name} - PVO #{p.pvo_id}</p><p className="text-sm text-slate-500">₱{pesos.toLocaleString()} pPHP</p></div>
+                <button onClick={() => handleConvert(p)} disabled={busy === p.id} className="btn-primary text-sm px-4 py-2">{busy === p.id ? busyStep || "Processing..." : "Approve & Mint"}</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
