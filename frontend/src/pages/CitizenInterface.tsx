@@ -6,6 +6,7 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { IpfsLink } from "../components/IpfsLink";
+import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
 
 export function CitizenInterface() {
@@ -27,6 +28,7 @@ export function CitizenInterface() {
       </div>
       <CitizenDashboard />
       <PvoHunter />
+      <CreatePphpTrustline address={address!} />
       <div className="flex items-center justify-between mb-6 bg-slate-100 rounded-xl p-1">
         {(["browse","my"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
