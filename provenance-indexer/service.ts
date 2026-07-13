@@ -107,8 +107,18 @@ interface MilestoneProvenance {
   status: string;
   evidence_count: number;
   evidence_types: string[];
+  evidence_items: EvidenceItem[];
   escrow?: EscrowSummary;
   gates: GateRecord[];
+}
+
+interface EvidenceItem {
+  id: number;
+  type: string;
+  data_hash: string;
+  metadata: string;
+  verified: boolean;
+  submitted_at: number;
 }
 
 interface TimelineEntry {
@@ -617,6 +627,14 @@ function buildMilestoneProvenance(
           )
         )
       : [],
+    evidence_items: (m.submitted_evidence || []).map((e: any) => ({
+      id: Number(e.id),
+      type: typeof e.evidence_type === "string" ? e.evidence_type : e.evidence_type?.tag ?? "Unknown",
+      data_hash: typeof e.data_hash === "string" ? e.data_hash : "",
+      metadata: typeof e.metadata === "string" ? e.metadata : "",
+      verified: !!e.verified,
+      submitted_at: Number(e.submitted_at || 0),
+    })),
     escrow: escrowSummary,
     gates,
   };
