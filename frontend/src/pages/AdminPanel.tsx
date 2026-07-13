@@ -590,6 +590,7 @@ function AdminPledgeManager() {
   useEffect(() => { load(); }, []);
 
   const handleConvert = async (pledge: any) => {
+    if (!address) return;
     setBusy(pledge.id);
     setBusyStep("Minting pPHP...");
     try {
