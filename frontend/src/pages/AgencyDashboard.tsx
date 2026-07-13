@@ -90,13 +90,26 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
       setLoading(true);
       try {
         const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const cnt = await client.get_pvo_count();
+        const cnt = Number((await client.get_pvo_count()).result);
         const list: any[] = [];
-        for (let i = 1; i <= Number(cnt.result); i++) {
+        // Iterate 1..=count first, then scan forward for non-sequential IDs
+        // (failed txs can consume IDs, creating gaps between count and max ID)
+        for (let i = 1; i <= cnt; i++) {
           try {
             const r = await client.get_pvo({ pvo_id: i });
             if (r.result) list.push(r.result);
           } catch {}
+        }
+        // Scan beyond count for PVOs with IDs > count (from gaps caused by failed txs)
+        let consecutiveNones = 0;
+        let scanId = cnt + 1;
+        while (consecutiveNones < 15) {
+          try {
+            const r = await client.get_pvo({ pvo_id: scanId });
+            if (r.result) { list.push(r.result); consecutiveNones = 0; }
+            else { consecutiveNones++; }
+          } catch { consecutiveNones++; }
+          scanId++;
         }
         setPvos(list);
 
