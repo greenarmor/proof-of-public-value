@@ -309,35 +309,35 @@ function PvoHunter() {
 
 function PphpBalanceInline({ address }: { address: string }) {
   const [balance, setBalance] = useState<string | null>(null);
-  const [hasTl, setHasTl] = useState(false);
+  const [hasTl, setHasTl] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const { Contract, Address, rpc, scValToBigInt } = await import("@stellar/stellar-sdk");
-        const server = new rpc.Server(RPC_URL);
-        const contract = new Contract(CONTRACT_IDS.pphp);
-        const acct = await server.getAccount(address);
-        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
-          .addOperation(contract.call("balance", new Address(address).toScVal()))
-          .setTimeout(30).build();
-        const sim = await server.simulateTransaction(tx);
-        const bal = scValToBigInt(sim.result!.retval);
-        setBalance(Number(bal) > 0 ? (Number(bal) / 10_000_000).toLocaleString() : "0");
-        setHasTl(true);
+        const r = await fetch(`https://horizon-testnet.stellar.org/accounts/${address}`);
+        if (!r.ok) { setHasTl(false); return; }
+        const data = await r.json();
+        const b = data.balances?.find((b: any) =>
+          b.asset_code === "pPHP" && b.asset_issuer === "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO"
+        );
+        if (b) {
+          setBalance(Number(b.balance).toLocaleString());
+          setHasTl(true);
+        } else {
+          setHasTl(false);
+        }
       } catch { setHasTl(false); }
     })();
   }, [address]);
 
-  if (!hasTl) {
-    return <CreatePphpTrustlineButton address={address} />;
-  }
-  return <span className="text-lg font-bold text-purple-600">{balance ?? "—"}</span>;
+  if (hasTl === null) return <span className="text-xs text-slate-400">...</span>;
+  if (!hasTl) return <CreatePphpTrustlineButton address={address} />;
+  return <span className="text-lg font-bold text-purple-600">{balance ?? "0"}</span>;
 }
 
 function CreatePphpTrustlineButton({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [done, setDone] = useState(false);
 
   const addTl = async () => {
     setLoading(true);
@@ -352,24 +352,19 @@ function CreatePphpTrustlineButton({ address }: { address: string }) {
       const sr = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
       const signedTx = TransactionBuilder.fromXDR(sr.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
-      setMsg({ text: "✅ Trustline added!", ok: true });
-      setTimeout(() => window.location.reload(), 1000);
+      setDone(true);
+      setTimeout(() => window.location.reload(), 1500);
     } catch (e: any) {
-      setMsg({ text: e.message?.slice(0, 80), ok: false });
+      alert("Trustline error: " + (e.message || "").slice(0, 80));
     } finally { setLoading(false); }
   };
 
+  if (done) return <span className="text-xs text-emerald-600">✅ Added</span>;
   return (
-    <span>
-      {msg ? (
-        <span className="text-xs text-purple-700">{msg.text}</span>
-      ) : (
-        <button onClick={addTl} disabled={loading}
-          className="text-xs text-purple-600 hover:text-purple-800 underline">
-          {loading ? "..." : "Add Trustline"}
-        </button>
-      )}
-    </span>
+    <button onClick={addTl} disabled={loading}
+      className="text-xs text-purple-600 hover:text-purple-800 underline">
+      {loading ? "..." : "Add Trustline"}
+    </button>
   );
 }
 
