@@ -141,7 +141,7 @@ function PledgeManager({ address }: { address: string }) {
     setBusyStep("Minting pPHP...");
     let mintSucceeded = false;
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt } =
+      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
         await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
@@ -174,6 +174,34 @@ function PledgeManager({ address }: { address: string }) {
       await server.sendTransaction(signedTx);
       mintSucceeded = true;
       localStorage.setItem(`pledge_${pledge.id}_minted`, "true");
+
+      // Step 2) Mark grant as Disbursed on-chain
+      setBusyStep("Marking disbursed...");
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
+        const markDisbursedOp = gcContract.call(
+          "admin_mark_disbursed",
+          new Address(address).toScVal(),
+          nativeToScVal(pledge.id, { type: "u32" } as any),
+        );
+        let tx2 = new TransactionBuilder(await server.getAccount(address), {
+          fee: "100000",
+          networkPassphrase: NETWORK_PASSPHRASE,
+        })
+          .addOperation(markDisbursedOp)
+          .setTimeout(30)
+          .build();
+        tx2 = await server.prepareTransaction(tx2);
+        signedResp = await signTransaction(tx2.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+        if (signedResp?.error) throw new Error(signedResp.error.message);
+        signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
+        await server.sendTransaction(signedTx);
+      } catch (markErr: any) {
+        console.error("mark_disbursed failed:", markErr.message);
+        // Mint succeeded - this is acceptable for demo
+      }
+
       setRefreshKey(k => k + 1);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
