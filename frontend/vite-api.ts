@@ -247,14 +247,14 @@ export function claimRptPlugin(): Plugin {
             res.end(JSON.stringify({ error: "Wallet account not found on testnet" }));
             return;
           }
-          const acct = await acctR.json();
+          const acct: any = await acctR.json();
           const balances = acct.balances || [];
 
           const hasRpt = balances.some(
-            (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+            (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
           );
           const hasPphp = balances.some(
-            (b) => b.asset_code === "pPHP" && b.asset_issuer === PPHP_ISSUER,
+            (b: any) => b.asset_code === "pPHP" && b.asset_issuer === PPHP_ISSUER,
           );
 
           if (hasRpt && hasPphp) {
@@ -292,7 +292,7 @@ export function claimRptPlugin(): Plugin {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `tx=${encodeURIComponent(tx.toXDR())}`,
           });
-          const sub = await subR.json();
+          const sub: any = await subR.json();
           if (!subR.ok) {
             res.statusCode = 500;
             res.end(JSON.stringify({
