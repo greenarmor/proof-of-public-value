@@ -288,7 +288,7 @@ function PvoHunter() {
             const distStr = pvo.distance < 1 ? `${Math.round(pvo.distance * 1000)}m` : `${pvo.distance.toFixed(1)}km`;
             const rarity = pvo.distance < 0.5 ? "🟡 Legendary" : pvo.distance < 2 ? "🟣 Rare" : pvo.distance < 5 ? "🔵 Uncommon" : "⚪ Common";
             return (
-              <a key={pvo.id} href={`/portal`}
+              <a key={pvo.id} href={`/portal?pvo=${pvo.id}`}
                 className="flex items-center gap-3 p-3 rounded-xl bg-white/80 hover:bg-white border border-slate-200 hover:border-indigo-300 transition-all hover:scale-[1.02] cursor-pointer">
                 <div className="text-3xl">{pvo.distance < 1 ? "🏆" : pvo.distance < 3 ? "🏗️" : "📋"}</div>
                 <div className="flex-1 min-w-0">

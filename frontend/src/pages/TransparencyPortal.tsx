@@ -215,6 +215,21 @@ export function TransparencyPortal() {
     }
   }, []);
 
+  // Auto-select PVO from URL query param (e.g. ?pvo=3)
+  useEffect(() => {
+    if (pvos.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const pvoId = params.get("pvo");
+    if (!pvoId) return;
+    const match = pvos.find((p) => p.id === Number(pvoId));
+    if (match && !selected) {
+      setSelected(match);
+      setTimeout(() => {
+        document.getElementById("pvo-detail")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, [pvos, selected]);
+
   // Fetch winning bids after PVOs are loaded
   useEffect(() => {
     if (loading || pvos.length === 0) return;
@@ -443,7 +458,7 @@ export function TransparencyPortal() {
           </div>
           {selected ? (
             /* PVO Detail - expanded in right panel */
-            <div>
+            <div id="pvo-detail">
               <button onClick={() => setSelected(null)} className="btn-ghost mb-4 text-sm">
                 ← Back to all projects
               </button>
