@@ -581,7 +581,7 @@ function AdminPledgeManager() {
     try {
       const { Client: GC } = await import("../contracts/grant_commitment/src");
       const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-      const raw = ((await gc.get_all_grants()).result || [];
+      const raw = (await gc.get_all_grants()).result || [];
       const committed = raw.filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed");
       setPledges(committed);
     } catch {} finally { setLoading(false); }
