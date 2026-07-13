@@ -174,40 +174,7 @@ function PledgeManager({ address }: { address: string }) {
       let signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
       await server.sendTransaction(signedTx);
       mintSucceeded = true;
-
-      // Brief delay so Freighter can process the first tx before the second popup
-      setBusyStep("Awaiting Freighter (step 2/2)...");
-      await new Promise((r) => setTimeout(r, 1500));
-
-      // Step 2) Mark grant as Disbursed on-chain
-      setBusyStep("Marking grant disbursed...");
-      try {
-        const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
-        const markDisbursedOp = gcContract.call(
-          "admin_mark_disbursed",
-          new Address(address).toScVal(),
-          nativeToScVal(pledge.id, { type: "u32" }),
-        );
-        let tx2 = new TransactionBuilder(await server.getAccount(address), {
-          fee: "100000",
-          networkPassphrase: NETWORK_PASSPHRASE,
-        })
-          .addOperation(markDisbursedOp)
-          .setTimeout(30)
-          .build();
-        tx2 = await server.prepareTransaction(tx2);
-        signedResp = await signTransaction(tx2.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-        if (signedResp?.error) throw new Error(signedResp.error.message);
-        signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-        await server.sendTransaction(signedTx);
-      } catch (markErr: any) {
-        console.error("mark_disbursed failed:", markErr.message);
-        // Mint succeeded but mark failed - show warning so user can retry
-        alert(`pPHP minted but grant status update failed. Use the retry button or CLI:\nstellar contract invoke --send=yes --source central_bank --network testnet --id ${CONTRACT_IDS.grant_commitment} -- admin_mark_disbursed --caller ${address} --grant_id ${pledge.id}`);
-      }
-
-      // Mint succeeded - re-fetch to remove from list
-      setTimeout(() => setRefreshKey(k => k + 1), 2000);
+      setRefreshKey(k => k + 1);
     } catch (e: any) {
       alert("Error: " + (e.message || e).slice(0, 200));
       // Re-fetch even on partial success (mint may have succeeded, mark may have failed)
