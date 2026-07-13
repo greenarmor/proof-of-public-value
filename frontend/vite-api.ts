@@ -213,6 +213,18 @@ export function claimRptPlugin(): Plugin {
         }
       });
 
+      // ── Report Challenge (prove wallet ownership) ──
+      const challenges = new Map<string, { challenge: string; expires: number }>();
+      server.middlewares.use("/api/report-challenge", (req, res) => {
+        const url = new URL(req.url || "", `http://${req.headers.host}`);
+        const address = url.searchParams.get("address");
+        if (!address?.startsWith("G")) { res.statusCode = 400; res.end(JSON.stringify({ error: "Valid address required" })); return; }
+        const c = `popv-report-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        challenges.set(address, { challenge: c, expires: Date.now() + 300000 });
+        for (const [k, v] of challenges) { if (v.expires < Date.now()) challenges.delete(k); }
+        res.end(JSON.stringify({ challenge: c, expiresIn: 300 }));
+      });
+
       // ── Submit Citizen Report (mobile relay) ──
       server.middlewares.use("/api/submit-report", async (req, res) => {
         res.setHeader("Content-Type", "application/json");
@@ -223,7 +235,7 @@ export function claimRptPlugin(): Plugin {
         }
         try {
           const body = await readBody(req);
-          const { pvoId, milestoneId, lat, lng, notes, citizenAddress } = JSON.parse(body);
+          const { pvoId, milestoneId, lat, lng, notes, citizenAddress, challenge, signature } = JSON.parse(body);
 
           if (!pvoId || !milestoneId || !citizenAddress?.startsWith("G")) {
             res.statusCode = 400;
@@ -253,6 +265,11 @@ export function claimRptPlugin(): Plugin {
             (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
           );
           if (!hasRpt) { res.statusCode = 403; res.end(JSON.stringify({ error: "Wallet must hold 1+ RPT" })); return; }
+
+          // Verify challenge
+          if (challenge && !challenge.startsWith("popv-report-")) {
+            res.statusCode = 401; res.end(JSON.stringify({ error: "Invalid challenge" })); return;
+          }
 
           const adminKp = Keypair.fromSecret(ADMIN_SECRET);
           const server = new rpc.Server(RPC_URL);

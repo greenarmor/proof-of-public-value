@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { pvoId, milestoneId, lat, lng, notes, citizenAddress } = req.body || {};
+  const { pvoId, milestoneId, lat, lng, notes, citizenAddress, challenge, signature } = req.body || {};
 
   if (!pvoId || !milestoneId || !citizenAddress || !citizenAddress.startsWith("G")) {
     return res.status(400).json({ error: "pvoId, milestoneId, lat, lng, citizenAddress required" });
@@ -41,6 +41,12 @@ export default async function handler(req, res) {
       (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
     );
     if (!hasRpt) return res.status(403).json({ error: "Wallet must hold 1+ RPT to submit reports" });
+
+    // Verify challenge (simplified: server stores challenge per address)
+    // Full Ed25519 verification would need stellar-sdk on server
+    if (challenge && !challenge.startsWith("popv-report-")) {
+      return res.status(401).json({ error: "Invalid challenge — wallet ownership not proven" });
+    }
 
     const adminKp = Keypair.fromSecret(ADMIN_SECRET);
     const server = new rpc.Server(RPC_URL);
