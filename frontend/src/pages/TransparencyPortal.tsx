@@ -88,125 +88,139 @@ export function TransparencyPortal() {
         networkPassphrase: NETWORK_PASSPHRASE,
         rpcUrl: RPC_URL,
       });
-      const cnt = await client.get_pvo_count();
-      const list: PVOData[] = [];
-      for (let i = 1; i <= Number(cnt.result); i++) {
-        try {
-          const r = await client.get_pvo({ pvo_id: i });
-          if (r.result) {
-            const { lat, lng, clean } = parseCoords(r.result.description || "");
-            const pvo: PVOData = {
-              id: r.result.id,
-              title: r.result.title,
-              description: clean,
-              department: r.result.department,
-              municipality: r.result.municipality,
-              total_budget: String(r.result.total_budget),
-              status: statusToString(r.result.status),
-              contractor: r.result.contractor,
-              public_value_score: r.result.public_value_score,
-              milestones: r.result.milestones as any,
-              created_at: Number(r.result.created_at),
-              gpsCoordinates: [],
-              latitude: lat,
-              longitude: lng,
-              milestonesReleased: 0,
-              milestonesTotal: ((r.result.milestones as any[]) || []).length,
-              budgetReleased: 0,
-              contractor_assigned: (r.result as any).contractor_assigned ?? false,
-            };
 
-            // Fetch milestone evidence to extract GPS coordinates + count Released
+      const fetchPvoData = async (pvoId: number): Promise<PVOData | null> => {
+        try {
+          const r = await client.get_pvo({ pvo_id: pvoId });
+          if (!r.result) return null;
+          const { lat, lng, clean } = parseCoords(r.result.description || "");
+          const pvo: PVOData = {
+            id: r.result.id,
+            title: r.result.title,
+            description: clean,
+            department: r.result.department,
+            municipality: r.result.municipality,
+            total_budget: String(r.result.total_budget),
+            status: statusToString(r.result.status),
+            contractor: r.result.contractor,
+            public_value_score: r.result.public_value_score,
+            milestones: r.result.milestones as any,
+            created_at: Number(r.result.created_at),
+            gpsCoordinates: [],
+            latitude: lat,
+            longitude: lng,
+            milestonesReleased: 0,
+            milestonesTotal: ((r.result.milestones as any[]) || []).length,
+            budgetReleased: 0,
+            contractor_assigned: (r.result as any).contractor_assigned ?? false,
+          };
+
+          try {
+            const mResult = await client.get_pvo_milestones({ pvo_id: pvoId });
+            const milestones = (mResult.result || []) as any[];
+            const coords: PVOData["gpsCoordinates"] = [];
+            let releasedCount = 0;
+            let budgetReleased = 0;
+            const escCli = new EscrowClient({
+              contractId: CONTRACT_IDS.escrow,
+              networkPassphrase: NETWORK_PASSPHRASE,
+              rpcUrl: RPC_URL,
+            });
+            let escList: any[] = [];
             try {
-              const mResult = await client.get_pvo_milestones({ pvo_id: i });
-              const milestones = (mResult.result || []) as any[];
-              const coords: PVOData["gpsCoordinates"] = [];
-              let releasedCount = 0;
-              let budgetReleased = 0;
-              // Check escrow status to count released milestones
-              const escCli = new EscrowClient({
-                contractId: CONTRACT_IDS.escrow,
-                networkPassphrase: NETWORK_PASSPHRASE,
-                rpcUrl: RPC_URL,
-              });
-              let escList: any[] = [];
-              try {
-                escList = ((await escCli.get_escrows_by_pvo({ pvo_id: i })).result || []) as any[];
-              } catch {}
-              for (const m of milestones) {
-                const esc = escList.find((e: any) => Number(e.milestone_id) === Number(m.id));
-                const escReleased =
-                  esc && (esc.status?.tag === "Released" || esc.status === "Released");
-                if (escReleased) {
-                  releasedCount++;
-                  budgetReleased += Number(m.budget || 0);
-                }
-                // GPS extraction
-                const items = m.submitted_evidence || [];
-                for (const ev of items) {
-                  const type = statusToString(ev.evidence_type);
-                  if (type === "Gps Coordinates" && ev.metadata) {
-                    // Parse "lat:14.599512,lng:120.984220" or "14.599512,120.984220"
-                    const meta: string = ev.metadata;
-                    const latMatch = meta.match(/lat:?\s*(-?\d+\.?\d*)/i);
-                    const lngMatch = meta.match(/lng:?\s*(-?\d+\.?\d*)/i);
-                    if (latMatch && lngMatch) {
+              escList = ((await escCli.get_escrows_by_pvo({ pvo_id: pvoId })).result || []) as any[];
+            } catch {}
+            for (const m of milestones) {
+              const esc = escList.find((e: any) => Number(e.milestone_id) === Number(m.id));
+              const escReleased =
+                esc && (esc.status?.tag === "Released" || esc.status === "Released");
+              if (escReleased) {
+                releasedCount++;
+                budgetReleased += Number(m.budget || 0);
+              }
+              const items = m.submitted_evidence || [];
+              for (const ev of items) {
+                const type = statusToString(ev.evidence_type);
+                if (type === "Gps Coordinates" && ev.metadata) {
+                  const meta: string = ev.metadata;
+                  const latMatch = meta.match(/lat:?\s*(-?\d+\.?\d*)/i);
+                  const lngMatch = meta.match(/lng:?\s*(-?\d+\.?\d*)/i);
+                  if (latMatch && lngMatch) {
+                    coords.push({
+                      lat: parseFloat(latMatch[1]),
+                      lng: parseFloat(lngMatch[1]),
+                      milestoneId: Number(m.id),
+                      evidenceId: Number(ev.id),
+                    });
+                  } else {
+                    const parts = meta.split(",");
+                    if (
+                      parts.length === 2 &&
+                      !isNaN(Number(parts[0])) &&
+                      !isNaN(Number(parts[1]))
+                    ) {
                       coords.push({
-                        lat: parseFloat(latMatch[1]),
-                        lng: parseFloat(lngMatch[1]),
+                        lat: parseFloat(parts[0]),
+                        lng: parseFloat(parts[1]),
                         milestoneId: Number(m.id),
                         evidenceId: Number(ev.id),
                       });
-                    } else {
-                      const parts = meta.split(",");
-                      if (
-                        parts.length === 2 &&
-                        !isNaN(Number(parts[0])) &&
-                        !isNaN(Number(parts[1]))
-                      ) {
-                        coords.push({
-                          lat: parseFloat(parts[0]),
-                          lng: parseFloat(parts[1]),
-                          milestoneId: Number(m.id),
-                          evidenceId: Number(ev.id),
-                        });
-                      }
                     }
                   }
                 }
               }
-              pvo.gpsCoordinates = coords;
-              pvo.milestonesReleased = releasedCount;
-              pvo.budgetReleased = budgetReleased;
-              if (
-                releasedCount > 0 &&
-                releasedCount === pvo.milestonesTotal &&
-                budgetReleased >= Number(pvo.total_budget) / PPHP_SCALE
-              ) {
-                pvo.status = "Completed";
-              }
-              // Compute value score: average gate completion across all milestones
-              let totalScore = 0;
-              for (const e of escList) {
-                const c = e.conditions || {};
-                let passed = 0;
-                if (c.engineer_approval) passed++;
-                if (c.compliance_validation) passed++;
-                if (c.community_oracle_validation) passed++;
-                if ((c.community_confirmation || 0) >= (c.community_required || 1)) passed++;
-                if (c.ai_risk_check) passed++;
-                totalScore += (passed / 5) * 100;
-              }
-              // Milestones without escrows count as 0
-              const score =
-                pvo.milestonesTotal > 0 ? Math.round(totalScore / pvo.milestonesTotal) : 0;
-              pvo.public_value_score = Math.min(100, score);
-            } catch {}
+            }
+            pvo.gpsCoordinates = coords;
+            pvo.milestonesReleased = releasedCount;
+            pvo.budgetReleased = budgetReleased;
+            if (
+              releasedCount > 0 &&
+              releasedCount === pvo.milestonesTotal &&
+              budgetReleased >= Number(pvo.total_budget) / PPHP_SCALE
+            ) {
+              pvo.status = "Completed";
+            }
+            let totalScore = 0;
+            for (const e of escList) {
+              const c = e.conditions || {};
+              let passed = 0;
+              if (c.engineer_approval) passed++;
+              if (c.compliance_validation) passed++;
+              if (c.community_oracle_validation) passed++;
+              if ((c.community_confirmation || 0) >= (c.community_required || 1)) passed++;
+              if (c.ai_risk_check) passed++;
+              totalScore += (passed / 5) * 100;
+            }
+            const score =
+              pvo.milestonesTotal > 0 ? Math.round(totalScore / pvo.milestonesTotal) : 0;
+            pvo.public_value_score = Math.min(100, score);
+          } catch {}
 
-            list.push(pvo);
-          }
-        } catch {}
+          return pvo;
+        } catch {
+          return null;
+        }
+      };
+
+      const cnt = await client.get_pvo_count();
+      const list: PVOData[] = [];
+      const maxId = Number(cnt.result);
+
+      for (let i = 1; i <= maxId; i++) {
+        const pvo = await fetchPvoData(i);
+        if (pvo) list.push(pvo);
       }
+
+      // Scan beyond count for non-sequential IDs (gaps from failed txs)
+      let consecutiveNones = 0;
+      let scanId = maxId + 1;
+      while (consecutiveNones < 15) {
+        const pvo = await fetchPvoData(scanId);
+        if (pvo) { list.push(pvo); consecutiveNones = 0; }
+        else { consecutiveNones++; }
+        scanId++;
+      }
+
       setPvos(list);
       setCached("transparency_pvos", list);
     } catch {
