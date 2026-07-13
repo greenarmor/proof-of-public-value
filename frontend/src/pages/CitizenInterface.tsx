@@ -230,20 +230,26 @@ function PvoHunter() {
 
         // Cross-check GPS vs IP geolocation (VPN/GPS spoof detection)
         try {
-          const ipResp = await fetch("https://ipwhois.app/json/", { signal: AbortSignal.timeout(5000) });
+          const ipResp = await fetch("https://ipwhois.app/json/");
           if (ipResp.ok) {
             const d = await ipResp.json();
-            const ipLat = d.latitude; const ipLng = d.longitude; const ipCity = d.city || "Unknown";
-            if (ipLat && ipLng) {
-              const loc = { lat: ipLat, lng: ipLng, city: ipCity };
+            if (d.latitude && d.longitude) {
+              const loc = { lat: d.latitude, lng: d.longitude, city: d.city || d.country || "Unknown" };
               setIpLocation(loc);
-              const ipDist = haversine(userLat, userLng, ipLat, ipLng);
+              const ipDist = haversine(userLat, userLng, d.latitude, d.longitude);
               if (ipDist > 100) {
-                console.warn(`⚠️ GPS/IP mismatch: ${ipDist.toFixed(0)}km away. IP says ${loc.city}. Possible VPN or GPS spoofing.`);
+                console.warn(`⚠️ GPS/IP mismatch: ${ipDist.toFixed(0)}km. IP=${loc.city}. VPN/spoof likely.`);
               }
+            } else {
+              setError("IP geolocation failed");
             }
+          } else {
+            console.warn("IP lookup failed with status", ipResp.status);
           }
-        } catch { /* IP geolocation unavailable */ }
+        } catch (e: any) {
+          console.warn("IP geolocation blocked (VPN may block it):", e.message);
+          setError("IP check blocked — your connection may be routing through a VPN");
+        }
         try {
           const { Client: PC } = await import("../contracts/pvo_core/src");
           const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
