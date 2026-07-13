@@ -610,14 +610,20 @@ function AdminPledgeManager() {
 
       setBusyStep("Marking disbursed...");
       await new Promise((r) => setTimeout(r, 1500));
-      const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
-      const markOp = gcContract.call("update_status", new Address(address).toScVal(), xdr.ScVal.scvU32(pledge.id), xdr.ScVal.scvSymbol("Disbursed"));
-      let tx2 = new TransactionBuilder(await server.getAccount(address), { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(markOp).setTimeout(30).build();
-      tx2 = await server.prepareTransaction(tx2);
-      signedResp = await signTransaction(tx2.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
+      const { Client: GC } = await import("../contracts/grant_commitment/src");
+      const gc2 = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      await gc2.update_status({
+        donor: address,
+        grant_id: pledge.id,
+        new_status: { tag: "Disbursed", values: undefined } as any,
+      }, {
+        fee: "100000",
+        signTransaction: async (txXdr: string) => {
+          const resp = await signTransaction(txXdr, { networkPassphrase: NETWORK_PASSPHRASE });
+          if (resp?.error) throw new Error(resp.error.message);
+          return resp.signedTxXdr;
+        },
+      } as any);
       load();
     } catch (e: any) { alert("Error: " + (e.message || e).slice(0, 200)); }
     finally { setBusy(null); setBusyStep(""); }
