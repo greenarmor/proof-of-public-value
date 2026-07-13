@@ -213,6 +213,73 @@ export function claimRptPlugin(): Plugin {
         }
       });
 
+      // ── Submit Citizen Report (mobile relay) ──
+      server.middlewares.use("/api/submit-report", async (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: "Method not allowed" }));
+          return;
+        }
+        try {
+          const body = await readBody(req);
+          const { pvoId, milestoneId, lat, lng, notes, citizenAddress } = JSON.parse(body);
+
+          if (!pvoId || !milestoneId || !citizenAddress?.startsWith("G")) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "pvoId, milestoneId, lat, lng, citizenAddress required" }));
+            return;
+          }
+
+          const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
+          if (!ADMIN_SECRET) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: "Server not configured" }));
+            return;
+          }
+
+          const { Keypair, Address, Contract, TransactionBuilder, rpc, xdr } = await import("@stellar/stellar-sdk");
+          const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
+          const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+          const RPC_URL = "https://soroban-testnet.stellar.org:443";
+
+          const adminKp = Keypair.fromSecret(ADMIN_SECRET);
+          const server = new rpc.Server(RPC_URL);
+          const account = await server.getAccount(adminKp.publicKey());
+
+          const dataHash = `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
+          const latMicro = Math.round((lat || 0) * 1_000_000);
+          const lngMicro = Math.round((lng || 0) * 1_000_000);
+
+          const contract = new Contract(COMMUNITY_ORACLE);
+          const op = contract.call("submit_report",
+            new Address(citizenAddress).toScVal(),
+            xdr.ScVal.scvU32(pvoId),
+            xdr.ScVal.scvU32(milestoneId),
+            xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
+            xdr.ScVal.scvString(dataHash),
+            xdr.ScVal.scvI128({ hi: 0, lo: latMicro }),
+            xdr.ScVal.scvI128({ hi: 0, lo: lngMicro }),
+          );
+
+          const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+            .addOperation(op).setTimeout(30).build();
+          const prepared = await server.prepareTransaction(tx);
+          prepared.sign(adminKp);
+          const result = await server.sendTransaction(prepared);
+
+          if (result.status === "PENDING" || result.status === "DUPLICATE") {
+            res.end(JSON.stringify({ success: true, txHash: result.hash }));
+          } else {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: `Status: ${result.status}` }));
+          }
+        } catch (err) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message?.slice(0, 200) }));
+        }
+      });
+
       // ── Provenance data ──
       server.middlewares.use("/api/provenance", (_req, res) => {
         res.setHeader("Content-Type", "application/json");
