@@ -354,12 +354,27 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
+      const sendResp = await server.sendTransaction(signedTx);
+      if (sendResp.status === "ERROR") throw new Error("Transaction rejected by network");
+      if (sendResp.status !== "PENDING" && sendResp.status !== "DUPLICATE") throw new Error(`Tx status: ${sendResp.status}`);
+
+      // Wait for on-chain confirmation before refreshing
+      setTxMsg("Confirming on-chain...");
+      let confirmed = false;
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const txResp = await server.getTransaction(sendResp.hash);
+          if (txResp.status === "SUCCESS") { confirmed = true; break; }
+          if (txResp.status === "FAILED") throw new Error("Transaction failed on-chain");
+        } catch (e) { if (String(e).includes("Failed")) throw e; }
+      }
+      if (!confirmed) throw new Error("Transaction not confirmed after 40s");
 
       setTxState("done");
       setTxMsg("PVO created on-chain!");
       setTitle(""); setDepartment(""); setMunicipality(""); setBudget(""); setDescription(""); setFundSource("National Budget"); setLatitude(""); setLongitude("");
-      setTimeout(onDone, 1500);
+      setTimeout(onDone, 800);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
@@ -492,10 +507,23 @@ function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string
       if (signedResp?.error) throw new Error(signedResp.error.message);
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
+      const sendResp = await server.sendTransaction(signedTx);
+      if (sendResp.status === "ERROR") throw new Error("Transaction rejected by network");
+      if (sendResp.status !== "PENDING" && sendResp.status !== "DUPLICATE") throw new Error(`Tx status: ${sendResp.status}`);
+      setTxMsg("Confirming on-chain...");
+      let confirmed = false;
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const txResp = await server.getTransaction(sendResp.hash);
+          if (txResp.status === "SUCCESS") { confirmed = true; break; }
+          if (txResp.status === "FAILED") throw new Error("Transaction failed on-chain");
+        } catch (e) { if (String(e).includes("Failed")) throw e; }
+      }
+      if (!confirmed) throw new Error("Transaction not confirmed after 40s");
       setTxState("done");
       setTxMsg("Tender created on-chain!");
-      setTimeout(onDone, 1500);
+      setTimeout(onDone, 800);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Failed");
@@ -622,13 +650,26 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
 
       setTxState("sending");
       const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      await server.sendTransaction(signedTx);
+      const sendResp = await server.sendTransaction(signedTx);
+      if (sendResp.status === "ERROR") throw new Error("Transaction rejected by network");
+      if (sendResp.status !== "PENDING" && sendResp.status !== "DUPLICATE") throw new Error(`Tx status: ${sendResp.status}`);
+      setTxMsg("Confirming on-chain...");
+      let confirmed = false;
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const txResp = await server.getTransaction(sendResp.hash);
+          if (txResp.status === "SUCCESS") { confirmed = true; break; }
+          if (txResp.status === "FAILED") throw new Error("Transaction failed on-chain");
+        } catch (e) { if (String(e).includes("Failed")) throw e; }
+      }
+      if (!confirmed) throw new Error("Transaction not confirmed after 40s");
 
       setTxState("done");
       setTxMsg("Milestone created on-chain!");
       setPvoId(""); setTitle(""); setDescription(""); setBudget("");
       setCommunityRequired("3"); setEvidenceTypes(["DroneImagery"]);
-      setTimeout(onDone, 1500);
+      setTimeout(onDone, 800);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
