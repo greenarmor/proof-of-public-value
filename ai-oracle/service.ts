@@ -83,6 +83,136 @@ interface Evidence {
   metadata_preview: string;
 }
 
+interface IpfsContentResult {
+  hash: string;
+  type: "image" | "document" | "text" | "binary" | "unknown";
+  size: number;
+  details: string;
+  flags: string[];
+}
+
+// ── IPFS Constants ──────────────────────────────────────
+const IPFS_GATEWAYS = [
+  "https://gateway.pinata.cloud/ipfs/",
+  "https://ipfs.io/ipfs/",
+  "https://cloudflare-ipfs.com/ipfs/",
+];
+
+function isMaybeIpfsHash(s: string): boolean {
+  return !!s && (s.startsWith("Qm") || s.startsWith("baf"));
+}
+
+async function fetchIpfsContent(hash: string): Promise<Buffer | null> {
+  for (const gw of IPFS_GATEWAYS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const resp = await fetch(gw + hash, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (resp.ok) return Buffer.from(await resp.arrayBuffer());
+    } catch { /* try next gateway */ }
+  }
+  return null;
+}
+
+function detectIpfsFileType(buffer: Buffer): "image" | "document" | "text" | "binary" | "unknown" {
+  if (buffer.length < 4) return "unknown";
+  // Image signatures
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8) return "image"; // JPEG
+  if (buffer[0] === 0x89 && buffer[1] === 0x50) return "image"; // PNG
+  if (buffer[0] === 0x47 && buffer[1] === 0x49) return "image"; // GIF
+  // PDF
+  if (buffer[0] === 0x25 && buffer[1] === 0x50) return "document"; // PDF
+  // UTF-8 text
+  try {
+    const sample = buffer.slice(0, 1024).toString("utf-8");
+    const printable = sample.replace(/[\x00-\x1F\x7F-\x9F]/g, "").length;
+    if (printable / Math.min(buffer.length, 1024) > 0.7) return "text";
+  } catch { /* fall through */ }
+  return "binary";
+}
+
+function analyzeIpfsText(buffer: Buffer): string[] {
+  const flags: string[] = [];
+  try {
+    const text = buffer.toString("utf-8").toLowerCase().slice(0, 50000);
+    // Suspicious patterns
+    if (text.includes("photoshopped") || text.includes("edited") || text.includes("manipulated")) {
+      flags.push("suspicious_metadata");
+    }
+    if ((text.match(/\d{4}-\d{2}-\d{2}/g) || []).length > 5) {
+      flags.push("multiple_timestamps"); // Possible metadata tampering
+    }
+    if (text.includes("error") || text.includes("fail") || text.includes("defect")) {
+      flags.push("report_contains_issues");
+    }
+    // Low content - possibly placeholder/fake
+    if (text.replace(/\s/g, "").length < 100 && buffer.length > 1000) {
+      flags.push("low_text_density"); // Large file but no substantive content
+    }
+  } catch {}
+  return flags;
+}
+
+async function analyzeIpfsContent(dataHash: string, metadataStr: string): Promise<IpfsContentResult> {
+  const result: IpfsContentResult = {
+    hash: dataHash,
+    type: "unknown",
+    size: 0,
+    details: "",
+    flags: [],
+  };
+
+  // Try data_hash first (IPFS CID), then check metadata for embedded hash
+  let hash = dataHash;
+  if (!isMaybeIpfsHash(hash)) {
+    // Check metadata for IPFS hash pattern
+    const match = metadataStr.match(/\b(Qm[1-9A-HJ-NP-Za-km-z]{44}|baf[a-z2-7]{52,})\b/);
+    if (match) hash = match[1];
+    else return result; // No IPFS hash found
+  }
+
+  const content = await fetchIpfsContent(hash);
+  if (!content) {
+    result.flags.push("ipfs_unreachable");
+    result.details = "File not retrievable from any IPFS gateway";
+    return result;
+  }
+
+  result.size = content.length;
+  result.type = detectIpfsFileType(content);
+  result.details = `${result.type} file, ${(content.length / 1024).toFixed(1)} KB`;
+
+  switch (result.type) {
+    case "image": {
+      if (content.length < 1000) result.flags.push("tiny_image_file");
+      if (content.length > 50_000_000) result.flags.push("oversized_image");
+      // Rough image quality: JPEG header analysis
+      if (content[0] === 0xFF && content[1] === 0xD8) {
+        const exifIdx = content.indexOf("Exif");
+        if (exifIdx === -1) result.flags.push("no_exif_metadata");
+      }
+      result.details += " (authenticity lowered if no EXIF)";
+      break;
+    }
+    case "document": {
+      if (content.length < 2000) result.flags.push("suspicious_small_document");
+      break;
+    }
+    case "text": {
+      const textFlags = analyzeIpfsText(content);
+      result.flags.push(...textFlags);
+      break;
+    }
+    case "binary": {
+      result.flags.push("binary_format_unverifiable");
+      break;
+    }
+  }
+
+  return result;
+}
+
 interface AnalysisResult {
   passed: boolean;
   riskScore: number;
@@ -950,9 +1080,30 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
         const progress = mStatus === "Released" ? 100 : mStatus === "EvidenceSubmitted" ? 40 : mStatus === "Ready" ? 80 : 20;
         const metaLen = String(ev.metadata || "").length;
         const authenticity = Math.min(98, 65 + metaLen / 10 + (ev.verified ? 10 : 0));
-        const summary = `Evidence: ${evType || "Unknown"} for milestone "${m.title || ""}". Metadata length: ${metaLen} chars. Verified: ${ev.verified ? "yes" : "no"}.`;
-        console.log(`  [Image] Evidence #${ev.id} (${evType}): progress=${progress}% auth=${authenticity}%`);
-        submitImageVerification(Number(ev.id), progress, authenticity, summary);
+
+        // IPFS content analysis
+        const dataHash = typeof ev.data_hash === "string" ? ev.data_hash : "";
+        const metadataStr = typeof ev.metadata === "string" ? ev.metadata : "";
+        if (isMaybeIpfsHash(dataHash) || isMaybeIpfsHash(metadataStr)) {
+          const ipfsResult = await analyzeIpfsContent(dataHash, metadataStr);
+          let adjustedAuth = authenticity;
+          // Adjust authenticity based on IPFS content analysis
+          if (ipfsResult.flags.includes("ipfs_unreachable")) adjustedAuth -= 20;
+          if (ipfsResult.flags.includes("tiny_image_file")) adjustedAuth -= 10;
+          if (ipfsResult.flags.includes("no_exif_metadata")) adjustedAuth -= 8;
+          if (ipfsResult.flags.includes("suspicious_small_document")) adjustedAuth -= 15;
+          if (ipfsResult.flags.includes("binary_format_unverifiable")) adjustedAuth -= 5;
+          if (ipfsResult.flags.includes("suspicious_metadata")) adjustedAuth -= 15;
+          if (ipfsResult.flags.includes("low_text_density")) adjustedAuth -= 10;
+          adjustedAuth = Math.max(0, adjustedAuth);
+          const summary = `Evidence: ${evType || "Unknown"} for milestone "${m.title || ""}". IPFS: ${ipfsResult.type} ${ipfsResult.details}. ${ipfsResult.flags.length > 0 ? "Flags: " + ipfsResult.flags.join(", ") : "Clean."} Auth: ${adjustedAuth}%`;
+          console.log(`  [IPFS] Evidence #${ev.id}: type=${ipfsResult.type} size=${(ipfsResult.size / 1024).toFixed(1)}KB flags=${ipfsResult.flags.join(",") || "none"} auth=${adjustedAuth}%`);
+          submitImageVerification(Number(ev.id), progress, adjustedAuth, summary);
+        } else {
+          const summary = `Evidence: ${evType || "Unknown"} for milestone "${m.title || ""}". Metadata length: ${metaLen} chars. Verified: ${ev.verified ? "yes" : "no"}.`;
+          console.log(`  [Image] Evidence #${ev.id} (${evType}): progress=${progress}% auth=${authenticity}%`);
+          submitImageVerification(Number(ev.id), progress, authenticity, summary);
+        }
       }
     }
     evidence.metadata_preview = JSON.stringify(submitted).slice(0, 300);
