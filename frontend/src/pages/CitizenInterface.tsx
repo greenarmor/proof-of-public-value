@@ -23,9 +23,10 @@ export function CitizenInterface() {
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Citizen Interface</h1>
-        <p className="text-slate-500">Browse, report, and track your civic impact.</p>
+        <p className="text-slate-500">Hunt PVOs, submit reports, earn reputation.</p>
       </div>
       <CitizenDashboard />
+      <PvoHunter />
       <div className="flex items-center justify-between mb-6 bg-slate-100 rounded-xl p-1">
         {(["browse","my"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
@@ -197,6 +198,111 @@ function CitizenBrowse() {
         </div>
       )}
     </div>))}{reports.length===0&&<div className="text-center py-16 text-slate-400">No community reports yet.</div>}</div>);
+}
+
+function PvoHunter() {
+  const { roles } = useWallet();
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearby, setNearby] = useState<any[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState("");
+  const HUNT_RADIUS_KM = 10;
+
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const startHunt = () => {
+    if (!navigator.geolocation) { setError("GPS not supported"); return; }
+    setScanning(true); setError("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+        setPosition({ lat: userLat, lng: userLng });
+        try {
+          const { Client: PC } = await import("../contracts/pvo_core/src");
+          const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+          const cnt = await pc.get_pvo_count();
+          const found: any[] = [];
+          for (let i = 1; i <= Number(cnt.result); i++) {
+            try {
+              const r = await pc.get_pvo({ pvo_id: i });
+              if (!r.result) continue;
+              const desc = r.result.description || "";
+              const coordMatch = desc.match(/^\[(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\]/);
+              if (!coordMatch) continue;
+              const pvoLat = parseFloat(coordMatch[1]);
+              const pvoLng = parseFloat(coordMatch[2]);
+              const dist = haversine(userLat, userLng, pvoLat, pvoLng);
+              if (dist <= HUNT_RADIUS_KM) {
+                found.push({ id: i, title: r.result.title, municipality: r.result.municipality, distance: dist, lat: pvoLat, lng: pvoLng });
+              }
+            } catch {}
+          }
+          found.sort((a, b) => a.distance - b.distance);
+          setNearby(found);
+        } catch { setError("Failed to load PVOs"); }
+        setScanning(false);
+      },
+      () => { setError("GPS denied — enable location to hunt"); setScanning(false); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
+  };
+
+  const isCitizen = roles.includes("Citizen") || roles.includes("Administrator");
+  if (!isCitizen) return null;
+
+  return (
+    <div className="card p-5 mb-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-indigo-200">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">📍</span>
+          <div>
+            <h3 className="font-bold text-slate-900">PVO Hunter</h3>
+            <p className="text-xs text-slate-500">Find government projects near you</p>
+          </div>
+        </div>
+        <button onClick={startHunt} disabled={scanning} className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${scanning ? "bg-indigo-200 text-indigo-400" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"}`}>
+          {scanning ? "🔍 Scanning..." : position ? "🔄 Re-Scan" : "🔍 Scan Area"}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+      {position && !scanning && (
+        <p className="text-xs text-slate-400 mb-2">Your position: {position.lat.toFixed(4)}, {position.lng.toFixed(4)} · Radius: {HUNT_RADIUS_KM}km</p>
+      )}
+      {nearby.length === 0 && position && !scanning && (
+        <div className="text-center py-6 text-slate-400">
+          <p className="text-4xl mb-2">🌍</p>
+          <p className="text-sm">No PVOs within {HUNT_RADIUS_KM}km</p>
+          <p className="text-xs mt-1">Try a different location or increase the radius</p>
+        </div>
+      )}
+      {nearby.length > 0 && (
+        <div className="space-y-2">
+          {nearby.map((pvo) => {
+            const distStr = pvo.distance < 1 ? `${Math.round(pvo.distance * 1000)}m` : `${pvo.distance.toFixed(1)}km`;
+            const rarity = pvo.distance < 0.5 ? "🟡 Legendary" : pvo.distance < 2 ? "🟣 Rare" : pvo.distance < 5 ? "🔵 Uncommon" : "⚪ Common";
+            return (
+              <a key={pvo.id} href={`/portal`}
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/80 hover:bg-white border border-slate-200 hover:border-indigo-300 transition-all hover:scale-[1.02] cursor-pointer">
+                <div className="text-3xl">{pvo.distance < 1 ? "🏆" : pvo.distance < 3 ? "🏗️" : "📋"}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 truncate">#{pvo.id} {pvo.title}</p>
+                  <p className="text-xs text-slate-500">{pvo.municipality} · <span className="text-indigo-600 font-medium">{distStr}</span> away · {rarity}</p>
+                </div>
+                <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full font-medium">📸 Report</span>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CitizenReputation() {
