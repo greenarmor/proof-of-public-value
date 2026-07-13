@@ -6,7 +6,6 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { IpfsLink } from "../components/IpfsLink";
-import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
 
 export function CitizenInterface() {
@@ -28,7 +27,6 @@ export function CitizenInterface() {
       </div>
       <CitizenDashboard />
       <PvoHunter />
-      <CreatePphpTrustline address={address!} />
       <div className="flex items-center justify-between mb-6 bg-slate-100 rounded-xl p-1">
         {(["browse","my"] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
@@ -103,25 +101,27 @@ function CitizenDashboard() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div className={`card p-4 ${canReport?"border-emerald-200 bg-gradient-to-br from-emerald-50 to-white":"border-amber-200 bg-gradient-to-br from-amber-50 to-white"}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="font-semibold text-sm">🪙 RPT Token</span>
+          <span className="font-semibold text-sm">🪙 Wallet</span>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${canReport?"bg-emerald-100 text-emerald-700":"bg-amber-100 text-amber-700"}`}>
             {canReport?"✅ Ready":"⚠️ Setup Needed"}
           </span>
         </div>
-        {canReport ? (
-          <div>
-            <span className="text-3xl font-bold text-brand-600">{rptBalance}</span>
-            <span className="text-sm text-slate-500 ml-1.5">RPT</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">RPT</span>
+            <span className="text-lg font-bold text-brand-600">{rptBalance ?? "—"}</span>
           </div>
-        ) : needsSetup ? (
-          <div>
-            <p className="text-xs text-amber-700 mb-3">{rptBalance===0?"Trustline missing or 0 RPT":""}</p>
-            <button onClick={setupTrustline} disabled={trustlineLoading}
-              className="w-full py-2.5 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 disabled:opacity-50 transition font-medium">
-              {trustlineLoading?"Opening Freighter...":"🔓 Create RPT Trustline"}
-            </button>
+          <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+            <span className="text-xs text-slate-400">pPHP</span>
+            <PphpBalanceInline address={address!} />
           </div>
-        ) : <p className="text-xs text-slate-400">Checking RPT status...</p>}
+        </div>
+        {!canReport && needsSetup && (
+          <button onClick={setupTrustline} disabled={trustlineLoading}
+            className="w-full mt-3 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 disabled:opacity-50 transition font-medium">
+            {trustlineLoading?"Opening Freighter...":"🔓 Create RPT Trustline"}
+          </button>
+        )}
         {message && <p className={`text-xs mt-2 ${message.ok?"text-emerald-600":"text-red-600"}`}>{message.text}</p>}
       </div>
 
@@ -304,6 +304,72 @@ function PvoHunter() {
         </div>
       )}
     </div>
+  );
+}
+
+function PphpBalanceInline({ address }: { address: string }) {
+  const [balance, setBalance] = useState<string | null>(null);
+  const [hasTl, setHasTl] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Contract, Address, rpc, scValToBigInt } = await import("@stellar/stellar-sdk");
+        const server = new rpc.Server(RPC_URL);
+        const contract = new Contract(CONTRACT_IDS.pphp);
+        const acct = await server.getAccount(address);
+        const tx = new TransactionBuilder(acct, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+          .addOperation(contract.call("balance", new Address(address).toScVal()))
+          .setTimeout(30).build();
+        const sim = await server.simulateTransaction(tx);
+        const bal = scValToBigInt(sim.result!.retval);
+        setBalance(Number(bal) > 0 ? (Number(bal) / 10_000_000).toLocaleString() : "0");
+        setHasTl(true);
+      } catch { setHasTl(false); }
+    })();
+  }, [address]);
+
+  if (!hasTl) {
+    return <CreatePphpTrustlineButton address={address} />;
+  }
+  return <span className="text-lg font-bold text-purple-600">{balance ?? "—"}</span>;
+}
+
+function CreatePphpTrustlineButton({ address }: { address: string }) {
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const addTl = async () => {
+    setLoading(true);
+    try {
+      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
+      const { signTransaction } = await import("@stellar/freighter-api");
+      const server = new rpc.Server(RPC_URL);
+      const acct = await server.getAccount(address);
+      const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(Operation.changeTrust({ asset: new Asset("pPHP", "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO") }))
+        .setTimeout(30).build();
+      const sr = await signTransaction(tx.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
+      const signedTx = TransactionBuilder.fromXDR(sr.signedTxXdr, NETWORK_PASSPHRASE);
+      await server.sendTransaction(signedTx);
+      setMsg({ text: "✅ Trustline added!", ok: true });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e: any) {
+      setMsg({ text: e.message?.slice(0, 80), ok: false });
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <span>
+      {msg ? (
+        <span className="text-xs text-purple-700">{msg.text}</span>
+      ) : (
+        <button onClick={addTl} disabled={loading}
+          className="text-xs text-purple-600 hover:text-purple-800 underline">
+          {loading ? "..." : "Add Trustline"}
+        </button>
+      )}
+    </span>
   );
 }
 
