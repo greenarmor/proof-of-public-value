@@ -294,17 +294,46 @@ function PvoHunter() {
         </button>
       </div>
       {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+
+      {/* Integrity Monitor */}
+      {position && ipLocation && (
+        <div className={`mb-3 p-2 rounded-lg text-xs flex items-center gap-2 ${
+          haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 100
+            ? "bg-red-50 border border-red-200 text-red-700"
+            : haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 10
+            ? "bg-amber-50 border border-amber-200 text-amber-700"
+            : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+        }`}>
+          <span className="text-base">
+            {haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 100
+              ? "🔴" : haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 10 ? "⚠️" : "✅"}
+          </span>
+          <div>
+            <p className="font-medium">
+              {haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 100
+                ? "VPN / GPS Spoof Detected"
+                : haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 10
+                ? "Location Approximate"
+                : "Location Verified"}
+            </p>
+            <p className="opacity-70">
+              GPS: {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
+              &nbsp;·&nbsp;IP: {ipLocation.city} ({Math.round(haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng))}km)
+            </p>
+          </div>
+        </div>
+      )}
+      {position && !ipLocation && (
+        <div className="mb-3 p-2 rounded-lg text-xs bg-slate-50 border border-slate-200 text-slate-500 flex items-center gap-2">
+          <span>🛡️</span>
+          <span>Integrity check active — your location is being verified</span>
+        </div>
+      )}
+
       {position && !scanning && (
         <p className="text-xs text-slate-400 mb-2">
-          GPS: {position.lat.toFixed(4)}, {position.lng.toFixed(4)} · Radius: {HUNT_RADIUS_KM}km
-          {ipLocation && (
-            <span className="ml-2 text-slate-300">
-              · IP: {ipLocation.city}
-              {haversine(position.lat, position.lng, ipLocation.lat, ipLocation.lng) > 100
-                ? <span className="text-amber-600 ml-1">⚠️ possible VPN</span>
-                : <span className="text-emerald-600 ml-1">✓</span>}
-            </span>
-          )}
+          📡 Scanning radius: {HUNT_RADIUS_KM}km
+          &nbsp;·&nbsp;<span className="text-slate-300">Reports are verified by other citizens</span>
         </p>
       )}
       {nearby.length === 0 && position && !scanning && (
