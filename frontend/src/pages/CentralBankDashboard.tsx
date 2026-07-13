@@ -173,6 +173,7 @@ function PledgeManager({ address }: { address: string }) {
       const result = await server.sendTransaction(signedResp.signedTxXdr);
       if (result.status === "PENDING" || result.status === "DUPLICATE") {
         mintSucceeded = true;
+        localStorage.setItem(`pledge_${pledge.id}_minted`, "true");
         setRefreshKey(k => k + 1);
       } else if (result.errorResult) {
         const msg =
@@ -192,15 +193,19 @@ function PledgeManager({ address }: { address: string }) {
     }
   };
 
+  const visible = pledges.filter(
+    (p: any) => !localStorage.getItem(`pledge_${p.id}_minted`),
+  );
+
   if (loading) return <div className="text-center py-10 text-slate-400">Loading pledges...</div>;
 
   return (
     <div>
-      {pledges.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="card p-8 text-center text-slate-400">No pending pledges to convert.</div>
       ) : (
         <div className="space-y-3 max-w-lg">
-          {pledges.map((p: any) => {
+          {visible.map((p: any) => {
             const pesos = Number(p.amount) / PPHP_SCALE;
             return (
               <div key={p.id} className="card p-4 flex items-center justify-between">
