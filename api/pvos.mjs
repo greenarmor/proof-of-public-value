@@ -15,19 +15,13 @@ export default async function handler(req, res) {
   const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 
   try {
-    const { Contract, rpc, nativeToScVal, xdr } = await import("@stellar/stellar-sdk");
+    const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
 
     const server = new rpc.Server(RPC_URL);
     const contract = new Contract(PVO_CORE);
     const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
 
-    const account = await server.getAccount(dummyPub).catch(() => ({
-      accountId: () => dummyPub,
-      sequenceNumber: () => "0",
-    }));
-
     function makeTx(fnName, ...args) {
-      const { TransactionBuilder } = require("@stellar/stellar-sdk");
       const tx = new TransactionBuilder(
         { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} },
         { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }
