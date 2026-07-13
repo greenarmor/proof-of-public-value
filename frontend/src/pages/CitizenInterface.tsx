@@ -281,7 +281,17 @@ function PvoHunter() {
   };
 
   const isCitizen = roles.includes("Citizen") || roles.includes("Administrator");
+  const hasRealGps = typeof navigator !== "undefined" && (navigator.maxTouchPoints > 0 || new URLSearchParams(window.location.search).has("dev"));
   if (!isCitizen) return null;
+  if (!hasRealGps) {
+    return (
+      <div className="card p-5 mb-6 bg-slate-50 border border-slate-200 text-center">
+        <p className="text-4xl mb-2">📱</p>
+        <p className="text-sm text-slate-500">PVO Hunter requires a GPS-enabled device.</p>
+        <p className="text-xs text-slate-400 mt-1">Visit this page on your mobile phone to scan for nearby projects.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="card p-5 mb-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-indigo-200">
