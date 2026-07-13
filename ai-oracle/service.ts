@@ -52,6 +52,7 @@ if (existsSync(envPath)) {
 
 // ── Config ──────────────────────────────────────────────
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const POLL_INTERVAL_MS = 60_000;
 
 const CONTRACT_IDS: Record<string, string> = {
@@ -261,7 +262,7 @@ const AI_AUDITOR_SECRET = getSecretKey();
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
 const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
-const AI_SOURCE_KEY = process.env.AI_SOURCE_KEY ?? "alice";
+const AI_SOURCE_KEY = process.env.AI_SOURCE_KEY ?? "ai_auditor_role";
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
 const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
@@ -269,6 +270,28 @@ const opts = {
   env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` },
   encoding: "utf-8" as BufferEncoding,
 };
+
+// SDK-based submission (bypasses CLI identity issues)
+async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Promise<boolean> {
+  if (!AI_AUDITOR_SECRET) { console.error("  AI_AUDITOR_SECRET not set"); return false; }
+  try {
+    const { Keypair, Contract, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
+    const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
+    const server = new rpc.Server(RPC_URL);
+    const account = await server.getAccount(kp.publicKey());
+    const contract = new Contract(contractId);
+    const op = contract.call(method, ...scvArgs);
+    const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(op).setTimeout(30).build();
+    const prepared = await server.prepareTransaction(tx);
+    prepared.sign(kp);
+    const result = await server.sendTransaction(prepared);
+    return result.status === "PENDING" || result.status === "DUPLICATE";
+  } catch (e: any) {
+    console.error(`  [SDK] ${method} failed: ${e.message?.slice(0, 100)}`);
+    return false;
+  }
+}
 
 function cli(cmd: string): string {
   try {
