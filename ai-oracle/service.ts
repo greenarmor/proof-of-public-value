@@ -262,6 +262,8 @@ const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
 const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
 const AI_SOURCE_KEY = process.env.AI_SOURCE_KEY ?? "ai_auditor_role";
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
+const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
 const opts = {
   env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` },
@@ -441,6 +443,68 @@ function getGeoRisk(municipality: string): { flood: number; seismic: number; lan
     }
   }
   return { ...GEO_RISK_DATA.default, region: municipality || "Philippines" };
+}
+
+// ── Citizen Reward Engine ────────────────────────────────
+const rewardedReports = new Set<string>();
+
+function getRewardTier(confidenceRating: number): { tier: string; pct: number } {
+  if (confidenceRating >= 96) return { tier: "Guardian", pct: 0.00010 };
+  if (confidenceRating >= 81) return { tier: "Elite", pct: 0.00008 };
+  if (confidenceRating >= 51) return { tier: "Trusted", pct: 0.00005 };
+  if (confidenceRating >= 21) return { tier: "Rising", pct: 0.00003 };
+  return { tier: "New", pct: 0.00001 };
+}
+
+async function rewardCitizenForReport(
+  citizenAddress: string,
+  reportId: number,
+  pvoId: number,
+  winningBidStroops: number
+): Promise<boolean> {
+  const rewardKey = `${reportId}:${citizenAddress}`;
+  if (rewardedReports.has(rewardKey)) return false;
+  if (!ADMIN_SECRET) { console.log("  [Reward] ADMIN_SECRET not set, skipping"); return false; }
+
+  try {
+    // Get citizen reputation
+    const rep = queryContract("reputation", "get_reputation", `--entity ${citizenAddress}`);
+    const confidence = Number(rep?.confidence_rating ?? rep?.reputation_score ?? 0);
+
+    const { tier, pct } = getRewardTier(confidence);
+    const rewardStroops = Math.floor(winningBidStroops * pct);
+    if (rewardStroops < 1) { console.log(`  [Reward] Amount too small: ${rewardStroops} stroops`); return false; }
+
+    const { Keypair, Address, Contract, TransactionBuilder, rpc, ScInt } = await import("@stellar/stellar-sdk");
+    const adminKp = Keypair.fromSecret(ADMIN_SECRET);
+    const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+    const account = await server.getAccount(adminKp.publicKey());
+
+    const tokenContract = new Contract(PPHP_CONTRACT);
+    const mintOp = tokenContract.call(
+      "mint",
+      new Address(citizenAddress).toScVal(),
+      new ScInt(rewardStroops).toI128(),
+    );
+    const tx = new TransactionBuilder(account, {
+      fee: "100000",
+      networkPassphrase: "Test SDF Network ; September 2015",
+    }).addOperation(mintOp).setTimeout(30).build();
+
+    const prepared = await server.prepareTransaction(tx);
+    prepared.sign(adminKp);
+    const result = await server.sendTransaction(prepared);
+
+    if (result.status === "PENDING" || result.status === "DUPLICATE") {
+      rewardedReports.add(rewardKey);
+      console.log(`  [Reward] ✅ ${tier} citizen rewarded ${(rewardStroops / 10_000_000).toFixed(2)} pPHP (${(pct * 100).toFixed(3)}% of bid) — report #${reportId}`);
+      return true;
+    }
+    console.log(`  [Reward] ❌ Failed: ${result.status}`);
+  } catch (e: any) {
+    console.error(`  [Reward] Error: ${e.message?.slice(0, 100)}`);
+  }
+  return false;
 }
 
 // ── On-Chain: Escrow Gate 5 ──────────────────────────────
@@ -692,6 +756,18 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
       event: cr.verified ? "Community Report Verified" : "Community Report Submitted",
       detail: `${typeof cr.report_type === "string" ? cr.report_type : cr.report_type?.tag ?? "Report"} by ${String(cr.citizen || "").slice(0, 12)}...`
     });
+    // Reward verified citizen reports
+    if (cr.verified && cr.citizen) {
+      const rewardBudget = caseFile.actualBudget ?? Number(pvo.total_budget || 0);
+      if (rewardBudget > 0) {
+        rewardCitizenForReport(
+          String(cr.citizen),
+          Number(cr.id || 0),
+          pvoId,
+          rewardBudget
+        );
+      }
+    }
   }
 
   // 5b. Cross-check: inspector approvals vs community ground truth
