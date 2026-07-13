@@ -917,11 +917,7 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     if (escrows.length > 0) {
       const escrowTotal = escrows.reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
       const escrowPesos = escrowTotal / 10_000_000;
-      // Only flag deviation if all milestones are escrowed but total doesn't match
-      const msCount = milestones.length || 1;
-      if (escrows.length >= msCount) {
-        deviation = Math.abs(escrowPesos - totalBudgetPesos) > totalBudgetPesos * 0.1;
-      }
+      deviation = Math.abs(escrowPesos - totalBudgetPesos) > totalBudgetPesos * 0.1;
     }
     if (flags.some(f => f.toLowerCase().includes("deviation") || f.toLowerCase().includes("mismatch"))) {
       deviation = true;
