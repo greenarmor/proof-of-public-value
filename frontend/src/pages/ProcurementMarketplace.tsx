@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";

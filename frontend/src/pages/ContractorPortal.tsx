@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { uploadToIPFS } from "../ipfs";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
@@ -635,7 +636,7 @@ function PaymentsTab({ address }: { address: string }) {
   }, [address]);
 
   if (loading) {
-    return <div className="card p-12 skeleton h-48" />;
+    return <BlockchainLoader text="Loading data from Stellar testnet..." />;
   }
 
   if (escrows.length === 0) {
@@ -782,7 +783,7 @@ function HistoryTab({ address }: { address: string }) {
   }, [address]);
 
   if (loading) {
-    return <div className="card p-12 skeleton h-48" />;
+    return <BlockchainLoader text="Loading data from Stellar testnet..." />;
   }
 
   if (evidence.length === 0) {

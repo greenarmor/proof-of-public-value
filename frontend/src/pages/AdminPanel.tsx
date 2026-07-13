@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE, RPT_ASSET } from "../config";
 import { formatAddress } from "../helpers";
@@ -213,7 +214,7 @@ function RoleManagement() {
         </button>
       </div>
       {loadingAssignments ? (
-        <div className="text-center py-8 text-gray-400">Loading...</div>
+        <BlockchainLoader text="Loading role assignments..." />
       ) : (
         <>
           <div className="p-3 border-b border-gray-100 flex gap-3">
@@ -630,7 +631,7 @@ function AdminPledgeManager() {
     finally { setBusy(null); setBusyStep(""); }
   };
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading pledges..." />;
   return (
     <div>
       <div className="mb-4"><h3 className="font-semibold text-lg">💰 Pledge Approval & Minting</h3><p className="text-sm text-slate-500">Mint pPHP and mark grants as disbursed.</p></div>
@@ -686,7 +687,7 @@ function DisputeResolution() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading pledges..." />;
 
   const dPages = Math.ceil(escrows.length / DPAGE);
   const dPaged = escrows.slice((disputePage - 1) * DPAGE, disputePage * DPAGE);

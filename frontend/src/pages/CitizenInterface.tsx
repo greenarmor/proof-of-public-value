@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 import { formatAddress } from "../helpers";
@@ -183,7 +184,7 @@ function CitizenBrowse() {
     finally { setVerifying(null); }
   };
 
-  if(loading)return<div className="space-y-3">{[...Array(3)].map((_,i)=><div key={i}className="skeleton-shimmer h-20 rounded-xl"/>)}</div>;
+  if(loading) return <BlockchainLoader text="Loading community reports..." />;
   return( <div className="space-y-3">
     {vmsg && <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">{vmsg}</div>}
     {reports.map((r:any)=>(<div key={r.id}className="card p-4"><div className="flex items-start justify-between mb-2"><div><span className="badge-green">{typeof r.report_type==="string"?r.report_type:r.report_type?.tag}</span><span className="ml-2 text-sm text-slate-500">PVO #{r.pvo_id}·M#{r.milestone_id}</span></div>{r.verified?<span className="badge-green">✅ Verified</span>:<span className="badge-amber">⏳ Pending</span>}</div>

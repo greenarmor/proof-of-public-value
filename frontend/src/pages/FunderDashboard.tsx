@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
@@ -938,7 +939,7 @@ function DonorCommitmentsTab() {
   // Track which PVOs have been funded by Central Bank (at least one disbursed grant)
   const fundedPvos = new Set(Object.keys(disbursedByPvo).map(Number));
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (grants.length === 0) {
     return (

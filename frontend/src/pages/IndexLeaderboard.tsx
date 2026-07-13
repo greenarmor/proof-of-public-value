@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as PublicIndexClient } from "../contracts/public_index/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE } from "../config";
 

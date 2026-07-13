@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
@@ -91,7 +92,7 @@ function AllProjects({ address }: { address: string }) {
     } catch {}
   };
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (selected) {
     return (
@@ -396,7 +397,7 @@ function MyReports({ address }: { address: string }) {
     })();
   }, [address]);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (reports.length === 0) {
     return (
@@ -488,7 +489,7 @@ function EvidenceHistory({ address }: { address: string }) {
     })();
   }, [address]);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (allEvidence.length === 0) {
     return (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { formatAddress, formatBudget } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";

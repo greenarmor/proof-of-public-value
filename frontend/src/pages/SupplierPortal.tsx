@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as ProcurementClient } from "../contracts/procurement_market/src";
@@ -81,7 +82,7 @@ function TendersTab() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (tenders.length === 0) {
     return (
@@ -276,7 +277,7 @@ function MyBidsTab({ address }: { address: string }) {
     })();
   }, [address]);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   if (bids.length === 0) {
     return (

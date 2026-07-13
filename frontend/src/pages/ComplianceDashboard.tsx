@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as ComplianceEngineClient } from "../contracts/compliance_engine/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
 

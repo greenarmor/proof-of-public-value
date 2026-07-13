@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE, getCurrency } from "../config";
 
@@ -141,7 +142,7 @@ function PledgeManager({ address }: { address: string }) {
     setBusyStep("Minting pPHP...");
     let mintSucceeded = false;
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, nativeToScVal } =
+      const { TransactionBuilder, Contract, Address, rpc, ScInt, xdr, nativeToScVal } =
         await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
       const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
@@ -181,9 +182,10 @@ function PledgeManager({ address }: { address: string }) {
       try {
         const gcContract = new Contract(CONTRACT_IDS.grant_commitment);
         const markDisbursedOp = gcContract.call(
-          "admin_mark_disbursed",
+          "update_status",
           new Address(address).toScVal(),
           nativeToScVal(pledge.id, { type: "u32" } as any),
+          xdr.ScVal.scvSymbol("Disbursed"),
         );
         let tx2 = new TransactionBuilder(await server.getAccount(address), {
           fee: "100000",
@@ -219,7 +221,7 @@ function PledgeManager({ address }: { address: string }) {
     (p: any) => !localStorage.getItem(`pledge_${p.id}_minted`),
   );
 
-  if (loading) return <div className="text-center py-10 text-slate-400">Loading pledges...</div>;
+  if (loading) return <BlockchainLoader text="Loading pledges from Stellar testnet..." />;
 
   return (
     <div>
@@ -362,7 +364,7 @@ function GrantsOverview() {
     })();
   }, []);
 
-  if (loading) return <div className="card p-12 skeleton h-48" />;
+  if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
   const statusTag = (s: any) => (s && typeof s === "object" && s.tag) ? s.tag : (typeof s === "string" ? s : "?");
   const statusColor = (s: string) => s === "Disbursed" ? "badge-blue" : s === "Completed" ? "badge-green" : s === "Cancelled" ? "badge-red" : "badge-purple";
