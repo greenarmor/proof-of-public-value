@@ -8,6 +8,17 @@ A comprehensive guide to PoPV's AI forensic engine - fraud detection, risk predi
 
 The AI Oracle is a **forensic analysis engine** that cross-references on-chain data across 10 Soroban contracts to detect fraud, predict risk, verify evidence, and trace the full project transaction journey from creation to release.
 
+### 🔑 Primary Data Sources: Citizens & Inspectors
+
+The AI is not black-box machine learning. It is **fully rule-based, fully data-driven**. Its accuracy depends entirely on two human roles:
+
+| Role | What They Submit | AI Analysis |
+|---|---|---|
+| **Citizen Reporter** 📸 | GPS-tagged field reports via `community_oracle` | GPS proximity check, verified report count, ghost project detection, community consensus scoring |
+| **Engineer/Inspector** 🔧 | Drone imagery, engineering reports, lab results, GPS coordinates via `pvo_core.submit_evidence` | Image authenticity scoring, metadata analysis, evidence coverage ratio, shell company risk, material/labor cost deviation |
+
+**No citizen reports?** → Ghost project flag. **No inspector evidence?** → Shell company risk flag. **GPS mismatch?** → Fraud indicator. The AI's forensic flags are direct reflections of what humans observe on the ground.
+
 It operates as an **off-chain Node.js service** (`ai-oracle/service.ts`) that reads from all contracts, builds forensic case files per PVO, and submits analysis results to the on-chain `ai_oracle` contract. The frontend then reads from the contract to display findings.
 
 ```
