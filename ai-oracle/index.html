@@ -981,6 +981,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="What the AI Is">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-data-sources-citizens-inspectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔑 Primary Data Sources: Citizens &amp; Inspectors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1227,6 +1244,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="What the AI Is">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-data-sources-citizens-inspectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔑 Primary Data Sources: Citizens &amp; Inspectors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1420,6 +1454,30 @@
 <hr />
 <h2 id="what-the-ai-is">What the AI Is<a class="headerlink" href="#what-the-ai-is" title="Permanent link">&para;</a></h2>
 <p>The AI Oracle is a <strong>forensic analysis engine</strong> that cross-references on-chain data across 10 Soroban contracts to detect fraud, predict risk, verify evidence, and trace the full project transaction journey from creation to release.</p>
+<h3 id="primary-data-sources-citizens-inspectors">🔑 Primary Data Sources: Citizens &amp; Inspectors<a class="headerlink" href="#primary-data-sources-citizens-inspectors" title="Permanent link">&para;</a></h3>
+<p>The AI is not black-box machine learning. It is <strong>fully rule-based, fully data-driven</strong>. Its accuracy depends entirely on two human roles:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>What They Submit</th>
+<th>AI Analysis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Citizen Reporter</strong> 📸</td>
+<td>GPS-tagged field reports via <code>community_oracle</code></td>
+<td>GPS proximity check, verified report count, ghost project detection, community consensus scoring</td>
+</tr>
+<tr>
+<td><strong>Engineer/Inspector</strong> 🔧</td>
+<td>Drone imagery, engineering reports, lab results, GPS coordinates via <code>pvo_core.submit_evidence</code></td>
+<td>Image authenticity scoring, metadata analysis, evidence coverage ratio, shell company risk, material/labor cost deviation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>No citizen reports?</strong> → Ghost project flag. <strong>No inspector evidence?</strong> → Shell company risk flag. <strong>GPS mismatch?</strong> → Fraud indicator. The AI's forensic flags are direct reflections of what humans observe on the ground.</p>
 <p>It operates as an <strong>off-chain Node.js service</strong> (<code>ai-oracle/service.ts</code>) that reads from all contracts, builds forensic case files per PVO, and submits analysis results to the on-chain <code>ai_oracle</code> contract. The frontend then reads from the contract to display findings.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>10 Contracts → Forensic Analysis Engine → ai_oracle contract → Public Dashboard
 </code></pre></div>
