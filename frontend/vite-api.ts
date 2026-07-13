@@ -519,7 +519,7 @@ export function claimRptPlugin(): Plugin {
       server.middlewares.use("/api/pvos", async (_req, res) => {
         res.setHeader("Content-Type", "application/json");
         try {
-          const { Contract, rpc, nativeToScVal } = await import("@stellar/stellar-sdk");
+          const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
           const server = new rpc.Server(RPC_URL);
           const PVO_CORE = "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B";
           const contract = new Contract(PVO_CORE);
@@ -529,9 +529,9 @@ export function claimRptPlugin(): Plugin {
           async function sim(fnName: string, ...args: any[]) {
             const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
               .addOperation(contract.call(fnName, ...args)).setTimeout(30).build();
-            const s = await server.simulateTransaction(tx);
+            const s: any = await server.simulateTransaction(tx);
             if (s.error) return null;
-            return (s as any).result?.retval;
+            return s.result?.retval;
           }
 
           function parseMap(sv: any): Record<string, any> {
