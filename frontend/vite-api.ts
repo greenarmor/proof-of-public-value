@@ -213,6 +213,102 @@ export function claimRptPlugin(): Plugin {
         }
       });
 
+      // ── Trustline Setup (mobile wallet) ──
+      server.middlewares.use("/api/setup-trustline", async (req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: "Method not allowed" }));
+          return;
+        }
+        try {
+          const body = await readBody(req);
+          const { secretKey } = JSON.parse(body);
+
+          if (!secretKey?.startsWith("S") || secretKey.length < 55) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid secret key required" }));
+            return;
+          }
+
+          const { Keypair, Asset, Operation, TransactionBuilder, Networks } =
+            await import("@stellar/stellar-sdk");
+
+          const HORIZON = "https://horizon-testnet.stellar.org";
+          const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
+          const PPHP_ISSUER = "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO";
+
+          const walletKp = Keypair.fromSecret(secretKey);
+          const walletAddr = walletKp.publicKey();
+
+          const acctR = await fetch(`${HORIZON}/accounts/${walletAddr}`);
+          if (!acctR.ok) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Wallet account not found on testnet" }));
+            return;
+          }
+          const acct = await acctR.json();
+          const balances = acct.balances || [];
+
+          const hasRpt = balances.some(
+            (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+          );
+          const hasPphp = balances.some(
+            (b) => b.asset_code === "pPHP" && b.asset_issuer === PPHP_ISSUER,
+          );
+
+          if (hasRpt && hasPphp) {
+            res.end(JSON.stringify({ success: true, alreadySetup: true, created: [] }));
+            return;
+          }
+
+          const ops: any[] = [];
+          const created: string[] = [];
+          if (!hasRpt) {
+            ops.push(Operation.changeTrust({ asset: new Asset("RPT", RPT_ISSUER) }));
+            created.push("RPT");
+          }
+          if (!hasPphp) {
+            ops.push(Operation.changeTrust({ asset: new Asset("pPHP", PPHP_ISSUER) }));
+            created.push("pPHP");
+          }
+
+          const source = {
+            accountId: () => walletAddr,
+            sequenceNumber: () => acct.sequence,
+            incrementSequenceNumber: () => {},
+          };
+
+          const txB = new TransactionBuilder(source as any, {
+            fee: "100000",
+            networkPassphrase: Networks.TESTNET,
+          });
+          for (const op of ops) txB.addOperation(op);
+          const tx = txB.setTimeout(30).build();
+          tx.sign(walletKp);
+
+          const subR = await fetch(`${HORIZON}/transactions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `tx=${encodeURIComponent(tx.toXDR())}`,
+          });
+          const sub = await subR.json();
+          if (!subR.ok) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({
+              error: sub.extras?.result_codes?.transaction || "Transaction failed",
+            }));
+            return;
+          }
+
+          res.end(JSON.stringify({ success: true, created, txHash: sub.hash }));
+        } catch (err: any) {
+          console.error("Trustline setup error:", err.message);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message?.slice(0, 200) || "Unknown error" }));
+        }
+      });
+
       // ── Report Challenge (prove wallet ownership) ──
       const challenges = new Map<string, { challenge: string; expires: number }>();
       server.middlewares.use("/api/report-challenge", (req, res) => {
@@ -235,7 +331,7 @@ export function claimRptPlugin(): Plugin {
         }
         try {
           const body = await readBody(req);
-          const { pvoId, milestoneId, lat, lng, notes, citizenAddress, challenge, signature } = JSON.parse(body);
+          const { pvoId, milestoneId, lat, lng, citizenAddress, challenge } = JSON.parse(body);
 
           if (!pvoId || !milestoneId || !citizenAddress?.startsWith("G")) {
             res.statusCode = 400;
@@ -260,9 +356,9 @@ export function claimRptPlugin(): Plugin {
           // Verify citizen has RPT
           const rptResp = await fetch(`${HORIZON}/accounts/${citizenAddress}`);
           if (!rptResp.ok) { res.statusCode = 403; res.end(JSON.stringify({ error: "Wallet not found" })); return; }
-          const rptData = await rptResp.json();
+          const rptData: any = await rptResp.json();
           const hasRpt = rptData.balances?.some(
-            (b) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
+            (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1
           );
           if (!hasRpt) { res.statusCode = 403; res.end(JSON.stringify({ error: "Wallet must hold 1+ RPT" })); return; }
 
@@ -286,8 +382,8 @@ export function claimRptPlugin(): Plugin {
             xdr.ScVal.scvU32(milestoneId),
             xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
             xdr.ScVal.scvString(dataHash),
-            xdr.ScVal.scvI128({ hi: 0, lo: latMicro }),
-            xdr.ScVal.scvI128({ hi: 0, lo: lngMicro }),
+            xdr.ScVal.scvI128({ hi: 0, lo: latMicro } as any),
+            xdr.ScVal.scvI128({ hi: 0, lo: lngMicro } as any),
           );
 
           const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -302,7 +398,7 @@ export function claimRptPlugin(): Plugin {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: `Status: ${result.status}` }));
           }
-        } catch (err) {
+        } catch (err: any) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: err.message?.slice(0, 200) }));
         }
