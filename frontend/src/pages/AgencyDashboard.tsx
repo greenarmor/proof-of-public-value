@@ -62,7 +62,7 @@ export function AgencyDashboard() {
 
       {activeTab === "overview" && <ProjectOverview key={refreshKey} onNewPvo={() => setPvoModal(true)} onNewMilestone={(pvoId) => { setPrefillMilestonePvoId(pvoId); setMilestoneModal(true); }} onOpenTender={(pvoId) => { setTenderPvoId(pvoId); setTenderModal(true); }} />}
       <Modal open={pvoModal} onClose={() => setPvoModal(false)} title="Create New PVO">
-        <CreatePVOForm address={address!} onDone={() => setPvoModal(false)} />
+        <CreatePVOForm address={address!} onDone={() => { setPvoModal(false); setRefreshKey(k => k + 1); }} />
       </Modal>
       <Modal open={milestoneModal} onClose={() => { setMilestoneModal(false); setRefreshKey(k => k + 1); }} title="Define Milestone">
         <CreateMilestoneForm address={address!} prefillPvoId={prefillMilestonePvoId || undefined} onDone={() => { setMilestoneModal(false); setPrefillMilestonePvoId(0); setRefreshKey(k => k + 1); }} />
