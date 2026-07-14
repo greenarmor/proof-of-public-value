@@ -176,8 +176,8 @@ export default async function handler(req, res) {
         xdr.ScVal.scvU32(milestoneId || 1),
         xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
         xdr.ScVal.scvString(dataHash),
-        xdr.ScVal.scvI128({ hi: 0, lo: latMicro }),
-        xdr.ScVal.scvI128({ hi: 0, lo: lngMicro }),
+        nativeToScVal(latMicro, { type: "i128" }),
+        nativeToScVal(lngMicro, { type: "i128" }),
       );
 
       const tx = new TransactionBuilder(source as any, {

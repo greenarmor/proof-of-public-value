@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { Keypair, Address, Contract, TransactionBuilder, rpc, xdr } =
+    const { Keypair, Address, Contract, TransactionBuilder, rpc, xdr, nativeToScVal } =
       await import("@stellar/stellar-sdk");
 
     const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
@@ -60,8 +60,8 @@ export default async function handler(req, res) {
       xdr.ScVal.scvU32(milestoneId),
       xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
       xdr.ScVal.scvString(dataHash),
-      xdr.ScVal.scvI128({ hi: 0, lo: latMicro }),
-      xdr.ScVal.scvI128({ hi: 0, lo: lngMicro }),
+      nativeToScVal(latMicro, { type: "i128" }),
+      nativeToScVal(lngMicro, { type: "i128" }),
     );
 
     const source = {
