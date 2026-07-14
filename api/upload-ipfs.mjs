@@ -1,14 +1,11 @@
 /**
  * IPFS Upload API - Vercel Serverless Function
- * Accepts JSON with text content, pins it to Pinata IPFS.
+ * Pins citizen evidence to Pinata IPFS.
  *
  * POST /api/upload-ipfs
  * Body: { content: "..." }
  * Returns: { hash: "Qm...", url: "..." }
  */
-
-import FormData from "form-data";
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -25,20 +22,27 @@ export default async function handler(req, res) {
     const { content } = req.body || {};
     const text = content || "PoPV field evidence";
 
-    const form = new FormData();
-    form.append("file", Buffer.from(text, "utf-8"), {
-      filename: "evidence.txt",
-      contentType: "text/plain",
+    // Pin JSON content - includes text + metadata
+    const body = JSON.stringify({
+      pinataContent: {
+        text: text,
+        timestamp: new Date().toISOString(),
+        type: "field_evidence",
+      },
+      pinataMetadata: {
+        name: "popv-evidence",
+        keyvalues: { app: "popv", type: "field-report" },
+      },
     });
 
-    const pinataResp = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+    const pinataResp = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         pinata_api_key: PINATA_KEY,
         pinata_secret_api_key: PINATA_SECRET,
-        ...form.getHeaders(),
       },
-      body: form,
+      body,
     });
 
     if (!pinataResp.ok) {
