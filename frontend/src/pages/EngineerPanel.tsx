@@ -93,25 +93,19 @@ function PendingReviews({ address }: { address: string }) {
       const count = Number(countResult.result);
       const all: MilestoneData[] = [];
 
-      for (let i = 1; i <= count; i++) {
+      async function processPvo(pvoId: number) {
         try {
-          const pvoResult = await pvoClient.get_pvo({ pvo_id: i });
-          if (!pvoResult.result) continue;
+          const pvoResult = await pvoClient.get_pvo({ pvo_id: pvoId });
+          if (!pvoResult.result) return;
           const pvo = pvoResult.result as any;
           const pvoTitle = pvo.title;
-
-          const mResult = await pvoClient.get_pvo_milestones({ pvo_id: i });
+          const mResult = await pvoClient.get_pvo_milestones({ pvo_id: pvoId });
           const chainMilestones = (mResult.result || []) as any[];
           for (const m of chainMilestones) {
-            // Show milestones that have evidence but aren't engineer-approved yet
             if (!m.engineer_approved && m.submitted_evidence && m.submitted_evidence.length > 0) {
               all.push({
-                id: Number(m.id),
-                pvoId: i,
-                pvoTitle,
-                title: m.title,
-                description: m.description,
-                budget: String(m.budget),
+                id: Number(m.id), pvoId, pvoTitle, title: m.title,
+                description: m.description, budget: String(m.budget),
                 status: statusToString(m.status),
                 submitted_evidence: m.submitted_evidence,
                 engineer_approved: m.engineer_approved,
@@ -119,6 +113,20 @@ function PendingReviews({ address }: { address: string }) {
             }
           }
         } catch {}
+      }
+
+      for (let i = 1; i <= count; i++) {
+        await processPvo(i);
+      }
+      // Scan forward for non-sequential PVO IDs
+      let scanned = 0;
+      let id = count + 1;
+      while (scanned < 15) {
+        try {
+          await processPvo(id);
+          scanned = 0;
+        } catch { scanned++; }
+        id++;
       }
       setMilestones(all);
     } catch (e) {
@@ -378,24 +386,23 @@ function ApprovedMilestones({ address }: { address: string }) {
         const countResult = await client.get_escrow_count();
         const count = Number(countResult.result);
         const all: EscrowData[] = [];
-        for (let i = 1; i <= count; i++) {
+        async function processEscrow(escrowId: number) {
           try {
-            const result = await client.get_escrow({ escrow_id: i });
+            const result = await client.get_escrow({ escrow_id: escrowId });
             if (result.result) {
               const e = result.result as any;
               if (e.conditions.engineer_approval === true) {
                 all.push({
-                  id: Number(e.id),
-                  pvoId: Number(e.pvo_id),
-                  milestoneId: Number(e.milestone_id),
-                  amount: Number(e.amount),
-                  status: statusToString(e.status),
-                  engineerApproval: true,
+                  id: Number(e.id), pvoId: Number(e.pvo_id), milestoneId: Number(e.milestone_id),
+                  amount: Number(e.amount), status: statusToString(e.status), engineerApproval: true,
                 });
               }
             }
           } catch {}
         }
+        for (let i = 1; i <= count; i++) { await processEscrow(i); }
+        let s = 0; let id = count + 1;
+        while (s < 15) { try { await processEscrow(id); s = 0; } catch { s++; } id++; }
         all.sort((a: any, b: any) => b.id - a.id);
         setEscrows(all);
       } catch (e) {
@@ -458,11 +465,21 @@ function AllPVOs() {
         const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await client.get_pvo_count();
         const list: any[] = [];
-        for (let i = 1; i <= Number(cnt.result); i++) {
+        const maxId = Number(cnt.result);
+        for (let i = 1; i <= maxId; i++) {
           try {
             const r = await client.get_pvo({ pvo_id: i });
             if (r.result) list.push(r.result);
           } catch {}
+        }
+        let nc = 0;
+        let si = maxId + 1;
+        while (nc < 15) {
+          try {
+            const r = await client.get_pvo({ pvo_id: si });
+            if (r.result) { list.push(r.result); nc = 0; } else { nc++; }
+          } catch { nc++; }
+          si++;
         }
         setPvos(list);
       } catch (e) {
