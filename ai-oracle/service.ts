@@ -29,7 +29,7 @@
  */
 
 import { execSync } from "child_process";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, join } from "path";
 import { Keypair } from "@stellar/stellar-sdk";
 
@@ -495,6 +495,17 @@ function getGeoRisk(municipality: string): { flood: number; seismic: number; lan
 // ── Citizen Reward Engine ────────────────────────────────
 const rewardedReports = new Set<string>();
 
+// Persist rewarded reports to disk to prevent re-reward on restart
+const REWARDS_FILE = `${HOME}/popv-rewarded-reports.json`;
+try {
+  const saved = readFileSync(REWARDS_FILE, 'utf-8');
+  JSON.parse(saved).forEach((k: string) => rewardedReports.add(k));
+} catch {}
+
+function persistRewards(): void {
+  try { writeFileSync(REWARDS_FILE, JSON.stringify([...rewardedReports])); } catch {}
+}
+
 function getRewardTier(confidenceRating: number): { tier: string; pct: number } {
   if (confidenceRating >= 96) return { tier: "Guardian", pct: 0.00010 };
   if (confidenceRating >= 81) return { tier: "Elite", pct: 0.00008 };
@@ -554,6 +565,7 @@ async function rewardCitizenForReport(
 
     if (result.status === "PENDING" || result.status === "DUPLICATE") {
       rewardedReports.add(rewardKey);
+      persistRewards();
       console.log(`  [Reward] ✅ ${tier} citizen rewarded ${(rewardStroops / 10_000_000).toFixed(2)} pPHP (${(pct * 100).toFixed(3)}% of bid) — report #${reportId}`);
       return true;
     }
