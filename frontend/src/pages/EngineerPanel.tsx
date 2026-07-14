@@ -105,7 +105,7 @@ function PendingReviews({ address }: { address: string }) {
         const mResult = await pvoClient.get_pvo_milestones({ pvo_id: pvoId });
         const chainMilestones = (mResult.result || []) as any[];
         for (const m of chainMilestones) {
-          if (!m.engineer_approved && m.submitted_evidence && m.submitted_evidence.length > 0) {
+          if (m.submitted_evidence && m.submitted_evidence.length > 0) {
             all.push({
               id: Number(m.id), pvoId, pvoTitle, title: m.title,
               description: m.description, budget: String(m.budget),
@@ -168,6 +168,21 @@ function MilestoneReviewCard({ milestone, currency, address, onAction, onApprove
 }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
+
+  // Check escrow state on mount - if already approved, show done immediately
+  useEffect(() => {
+    (async () => {
+      try {
+        const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const escrowsResult = await escrowClient.get_escrows_by_pvo({ pvo_id: milestone.pvoId });
+        const escrows = (escrowsResult.result || []) as any[];
+        const escrow = escrows.find((e: any) => Number(e.milestone_id) === milestone.id);
+        if (escrow?.conditions?.engineer_approval === true) {
+          setTxState("done");
+        }
+      } catch {}
+    })();
+  }, [milestone.pvoId, milestone.id]);
 
   const handleApprove = async () => {
     setTxState("preparing");
