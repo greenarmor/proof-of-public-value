@@ -84,14 +84,14 @@ export function EngineerPanel() {
 
 function PendingReviews({ address, onApproved }: { address: string; onApproved: (m: MilestoneData) => void }) {
   const [milestones, setMilestones] = useState<MilestoneData[]>([]);
-  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
+  const [approvedKeys, setApprovedKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const handleApproved = (pvoId: number, msId: number) => {
+  const markApproved = (pvoId: number, msId: number) => {
     const key = `${pvoId}:${msId}`;
-    setApprovedIds(prev => new Set(prev).add(key));
-    const approved = milestones.find(m => m.pvoId === pvoId && m.id === msId);
-    if (approved) onApproved(approved);
+    setApprovedKeys(prev => [...prev, key]);
+    const m = milestones.find(x => x.pvoId === pvoId && x.id === msId);
+    if (m) onApproved(m);
   };
 
   const load = useCallback(async () => {
@@ -145,7 +145,7 @@ function PendingReviews({ address, onApproved }: { address: string; onApproved: 
 
   useEffect(() => { load(); }, [load]);
 
-  const visible = milestones.filter(m => !approvedIds.has(`${m.pvoId}:${m.id}`));
+  const visible = milestones.filter(m => !approvedKeys.includes(`${m.pvoId}:${m.id}`));
 
   if (loading) return <BlockchainLoader text="Loading milestones and evidence..." />;
 
@@ -164,16 +164,16 @@ function PendingReviews({ address, onApproved }: { address: string; onApproved: 
   return (
     <div className="space-y-4">
       {visible.map(m => (
-        <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} onApproved={handleApproved} />
+        <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} onApproved={markApproved} />
       ))}
     </div>
   );
 }
 
-function MilestoneReviewCard({ milestone, currency, address, onAction, onApproved }: {
-  milestone: MilestoneData; currency: string; address: string; onAction: () => void; onApproved: (pvoId: number, msId: number) => void;
+function MilestoneReviewCard({ milestone, currency, address, onAction, onApproved, readonly }: {
+  milestone: MilestoneData; currency: string; address: string; onAction: () => void; onApproved: (pvoId: number, msId: number) => void; readonly?: boolean;
 }) {
-  const [txState, setTxState] = useState<TxState>("idle");
+  const [txState, setTxState] = useState<TxState>(readonly ? "done" : "idle");
   const [txMsg, setTxMsg] = useState("");
 
   // Check escrow state on mount - if already approved, show done immediately
@@ -456,14 +456,19 @@ function ApprovedMilestones({ address, extraApproved }: { address: string; extra
   return (
     <div className="space-y-3">
       {extraApproved.map((m, idx) => (
-        <div key={`new-${idx}`} className="card p-4 border-green-200 bg-green-50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-green-800">✅ Just Approved</span>
-            <span className="badge-green text-xs">Gate 1</span>
+        <div key={`extra-${idx}`} className="card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="badge-green text-xs">✓ Gate 1 Passed</span>
+            <span className="text-xs text-gray-500">Just approved — awaiting chain sync</span>
           </div>
-          <p className="font-medium text-gray-800">{m.title || `Milestone #${m.id}`}</p>
-          <p className="text-xs text-gray-500 mt-1">PVO: {m.pvoTitle} (#{m.pvoId})</p>
-          <p className="text-xs text-gray-400 mt-0.5">Budget: {currency}{formatBudget(Number(m.budget))}</p>
+          <MilestoneReviewCard 
+            milestone={{...m, engineer_approved: true}} 
+            currency={getCurrency()} 
+            address={address} 
+            onAction={() => {}} 
+            onApproved={() => {}}
+            readonly
+          />
         </div>
       ))}
       {escrows.map(e => (
