@@ -66,27 +66,25 @@ export function ContractorPortal() {
   const confirmRegistration = async () => {
     setConfirming(true);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
       const { signTransaction } = await import("@stellar/freighter-api");
 
-      const server = new rpc.Server(RPC_URL);
-      const account = await server.getAccount(address!);
-      const contract = new Contract(CONTRACT_IDS.reputation);
-      const op = contract.call("register_entity",
-        new Address(address!).toScVal(),
-        xdr.ScVal.scvSymbol("Contractor"),
-      );
-
-      const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
-        .addOperation(op).setTimeout(30).build();
-
-      const prepared = await server.prepareTransaction(tx);
-      const signedResp = await signTransaction(prepared.toXDR(), { networkPassphrase: NETWORK_PASSPHRASE });
-      if (signedResp?.error) throw new Error(signedResp.error.message);
-      const signedTx = TransactionBuilder.fromXDR(signedResp.signedTxXdr, NETWORK_PASSPHRASE);
-      const result = await server.sendTransaction(signedTx);
-      if (result.status === "ERROR") throw new Error("Tx rejected");
-
+      const repClient = new RepClient({
+        contractId: CONTRACT_IDS.reputation,
+        networkPassphrase: NETWORK_PASSPHRASE,
+        rpcUrl: RPC_URL,
+        publicKey: address!,
+      });
+      const tx = await repClient.register_entity({
+        entity: address!,
+        entity_type: { tag: "Contractor", values: void 0 },
+      });
+      await tx.signAndSend({
+        signTransaction: async (txXdr: string) => {
+          const resp = await signTransaction(txXdr, { networkPassphrase: NETWORK_PASSPHRASE });
+          if (resp?.error) throw new Error(resp.error.message);
+          return resp;
+        },
+      } as any);
       setReputation({ reputation_score: 100, completed_projects: 0, success_rate: 100 });
     } catch (e: any) { console.error(e); alert("Confirmation failed: " + (e.message?.slice(0, 80) || "Unknown")); }
     finally { setConfirming(false); }
