@@ -1,26 +1,24 @@
 /**
  * Citizen Report Relay API - Vercel Serverless Function
- * Mobile app sends report data, server signs and submits on-chain.
- * Uses admin secret key server-side only.
+ * Mobile app sends report data + wallet secret key, server
+ * signs transaction with citizen's key and submits on-chain.
  *
  * POST /api/submit-report
- * Body: { pvoId, milestoneId, lat, lng, notes, citizenAddress }
+ * Body: { pvoId, milestoneId, lat, lng, notes, citizenAddress, secretKey, signature, message, ipfsHash }
  */
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { pvoId, milestoneId, lat, lng, notes, citizenAddress, ipfsHash } = req.body || {};
+  const { pvoId, milestoneId, lat, lng, notes, citizenAddress, secretKey, ipfsHash } = req.body || {};
 
   if (!pvoId || !milestoneId || !citizenAddress || !citizenAddress.startsWith("G")) {
     return res.status(400).json({ error: "pvoId, milestoneId, lat, lng, citizenAddress required" });
   }
 
-  const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
-  if (!ADMIN_SECRET) {
-    return res.status(500).json({ error: "Server not configured" });
+  if (!secretKey || !secretKey.startsWith("S") || secretKey.length < 55) {
+    return res.status(400).json({ error: "Valid wallet secret key required to sign the report" });
   }
 
   try {
@@ -33,7 +31,12 @@ export default async function handler(req, res) {
     const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
     const NETWORK = "Test SDF Network ; September 2015";
 
-    // Verify citizen has RPT — prevents random address spoofing
+    const citizenKp = Keypair.fromSecret(secretKey);
+    if (citizenKp.publicKey() !== citizenAddress) {
+      return res.status(401).json({ error: "Secret key does not match citizen address" });
+    }
+
+    // Verify citizen has RPT
     const rptResp = await fetch(`${HORIZON}/accounts/${citizenAddress}`);
     if (!rptResp.ok) return res.status(403).json({ error: "Wallet not found" });
     const rptData = await rptResp.json();
@@ -42,17 +45,9 @@ export default async function handler(req, res) {
     );
     if (!hasRpt) return res.status(403).json({ error: "Wallet must hold 1+ RPT to submit reports" });
 
-    // Verify challenge (simplified: server stores challenge per address)
-    // Full Ed25519 verification would need stellar-sdk on server
-    if (challenge && !challenge.startsWith("popv-report-")) {
-      return res.status(401).json({ error: "Invalid challenge — wallet ownership not proven" });
-    }
-
-    const adminKp = Keypair.fromSecret(ADMIN_SECRET);
     const server = new rpc.Server(RPC_URL);
-    const account = await server.getAccount(adminKp.publicKey());
+    const account = await server.getAccount(citizenAddress);
 
-    // Use IPFS hash if provided, otherwise generate a placeholder
     const dataHash = ipfsHash || `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
     const latMicro = Math.round((lat || 0) * 1_000_000);
     const lngMicro = Math.round((lng || 0) * 1_000_000);
@@ -69,13 +64,20 @@ export default async function handler(req, res) {
       xdr.ScVal.scvI128({ hi: 0, lo: lngMicro }),
     );
 
-    const tx = new TransactionBuilder(account, {
+    const source = {
+      accountId: () => citizenAddress,
+      sequenceNumber: () => account.sequenceNumber(),
+      incrementSequenceNumber: () => {},
+    };
+
+    const tx = new TransactionBuilder(source, {
       fee: "100000",
       networkPassphrase: NETWORK,
     }).addOperation(op).setTimeout(30).build();
 
     const prepared = await server.prepareTransaction(tx);
-    prepared.sign(adminKp);
+    prepared.sign(citizenKp);
+
     const result = await server.sendTransaction(prepared);
 
     if (result.status === "PENDING" || result.status === "DUPLICATE") {
@@ -83,6 +85,6 @@ export default async function handler(req, res) {
     }
     return res.status(500).json({ error: `Status: ${result.status}` });
   } catch (err) {
-    return res.status(500).json({ error: err.message?.slice(0, 200) });
+    return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
   }
 }
