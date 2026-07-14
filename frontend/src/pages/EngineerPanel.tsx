@@ -94,25 +94,23 @@ function PendingReviews({ address }: { address: string }) {
       const all: MilestoneData[] = [];
 
       async function processPvo(pvoId: number) {
-        try {
-          const pvoResult = await pvoClient.get_pvo({ pvo_id: pvoId });
-          if (!pvoResult.result) return;
-          const pvo = pvoResult.result as any;
-          const pvoTitle = pvo.title;
-          const mResult = await pvoClient.get_pvo_milestones({ pvo_id: pvoId });
-          const chainMilestones = (mResult.result || []) as any[];
-          for (const m of chainMilestones) {
-            if (!m.engineer_approved && m.submitted_evidence && m.submitted_evidence.length > 0) {
-              all.push({
-                id: Number(m.id), pvoId, pvoTitle, title: m.title,
-                description: m.description, budget: String(m.budget),
-                status: statusToString(m.status),
-                submitted_evidence: m.submitted_evidence,
-                engineer_approved: m.engineer_approved,
-              });
-            }
+        const pvoResult = await pvoClient.get_pvo({ pvo_id: pvoId });
+        if (!pvoResult.result) throw new Error("not found");
+        const pvo = pvoResult.result as any;
+        const pvoTitle = pvo.title;
+        const mResult = await pvoClient.get_pvo_milestones({ pvo_id: pvoId });
+        const chainMilestones = (mResult.result || []) as any[];
+        for (const m of chainMilestones) {
+          if (!m.engineer_approved && m.submitted_evidence && m.submitted_evidence.length > 0) {
+            all.push({
+              id: Number(m.id), pvoId, pvoTitle, title: m.title,
+              description: m.description, budget: String(m.budget),
+              status: statusToString(m.status),
+              submitted_evidence: m.submitted_evidence,
+              engineer_approved: m.engineer_approved,
+            });
           }
-        } catch {}
+        }
       }
 
       for (let i = 1; i <= count; i++) {
@@ -387,18 +385,15 @@ function ApprovedMilestones({ address }: { address: string }) {
         const count = Number(countResult.result);
         const all: EscrowData[] = [];
         async function processEscrow(escrowId: number) {
-          try {
-            const result = await client.get_escrow({ escrow_id: escrowId });
-            if (result.result) {
-              const e = result.result as any;
-              if (e.conditions.engineer_approval === true) {
-                all.push({
-                  id: Number(e.id), pvoId: Number(e.pvo_id), milestoneId: Number(e.milestone_id),
-                  amount: Number(e.amount), status: statusToString(e.status), engineerApproval: true,
-                });
-              }
-            }
-          } catch {}
+          const result = await client.get_escrow({ escrow_id: escrowId });
+          if (!result.result) throw new Error("not found");
+          const e = result.result as any;
+          if (e.conditions.engineer_approval === true) {
+            all.push({
+              id: Number(e.id), pvoId: Number(e.pvo_id), milestoneId: Number(e.milestone_id),
+              amount: Number(e.amount), status: statusToString(e.status), engineerApproval: true,
+            });
+          }
         }
         for (let i = 1; i <= count; i++) { await processEscrow(i); }
         let s = 0; let id = count + 1;
