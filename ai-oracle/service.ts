@@ -278,6 +278,7 @@ async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Pr
   try {
     const { Keypair, Contract, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
     const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
+    const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
     const server = new rpc.Server(RPC_URL);
     const account = await server.getAccount(kp.publicKey());
     const contract = new Contract(contractId);
@@ -287,11 +288,19 @@ async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Pr
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(kp);
     const result = await server.sendTransaction(prepared);
+    if (result.status !== "PENDING" && result.status !== "DUPLICATE") {
+      console.error(`  [${method}] Tx failed: ${result.status} ${result.hash?.slice(0,10)??""}`);
+    }
     return result.status === "PENDING" || result.status === "DUPLICATE";
   } catch (e: any) {
-    console.error(`  [SDK] ${method} failed: ${e.message?.slice(0, 100)}`);
+    console.error(`  [${method}] failed: ${e.message?.slice(0, 100)}`);
     return false;
   }
+}
+
+// SDK-based submission helper for ai_oracle contract
+async function sdkSubmitOracle(method: string, scvArgs: any[]): Promise<boolean> {
+  return sdkInvoke(CONTRACT_IDS.ai_oracle, method, scvArgs);
 }
 
 function cli(cmd: string): string {
@@ -533,55 +542,89 @@ async function rewardCitizenForReport(
 
 // ── On-Chain: Escrow Gate 5 ──────────────────────────────
 function submitEscrowGate5(escrowId: number, passed: boolean): void {
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.escrow} -- ai_validate --auditor ${AI_AUDITOR_PUBLIC} --escrow_id ${escrowId} --passed ${passed}`;
-
+  const { Address, xdr } = require("@stellar/stellar-sdk");
   console.log(`  [Gate 5] Escrow #${escrowId}: ai_validate passed=${passed}`);
-  const result = cli(cmd);
-  if (result && !result.includes("error")) {
-    console.log(`  [Gate 5] Submitted on-chain`);
-  } else {
-    console.error(`  [Gate 5] Failed: ${result.slice(0, 200)}`);
-  }
+  sdkInvoke(CONTRACT_IDS.escrow, "ai_validate", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(escrowId),
+    xdr.ScVal.scvBool(passed),
+  ]).then(ok => {
+    if (ok) { console.log(`  [Gate 5] Submitted on-chain`); }
+    else { console.error(`  [Gate 5] Failed`); }
+  });
 }
 
 // ── On-Chain: AI Oracle Submissions ─────────────────────
 function submitFraudDetection(pvoId: number, riskScore: number, indicators: string[], confidence: number, evidenceHash: string): boolean {
-  const indStr = JSON.stringify(indicators);
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- submit_fraud_detection --auditor ${AI_AUDITOR_PUBLIC} --pvo_id ${pvoId} --risk_score ${riskScore} --indicators '${indStr}' --confidence ${confidence} --evidence_hash "${evidenceHash.slice(0, 32)}"`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("submit_fraud_detection", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(pvoId),
+    xdr.ScVal.scvU32(riskScore),
+    xdr.ScVal.scvString(JSON.stringify(indicators).slice(0,200)),
+    xdr.ScVal.scvU32(confidence),
+    xdr.ScVal.scvString(evidenceHash.slice(0,32)),
+  ]);
 }
 
 function submitRiskPrediction(contractor: string, delayProb: number, overrunProb: number, riskCategory: number, confidence: number): boolean {
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- submit_risk_prediction --auditor ${AI_AUDITOR_PUBLIC} --contractor ${contractor} --delay_probability ${delayProb} --overrun_probability ${overrunProb} --risk_category ${riskCategory} --confidence ${confidence}`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("submit_risk_prediction", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    new Address(contractor).toScVal(),
+    xdr.ScVal.scvU32(delayProb),
+    xdr.ScVal.scvU32(overrunProb),
+    xdr.ScVal.scvU32(riskCategory),
+    xdr.ScVal.scvU32(confidence),
+  ]);
 }
 
 function submitImageVerification(evidenceId: number, progressPercent: number, authenticityScore: number, summary: string): boolean {
-  const safeSummary = summary.replace(/["\\]/g, "").slice(0, 100);
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- submit_image_verification --auditor ${AI_AUDITOR_PUBLIC} --evidence_id ${evidenceId} --progress_percent ${progressPercent} --authenticity_score ${authenticityScore} --summary "${safeSummary}"`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("submit_image_verification", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(evidenceId),
+    xdr.ScVal.scvU32(progressPercent),
+    xdr.ScVal.scvU32(authenticityScore),
+    xdr.ScVal.scvString(summary.slice(0,200)),
+  ]);
 }
 
 function submitDigitalTwin(pvoId: number, expectedCost: number, materialIdx: number, laborIdx: number, deviation: boolean): boolean {
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- update_digital_twin --auditor ${AI_AUDITOR_PUBLIC} --pvo_id ${pvoId} --expected_cost ${expectedCost} --material_cost_index ${materialIdx} --labor_cost_index ${laborIdx} --deviation_alert ${deviation}`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("update_digital_twin", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(pvoId),
+    xdr.ScVal.scvU32(expectedCost),
+    xdr.ScVal.scvU32(materialIdx),
+    xdr.ScVal.scvU32(laborIdx),
+    xdr.ScVal.scvBool(deviation),
+  ]);
 }
 
 function submitGeoRisk(pvoId: number, region: string, flood: number, seismic: number, landslide: number): boolean {
-  const safeRegion = region.replace(/["\\]/g, "").slice(0, 50);
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- submit_geo_risk --auditor ${AI_AUDITOR_PUBLIC} --pvo_id ${pvoId} --region "${safeRegion}" --flood_risk ${flood} --seismic_risk ${seismic} --landslide_risk ${landslide}`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("submit_geo_risk", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(pvoId),
+    xdr.ScVal.scvString(region.slice(0,50)),
+    xdr.ScVal.scvU32(flood),
+    xdr.ScVal.scvU32(seismic),
+    xdr.ScVal.scvU32(landslide),
+  ]);
 }
 
 function submitGpsValidation(evidenceId: number, expectedLat: number, expectedLon: number, reportedLat: number, reportedLon: number, maxDistM: number): boolean {
-  const cmd = `contract invoke --source ${AI_SOURCE_KEY} --network testnet --id ${CONTRACT_IDS.ai_oracle} -- submit_gps_validation --auditor ${AI_AUDITOR_PUBLIC} --evidence_id ${evidenceId} --expected_lat ${Math.round(expectedLat * 1_000_000)} --expected_lon ${Math.round(expectedLon * 1_000_000)} --reported_lat ${Math.round(reportedLat * 1_000_000)} --reported_lon ${Math.round(reportedLon * 1_000_000)} --max_distance_m ${maxDistM}`;
-  const result = cli(cmd);
-  return !!(result && !result.includes("error"));
+  const { Address, xdr, nativeToScVal } = require("@stellar/stellar-sdk");
+  return sdkSubmitOracle("submit_gps_validation", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(evidenceId),
+    nativeToScVal(Math.round(expectedLat*1_000_000), {type:"i128"}),
+    nativeToScVal(Math.round(expectedLon*1_000_000), {type:"i128"}),
+    nativeToScVal(Math.round(reportedLat*1_000_000), {type:"i128"}),
+    nativeToScVal(Math.round(reportedLon*1_000_000), {type:"i128"}),
+    xdr.ScVal.scvU32(maxDistM),
+  ]);
 }
 
 // ── Check if already submitted ──────────────────────────
