@@ -262,7 +262,8 @@ const AI_AUDITOR_SECRET = getSecretKey();
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
 const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
-const AI_SOURCE_KEY = process.env.AI_SOURCE_KEY ?? "ai_auditor_role";
+// Use raw secret key as --source so signing matches auditor for require_auth()
+const AI_SOURCE_KEY = AI_AUDITOR_SECRET;
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
 const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
