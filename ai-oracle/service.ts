@@ -525,7 +525,17 @@ async function rewardCitizenForReport(
     const { Keypair, Address, Contract, TransactionBuilder, rpc, ScInt } = await import("@stellar/stellar-sdk");
     const adminKp = Keypair.fromSecret(ADMIN_SECRET);
     const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
-    const account = await server.getAccount(adminKp.publicKey());
+    // Retry getAccount up to 3 times for RPC rate limit resilience
+    let account: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        account = await server.getAccount(adminKp.publicKey());
+        break;
+      } catch {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    if (!account) { console.log("  [Reward] Admin account not reachable, skipping"); return false; }
 
     const tokenContract = new Contract(PPHP_CONTRACT);
     const mintOp = tokenContract.call(
