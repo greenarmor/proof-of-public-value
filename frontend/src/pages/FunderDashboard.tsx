@@ -909,7 +909,7 @@ function DonorCommitmentsTab() {
   }, [refreshKey]);
 
   const [pvoBudgets, setPvoBudgets] = useState<Record<number, string>>({});
-  useEffect(() => { (async () => { try { const { Client } = await import("../contracts/pvo_core/src"); const pc = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; for(let i=1;i<=Number(cnt.result);i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} setPvoBudgets(b); }catch{}})(); }, []);
+  useEffect(() => { (async () => { try { const { Client } = await import("../contracts/pvo_core/src"); const pc = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; const maxId = Number(cnt.result); for(let i=1;i<=maxId;i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} let consecutiveNones = 0; let scanId = maxId + 1; while (consecutiveNones < 15) { try { const r=await pc.get_pvo({pvo_id:scanId}); if(r.result) { b[r.result.id]=String(r.result.total_budget); consecutiveNones=0; } else { consecutiveNones++; } } catch { consecutiveNones++; } scanId++; } setPvoBudgets(b); }catch{}})(); }, []);
 
   const statusTag = (s: any): string => {
     if (s && typeof s === "object" && s.tag) return s.tag;

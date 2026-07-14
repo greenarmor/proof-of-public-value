@@ -150,7 +150,7 @@ function CitizenBrowse() {
   const { address } = useWallet();
   const [reports,setReports]=useState<any[]>([]);const[loading,setLoading]=useState(true);const[verifying,setVerifying]=useState<number|null>(null);const[vmsg,setVmsg]=useState<string|null>(null);
   useEffect(()=>{(async()=>{
-    try{const c=new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL});const cnt=await c.get_report_count();const items:any[]=[];for(let i=1;i<=Number(cnt.result)&&i<=20;i++){try{const r=await c.get_report({report_id:i});if(r.result)items.push(r.result)}catch{}}setReports(items)}catch(e){console.error(e)}finally{setLoading(false)}})()},[]);
+    try{const c=new CommunityOracleClient({contractId:CONTRACT_IDS.community_oracle,networkPassphrase:NETWORK_PASSPHRASE,rpcUrl:RPC_URL});const cnt=await c.get_report_count();const items:any[]=[];const maxId=Number(cnt.result);for(let i=1;i<=maxId;i++){try{const r=await c.get_report({report_id:i});if(r.result)items.push(r.result)}catch{}}let cn=0;let si=maxId+1;while(cn<15){try{const r=await c.get_report({report_id:si});if(r.result){items.push(r.result);cn=0}else{cn++}}catch{cn++}si++}setReports(items)}catch(e){console.error(e)}finally{setLoading(false)}})()},[]);
 
   const doVerify = async (reportId: number, weight: number) => {
     if (!address) return;
