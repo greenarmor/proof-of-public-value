@@ -675,6 +675,14 @@ async function buildProvenance(
     const esc = readEscrow(i);
     if (esc) escrows.push(esc);
   }
+  // Scan forward for non-sequential escrow IDs
+  let escNones = 0;
+  let escId = escrowCount + 1;
+  while (escNones < 15) {
+    const esc = readEscrow(escId);
+    if (esc) { escrows.push(esc); escNones = 0; } else { escNones++; }
+    escId++;
+  }
 
   let lastLedger = existingStore?.lastLedger ?? 0;
   let allEvents = existingStore?.events ?? [];
@@ -858,6 +866,63 @@ async function buildProvenance(
     console.log(
       `  ✅ PVO #${i}: ${pvo.title} - ${milestones.length} milestones, ${timeline.length} timeline entries`
     );
+  }
+
+  // Scan forward for PVOs with IDs beyond count (from failed tx gaps)
+  let consecutiveNones = 0;
+  let scanId = pvoCount + 1;
+  while (consecutiveNones < 15) {
+    const pvo = readPVO(scanId);
+    if (!pvo) {
+      consecutiveNones++;
+      scanId++;
+      continue;
+    }
+    consecutiveNones = 0;
+
+    const milestonesRaw = readPVOMilestones(scanId);
+    const auditEntries = readAuditEntries(scanId);
+    const milestones: MilestoneProvenance[] = milestonesRaw.map((m: any) =>
+      buildMilestoneProvenance(m, scanId, escrows, allEvents)
+    );
+    const timeline = buildTimeline(scanId, milestones, allEvents, auditEntries);
+    const totalEscrowed = milestones.reduce((s, m) => s + (m.escrow?.amount ?? 0), 0);
+    const totalFunded = milestones.filter((m) => m.escrow?.funded).length;
+    const totalReleased = milestones.reduce((s, m) => s + (m.escrow?.released ? m.escrow.amount : 0), 0);
+    const gatesPassed = milestones.reduce((s, m) => s + m.gates.filter((g) => g.status === "passed").length, 0);
+    const gatesTotal = milestones.reduce((s, m) => s + m.gates.length, 0);
+    const evidenceCount = milestones.reduce((s, m) => s + m.evidence_count, 0);
+    let computedScore = 0;
+    if (milestones.length > 0) {
+      let totalPct = 0;
+      for (const m of milestones) {
+        if (m.escrow) {
+          let passed = 0;
+          for (const g of m.gates) { if (g.status === "passed") passed++; }
+          totalPct += (passed / 5) * 100;
+        }
+      }
+      computedScore = Math.round(totalPct / milestones.length);
+    }
+    pvOs.push({
+      pvo_id: Number(pvo.id ?? scanId),
+      title: pvo.title ?? `PVO #${scanId}`,
+      department: pvo.department ?? "Unknown",
+      municipality: pvo.municipality ?? "Unknown",
+      description: pvo.description ?? "",
+      total_budget: toPesos(Number(pvo.total_budget ?? 0)),
+      status: extractStatus(pvo.status),
+      funding_agency: extractAddress(pvo.funding_agency) ?? "",
+      contractor: extractAddress(pvo.contractor),
+      project_manager: extractAddress(pvo.project_manager),
+      fund_source: typeof pvo.fund_source === "object" ? extractStatus(pvo.fund_source) : pvo.fund_source ?? "Unknown",
+      public_value_score: computedScore,
+      contractor_assigned: pvo.contractor_assigned ?? false,
+      milestones, timeline,
+      stats: { total_escrowed: totalEscrowed, total_released: totalReleased, total_funded: totalFunded, gates_passed: gatesPassed, gates_total: gatesTotal, evidence_submitted: evidenceCount },
+    });
+    console.log(`  ✅ PVO #${scanId}: ${pvo.title} - ${milestones.length} milestones, ${timeline.length} timeline entries`);
+    scanId++;
   }
 
   const store: ProvenanceStore = {
