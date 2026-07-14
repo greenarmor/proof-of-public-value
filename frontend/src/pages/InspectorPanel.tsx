@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BlockchainLoader } from "../components/BlockchainLoader";
+import { IpfsLink } from "../components/IpfsLink";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
@@ -145,6 +146,9 @@ function AllProjects({ address }: { address: string }) {
                     <div key={i} className="bg-slate-50 rounded p-2">
                       <span className="font-medium text-slate-700">{statusToString(ev.evidence_type)}</span>
                       <span className="text-slate-400 ml-1">{ev.verified ? "✓" : "○"}</span>
+                      {ev.data_hash && ev.data_hash.length > 10 && (
+                        <div className="mt-1"><IpfsLink hash={ev.data_hash} short /></div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -535,6 +539,7 @@ function EvidenceHistory({ address }: { address: string }) {
             <th className="text-left px-4 py-3 font-medium text-slate-500">Milestone</th>
             <th className="text-left px-4 py-3 font-medium text-slate-500">Type</th>
             <th className="text-left px-4 py-3 font-medium text-slate-500">Submitter</th>
+            <th className="text-left px-4 py-3 font-medium text-slate-500">Evidence</th>
             <th className="text-left px-4 py-3 font-medium text-slate-500">Status</th>
           </tr>
         </thead>
@@ -546,6 +551,7 @@ function EvidenceHistory({ address }: { address: string }) {
               <td className="px-4 py-3 text-slate-900">{ev.milestoneTitle}<br /><span className="text-xs text-slate-400">MS #{ev.milestoneId}</span></td>
               <td className="px-4 py-3"><span className="badge badge-blue">{ev.type}</span></td>
               <td className="px-4 py-3 font-mono text-xs"><WalletAddress addr={ev.submitter} chars={4}/></td>
+              <td className="px-4 py-3"><IpfsLink hash={ev.hash} short /></td>
               <td className="px-4 py-3">
                 <span className={`badge ${ev.verified ? "badge-green" : "badge-amber"}`}>
                   {ev.verified ? "Verified" : "Pending"}
