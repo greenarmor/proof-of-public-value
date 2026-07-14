@@ -1,9 +1,9 @@
 /**
  * IPFS Upload API - Vercel Serverless Function
- * Pins citizen evidence to Pinata IPFS.
+ * Pins citizen evidence (text or base64 image) to Pinata IPFS via pinJSONToIPFS.
  *
  * POST /api/upload-ipfs
- * Body: { content: "..." }
+ * Body: { content?: "...", image?: "base64..." }
  * Returns: { hash: "Qm...", url: "..." }
  */
 export default async function handler(req, res) {
@@ -14,33 +14,21 @@ export default async function handler(req, res) {
   const PINATA_KEY = process.env.PINATA_API_KEY || process.env.VITE_PINATA_API_KEY;
   const PINATA_SECRET = process.env.PINATA_SECRET || process.env.VITE_PINATA_SECRET;
 
-  // Debug: show what vars are available
   if (!PINATA_KEY || !PINATA_SECRET) {
-    return res.status(500).json({
-      error: "Pinata API keys not configured",
-      debug: {
-        has_pinata_key: !!process.env.PINATA_API_KEY,
-        has_pinata_secret: !!process.env.PINATA_SECRET,
-        has_vite_key: !!process.env.VITE_PINATA_API_KEY,
-        has_vite_secret: !!process.env.VITE_PINATA_SECRET,
-        env_keys: Object.keys(process.env).filter(k => k.toLowerCase().includes('pinata') || k.toLowerCase().includes('api_key') || k.toLowerCase().includes('secret')).slice(0, 10),
-      }
-    });
+    return res.status(500).json({ error: "Pinata API keys not configured" });
   }
 
   try {
-    const { content } = req.body || {};
-    const text = content || "PoPV field evidence";
+    const { content, image } = req.body || {};
 
-    // Pin JSON content - includes text + metadata
+    const pinataContent = image && image.length > 100
+      ? { image, contentType: "image/jpeg", timestamp: new Date().toISOString(), type: "field_evidence" }
+      : { text: content || "PoPV field evidence", timestamp: new Date().toISOString(), type: "field_evidence" };
+
     const body = JSON.stringify({
-      pinataContent: {
-        text: text,
-        timestamp: new Date().toISOString(),
-        type: "field_evidence",
-      },
+      pinataContent,
       pinataMetadata: {
-        name: "popv-evidence",
+        name: image ? "popv-photo" : "popv-evidence",
         keyvalues: { app: "popv", type: "field-report" },
       },
     });
