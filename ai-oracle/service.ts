@@ -1073,8 +1073,8 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     console.log(`  [Geo Risk] Already exists, skipping`);
   }
 
-  // 2. Submit Digital Twin (updates every scan)
-  if (true) {
+  // 2. Submit Digital Twin (once per PVO)
+  if (!hasDigitalTwin(pvoId)) {
     const budgetForTwin = caseFile.actualBudget
       ?? milestones.reduce((s: number, m: any) => s + Number(m.budget || 0), 0);
     const totalBudgetPesos = budgetForTwin / 10_000_000;
