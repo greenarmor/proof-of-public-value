@@ -70,13 +70,22 @@ function AllProjects({ address }: { address: string }) {
       setLoading(true);
       try {
         const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const cnt = await client.get_pvo_count();
+        const cnt = Number((await client.get_pvo_count()).result);
         const list: any[] = [];
-        for (let i = 1; i <= Number(cnt.result); i++) {
+        for (let i = 1; i <= cnt; i++) {
           try {
             const r = await client.get_pvo({ pvo_id: i });
             if (r.result) list.push(r.result);
           } catch {}
+        }
+        let scanned = 0;
+        let id = cnt + 1;
+        while (scanned < 15) {
+          try {
+            const r = await client.get_pvo({ pvo_id: id });
+            if (r.result) { list.push(r.result); scanned = 0; } else { scanned++; }
+          } catch { scanned++; }
+          id++;
         }
         setPvos(list);
       } catch (e) { console.error(e); }
@@ -204,10 +213,20 @@ function SubmitInspection({ address, onDone }: { address: string; onDone: () => 
         const cnt = await client.get_pvo_count();
         const list: { id: number; title: string }[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {
+          const pvoId = i;
           try {
             const r = await client.get_pvo({ pvo_id: i });
             if (r.result) list.push({ id: Number(r.result.id), title: r.result.title });
           } catch {}
+        }
+        let scanned = 0;
+        let id = Number(cnt.result) + 1;
+        while (scanned < 15) {
+          try {
+            const r = await client.get_pvo({ pvo_id: id });
+            if (r.result) { list.push({ id: Number(r.result.id), title: r.result.title }); scanned = 0; } else { scanned++; }
+          } catch { scanned++; }
+          id++;
         }
         setPvos(list);
       } catch {}
@@ -361,6 +380,7 @@ function MyReports({ address }: { address: string }) {
         const allReports: any[] = [];
 
         for (let i = 1; i <= Number(cnt.result); i++) {
+          const pvoId = i;
           try {
             const pvoResult = await client.get_pvo({ pvo_id: i });
             if (!pvoResult.result) continue;
@@ -454,6 +474,7 @@ function EvidenceHistory({ address }: { address: string }) {
         const items: any[] = [];
 
         for (let i = 1; i <= Number(cnt.result); i++) {
+          const pvoId = i;
           try {
             const pvoResult = await client.get_pvo({ pvo_id: i });
             if (!pvoResult.result) continue;
