@@ -264,6 +264,24 @@ const STELLAR = `${HOME}/.local/bin/stellar`;
 const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
 // Use raw secret key as --source so signing matches auditor for require_auth()
 const AI_SOURCE_KEY = AI_AUDITOR_SECRET;
+
+// In-memory cache to prevent re-submitting identical data
+const submittedCache: Record<string, string> = {};
+
+function cacheKey(prefix: string, id: string | number): string {
+  return `${prefix}:${id}`;
+}
+
+function shouldSubmit(key: string, data: string): boolean {
+  const prev = submittedCache[key];
+  if (prev === data) return false;
+  submittedCache[key] = data;
+  return true;
+}
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
+const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
+const AI_SOURCE_KEY = AI_AUDITOR_SECRET;
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
 const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
@@ -1204,10 +1222,16 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
 
     console.log(`  [Risk] Contractor: ${contractor.slice(0, 12)}... delay=${delayProb}% overrun=${overrunProb}% cat=${riskCat}`);
     console.log(`  [Risk] ${factors.length} factors: ${factors.slice(0, 5).join("; ")}${factors.length > 5 ? ` (+${factors.length - 5} more)` : ""}`);
-    if (submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid)) {
-      console.log(`  [Risk] Submitted`);
+    const riskKey = cacheKey("risk", `${contractor}:${pvoId}`);
+    const riskData = `${delayProb}:${overrunProb}:${riskCat}:${confid}:${factors.join("|")}`;
+    if (shouldSubmit(riskKey, riskData)) {
+      if (submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid)) {
+        console.log(`  [Risk] Submitted`);
+      } else {
+        console.error(`  [Risk] Failed`);
+      }
     } else {
-      console.error(`  [Risk] Failed`);
+      console.log(`  [Risk] Unchanged, skipped`);
     }
   }
 
@@ -1267,11 +1291,19 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
           adjustedAuth = Math.max(0, adjustedAuth);
           const summary = `Evidence: ${evType || "Unknown"} for milestone "${m.title || ""}". IPFS: ${ipfsResult.type} ${ipfsResult.details}. ${ipfsResult.flags.length > 0 ? "Flags: " + ipfsResult.flags.join(", ") : "Clean."} Auth: ${adjustedAuth}%`;
           console.log(`  [IPFS] Evidence #${ev.id}: type=${ipfsResult.type} size=${(ipfsResult.size / 1024).toFixed(1)}KB flags=${ipfsResult.flags.join(",") || "none"} auth=${adjustedAuth}%`);
-          submitImageVerification(Number(ev.id), progress, adjustedAuth, summary);
+          const imgKey = cacheKey("image", ev.id);
+          const imgData = `${progress}:${adjustedAuth}`;
+          if (shouldSubmit(imgKey, imgData)) {
+            submitImageVerification(Number(ev.id), progress, adjustedAuth, summary);
+          } else { console.log(`  [Image] Ev #${ev.id}: Unchanged, skipped`); }
         } else {
           const summary = `Evidence: ${evType || "Unknown"} for milestone "${m.title || ""}". Metadata length: ${metaLen} chars. Verified: ${ev.verified ? "yes" : "no"}.`;
           console.log(`  [Image] Evidence #${ev.id} (${evType}): progress=${progress}% auth=${authenticity}%`);
-          submitImageVerification(Number(ev.id), progress, authenticity, summary);
+          const imgKey = cacheKey("image", ev.id);
+          const imgData = `${progress}:${authenticity}`;
+          if (shouldSubmit(imgKey, imgData)) {
+            submitImageVerification(Number(ev.id), progress, authenticity, summary);
+          } else { console.log(`  [Image] Ev #${ev.id}: Unchanged, skipped`); }
         }
       }
     }
@@ -1325,16 +1357,28 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
       const hash = `${pvoId}-${milestoneId}-${Date.now()}`;
 
       console.log(`  [Fraud] PVO #${pvoId}: score=${finalRiskScore} (base=${result.riskScore} +forensic=${forensicRiskAdjust}) indicators=${indicators.join(",")}`);
-      if (submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash)) {
-        console.log(`  [Fraud] Submitted on-chain`);
+      const fraudKey = cacheKey("fraud", pvoId);
+      const fraudData = `${finalRiskScore}:${confidence}:${indicators.join(",")}`;
+      if (shouldSubmit(fraudKey, fraudData)) {
+        if (submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash)) {
+          console.log(`  [Fraud] Submitted on-chain`);
+        } else {
+          console.error(`  [Fraud] Failed to submit`);
+        }
       } else {
-        console.error(`  [Fraud] Failed to submit`);
+        console.log(`  [Fraud] Unchanged, skipped`);
       }
 
       // 7. Submit GPS Validation
       if (gpsEvidenceId !== null && evidence.gps_lat !== null && pvoGps) {
         console.log(`  [GPS] Evidence #${gpsEvidenceId}: reported=[${gpsReportedLat},${gpsReportedLng}] expected=[${pvoGps.lat},${pvoGps.lng}]`);
-        submitGpsValidation(gpsEvidenceId, pvoGps.lat, pvoGps.lng, gpsReportedLat, gpsReportedLng, 30000);
+        const gpsKey = cacheKey("gps", gpsEvidenceId);
+        const gpsData = `${gpsReportedLat}:${gpsReportedLng}:${pvoGps.lat}:${pvoGps.lng}`;
+        if (shouldSubmit(gpsKey, gpsData)) {
+          submitGpsValidation(gpsEvidenceId, pvoGps.lat, pvoGps.lng, gpsReportedLat, gpsReportedLng, 30000);
+        } else {
+          console.log(`  [GPS] Unchanged, skipped`);
+        }
       }
     }
   }
