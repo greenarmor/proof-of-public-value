@@ -190,6 +190,13 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
         return;
       }
 
+      // Guard: if already approved on-chain, skip
+      if (escrow.conditions?.engineer_approval === true) {
+        setTxState("done");
+        setTxMsg("Already approved on-chain.");
+        return;
+      }
+
       const escrowId = Number(escrow.id);
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
