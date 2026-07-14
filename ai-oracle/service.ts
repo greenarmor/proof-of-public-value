@@ -281,9 +281,6 @@ function shouldSubmit(key: string, data: string): boolean {
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
 const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
-const AI_SOURCE_KEY = AI_AUDITOR_SECRET;
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
-const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
 const opts = {
   env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` },
