@@ -114,7 +114,7 @@ function PendingReviews({ address }: { address: string }) {
       }
 
       for (let i = 1; i <= count; i++) {
-        await processPvo(i);
+        try { await processPvo(i); } catch {}
       }
       // Scan forward for non-sequential PVO IDs
       let scanned = 0;
