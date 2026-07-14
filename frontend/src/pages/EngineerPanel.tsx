@@ -85,6 +85,10 @@ function PendingReviews({ address }: { address: string }) {
   const [milestones, setMilestones] = useState<MilestoneData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const handleApproved = (pvoId: number, msId: number) => {
+    setMilestones(prev => prev.filter(m => !(m.pvoId === pvoId && m.id === msId)));
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -153,14 +157,14 @@ function PendingReviews({ address }: { address: string }) {
   return (
     <div className="space-y-4">
       {milestones.map(m => (
-        <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} />
+        <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} onApproved={handleApproved} />
       ))}
     </div>
   );
 }
 
-function MilestoneReviewCard({ milestone, currency, address, onAction }: {
-  milestone: MilestoneData; currency: string; address: string; onAction: () => void;
+function MilestoneReviewCard({ milestone, currency, address, onAction, onApproved }: {
+  milestone: MilestoneData; currency: string; address: string; onAction: () => void; onApproved: (pvoId: number, msId: number) => void;
 }) {
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
@@ -221,7 +225,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction }: {
 
       setTxState("done");
       setTxMsg("Engineer approved on escrow. Gate 1 passed!");
-      setTimeout(() => onAction(), 3000);
+      onApproved(milestone.pvoId, milestone.id);
     } catch (err: any) {
       setTxState("error");
       setTxMsg(err.message?.slice(0, 150) || "Transaction failed");
