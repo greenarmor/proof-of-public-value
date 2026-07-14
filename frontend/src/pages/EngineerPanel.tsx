@@ -136,9 +136,7 @@ function PendingReviews({ address }: { address: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) {
-    return <div className="space-y-4">{[1,2].map(i => <div key={i} className="card p-5 skeleton h-36" />)}</div>;
-  }
+  if (loading) return <BlockchainLoader text="Loading milestones and evidence..." />;
 
   if (milestones.length === 0) {
     return (
