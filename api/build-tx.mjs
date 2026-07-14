@@ -12,6 +12,7 @@
  * Returns: { success, txHash }
  */
 export default async function handler(req, res) {
+  try {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -192,6 +193,11 @@ export default async function handler(req, res) {
 
     return res.status(400).json({ error: `Unknown tx type: ${type}` });
   } catch (err) {
+    console.error("build-tx CRASH:", err?.message || err, err?.stack?.slice(0, 400));
     return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
+  }
+  } catch (err) {
+    console.error("build-tx FATAL:", err?.message || err);
+    return res.status(500).json({ error: "Fatal: " + (err?.message || "unknown").slice(0, 200) });
   }
 }
