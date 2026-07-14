@@ -278,7 +278,6 @@ async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Pr
   try {
     const { Keypair, Contract, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
     const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
-    const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
     const server = new rpc.Server(RPC_URL);
     const account = await server.getAccount(kp.publicKey());
     const contract = new Contract(contractId);
