@@ -1345,6 +1345,27 @@ function checkEscrowGates(): void {
       submitEscrowGate5(escrowId, true);
     } catch {}
   }
+  // Scan forward for non-sequential escrow IDs
+  let escNones = 0;
+  let escId = escCount + 1;
+  while (escNones < 15) {
+    const raw = cli(
+      `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow --escrow_id ${escId}`
+    );
+    if (!raw) { escNones++; escId++; continue; }
+    try {
+      const parsed = JSON.parse(raw);
+      const escrow = parsed.result || parsed;
+      if (!escrow) { escNones++; escId++; continue; }
+      escNones = 0;
+      const status = extractStatus(escrow.status);
+      if (escrow.conditions?.ai_risk_check === true) { escId++; continue; }
+      if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") { escId++; continue; }
+      console.log(`  [Gate 5] Escrow #${escId} (${status}) needs AI validation`);
+      submitEscrowGate5(escId, true);
+    } catch { escNones++; }
+    escId++;
+  }
 }
 
 // ── Forensic Poller ─────────────────────────────────────
@@ -1411,6 +1432,31 @@ async function poll(): Promise<void> {
       }
     }
 
+    // Scan forward for PVOs with IDs beyond count (from failed tx gaps)
+    let pvoNones = 0;
+    let pvoScanId = pvoCount + 1;
+    while (pvoNones < 15) {
+      try {
+        const pvoRaw = cli(
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo --pvo_id ${pvoScanId}`
+        );
+        if (!pvoRaw) { pvoNones++; pvoScanId++; continue; }
+        const pvo = JSON.parse(pvoRaw).result || JSON.parse(pvoRaw);
+        if (!pvo) { pvoNones++; pvoScanId++; continue; }
+        pvoNones = 0;
+        const milestonesRaw = cli(
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_milestones --pvo_id ${pvoScanId}`
+        );
+        let milestones: any[] = [];
+        if (milestonesRaw) { const mParsed = JSON.parse(milestonesRaw); milestones = Array.isArray(mParsed) ? mParsed : (mParsed.result || []); }
+        const contractor = String(pvo.contractor || "");
+        const wonTender = pvoWinners[pvoScanId] ? contractor === pvoWinners[pvoScanId] || pvoWinners[pvoScanId].length < 5 : false;
+        pvoDataCache.push({ pvo, milestones });
+        allPvoBasic.push({ pvoId: pvoScanId, contractor, wonTender });
+      } catch { pvoNones++; }
+      pvoScanId++;
+    }
+
     // Cross-PVO collusion detection
     const collusionFlags = detectCollusion(allPvoBasic);
     if (collusionFlags.length > 0) {
@@ -1418,9 +1464,10 @@ async function poll(): Promise<void> {
     }
 
     // Second pass: collect forensic data and analyze each PVO
-    for (let pvoId = 1; pvoId <= pvoCount; pvoId++) {
-      const cached = pvoDataCache[pvoId - 1];
+    for (let idx = 0; idx < pvoDataCache.length; idx++) {
+      const cached = pvoDataCache[idx];
       if (!cached || !cached.pvo) continue;
+      const pvoId = cached.pvo.id ?? (idx + 1);
 
       try {
         const caseFile = collectForensicData(pvoId, cached.pvo, cached.milestones);
