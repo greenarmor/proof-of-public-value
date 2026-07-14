@@ -25,6 +25,7 @@ export function EngineerPanel() {
   const { address, connected, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<"pending" | "approved" | "all">("pending");
   const [reputation, setReputation] = useState<number | null>(null);
+  const [approvedMilestones, setApprovedMilestones] = useState<MilestoneData[]>([]);
 
   useEffect(() => {
     if (!address) return;
@@ -74,18 +75,20 @@ export function EngineerPanel() {
         ))}
       </div>
 
-      {activeTab === "pending" && <PendingReviews address={address!} />}
-      {activeTab === "approved" && <ApprovedMilestones address={address!} />}
+      {activeTab === "pending" && <PendingReviews address={address!} onApproved={(m) => setApprovedMilestones(prev => [m, ...prev])} />}
+      {activeTab === "approved" && <ApprovedMilestones address={address!} extraApproved={approvedMilestones} />}
       {activeTab === "all" && <AllPVOs />}
     </div>
   );
 }
 
-function PendingReviews({ address }: { address: string }) {
+function PendingReviews({ address, onApproved }: { address: string; onApproved: (m: MilestoneData) => void }) {
   const [milestones, setMilestones] = useState<MilestoneData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const handleApproved = (pvoId: number, msId: number) => {
+    const approved = milestones.find(m => m.pvoId === pvoId && m.id === msId);
+    if (approved) onApproved(approved);
     setMilestones(prev => prev.filter(m => !(m.pvoId === pvoId && m.id === msId)));
   };
 
@@ -396,7 +399,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction, onApprove
   );
 }
 
-function ApprovedMilestones({ address }: { address: string }) {
+function ApprovedMilestones({ address, extraApproved }: { address: string; extraApproved: MilestoneData[] }) {
   const [escrows, setEscrows] = useState<EscrowData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -434,7 +437,7 @@ function ApprovedMilestones({ address }: { address: string }) {
 
   if (loading) return <BlockchainLoader text="Loading data from Stellar testnet..." />;
 
-  if (escrows.length === 0) {
+  if (escrows.length === 0 && extraApproved.length === 0) {
     return (
       <div className="card p-12 text-center">
         <div className="text-5xl mb-4">✅</div>
@@ -448,6 +451,17 @@ function ApprovedMilestones({ address }: { address: string }) {
 
   return (
     <div className="space-y-3">
+      {extraApproved.map((m, idx) => (
+        <div key={`new-${idx}`} className="card p-4 border-green-200 bg-green-50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-green-800">✅ Just Approved</span>
+            <span className="badge-green text-xs">Gate 1</span>
+          </div>
+          <p className="font-medium text-gray-800">{m.title || `Milestone #${m.id}`}</p>
+          <p className="text-xs text-gray-500 mt-1">PVO: {m.pvoTitle} (#{m.pvoId})</p>
+          <p className="text-xs text-gray-400 mt-0.5">Budget: {currency}{formatBudget(Number(m.budget))}</p>
+        </div>
+      ))}
       {escrows.map(e => (
         <div key={e.id} className="card p-4">
           <div className="flex items-start justify-between">
