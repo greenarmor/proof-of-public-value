@@ -84,12 +84,14 @@ export function EngineerPanel() {
 
 function PendingReviews({ address, onApproved }: { address: string; onApproved: (m: MilestoneData) => void }) {
   const [milestones, setMilestones] = useState<MilestoneData[]>([]);
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const handleApproved = (pvoId: number, msId: number) => {
+    const key = `${pvoId}:${msId}`;
+    setApprovedIds(prev => new Set(prev).add(key));
     const approved = milestones.find(m => m.pvoId === pvoId && m.id === msId);
     if (approved) onApproved(approved);
-    setMilestones(prev => prev.filter(m => !(m.pvoId === pvoId && m.id === msId)));
   };
 
   const load = useCallback(async () => {
@@ -143,9 +145,11 @@ function PendingReviews({ address, onApproved }: { address: string; onApproved: 
 
   useEffect(() => { load(); }, [load]);
 
+  const visible = milestones.filter(m => !approvedIds.has(`${m.pvoId}:${m.id}`));
+
   if (loading) return <BlockchainLoader text="Loading milestones and evidence..." />;
 
-  if (milestones.length === 0) {
+  if (visible.length === 0) {
     return (
       <div className="card p-12 text-center">
         <div className="text-5xl mb-4">🔍</div>
@@ -159,7 +163,7 @@ function PendingReviews({ address, onApproved }: { address: string; onApproved: 
 
   return (
     <div className="space-y-4">
-      {milestones.map(m => (
+      {visible.map(m => (
         <MilestoneReviewCard key={`${m.pvoId}-${m.id}`} milestone={m} currency={currency} address={address} onAction={load} onApproved={handleApproved} />
       ))}
     </div>
