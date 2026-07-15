@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { StrKey, Contract, TransactionBuilder, rpc, nativeToScVal } =
+    const { Address, Contract, TransactionBuilder, rpc, nativeToScVal } =
       await import("@stellar/stellar-sdk");
 
     const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
@@ -44,7 +44,6 @@ export default async function handler(req, res) {
 
     const vec = sim.result.retval.vec();
     const milestones = [];
-    const reporters = [];
     let confirmed = false;
 
     for (let i = 0; i < vec.length; i++) {
@@ -58,21 +57,10 @@ export default async function handler(req, res) {
         const key = me.key().sym().toString();
         const val = me.val();
         if (key === "citizen") {
-          // Address type - extract citizen wallet address
-          {
-            let errs = [];
-            try {
-              const raw = val.address();
-              reporter = StrKey.encodeEd25519PublicKey(Buffer.from(raw.accountId().ed25519()));
-            } catch (e) { errs.push(e.message?.slice(0,30)); }
-            if (!reporter) {
-              try {
-                const { Address } = await import("@stellar/stellar-sdk");
-                reporter = Address.fromScAddress(val.address()).toString();
-              } catch (e) { errs.push(e.message?.slice(0,30)); }
-            }
-            if (!reporter) reporter = "err:" + errs.join("|").slice(0, 50);
-          }
+          // Address type - convert to human-readable strkey
+          try {
+            reporter = Address.fromScAddress(val.address()).toString();
+          } catch { reporter = null; }
         } else if (key === "milestone_id") {
           milestoneId = Number(val.u32().toString());
         } else if (key === "verified") {
@@ -81,7 +69,6 @@ export default async function handler(req, res) {
       }
 
       // Check if this address matches
-      if (reporter && reporters.length < 3) reporters.push(reporter);
       if (reporter === citizen) {
         if (milestoneId && !milestones.includes(milestoneId)) {
           milestones.push(milestoneId);
@@ -90,11 +77,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader("Cache-Control", "s-maxage=5, stale-while-revalidate=2");
-    return res.status(200).json({
-      milestones, count: milestones.length,
-      _v: "v4", _citizen: citizen, _reportCount: vec.length,
-      _sample: reporters[0] || "none"
-    });
+    return res.status(200).json({ milestones, count: milestones.length });
   } catch (err) {
     console.error("citizen-reports error:", err.message?.slice(0, 100));
     return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
