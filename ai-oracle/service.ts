@@ -280,6 +280,7 @@ function shouldSubmit(key: string, data: string): boolean {
 }
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY ?? "";
+const CENTRAL_BANK_SECRET = process.env.CENTRAL_BANK_SECRET ?? "";
 const PPHP_CONTRACT = process.env.PPHP_CONTRACT_ID ?? "CDABOKL55EN6LUEWFC5GHAI3GPYQTEDR2AAVZLA3WHM263DN7A3LGML5";
 
 const opts = {
@@ -576,7 +577,7 @@ async function rewardCitizenForReport(
 ): Promise<boolean> {
   const rewardKey = `${reportId}:${citizenAddress}`;
   if (rewardedReports.has(rewardKey)) return false;
-  if (!ADMIN_SECRET) { console.log("  [Reward] ADMIN_SECRET not set, skipping"); return false; }
+  if (!CENTRAL_BANK_SECRET) { console.log("  [Reward] CENTRAL_BANK_SECRET not set, skipping"); return false; }
 
   try {
     // Get citizen reputation
@@ -588,19 +589,19 @@ async function rewardCitizenForReport(
     if (rewardStroops < 1) { console.log(`  [Reward] Amount too small: ${rewardStroops} stroops`); return false; }
 
     const { Keypair, Address, Contract, TransactionBuilder, rpc, ScInt } = await import("@stellar/stellar-sdk");
-    const adminKp = Keypair.fromSecret(ADMIN_SECRET);
+    const cbKp = Keypair.fromSecret(CENTRAL_BANK_SECRET);
     const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
     // Retry getAccount up to 3 times for RPC rate limit resilience
     let account: any = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        account = await server.getAccount(adminKp.publicKey());
+        account = await server.getAccount(cbKp.publicKey());
         break;
       } catch {
         await new Promise(r => setTimeout(r, 1000));
       }
     }
-    if (!account) { console.log("  [Reward] Admin account not reachable, skipping"); return false; }
+    if (!account) { console.log("  [Reward] CentralBank account not reachable, skipping"); return false; }
 
     const tokenContract = new Contract(PPHP_CONTRACT);
     const mintOp = tokenContract.call(
@@ -614,7 +615,7 @@ async function rewardCitizenForReport(
     }).addOperation(mintOp).setTimeout(30).build();
 
     const prepared = await server.prepareTransaction(tx);
-    prepared.sign(adminKp);
+    prepared.sign(cbKp);
     const result = await server.sendTransaction(prepared);
 
     if (result.status === "PENDING" || result.status === "DUPLICATE") {
