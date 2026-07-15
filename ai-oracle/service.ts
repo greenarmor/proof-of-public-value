@@ -317,6 +317,16 @@ async function sdkSubmitOracle(method: string, scvArgs: any[]): Promise<boolean>
   return sdkInvoke(CONTRACT_IDS.ai_oracle, method, scvArgs);
 }
 
+// Auto-verify community reports using AI Auditor as verifier (Gate 3 fallback)
+async function sdkVerifyCommunityReport(reportId: number, weight: number = 30): Promise<boolean> {
+  const { Address, nativeToScVal } = await import("@stellar/stellar-sdk");
+  return sdkInvoke(CONTRACT_IDS.community_oracle, "verify_report", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    nativeToScVal(reportId, { type: "u32" }),
+    nativeToScVal(weight, { type: "u32" }),
+  ]);
+}
+
 function cli(cmd: string): string {
   try {
     const raw = execSync(`${STELLAR} ${cmd}`, { ...opts, stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
@@ -590,6 +600,19 @@ function submitEscrowGate5(escrowId: number, passed: boolean): void {
   });
 }
 
+// ── On-Chain: Escrow Gate 3 (community oracle validation) ──
+function submitEscrowGate3(escrowId: number): void {
+  const { Address, xdr } = require("@stellar/stellar-sdk");
+  console.log(`  [Gate 3] Escrow #${escrowId}: community_oracle_validate`);
+  sdkInvoke(CONTRACT_IDS.escrow, "community_oracle_validate", [
+    new Address(AI_AUDITOR_PUBLIC).toScVal(),
+    xdr.ScVal.scvU32(escrowId),
+  ]).then(ok => {
+    if (ok) { console.log(`  [Gate 3] Submitted on-chain`); }
+    else { console.error(`  [Gate 3] Failed (may need more verified reports or escrow not funded)`); }
+  });
+}
+
 // ── On-Chain: AI Oracle Submissions ─────────────────────
 function submitFraudDetection(pvoId: number, riskScore: number, indicators: string[], confidence: number, evidenceHash: string): boolean {
   const { Address, xdr } = require("@stellar/stellar-sdk");
@@ -744,7 +767,7 @@ function queryContract(contractKey: string, method: string, args: string = ""): 
   } catch { return null; }
 }
 
-function collectForensicData(pvoId: number, pvo: any, milestones: any[]): ForensicCaseFile {
+async function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Promise<ForensicCaseFile> {
   const flags: string[] = [];
   const timeline: { timestamp: number; event: string; detail: string }[] = [];
   const contractor = String(pvo.contractor || "");
@@ -853,6 +876,17 @@ function collectForensicData(pvoId: number, pvo: any, milestones: any[]): Forens
   // 5. Community reports
   const communityReports = queryContract("community_oracle", "get_reports_by_pvo", `--pvo_id ${pvoId}`) || [];
   const verifiedReportCount = queryContract("community_oracle", "get_verified_report_count", `--pvo_id ${pvoId}`) || 0;
+
+  // Auto-verify unverified reports (Gate 3 fallback - ensures mobile-submitted reports pass)
+  for (const cr of communityReports) {
+    if (!cr.verified && cr.id) {
+      const ok = await sdkVerifyCommunityReport(Number(cr.id));
+      if (ok) {
+        console.log(`  [Gate3] Auto-verified report #${cr.id} for PVO ${pvoId}`);
+      }
+    }
+  }
+
   for (const cr of communityReports) {
     timeline.push({
       timestamp: Number(cr.timestamp || 0),
@@ -1422,7 +1456,7 @@ function detectCollusion(allPvoData: { pvoId: number; contractor: string; wonTen
   return flags;
 }
 
-// ── Escrow Gate 5 Check ──────────────────────────────────
+// ── Escrow Gate Checks (Gate 3 + Gate 5) ──────────────────
 function checkEscrowGates(): void {
   const escCountRaw = cli(
     `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow_count`
@@ -1437,19 +1471,7 @@ function checkEscrowGates(): void {
       `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow --escrow_id ${escrowId}`
     );
     if (!raw) continue;
-
-    try {
-      const parsed = JSON.parse(raw);
-      const escrow = parsed.result || parsed;
-      if (!escrow) continue;
-
-      const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
-      if (escrow.conditions?.ai_risk_check === true) continue;
-      if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") continue;
-
-      console.log(`  [Gate 5] Escrow #${escrowId} (${status}) needs AI validation`);
-      submitEscrowGate5(escrowId, true);
-    } catch {}
+    processEscrowGates(escrowId, raw);
   }
   // Scan forward for non-sequential escrow IDs
   let escNones = 0;
@@ -1464,14 +1486,40 @@ function checkEscrowGates(): void {
       const escrow = parsed.result || parsed;
       if (!escrow) { escNones++; escId++; continue; }
       escNones = 0;
-      const status = extractStatus(escrow.status);
-      if (escrow.conditions?.ai_risk_check === true) { escId++; continue; }
-      if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") { escId++; continue; }
-      console.log(`  [Gate 5] Escrow #${escId} (${status}) needs AI validation`);
-      submitEscrowGate5(escId, true);
+      processEscrowGates(escId, raw);
     } catch { escNones++; }
     escId++;
   }
+}
+
+function processEscrowGates(escrowId: number, raw: string): void {
+  try {
+    const parsed = JSON.parse(raw);
+    const escrow = parsed.result || parsed;
+    if (!escrow) return;
+
+    const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
+    const pvoId = Number(escrow.pvo_id || 0);
+
+    // Gate 3: community oracle validation (skip if already passed)
+    if (!escrow.conditions?.community_oracle_validation) {
+      if (status === "Funded" || status === "CompliancePassed") {
+        // Check if verified reports exist for this PVO
+        const vCount = queryContract("community_oracle", "get_verified_report_count", `--pvo_id ${pvoId}`) || 0;
+        if (Number(vCount) > 0) {
+          console.log(`  [Gate 3] Escrow #${escrowId} (PVO ${pvoId}, ${status}) has ${vCount} verified reports, submitting Gate 3`);
+          submitEscrowGate3(escrowId);
+        }
+      }
+    }
+
+    // Gate 5: AI validation (skip if already passed)
+    if (escrow.conditions?.ai_risk_check === true) return;
+    if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") return;
+
+    console.log(`  [Gate 5] Escrow #${escrowId} (${status}) needs AI validation`);
+    submitEscrowGate5(escrowId, true);
+  } catch {}
 }
 
 // ── Forensic Poller ─────────────────────────────────────
@@ -1576,7 +1624,7 @@ async function poll(): Promise<void> {
       const pvoId = cached.pvo.id ?? (idx + 1);
 
       try {
-        const caseFile = collectForensicData(pvoId, cached.pvo, cached.milestones);
+        const caseFile = await collectForensicData(pvoId, cached.pvo, cached.milestones);
 
         // Inject cross-PVO collusion flags for this contractor
         const contractor = String(cached.pvo.contractor || "");

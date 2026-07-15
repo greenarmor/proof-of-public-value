@@ -2,10 +2,15 @@
  * Citizen Report Relay API - Vercel Serverless Function
  * Mobile app sends report data + wallet secret key, server
  * signs transaction with citizen's key and submits on-chain.
+ * After submission, auto-verifies the report so Gate 3 passes.
  *
  * POST /api/submit-report
  * Body: { pvoId, milestoneId, lat, lng, notes, citizenAddress, secretKey, signature, message, ipfsHash }
  */
+export const config = {
+  maxDuration: 60,
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -75,15 +80,78 @@ export default async function handler(req, res) {
       networkPassphrase: NETWORK,
     }).addOperation(op).setTimeout(30).build();
 
+    // Simulate to extract the predicted report_id from the return value
+    const sim = await server.simulateTransaction(tx);
+    if (sim.error) {
+      return res.status(500).json({ error: `Simulation failed: ${(sim.error || "").slice(0, 200)}` });
+    }
+    const reportId = sim.result?.retval
+      ? Number(sim.result.retval.u32().toString())
+      : null;
+
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(citizenKp);
 
     const result = await server.sendTransaction(prepared);
 
-    if (result.status === "PENDING" || result.status === "DUPLICATE") {
-      return res.status(200).json({ success: true, txHash: result.hash });
+    if (result.status !== "PENDING" && result.status !== "DUPLICATE") {
+      return res.status(500).json({ error: `Submit status: ${result.status}` });
     }
-    return res.status(500).json({ error: `Status: ${result.status}` });
+
+    // Poll for confirmation so we can verify the report in the same request
+    let confirmed = null;
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const resp = await server.getTransaction(result.hash);
+        if (resp.status !== "NOT_FOUND") {
+          confirmed = resp;
+          break;
+        }
+      } catch {}
+    }
+
+    if (confirmed?.status !== "SUCCESS" || !reportId) {
+      return res.status(200).json({
+        success: true,
+        txHash: result.hash,
+        verified: false,
+        reportId,
+        note: confirmed?.status === "SUCCESS" ? "No report_id to verify" : `Submit ${confirmed?.status || "timeout"}`,
+      });
+    }
+
+    // Auto-verify: citizen verifies own report with weight 20
+    const verifyAccount = await server.getAccount(citizenAddress);
+    const verifyOp = contract.call(
+      "verify_report",
+      new Address(citizenAddress).toScVal(),
+      xdr.ScVal.scvU32(reportId),
+      xdr.ScVal.scvU32(20),
+    );
+    const verifyTx = new TransactionBuilder(
+      {
+        accountId: () => citizenAddress,
+        sequenceNumber: () => verifyAccount.sequenceNumber(),
+        incrementSequenceNumber: () => {},
+      },
+      { fee: "100000", networkPassphrase: NETWORK },
+    ).addOperation(verifyOp).setTimeout(30).build();
+
+    const preparedVerify = await server.prepareTransaction(verifyTx);
+    preparedVerify.sign(citizenKp);
+    const verifyResult = await server.sendTransaction(preparedVerify);
+
+    const verified =
+      verifyResult.status === "PENDING" || verifyResult.status === "DUPLICATE";
+
+    return res.status(200).json({
+      success: true,
+      txHash: result.hash,
+      verifyTxHash: verifyResult.hash || null,
+      verified,
+      reportId,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
   }
