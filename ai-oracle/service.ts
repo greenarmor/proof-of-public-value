@@ -524,6 +524,50 @@ function getRewardTier(confidenceRating: number): { tier: string; pct: number } 
   return { tier: "New", pct: 0.00001 };
 }
 
+// ── Pending Auditor Reviews (Gate 5 human oversight) ─────
+interface PendingReview {
+  escrowId: number;
+  pvoId: number;
+  pvoTitle: string;
+  flags: string[];
+  riskScore: number;
+  confidence: number;
+  timestamp: string;
+}
+const pendingReviews = new Map<number, PendingReview>();
+const PENDING_FILE = `${HOME}/popv-pending-reviews.json`;
+
+// Load saved pending reviews
+try {
+  const saved = readFileSync(PENDING_FILE, "utf-8");
+  JSON.parse(saved).forEach((r: PendingReview) => pendingReviews.set(r.escrowId, r));
+} catch {}
+
+function persistPendingReviews(): void {
+  try {
+    writeFileSync(PENDING_FILE, JSON.stringify([...pendingReviews.values()], null, 2));
+  } catch {}
+}
+
+function logPendingReview(escrowId: number, pvoId: number): void {
+  const review: PendingReview = {
+    escrowId,
+    pvoId,
+    pvoTitle: "",
+    flags: [],
+    riskScore: 0,
+    confidence: 0,
+    timestamp: new Date().toISOString(),
+  };
+  pendingReviews.set(escrowId, review);
+  persistPendingReviews();
+}
+
+function resolvePendingReview(escrowId: number): void {
+  pendingReviews.delete(escrowId);
+  persistPendingReviews();
+}
+
 async function rewardCitizenForReport(
   citizenAddress: string,
   reportId: number,
@@ -1521,8 +1565,8 @@ function processEscrowGates(escrowId: number, raw: string): void {
 
     if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") return;
 
-    console.log(`  [Gate 5] Escrow #${escrowId} (${status}) needs AI validation`);
-    submitEscrowGate5(escrowId, true);
+    console.log(`  [Gate 5] Escrow #${escrowId} (${status}) AI assessment complete — pending human Auditor review`);
+    logPendingReview(escrowId, pvoId);
   } catch {}
 }
 
