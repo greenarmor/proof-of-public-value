@@ -241,37 +241,9 @@ export default async function handler(req, res) {
             }
           }
 
-          // Step 3b: Add community confirmation (Gate 4) on all escrows for this PVO
+          // Step 3b: (removed - community confirmation is now a separate mobile action)
           let gate4 = false;
           let gate4TxHash = null;
-
-          for (const c of candidates) {
-            if (c.commCount >= c.commRequired) continue; // already met threshold
-
-            const gate4Account = await server.getAccount(citizenAddress);
-            const gate4Tx = new TransactionBuilder(makeSource(gate4Account.sequenceNumber()), {
-              fee: "100000", networkPassphrase: NETWORK,
-            }).addOperation(escrowContract.call(
-              "add_community_confirmation",
-              new Address(citizenAddress).toScVal(),
-              xdr.ScVal.scvU32(c.escId),
-            )).setTimeout(30).build();
-
-            const gate4Sim = await server.simulateTransaction(gate4Tx);
-            if (gate4Sim.error) {
-              console.log(`Gate4 escrow #${c.escId} sim failed: ${(gate4Sim.error || "").slice(0, 80)}`);
-              continue;
-            }
-
-            try {
-              const gate4Result = await submitTx(gate4Tx);
-              gate4TxHash = gate4Result.hash;
-              gate4 = true;
-              console.log(`Gate4 escrow #${c.escId} confirmed by citizen`);
-            } catch (e) {
-              console.error(`Gate4 escrow #${c.escId} submit failed:`, e.message?.slice(0, 80));
-            }
-          }
         }
       } catch (e) {
         console.error("Gate3 lookup failed:", e.message?.slice(0, 100));
