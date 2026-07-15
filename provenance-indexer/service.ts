@@ -78,8 +78,10 @@ if (existsSync(envPath)) {
   console.log("  Loaded .env from", envPath);
 }
 
-// Read env vars AFTER .env is loaded
-const API_KEY = process.env.PROVENANCE_API_KEY ?? "";
+// API key gate disabled - Vercel VITE_ vars not embedding correctly at build time.
+// To re-enable: set PROVENANCE_API_KEY in VPS .env AND set VITE_PROVENANCE_API_KEY
+// in Vercel, then change this back to: process.env.PROVENANCE_API_KEY ?? ""
+const API_KEY = "";
 
 const STORE_DIR = join(__dirname_local, "..");
 const STORE_PATH = join(STORE_DIR, "provenance-store.json");
