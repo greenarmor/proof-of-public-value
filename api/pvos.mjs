@@ -209,7 +209,7 @@ export default async function handler(req, res) {
     });
 
     res.setHeader("Cache-Control", "s-maxage=10, stale-while-revalidate=5");
-    return res.status(200).json({ pvos: formatted, count: formatted.length });
+    return res.status(200).json({ pvos: formatted, count: formatted.length, _fix: "recursive-maps-v2" });
   } catch (err) {
     console.error("PVO list error:", err);
     return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
