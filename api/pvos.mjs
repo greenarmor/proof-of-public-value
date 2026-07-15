@@ -2,9 +2,15 @@
  * PVO List API - Vercel Serverless Function
  * Fetches all PVOs from the pvo_core Soroban contract.
  *
- * GET /api/pvos
- * Returns: { pvos: [...] }
+ * GET /api/pvos          - fast: PVO list only
+ * GET /api/pvos?gates=1  - slow: PVO list + escrow gate status
+ *
+ * Returns: { pvos: [...], count: N }
  */
+export const config = {
+  maxDuration: 120,
+};
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
