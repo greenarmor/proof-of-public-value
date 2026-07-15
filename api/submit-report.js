@@ -180,42 +180,55 @@ export default async function handler(req, res) {
             const map = entry.map();
             let escId = null;
             let alreadyValidated = false;
+            let alreadyConfirmed = false;
+            let commRequired = 1;
+            let commCount = 0;
+            let milestoneId = null;
 
             for (const me of map) {
               const key = me.key().sym().toString();
               const val = me.val();
               if (key === "id") {
                 escId = Number(val.u32().toString());
+              } else if (key === "milestone_id") {
+                milestoneId = Number(val.u32().toString());
               } else if (key === "conditions") {
                 const condMap = val.map();
                 for (const ce of condMap) {
-                  if (ce.key().sym().toString() === "community_oracle_validation") {
-                    alreadyValidated = ce.val().b();
+                  const ck = ce.key().sym().toString();
+                  const cv = ce.val();
+                  if (ck === "community_oracle_validation") {
+                    alreadyValidated = cv.b();
+                  } else if (ck === "community_required") {
+                    commRequired = Number(cv.u32().toString());
+                  } else if (ck === "community_confirmation") {
+                    commCount = Number(cv.u32().toString());
                   }
                 }
               }
             }
 
-            if (escId && !alreadyValidated) {
-              candidates.push(escId);
+            if (escId) {
+              candidates.push({ escId, alreadyValidated, commRequired, commCount, milestoneId });
             }
           }
 
-          // Try each candidate escrow
-          for (const escId of candidates) {
+          // Step 3a: Trigger Gate 3 on escrows that need it
+          for (const c of candidates) {
+            if (c.alreadyValidated) continue;
             const gate3Account = await server.getAccount(citizenAddress);
             const gate3Tx = new TransactionBuilder(makeSource(gate3Account.sequenceNumber()), {
               fee: "100000", networkPassphrase: NETWORK,
             }).addOperation(escrowContract.call(
               "community_oracle_validate",
               new Address(citizenAddress).toScVal(),
-              xdr.ScVal.scvU32(escId),
+              xdr.ScVal.scvU32(c.escId),
             )).setTimeout(30).build();
 
             // Simulate first to check if escrow is funded + ready
             const gate3Sim = await server.simulateTransaction(gate3Tx);
             if (gate3Sim.error) {
-              console.log(`Gate3 escrow #${escId} sim failed: ${(gate3Sim.error || "").slice(0, 80)}`);
+              console.log(`Gate3 escrow #${c.escId} sim failed: ${(gate3Sim.error || "").slice(0, 80)}`);
               continue;
             }
 
@@ -223,9 +236,40 @@ export default async function handler(req, res) {
               const gate3Result = await submitTx(gate3Tx);
               gate3TxHash = gate3Result.hash;
               gate3 = true;
-              break;
             } catch (e) {
-              console.error(`Gate3 escrow #${escId} submit failed:`, e.message?.slice(0, 80));
+              console.error(`Gate3 escrow #${c.escId} submit failed:`, e.message?.slice(0, 80));
+            }
+          }
+
+          // Step 3b: Add community confirmation (Gate 4) on all escrows for this PVO
+          let gate4 = false;
+          let gate4TxHash = null;
+
+          for (const c of candidates) {
+            if (c.commCount >= c.commRequired) continue; // already met threshold
+
+            const gate4Account = await server.getAccount(citizenAddress);
+            const gate4Tx = new TransactionBuilder(makeSource(gate4Account.sequenceNumber()), {
+              fee: "100000", networkPassphrase: NETWORK,
+            }).addOperation(escrowContract.call(
+              "add_community_confirmation",
+              new Address(citizenAddress).toScVal(),
+              xdr.ScVal.scvU32(c.escId),
+            )).setTimeout(30).build();
+
+            const gate4Sim = await server.simulateTransaction(gate4Tx);
+            if (gate4Sim.error) {
+              console.log(`Gate4 escrow #${c.escId} sim failed: ${(gate4Sim.error || "").slice(0, 80)}`);
+              continue;
+            }
+
+            try {
+              const gate4Result = await submitTx(gate4Tx);
+              gate4TxHash = gate4Result.hash;
+              gate4 = true;
+              console.log(`Gate4 escrow #${c.escId} confirmed by citizen`);
+            } catch (e) {
+              console.error(`Gate4 escrow #${c.escId} submit failed:`, e.message?.slice(0, 80));
             }
           }
         }
@@ -239,8 +283,10 @@ export default async function handler(req, res) {
       txHash: reportResult.hash,
       verifyTxHash,
       gate3TxHash,
+      gate4TxHash: gate4TxHash || null,
       verified,
       gate3,
+      gate4,
       reportId,
     });
   } catch (err) {
