@@ -639,7 +639,15 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
   const isValidated = (e: EscrowWithOracle) => e.escrow.conditions.ai_risk_check === true;
   const awaiting = escrows.filter(isReady);
   const validated = escrows.filter(isValidated);
-  const pipeline = escrows.filter(e => !isReady(e) && !isValidated(e));
+  const reviewing = escrows.filter(e => {
+    const hasData = e.fraudData !== null || e.riskData !== null;
+    const conditions = e.escrow.conditions;
+    return !conditions.ai_risk_check && hasData
+      && conditions.engineer_approval && conditions.compliance_validation
+      && conditions.community_oracle_validation
+      && Number(conditions.community_confirmation) >= Number(conditions.community_required);
+  });
+  const pipeline = escrows.filter(e => !isReady(e) && !isValidated(e) && !reviewing.includes(e));
 
   if (!connected) {
     return (
@@ -719,12 +727,33 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
   const pvoId = Number(escrow.pvo_id);
 
   const c = escrow.conditions;
+
+  // Gate 5 state machine: pending → reviewing → passed/failed
+  const hasOracleAssessment = data.fraudData !== null || data.riskData !== null;
+  const gates14Ready = c.engineer_approval && c.compliance_validation
+    && c.community_oracle_validation && (Number(c.community_confirmation) >= Number(c.community_required));
+
+  let gate5State: "pending" | "reviewing" | "passed" | "failed" = "pending";
+  let gate5Label = "AI Risk";
+  let gate5Done = false;
+
+  if (c.ai_risk_check) {
+    gate5State = "passed";
+    gate5Done = true;
+  } else if (hasOracleAssessment && gates14Ready) {
+    gate5State = "reviewing";
+    gate5Label = "AI (Review)";
+  } else if (gates14Ready && !hasOracleAssessment) {
+    gate5State = "pending";
+    gate5Label = "AI (Waiting)";
+  }
+
   const gates = [
     { label: "Engineer", done: c.engineer_approval },
     { label: "Compliance", done: c.compliance_validation },
     { label: "Oracle", done: c.community_oracle_validation || false },
     { label: `Community (${Number(c.community_confirmation)}/${Number(c.community_required)})`, done: Number(c.community_confirmation) >= Number(c.community_required) },
-    { label: "AI Risk", done: c.ai_risk_check },
+    { label: gate5Label, done: gate5Done },
   ];
 
   const status = typeof escrow.status === "string" ? escrow.status : escrow.status?.tag ?? "";
@@ -799,12 +828,39 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
       </div>
 
       <div className="grid grid-cols-5 gap-2 mb-4">
-        {gates.map((gate, i) => (
-          <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${gate.done ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200 text-slate-400"}`}>
-            <div className="text-sm mb-0.5">{gate.done ? "✓" : "○"}</div>{gate.label}
-          </div>
-        ))}
+        {gates.map((gate, i) => {
+          const isGate5 = i === 4;
+          const isReviewing = isGate5 && gate5State === "reviewing";
+          const isPassed = gate.done;
+          const style = isReviewing
+            ? "bg-amber-50 border-amber-300 text-amber-700 ring-1 ring-amber-200"
+            : isPassed
+            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+            : "bg-slate-50 border-slate-200 text-slate-400";
+          return (
+            <div key={i} className={`rounded-lg p-1.5 text-center text-[11px] font-medium border ${style}`}>
+              <div className="text-sm mb-0.5">
+                {isReviewing ? "⏳" : isPassed ? "✓" : "○"}
+              </div>
+              {gate.label}
+            </div>
+          );
+        })}
       </div>
+
+      {gate5State === "reviewing" && (
+        <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⏳</span>
+            <div>
+              <p className="text-sm font-bold text-amber-800">AI Assessment Complete — Awaiting Human Auditor</p>
+              <p className="text-xs text-amber-600">
+                AI Oracle has analyzed this escrow. Gate 5 shown as amber until human Auditor reviews and makes final decision.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="border-t pt-3">
         <p className="text-xs font-medium text-slate-500 mb-3">AI Oracle On-Chain Analysis</p>
