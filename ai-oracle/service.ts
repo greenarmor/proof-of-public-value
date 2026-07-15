@@ -1513,6 +1513,12 @@ function processEscrowGates(escrowId: number, raw: string): void {
 
     // Gate 5: AI validation (skip if already passed)
     if (escrow.conditions?.ai_risk_check === true) return;
+
+    // Gate 5 must wait for Gate 4 (community confirmations)
+    const commCount = Number(escrow.conditions?.community_confirmation || 0);
+    const commRequired = Number(escrow.conditions?.community_required || 1);
+    if (commCount < commRequired) return;
+
     if (status !== "CommunityVerified" && status !== "Ready" && status !== "OracleValidated") return;
 
     console.log(`  [Gate 5] Escrow #${escrowId} (${status}) needs AI validation`);
