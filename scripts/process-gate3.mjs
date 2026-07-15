@@ -150,56 +150,75 @@ async function main() {
   console.log(`\nVerified ${verifiedCount} reports`);
 
   // ── Step 3: Trigger Gate 3 on escrows ────────────────
-  const pvoCountRv = await sim("get_pvo_count", pvoContract);
-  const pvoCount = pvoCountRv ? Number(pvoCountRv.u32().toString()) : 0;
-  console.log(`\nScanning ${pvoCount} PVOs for Gate 3 escrows...`);
+  // Scan ALL escrows directly (not by PVO) to handle non-sequential IDs
+  const escCountRv = await sim("get_escrow_count", escrow);
+  const escCount = escCountRv ? Number(escCountRv.u32().toString()) : 0;
+  console.log(`\nScanning ${escCount} escrows for Gate 3...`);
 
   let gate3Triggered = 0;
 
-  for (let pid = 1; pid <= pvoCount; pid++) {
-    const escRv = await sim("get_escrows_by_pvo", escrow, nativeToScVal(pid, { type: "u32" }));
-    if (!escRv || escRv.switch().name !== "scvVec") continue;
+  async function tryEscrowGate3(escId) {
+    const escRv = await sim("get_escrow", escrow, nativeToScVal(escId, { type: "u32" }));
+    if (!escRv || escRv.switch().name === "scvVoid") return false;
 
-    const vec = escRv.vec();
-    for (let i = 0; i < vec.length; i++) {
-      const map = parseMap(vec.at(i));
-      const escId = map.id;
-      const conditions = map.conditions || {};
+    const map = parseMap(escRv);
+    const pvoId = map.pvo_id || "?";
+    const conditions = map.conditions || {};
 
-      if (conditions.community_oracle_validation) {
-        console.log(`  Escrow #${escId} (PVO ${pid}): Gate 3 already passed`);
-        continue;
-      }
-
-      console.log(`  Escrow #${escId} (PVO ${pid}): Gate 3 not passed, attempting...`);
-
-      const account = await server.getAccount(pub);
-      const gate3Tx = new TransactionBuilder(makeSource(account.sequenceNumber()), {
-        fee: "100000", networkPassphrase: NETWORK,
-      }).addOperation(escrow.call(
-        "community_oracle_validate",
-        new Address(pub).toScVal(),
-        xdr.ScVal.scvU32(escId),
-      )).setTimeout(30).build();
-
-      const gate3Sim = await server.simulateTransaction(gate3Tx);
-      if (gate3Sim.error) {
-        console.log(`    Skip: ${(gate3Sim.error || "").slice(0, 80)}`);
-        continue;
-      }
-
-      try {
-        const confirmed = await submitTx(gate3Tx);
-        if (confirmed?.status === "SUCCESS") {
-          gate3Triggered++;
-          console.log(`    Gate 3 PASSED!`);
-        } else {
-          console.log(`    Failed: ${confirmed?.status || "timeout"}`);
-        }
-      } catch (e) {
-        console.error(`    Error: ${e.message?.slice(0, 100)}`);
-      }
+    if (conditions.community_oracle_validation) {
+      console.log(`  Escrow #${escId} (PVO ${pvoId}): Gate 3 already passed`);
+      return false;
     }
+
+    console.log(`  Escrow #${escId} (PVO ${pvoId}): Gate 3 not passed, attempting...`);
+
+    const account = await server.getAccount(pub);
+    const gate3Tx = new TransactionBuilder(makeSource(account.sequenceNumber()), {
+      fee: "100000", networkPassphrase: NETWORK,
+    }).addOperation(escrow.call(
+      "community_oracle_validate",
+      new Address(pub).toScVal(),
+      xdr.ScVal.scvU32(escId),
+    )).setTimeout(30).build();
+
+    const gate3Sim = await server.simulateTransaction(gate3Tx);
+    if (gate3Sim.error) {
+      console.log(`    Skip: ${(gate3Sim.error || "").slice(0, 80)}`);
+      return false;
+    }
+
+    try {
+      const confirmed = await submitTx(gate3Tx);
+      if (confirmed?.status === "SUCCESS") {
+        gate3Triggered++;
+        console.log(`    Gate 3 PASSED!`);
+        return true;
+      } else {
+        console.log(`    Failed: ${confirmed?.status || "timeout"}`);
+      }
+    } catch (e) {
+      console.error(`    Error: ${e.message?.slice(0, 100)}`);
+    }
+    return false;
+  }
+
+  for (let escId = 1; escId <= escCount; escId++) {
+    await tryEscrowGate3(escId);
+  }
+
+  // Scan forward for non-sequential escrow IDs
+  let nones = 0;
+  let escId = escCount + 1;
+  while (nones < 15) {
+    const found = await tryEscrowGate3(escId);
+    // can't easily distinguish "not found" from "already passed" - check raw
+    const escRv = await sim("get_escrow", escrow, nativeToScVal(escId, { type: "u32" }));
+    if (!escRv || escRv.switch().name === "scvVoid") {
+      nones++;
+    } else {
+      nones = 0;
+    }
+    escId++;
   }
 
   console.log(`\n=== DONE ===`);

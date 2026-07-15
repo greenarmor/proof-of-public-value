@@ -1503,13 +1503,11 @@ function processEscrowGates(escrowId: number, raw: string): void {
 
     // Gate 3: community oracle validation (skip if already passed)
     if (!escrow.conditions?.community_oracle_validation) {
-      if (status === "Funded" || status === "CompliancePassed") {
-        // Check if verified reports exist for this PVO
-        const vCount = queryContract("community_oracle", "get_verified_report_count", `--pvo_id ${pvoId}`) || 0;
-        if (Number(vCount) > 0) {
-          console.log(`  [Gate 3] Escrow #${escrowId} (PVO ${pvoId}, ${status}) has ${vCount} verified reports, submitting Gate 3`);
-          submitEscrowGate3(escrowId);
-        }
+      // Check if verified reports exist for this PVO
+      const vCount = queryContract("community_oracle", "get_verified_report_count", `--pvo_id ${pvoId}`) || 0;
+      if (Number(vCount) > 0) {
+        console.log(`  [Gate 3] Escrow #${escrowId} (PVO ${pvoId}, ${status}) has ${vCount} verified reports, submitting Gate 3`);
+        submitEscrowGate3(escrowId);
       }
     }
 
