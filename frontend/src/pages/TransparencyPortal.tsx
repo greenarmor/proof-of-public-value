@@ -623,7 +623,18 @@ export function TransparencyPortal() {
                 <div className="mt-4 card p-4 text-center text-sm text-slate-400">Loading provenance chain...</div>
               ) : provenanceData ? (
                 <ExpandableProvenance data={provenanceData} />
-              ) : null}
+              ) : (
+                <div className="mt-4 card p-4 text-center text-sm text-amber-600 border border-amber-200 bg-amber-50">
+                  ⚠️ Provenance data unavailable. The indexer may still be building ({PROVENANCE_API_BASE}). 
+                  <button onClick={() => { setProvenanceData(null); setProvenanceLoading(true); 
+                    const h:any = PROV_API_KEY ? {"x-api-key": PROV_API_KEY} : {};
+                    fetch(`${PROVENANCE_API_BASE}/api/provenance/${selected?.id}`, {headers: h})
+                      .then(r => r.ok ? r.json() : null)
+                      .then(d => { setProvenanceData(d); setProvenanceLoading(false); })
+                      .catch(() => setProvenanceLoading(false)); }}
+                    className="ml-2 underline hover:text-amber-800">Retry</button>
+                </div>
+              )}
 
               {/* Escrow Cards */}
               {escrowsLoading ? (
