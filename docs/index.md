@@ -830,6 +830,8 @@ AI Auditor → validates for fraud                        [Gate 5 - Final]
 **Wallets:** citizen_1 through citizen_4 (see credentials file)  
 **Dashboard:** Citizen Report Form
 
+> 📱 **Mobile version available:** The PVO Hunter mobile app supports GPS field reporting from a phone. See [Citizen Field Reporting](citizen-field-reporting.md) and [Reward System](reward-system.md) for the mobile experience and pPHP incentives.
+
 | Step | Action | Details |
 |------|--------|---------|
 | 1 | Connect citizen_1 wallet | |
