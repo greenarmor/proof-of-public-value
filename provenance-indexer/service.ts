@@ -57,6 +57,7 @@ for (const [name, id] of Object.entries(CONTRACT_IDS)) {
 const PPHP_SCALE = 10_000_000;
 
 const READ_SOURCE = process.env.PROVENANCE_SOURCE ?? "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
+const API_KEY = process.env.PROVENANCE_API_KEY ?? "";
 
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
@@ -1071,6 +1072,16 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   if (req.method === "OPTIONS") {
     sendJSON(res, {});
     return;
+  }
+
+  // API key gate (skip for health + HTML landing page)
+  if (API_KEY && url.pathname !== "/api/health" && url.pathname !== "/" && url.pathname !== "/api") {
+    const provided = req.headers["x-api-key"] as string || req.headers["authorization"]?.replace("Bearer ", "");
+    if (provided !== API_KEY) {
+      console.log(`  Denied ${ip} ${url.pathname} - no/bad API key`);
+      sendJSON(res, { error: "Unauthorized" }, 401);
+      return;
+    }
   }
 
   if (url.pathname === "/api/rebuild" || url.pathname === "/api/rebuild/") {

@@ -14,6 +14,8 @@ const PROVENANCE_API_BASE =
   (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   PROVENANCE_API;
+const PROV_API_KEY =
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API_KEY) || "";
 
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
@@ -384,7 +386,8 @@ export function TransparencyPortal() {
       setProvenanceLoading(true);
       setProvenanceData(null); // clear old data when selecting new PVO
       try {
-        const res = await fetch(`${PROVENANCE_API_BASE}/api/provenance/${selected.id}`);
+        const headers = PROV_API_KEY ? { "x-api-key": PROV_API_KEY } : undefined;
+        const res = await fetch(`${PROVENANCE_API_BASE}/api/provenance/${selected.id}`, { headers });
         if (res.ok) setProvenanceData(await res.json());
       } catch {
       } finally {

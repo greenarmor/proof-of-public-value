@@ -96,6 +96,9 @@ const API_BASE =
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   (import.meta.env?.DEV ? "" : "https://provenance.chain.popv.quest");
 
+const PROV_API_KEY =
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API_KEY) || "";
+
 const STELLAR_EXPERT_TX = "https://stellar.expert/explorer/testnet/tx/";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -569,9 +572,10 @@ export function ProvenanceExplorer() {
     }
 
     try {
+      const headers = PROV_API_KEY ? { "x-api-key": PROV_API_KEY } : undefined;
       const [healthResp, pvoResp] = await Promise.all([
         fetch(`${API_BASE}/api/health`).then((r) => r.json()).catch(() => null),
-        fetch(`${API_BASE}/api/provenance`).then((r) => r.json()).catch(() => null),
+        fetch(`${API_BASE}/api/provenance`, { headers }).then((r) => r.json()).catch(() => null),
       ]);
       setHealth(healthResp);
       if (Array.isArray(pvoResp)) {
