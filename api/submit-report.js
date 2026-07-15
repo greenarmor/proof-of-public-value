@@ -2,7 +2,11 @@
  * Citizen Report Relay API - Vercel Serverless Function
  * Mobile app sends report data + wallet secret key, server
  * signs transaction with citizen's key and submits on-chain.
- * After submission, auto-verifies the report so Gate 3 passes.
+ *
+ * Full flow in one request:
+ *   1. submit_report on community_oracle
+ *   2. verify_report (auto-verify so Gate 3 data exists)
+ *   3. community_oracle_validate on escrow (flips Gate 3)
  *
  * POST /api/submit-report
  * Body: { pvoId, milestoneId, lat, lng, notes, citizenAddress, secretKey, signature, message, ipfsHash }
@@ -19,11 +23,11 @@ export default async function handler(req, res) {
   const { pvoId, milestoneId, lat, lng, notes, citizenAddress, secretKey, ipfsHash } = req.body || {};
 
   if (!pvoId || !milestoneId || !citizenAddress || !citizenAddress.startsWith("G")) {
-    return res.status(400).json({ error: "pvoId, milestoneId, lat, lng, citizenAddress required" });
+    return res.status(400).json({ error: "pvoId, milestoneId, citizenAddress required" });
   }
 
   if (!secretKey || !secretKey.startsWith("S") || secretKey.length < 55) {
-    return res.status(400).json({ error: "Valid wallet secret key required to sign the report" });
+    return res.status(400).json({ error: "Valid wallet secret key required" });
   }
 
   try {
@@ -31,6 +35,7 @@ export default async function handler(req, res) {
       await import("@stellar/stellar-sdk");
 
     const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
+    const ESCROW = "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7";
     const RPC_URL = "https://soroban-testnet.stellar.org:443";
     const HORIZON = "https://horizon-testnet.stellar.org";
     const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
@@ -51,14 +56,47 @@ export default async function handler(req, res) {
     if (!hasRpt) return res.status(403).json({ error: "Wallet must hold 1+ RPT to submit reports" });
 
     const server = new rpc.Server(RPC_URL);
-    const account = await server.getAccount(citizenAddress);
+    const oracleContract = new Contract(COMMUNITY_ORACLE);
+    const escrowContract = new Contract(ESCROW);
 
+    function makeSource(seq) {
+      return {
+        accountId: () => citizenAddress,
+        sequenceNumber: () => seq,
+        incrementSequenceNumber: () => {},
+      };
+    }
+
+    async function pollForTx(hash, maxTries = 12) {
+      for (let i = 0; i < maxTries; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const resp = await server.getTransaction(hash);
+          if (resp.status !== "NOT_FOUND") return resp;
+        } catch {}
+      }
+      return null;
+    }
+
+    async function submitTx(tx) {
+      const prepared = await server.prepareTransaction(tx);
+      prepared.sign(citizenKp);
+      const result = await server.sendTransaction(prepared);
+      if (result.status !== "PENDING" && result.status !== "DUPLICATE") {
+        throw new Error(`Tx status: ${result.status}`);
+      }
+      return result;
+    }
+
+    // ── Step 1: Submit report ───────────────────────────
+    const account = await server.getAccount(citizenAddress);
     const dataHash = ipfsHash || `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
     const latMicro = Math.round((lat || 0) * 1_000_000);
     const lngMicro = Math.round((lng || 0) * 1_000_000);
 
-    const contract = new Contract(COMMUNITY_ORACLE);
-    const op = contract.call(
+    const reportTx = new TransactionBuilder(makeSource(account.sequenceNumber()), {
+      fee: "100000", networkPassphrase: NETWORK,
+    }).addOperation(oracleContract.call(
       "submit_report",
       new Address(citizenAddress).toScVal(),
       xdr.ScVal.scvU32(pvoId),
@@ -67,21 +105,10 @@ export default async function handler(req, res) {
       xdr.ScVal.scvString(dataHash),
       nativeToScVal(latMicro, { type: "i128" }),
       nativeToScVal(lngMicro, { type: "i128" }),
-    );
+    )).setTimeout(30).build();
 
-    const source = {
-      accountId: () => citizenAddress,
-      sequenceNumber: () => account.sequenceNumber(),
-      incrementSequenceNumber: () => {},
-    };
-
-    const tx = new TransactionBuilder(source, {
-      fee: "100000",
-      networkPassphrase: NETWORK,
-    }).addOperation(op).setTimeout(30).build();
-
-    // Simulate to extract the predicted report_id from the return value
-    const sim = await server.simulateTransaction(tx);
+    // Simulate to get predicted report_id
+    const sim = await server.simulateTransaction(reportTx);
     if (sim.error) {
       return res.status(500).json({ error: `Simulation failed: ${(sim.error || "").slice(0, 200)}` });
     }
@@ -89,67 +116,131 @@ export default async function handler(req, res) {
       ? Number(sim.result.retval.u32().toString())
       : null;
 
-    const prepared = await server.prepareTransaction(tx);
-    prepared.sign(citizenKp);
+    const reportResult = await submitTx(reportTx);
+    const reportConfirmed = await pollForTx(reportResult.hash);
 
-    const result = await server.sendTransaction(prepared);
-
-    if (result.status !== "PENDING" && result.status !== "DUPLICATE") {
-      return res.status(500).json({ error: `Submit status: ${result.status}` });
-    }
-
-    // Poll for confirmation so we can verify the report in the same request
-    let confirmed = null;
-    for (let i = 0; i < 30; i++) {
-      await new Promise((r) => setTimeout(r, 2000));
-      try {
-        const resp = await server.getTransaction(result.hash);
-        if (resp.status !== "NOT_FOUND") {
-          confirmed = resp;
-          break;
-        }
-      } catch {}
-    }
-
-    if (confirmed?.status !== "SUCCESS" || !reportId) {
+    if (reportConfirmed?.status !== "SUCCESS") {
       return res.status(200).json({
         success: true,
-        txHash: result.hash,
-        verified: false,
+        txHash: reportResult.hash,
         reportId,
-        note: confirmed?.status === "SUCCESS" ? "No report_id to verify" : `Submit ${confirmed?.status || "timeout"}`,
+        verified: false,
+        gate3: false,
+        note: `Report submitted but confirmation ${reportConfirmed?.status || "timeout"}`,
       });
     }
 
-    // Auto-verify: citizen verifies own report with weight 20
-    const verifyAccount = await server.getAccount(citizenAddress);
-    const verifyOp = contract.call(
-      "verify_report",
-      new Address(citizenAddress).toScVal(),
-      xdr.ScVal.scvU32(reportId),
-      xdr.ScVal.scvU32(20),
-    );
-    const verifyTx = new TransactionBuilder(
-      {
-        accountId: () => citizenAddress,
-        sequenceNumber: () => verifyAccount.sequenceNumber(),
-        incrementSequenceNumber: () => {},
-      },
-      { fee: "100000", networkPassphrase: NETWORK },
-    ).addOperation(verifyOp).setTimeout(30).build();
+    // ── Step 2: Auto-verify report ──────────────────────
+    let verified = false;
+    let verifyTxHash = null;
 
-    const preparedVerify = await server.prepareTransaction(verifyTx);
-    preparedVerify.sign(citizenKp);
-    const verifyResult = await server.sendTransaction(preparedVerify);
+    if (reportId) {
+      const verifyAccount = await server.getAccount(citizenAddress);
+      const verifyTx = new TransactionBuilder(makeSource(verifyAccount.sequenceNumber()), {
+        fee: "100000", networkPassphrase: NETWORK,
+      }).addOperation(oracleContract.call(
+        "verify_report",
+        new Address(citizenAddress).toScVal(),
+        xdr.ScVal.scvU32(reportId),
+        xdr.ScVal.scvU32(20),
+      )).setTimeout(30).build();
 
-    const verified =
-      verifyResult.status === "PENDING" || verifyResult.status === "DUPLICATE";
+      try {
+        const verifyResult = await submitTx(verifyTx);
+        verifyTxHash = verifyResult.hash;
+        const verifyConfirmed = await pollForTx(verifyResult.hash, 10);
+        verified = verifyConfirmed?.status === "SUCCESS";
+      } catch (e) {
+        console.error("Verify failed:", e.message?.slice(0, 100));
+      }
+    }
+
+    // ── Step 3: Trigger Gate 3 on escrow ────────────────
+    let gate3 = false;
+    let gate3TxHash = null;
+
+    if (verified) {
+      try {
+        // Find escrows for this PVO via simulation
+        const escQueryAccount = await server.getAccount(citizenAddress);
+        const escQueryTx = new TransactionBuilder(makeSource(escQueryAccount.sequenceNumber()), {
+          fee: "100000", networkPassphrase: NETWORK,
+        }).addOperation(escrowContract.call(
+          "get_escrows_by_pvo",
+          nativeToScVal(Number(pvoId), { type: "u32" }),
+        )).setTimeout(30).build();
+
+        const escSim = await server.simulateTransaction(escQueryTx);
+        if (escSim.result?.retval && escSim.result.retval.switch().name === "scvVec") {
+          const escVec = escSim.result.retval.vec();
+          const candidates = [];
+
+          for (let i = 0; i < escVec.length; i++) {
+            const entry = escVec.at(i);
+            const map = entry.map();
+            let escId = null;
+            let alreadyValidated = false;
+
+            for (const me of map) {
+              const key = me.key().sym().toString();
+              const val = me.val();
+              if (key === "id") {
+                escId = Number(val.u32().toString());
+              } else if (key === "conditions") {
+                const condMap = val.map();
+                for (const ce of condMap) {
+                  if (ce.key().sym().toString() === "community_oracle_validation") {
+                    alreadyValidated = ce.val().b();
+                  }
+                }
+              }
+            }
+
+            if (escId && !alreadyValidated) {
+              candidates.push(escId);
+            }
+          }
+
+          // Try each candidate escrow
+          for (const escId of candidates) {
+            const gate3Account = await server.getAccount(citizenAddress);
+            const gate3Tx = new TransactionBuilder(makeSource(gate3Account.sequenceNumber()), {
+              fee: "100000", networkPassphrase: NETWORK,
+            }).addOperation(escrowContract.call(
+              "community_oracle_validate",
+              new Address(citizenAddress).toScVal(),
+              xdr.ScVal.scvU32(escId),
+            )).setTimeout(30).build();
+
+            // Simulate first to check if escrow is funded + ready
+            const gate3Sim = await server.simulateTransaction(gate3Tx);
+            if (gate3Sim.error) {
+              console.log(`Gate3 escrow #${escId} sim failed: ${(gate3Sim.error || "").slice(0, 80)}`);
+              continue;
+            }
+
+            try {
+              const gate3Result = await submitTx(gate3Tx);
+              gate3TxHash = gate3Result.hash;
+              gate3 = true;
+              break;
+            } catch (e) {
+              console.error(`Gate3 escrow #${escId} submit failed:`, e.message?.slice(0, 80));
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Gate3 lookup failed:", e.message?.slice(0, 100));
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      txHash: result.hash,
-      verifyTxHash: verifyResult.hash || null,
+      txHash: reportResult.hash,
+      verifyTxHash,
+      gate3TxHash,
       verified,
+      gate3,
       reportId,
     });
   } catch (err) {
