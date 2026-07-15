@@ -97,7 +97,8 @@ const API_BASE =
   (import.meta.env?.DEV ? "" : "https://provenance.chain.popv.quest");
 
 const PROV_API_KEY =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API_KEY) || "";
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API_KEY) ||
+  "popv-94b8dac67f475a1adca2d15ed05c94334cd79cfa581ce60b";
 
 const STELLAR_EXPERT_TX = "https://stellar.expert/explorer/testnet/tx/";
 
