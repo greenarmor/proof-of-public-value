@@ -869,9 +869,18 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
 
         {readyForGate5 && txState !== "done" && (
           <div className="border-t pt-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <p className="text-sm font-bold text-amber-800 flex items-center gap-1">
+                <span>⚠️</span> HUMAN AUDITOR REVIEW REQUIRED
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                AI analysis below is advisory only. You, the human Auditor, have the final say on Gate 5.
+                Your decision is permanently recorded on-chain.
+              </p>
+            </div>
             {oracleRecommendation && (
               <div className={`mb-3 p-3 rounded-lg text-sm ${oracleRecommendation === "pass" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                <p className="font-medium">AI Oracle Recommendation: {oracleRecommendation === "pass" ? "✓ PASS" : "✗ REJECT"}</p>
+                <p className="font-medium">🤖 AI Oracle Recommendation: {oracleRecommendation === "pass" ? "PASS" : "REJECT"}</p>
                 <p className="text-xs mt-1">
                   {oracleRecommendation === "pass"
                     ? `Risk score ${fraudRisk}/100 is below threshold (50). No critical fraud indicators detected.`
@@ -879,16 +888,19 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
                 </p>
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={() => submitVerdict(true)} disabled={busy}
-                className="btn-primary text-sm px-4 py-2 flex-1">
-                {busy ? "Signing..." : "✓ Submit PASS (Gate 5)"}
+                className="btn-primary text-sm px-4 py-2 flex-1 bg-emerald-600 hover:bg-emerald-700">
+                {busy ? "Signing..." : "✅ Pass Gate 5"}
               </button>
               <button onClick={() => submitVerdict(false)} disabled={busy}
-                className="btn-secondary text-sm px-4 py-2 flex-1 border-red-200 text-red-700 hover:bg-red-50">
-                {busy ? "..." : "✗ Submit REJECT"}
+                className="btn-secondary text-sm px-4 py-2 border-red-200 text-red-700 hover:bg-red-50">
+                {busy ? "..." : "❌ Fail Gate 5"}
               </button>
             </div>
+            <p className="text-[11px] text-slate-400 text-center mt-2">
+              Pass: escrow advances to Ready · Fail: gate locked permanently · Dispute via Anti-Corruption Agency
+            </p>
             {busy && <p className="text-xs text-brand-600 text-center mt-2 animate-pulse">Check Freighter for signing prompt...</p>}
           </div>
         )}
