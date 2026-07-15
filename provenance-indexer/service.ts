@@ -1221,8 +1221,8 @@ function startHTTPServer(): void {
       console.error(`  ⚠️ Server error: ${e.message}`);
     }
   });
-  server.listen(HTTP_PORT, "0.0.0.0", () => {
-    console.log(`\n🌐 Provenance API: http://0.0.0.0:${HTTP_PORT}`);
+  server.listen(HTTP_PORT, "127.0.0.1", () => {
+    console.log(`\n🌐 Provenance API: http://127.0.0.1:${HTTP_PORT} (only via nginx)`);
     console.log(`   Endpoints: /api/provenance, /api/events, /api/health\n`);
   });
 }
