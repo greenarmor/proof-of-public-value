@@ -1218,8 +1218,8 @@ function startHTTPServer(): void {
       console.error(`  ⚠️ Server error: ${e.message}`);
     }
   });
-  server.listen(HTTP_PORT, () => {
-    console.log(`\n🌐 Provenance API: http://localhost:${HTTP_PORT}`);
+  server.listen(HTTP_PORT, "0.0.0.0", () => {
+    console.log(`\n🌐 Provenance API: http://0.0.0.0:${HTTP_PORT}`);
     console.log(`   Endpoints: /api/provenance, /api/events, /api/health\n`);
   });
 }
