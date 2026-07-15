@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader("Cache-Control", "s-maxage=5, stale-while-revalidate=2");
-    return res.status(200).json({ milestones, count: milestones.length });
+    return res.status(200).json({ milestones, count: milestones.length, _v: "v3", _citizen: citizen, _reportCount: vec.length });
   } catch (err) {
     console.error("citizen-reports error:", err.message?.slice(0, 100));
     return res.status(500).json({ error: err.message?.slice(0, 200) || "Unknown error" });
