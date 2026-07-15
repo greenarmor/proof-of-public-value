@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { Contract, TransactionBuilder, rpc, nativeToScVal } =
+    const { StrKey, Contract, TransactionBuilder, rpc, nativeToScVal } =
       await import("@stellar/stellar-sdk");
 
     const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
@@ -58,15 +58,21 @@ export default async function handler(req, res) {
         const key = me.key().sym().toString();
         const val = me.val();
         if (key === "citizen") {
-          // Address type - convert to human-readable strkey
-          try {
-            const addrObj = Address.fromScAddress(val.address());
-            reporter = addrObj.toString();
-            if (!reporter || reporter === "[object Object]") {
-              // fallback: try constructor
-              reporter = new Address(val.address()).toString();
+          // Address type - extract citizen wallet address
+          {
+            let errs = [];
+            try {
+              const raw = val.address();
+              reporter = StrKey.encodeEd25519PublicKey(Buffer.from(raw.accountId().ed25519()));
+            } catch (e) { errs.push(e.message?.slice(0,30)); }
+            if (!reporter) {
+              try {
+                const { Address } = await import("@stellar/stellar-sdk");
+                reporter = Address.fromScAddress(val.address()).toString();
+              } catch (e) { errs.push(e.message?.slice(0,30)); }
             }
-          } catch { reporter = null; }
+            if (!reporter) reporter = "err:" + errs.join("|").slice(0, 50);
+          }
         } else if (key === "milestone_id") {
           milestoneId = Number(val.u32().toString());
         } else if (key === "verified") {
