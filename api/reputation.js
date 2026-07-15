@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       if (val.switch().name === "scvU32") result[key] = Number(val.u32().toString());
     }
 
-    res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=10");
+    res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
     return res.status(200).json({
       total_reports: result.total_reports || 0,
       verified_reports: result.verified_reports || 0,
