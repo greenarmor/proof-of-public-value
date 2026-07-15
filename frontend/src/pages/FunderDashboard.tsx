@@ -412,7 +412,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
   const [pvoId, setPvoId] = useState(String(prefillPvoId || ""));
   const [milestoneId, setMilestoneId] = useState(String(prefillMilestoneId || ""));
   const [amount, setAmount] = useState(prefillAmount || "");
-  const [communityRequired, setCommunityRequired] = useState("1");
+  const [communityRequired, setCommunityRequired] = useState("5");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txMsg, setTxMsg] = useState("");
   const [grantsF, setGrantsF] = useState<any[]>([]);
