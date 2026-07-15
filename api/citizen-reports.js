@@ -56,8 +56,11 @@ export default async function handler(req, res) {
         const key = me.key().sym().toString();
         const val = me.val();
         if (key === "citizen") {
-          // Address type - convert to string
-          try { reporter = val.address().toString(); } catch { reporter = null; }
+          // Address type - convert to human-readable strkey
+          try {
+            const addrObj = Address.fromScAddress(val.address());
+            reporter = addrObj.toString();
+          } catch { reporter = null; }
         } else if (key === "milestone_id") {
           milestoneId = Number(val.u32().toString());
         } else if (key === "verified") {
