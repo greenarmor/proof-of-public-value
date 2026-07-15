@@ -1,9 +1,10 @@
 /**
  * Citizen Reports API - Vercel Serverless Function
  * Returns milestone IDs that a citizen has already reported for a given PVO.
+ * Queries community_oracle contract on-chain for ground-truth data.
  *
  * GET /api/citizen-reports?pvoId=30&citizen=GXXX
- * Returns: { milestones: [1, 2, 3], confirmed: false }
+ * Returns: { milestones: [1, 2, 3], count: 3 }
  */
 export default async function handler(req, res) {
   if (req.method !== "GET") {
