@@ -57,7 +57,6 @@ for (const [name, id] of Object.entries(CONTRACT_IDS)) {
 const PPHP_SCALE = 10_000_000;
 
 const READ_SOURCE = process.env.PROVENANCE_SOURCE ?? "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
-const API_KEY = process.env.PROVENANCE_API_KEY ?? "";
 
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
@@ -78,6 +77,10 @@ if (existsSync(envPath)) {
   }
   console.log("  Loaded .env from", envPath);
 }
+
+// Read env vars AFTER .env is loaded
+const API_KEY = process.env.PROVENANCE_API_KEY ?? "";
+
 const STORE_DIR = join(__dirname_local, "..");
 const STORE_PATH = join(STORE_DIR, "provenance-store.json");
 
