@@ -488,7 +488,9 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the lean-reset 
 
 **Production build:** `npm run build && npm start` from project root → `http://localhost:5174`
 
-**Live Demo:** [greenarmor.github.io/proof-of-public-value](https://greenarmor.github.io/proof-of-public-value/)
+**Live Demo:** [www.popv.quest](https://www.popv.quest/) - connect Freighter wallet
+
+**Mobile App:** PVO Hunter with GPS proximity detection, camera field reports, IPFS evidence, and Ed25519 wallet signing. See [Citizen Field Reporting](citizen-field-reporting.md).
 
 **Quick Start:**
 1. **Public pages**  -  Browse projects, national index, map, search  -  no wallet needed

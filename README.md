@@ -155,6 +155,7 @@ CLI aliases (`alice`, `agency`, `contractor`, etc.) are registered in the Stella
 ## Quick Start
 
 **Live version:** [www.popv.quest](https://www.popv.quest) - no setup needed. Just connect Freighter.
+**Mobile app:** Flutter app with PVO Hunter GPS proximity detection, camera field reports, IPFS evidence upload, and Ed25519 wallet signing. See [Citizen Field Reporting](docs/citizen-field-reporting.md).
 
 ### Path A: Frontend Only (reuse existing testnet contracts)
 
