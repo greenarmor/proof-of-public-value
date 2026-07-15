@@ -14,9 +14,7 @@ const PROVENANCE_API_BASE =
   (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
   (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
   PROVENANCE_API;
-const PROV_API_KEY =
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API_KEY) ||
-  "popv-94b8dac67f475a1adca2d15ed05c94334cd79cfa581ce60b";
+const PROV_API_KEY = "";
 
 const ProjectMap = lazy(() => import("./ProjectMap"));
 
