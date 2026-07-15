@@ -151,7 +151,7 @@ export default async function handler(req, res) {
       const list = [];
       const vec = sv.vec();
       for (let i = 0; i < vec.length; i++) {
-        const entry = vec.get(i);
+        const entry = vec.at(i);
         const map = parseScValMap(entry);
         list.push(map);
       }
