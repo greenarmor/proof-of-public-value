@@ -9,11 +9,7 @@ import { useWallet } from "../wallet";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { getCached, setCached } from "../dataCache";
 
-const PROVENANCE_API = "https://provenance.chain.popv.quest";
-const PROVENANCE_API_BASE =
-  (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
-  PROVENANCE_API;
+const PROVENANCE_API_BASE = "https://provenance.chain.popv.quest";
 const PROV_API_KEY = "";
 
 const ProjectMap = lazy(() => import("./ProjectMap"));

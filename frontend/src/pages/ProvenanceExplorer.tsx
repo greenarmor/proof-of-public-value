@@ -91,10 +91,7 @@ interface HealthInfo {
 }
 
 // ── Config ──────────────────────────────────────────────
-const API_BASE =
-  (typeof window !== "undefined" && (window as any).__PROVENANCE_API__) ||
-  (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_PROVENANCE_API) ||
-  (import.meta.env?.DEV ? "" : "https://provenance.chain.popv.quest");
+const API_BASE = "https://provenance.chain.popv.quest";
 
 const PROV_API_KEY = "";
 
