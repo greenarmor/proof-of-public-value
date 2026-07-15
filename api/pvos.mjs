@@ -69,6 +69,9 @@ export default async function handler(req, res) {
           case "scvSymbol":
             result[key] = val.sym().toString();
             break;
+          case "scvMap":
+            result[key] = parseScValMap(val);
+            break;
           default:
             result[key] = null;
         }

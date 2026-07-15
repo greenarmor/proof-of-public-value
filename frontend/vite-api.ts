@@ -546,6 +546,7 @@ export function claimRptPlugin(): Plugin {
                 case "scvString": result[key] = val.str().toString(); break;
                 case "scvBool": result[key] = val.b(); break;
                 case "scvVec": result[key] = val.vec().length; break;
+                case "scvMap": result[key] = parseMap(val); break;
                 default: result[key] = null;
               }
             }
