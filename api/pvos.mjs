@@ -169,13 +169,14 @@ export default async function handler(req, res) {
           let g1 = false, g2 = false, g3 = false, g4 = false, g5 = false;
           let g4Count = 0, g4Required = 0;
           for (const e of escList) {
-            if (e.engineer_approval) g1 = true;
-            if (e.compliance_validation) g2 = true;
-            if (e.community_oracle_validation) g3 = true;
-            g4Count = Math.max(g4Count, e.community_confirmation || 0);
-            g4Required = Math.max(g4Required, e.community_required || 0);
-            if ((e.community_confirmation || 0) >= (e.community_required || 1)) g4 = true;
-            if (e.ai_risk_check) g5 = true;
+            const c = e.conditions || {};
+            if (c.engineer_approval) g1 = true;
+            if (c.compliance_validation) g2 = true;
+            if (c.community_oracle_validation) g3 = true;
+            g4Count = Math.max(g4Count, c.community_confirmation || 0);
+            g4Required = Math.max(g4Required, c.community_required || 0);
+            if ((c.community_confirmation || 0) >= (c.community_required || 1)) g4 = true;
+            if (c.ai_risk_check) g5 = true;
           }
           escrowGates[pid] = { g1, g2, g3, g4, g5, g4Count, g4Required };
         }
