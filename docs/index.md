@@ -79,9 +79,13 @@ The AI Oracle and Provenance Indexer are the **only off-chain components**. Thes
 
 **AI Oracle** (`ai-oracle/service.ts`):
 
-- Polls testnet for EngineerApproved milestones
-- Runs local fraud detection (GPS bounding box, metadata scanning, description analysis)
-- Submits `ai_validate(passed, risk_score)` on-chain
+- Polls Stellar testnet for milestones awaiting Gate 5 validation
+- Runs LLM-powered fraud detection (DeepSeek/GPT configurable, falls back to rule-based)
+- Submits fraud detection, risk prediction, geo risk, digital twin, GPS validation on-chain
+- Auto-verifies unverified community reports as fallback
+- Issues Gate 5 recommendation with risk score - amber state for human review
+- **Human AI Auditor** reviews forensic data and makes final pass/fail decision
+- **Citizen reward engine** - mints pPHP to verified reporters based on reputation tier
 - **One instance serves all frontend deployments**
 
 **Provenance Indexer** (`provenance-indexer/service.ts`):
@@ -276,15 +280,15 @@ Each gate is an independent on-chain verification.
 **Before the gates - Evidence + Inspector:**
 The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The **Inspector** independently reviews this evidence for quality, clarity, and completeness - submitting an `InspectionReport` on-chain. This report strengthens the Engineer's decision at Gate 1.
 
-**Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications. References contractor evidence AND the Inspector's independent quality report.
+**Gate 1  -  Engineer:** Licensed engineer signs off that physical work meets specifications. Reviews contractor evidence AND inspector's independent quality report.
 
-**Gate 2  -  Compliance:** Auditor or COA validates procurement law, budget rules, safety regulations.
+**Gate 2  -  Compliance:** Compliance engine validates procurement law, budget rules, and regulatory requirements.
 
-**Gate 3  -  Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.
+**Gate 3  -  Community Oracle:** Citizens submit GPS-tagged field reports through the mobile app. At least 1 verified citizen report is required. Reports are auto-verified and the oracle validation triggers on-chain.
 
-**Gate 4  -  Community Confirmations:** Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.
+**Gate 4  -  Community Confirmations:** Each unique citizen wallet confirms the escrow independently (one per wallet). When the counter reaches the threshold set at escrow creation (default 5), this gate passes. Higher thresholds for high-risk projects.
 
-**Gate 5  -  AI Fraud Detection:** AI scans ALL evidence submitted across all prior gates for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns, description completeness. Runs last so it has maximum data to analyze.
+**Gate 5  -  AI Risk Check (Human Review):** AI Oracle scans all evidence across all prior gates for anomalies - duplicate GPS, metadata tampering, fraud patterns. Issues a recommendation with risk score. Gate shows amber until a **human AI Auditor** reviews the forensic data and makes the final pass/fail decision. AI recommends, human decides.
 
 ### 10. Escrow Releases  -  PVO Goes InProgress
 
@@ -490,7 +494,7 @@ Contract IDs are in `frontend/src/config.ts` and auto-updated by the lean-reset 
 
 **Live Demo:** [www.popv.quest](https://www.popv.quest/) - connect Freighter wallet
 
-**Mobile App:** PVO Hunter with GPS proximity detection, camera field reports, IPFS evidence, and Ed25519 wallet signing. See [Citizen Field Reporting](citizen-field-reporting.md).
+**Mobile App:** Flutter PVO Hunter with GPS proximity alerts, photo evidence upload to IPFS, on-chain field reports, community confirmation (Gate 4), asset wallet with XLM/RPT/pPHP transaction history, and live civic reputation scoring. See [Citizen Field Reporting](citizen-field-reporting.md).
 
 **Quick Start:**
 1. **Public pages**  -  Browse projects, national index, map, search  -  no wallet needed
