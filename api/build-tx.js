@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "type and params required" });
     }
 
-    const { Keypair, Asset, Operation, TransactionBuilder, Contract, xdr, nativeToScVal, Address } = await import("@stellar/stellar-sdk");
+    const { Keypair, Asset, Operation, TransactionBuilder, Contract, xdr, nativeToScVal, Address, rpc } = await import("@stellar/stellar-sdk");
     const RPC_URL = "https://soroban-testnet.stellar.org:443";
     const HORIZON = "https://horizon-testnet.stellar.org";
     const NETWORK = "Test SDF Network ; September 2015";
