@@ -367,6 +367,19 @@ function readTenders(): any[] {
   return [];
 }
 
+function readCommunityReports(): any[] {
+  const count = Number(invokeJSON(CONTRACT_IDS.community_oracle, "get_report_count") || 0);
+  const reports: any[] = [];
+  let misses = 0;
+  for (let id = 1; id <= count + 30; id++) {
+    const report = invokeJSON(CONTRACT_IDS.community_oracle, "get_report", [`--report_id ${id}`]);
+    if (report && report.id) { reports.push(report); misses = 0; }
+    else { misses++; }
+    if (misses >= 15 && id > count) break;
+  }
+  return reports;
+}
+
 // ── Helpers ─────────────────────────────────────────────
 function extractStatus(statusField: any): string {
   if (!statusField) return "Unknown";
@@ -789,6 +802,19 @@ async function buildProvenance(
   }
 
   const pvOs: PVOProvenance[] = [];
+
+  // Fetch community reports for all PVOs
+  const communityReports = readCommunityReports();
+  console.log(`  Loaded ${communityReports.length} community reports`);
+  const reportsByPvo: Record<number, any[]> = {};
+  for (const cr of communityReports) {
+    const pid = Number(cr.pvo_id || 0);
+    if (pid > 0) {
+      if (!reportsByPvo[pid]) reportsByPvo[pid] = [];
+      reportsByPvo[pid].push(cr);
+    }
+  }
+
   for (let i = 1; i <= pvoCount; i++) {
     const pvo = readPVO(i);
     if (!pvo) {
@@ -804,6 +830,18 @@ async function buildProvenance(
     );
 
     const timeline = buildTimeline(i, milestones, allEvents, auditEntries);
+
+    // Add community reports to timeline
+    const pvoReports = reportsByPvo[i] || [];
+    for (const cr of pvoReports) {
+      timeline.push({
+        timestamp: Number(cr.timestamp || cr.submitted_at || 0),
+        actor: String(cr.citizen || "").slice(0, 12),
+        action: cr.verified ? "Community Report Verified" : "Community Report Submitted",
+        details: { report_id: cr.id, pvo_id: i, report_type: cr.report_type, verified: cr.verified, data_hash: cr.data_hash },
+      });
+    }
+    timeline.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
     const totalEscrowed = milestones.reduce((s, m) => s + (m.escrow?.amount ?? 0), 0);
     const totalFunded = milestones.filter((m) => m.escrow?.funded).length;
