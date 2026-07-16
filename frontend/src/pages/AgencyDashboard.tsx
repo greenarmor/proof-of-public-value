@@ -92,24 +92,15 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
         const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = Number((await client.get_pvo_count()).result);
         const list: any[] = [];
-        // Iterate 1..=count first, then scan forward for non-sequential IDs
-        // (failed txs can consume IDs, creating gaps between count and max ID)
-        for (let i = 1; i <= cnt; i++) {
+        // get_pvo_count returns map length, not the counter (max ID).
+        // Failed txs increment counter without storing PVOs, creating gaps.
+        // Scan from 1 to cnt*3 + 50 to cover all possible ID gaps.
+        const scanLimit = Math.max(cnt * 3 + 50, 200);
+        for (let i = 1; i <= scanLimit; i++) {
           try {
             const r = await client.get_pvo({ pvo_id: i });
             if (r.result) list.push(r.result);
           } catch {}
-        }
-        // Scan beyond count for PVOs with IDs > count (from gaps caused by failed txs)
-        let consecutiveNones = 0;
-        let scanId = cnt + 1;
-        while (consecutiveNones < 15) {
-          try {
-            const r = await client.get_pvo({ pvo_id: scanId });
-            if (r.result) { list.push(r.result); consecutiveNones = 0; }
-            else { consecutiveNones++; }
-          } catch { consecutiveNones++; }
-          scanId++;
         }
         setPvos(list);
 
