@@ -576,7 +576,7 @@ async function rewardCitizenForReport(
   winningBidStroops: number
 ): Promise<boolean> {
   const rewardKey = `${reportId}:${citizenAddress}`;
-  if (rewardedReports.has(rewardKey)) return false;
+  if (rewardedReports.has(rewardKey)) { console.log(`  [Reward] Report #${reportId} already in dedup set, skipping`); return false; }
   if (!CENTRAL_BANK_SECRET) { console.log("  [Reward] CENTRAL_BANK_SECRET not set, skipping"); return false; }
 
   try {
@@ -599,6 +599,7 @@ async function rewardCitizenForReport(
 
     const { tier, pct } = getRewardTier(confidence);
     const rewardStroops = Math.floor(winningBidStroops * pct);
+    console.log(`  [Reward] Report #${reportId}: confidence=${confidence}, tier=${tier}, pct=${pct}, budget=${winningBidStroops}, reward=${rewardStroops} stroops (${(rewardStroops / 10_000_000).toFixed(2)} pPHP)`);
     if (rewardStroops < 1) { console.log(`  [Reward] Amount too small: ${rewardStroops} stroops`); return false; }
 
     const { Keypair, Address, Contract, TransactionBuilder, rpc, ScInt } = await import("@stellar/stellar-sdk");
@@ -963,7 +964,7 @@ async function collectForensicData(pvoId: number, pvo: any, milestones: any[]): 
             rewardBudget
           );
           if (!rewarded) {
-            console.log(`  [Reward] Report #${cr.id} not rewarded (dedup, too small, or config issue)`);
+            console.log(`  [Reward] Report #${cr.id} returned false — check logs above for specific reason`);
           }
         } catch (e: any) {
           console.error(`  [Reward] Error rewarding report #${cr.id}: ${e.message?.slice(0, 150)}`);
