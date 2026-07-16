@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoPV - Proof of Public Value</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--card:rgba(255,255,255,.03);--accent:#3b82f6;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--orange:#f97316;--purple:#a855f7;--cyan:#06b6d4;--text:#e2e8f0;--muted:#94a3b8}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
+
+.viewport{position:fixed;inset:0;overflow:hidden}
+.canvas{position:absolute;transform-origin:0 0;transition:transform 1.2s cubic-bezier(.7,0,.3,1);
+  background-color:var(--bg);
+  background-image:radial-gradient(circle,rgba(59,130,246,.04) 1px,transparent 1px);
+  background-size:50px 50px}
+
+.zone{position:absolute;overflow:hidden;cursor:pointer;opacity:.25;transition:opacity .6s}
+.zone.active{opacity:1}
+.zone:hover{opacity:.7}
+.zone-content{padding:3rem 4rem;height:100%;display:flex;flex-direction:column;justify-content:center}
+
+.slide-inner{max-width:100%;height:100%;display:flex;flex-direction:column;justify-content:center}
+h1{font-size:4.5rem;font-weight:800;line-height:1.05;margin-bottom:.35em;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:3.2rem;font-weight:700;margin-bottom:.4em;color:var(--accent)}
+h3{font-size:1.8rem;font-weight:600;color:var(--text);margin-bottom:.35em}
+p,li{font-size:1.6rem;line-height:1.55;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.8rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem}
+.card{background:var(--card);border-radius:14px;padding:1.6rem}
+.gate-card{text-align:center;padding:1.3rem .8rem}
+.gate-icon{font-size:3rem;margin-bottom:.4rem}
+.gate-num{font-size:1.1rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:.3rem}
+.gate-who{font-size:1.4rem;font-weight:600;color:var(--text);margin-bottom:.3rem}
+.gate-what{font-size:1.1rem;color:var(--muted);line-height:1.4}
+.stat{text-align:center}
+.stat-val{font-size:4.5rem;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:1.4rem;color:var(--muted);margin-top:.2rem}
+.bar-label{display:flex;justify-content:space-between;font-size:1.3rem;margin-bottom:.3rem}
+.bar{height:34px;background:#1e293b;border-radius:8px;overflow:hidden;display:flex}
+.bar-seg{height:100%}
+.bar-green{background:var(--green)}
+.bar-amber{background:var(--amber)}
+.tag{display:inline-block;padding:.3em 1em;border-radius:100px;font-size:1.1rem;font-weight:600}
+.tag-green{background:rgba(16,185,129,.15);color:var(--green)}
+.tag-orange{background:rgba(249,115,22,.15);color:var(--orange)}
+.tag-blue{background:rgba(59,130,246,.15);color:var(--accent)}
+.tag-red{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-purple{background:rgba(168,85,247,.15);color:var(--purple)}
+.tag-cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+table{width:100%;border-collapse:collapse;font-size:1.3rem}
+th{background:rgba(59,130,246,.12);color:var(--accent);padding:.7em 1em;text-align:left;font-weight:600;font-size:1.05rem;text-transform:uppercase;letter-spacing:.05em}
+td{padding:.6em 1em;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
+.flow-row{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;margin:1em 0}
+.flow-step{background:var(--card);border-radius:10px;padding:1em 1.4em;text-align:center}
+.flow-arrow{font-size:1.8rem;color:var(--accent)}
+.arrow-down{font-size:1.3rem;color:var(--accent)}
+
+.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.08}
+.glow-orb{position:absolute;border-radius:50%;filter:blur(120px)}
+.glow-orb:nth-child(1){width:600px;height:600px;background:#3b82f6;top:-100px;right:-50px;animation:float 20s infinite}
+.glow-orb:nth-child(2){width:400px;height:400px;background:#a855f7;bottom:-100px;left:-50px;animation:float 25s infinite reverse}
+@keyframes float{0%,100%{transform:translate(0,0)}33%{transform:translate(40px,-30px)}66%{transform:translate(-20px,20px)}}
+
+.nav{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;gap:.35rem;z-index:100;max-width:90vw;flex-wrap:wrap;justify-content:center}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:all .3s}
+.nav-dot.active{background:var(--accent);box-shadow:0 0 8px rgba(59,130,246,.5);width:22px;border-radius:20px}
+.nav-arrows{position:fixed;bottom:1.8rem;right:1.5rem;display:flex;gap:.5rem;z-index:100}
+.nav-btn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.nav-btn:hover{background:var(--accent);border-color:var(--accent)}
+.slide-num{position:fixed;bottom:2.1rem;left:1.5rem;font-size:.8rem;color:var(--muted);z-index:100}
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);transition:width 1.2s cubic-bezier(.7,0,.3,1);z-index:100}
+.overview-btn{position:fixed;top:1rem;right:1.5rem;z-index:100;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;font-size:1.2rem}
+.overview-btn:hover{background:var(--accent);border-color:var(--accent)}
+.overview-btn.active{background:var(--accent);border-color:var(--accent)}
+
+.minimap{position:fixed;bottom:1.2rem;right:1.5rem;width:140px;height:100px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:8px;z-index:100;overflow:hidden}
+.minimap-zone{position:absolute;background:rgba(255,255,255,.12);border-radius:2px}
+.minimap-zone.active{background:var(--accent)}
+.minimap-viewport{position:absolute;border:1.5px solid var(--accent);border-radius:2px;transition:all 1.2s cubic-bezier(.7,0,.3,1)}
+
+@media(max-width:768px){
+h1{font-size:2rem}h2{font-size:1.5rem}h3{font-size:1.1rem}
+p,li{font-size:.8rem}
+.grid2,.grid3,.grid5{grid-template-columns:1fr}
+.stat-val{font-size:1.8rem}
+.minimap{display:none}
+.nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"><div class="glow-orb"></div><div class="glow-orb"></div></div>
+<div class="progress-bar" id="progress"></div>
+<div class="slide-num" id="slideNum">1 / 28</div>
+
+<div class="viewport">
+  <div class="canvas" id="canvas"></div>
+</div>
+
+<button class="overview-btn" id="overviewBtn" title="Overview (O)">&#9635;</button>
+
+<div class="nav" id="navDots"></div>
+<div class="nav-arrows">
+  <button class="nav-btn" id="prevBtn">&#9664;</button>
+  <button class="nav-btn" id="nextBtn">&#9654;</button>
+</div>
+
+<div class="minimap" id="minimap">
+  <div class="minimap-viewport" id="minimapVP"></div>
+</div>
+
+<script>
+const slides = [
+  // 1: Title
+  `<div class="slide-inner" style="text-align:center">
+    <div style="font-size:6rem;margin-bottom:.3em">&#127963;&#65039;</div>
+    <h1 style="font-size:5rem">Proof of Public Value</h1>
+    <p style="font-size:2.2rem;color:var(--accent);margin-bottom:.5em">No Proof. No Payment.</p>
+    <p style="font-size:1.6rem;max-width:800px;margin:0 auto">A serverless Stellar Soroban dApp for government spending accountability</p>
+    <p style="margin-top:1.2em;font-size:1.1rem;color:var(--muted)">Stellar Build Better Hackathon &#183; Local Finance &amp; Real World Access</p>
+  </div>`,
+
+  // 2: The Problem
+  `<div class="slide-inner">
+    <h2>The Problem</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div style="text-align:center">
+        <div class="stat-val" style="font-size:6rem">$2.6T</div>
+        <p class="stat-label" style="font-size:1.8rem">Lost to corruption every year</p>
+        <div style="margin-top:.8em;text-align:left">
+          <p style="font-size:1.4rem">&#8226; Ghost projects - paper only</p>
+          <p style="font-size:1.4rem">&#8226; Inflated budgets, shoddy work</p>
+          <p style="font-size:1.4rem">&#8226; Untraceable fund flows</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Root Cause</h3>
+        <p style="font-size:1.4rem;color:var(--text);margin-bottom:.5em">Funds are released based on <strong style="color:var(--red)">signatures</strong>, not proof of work.</p>
+        <div style="margin-top:.8em;padding:.8em;background:rgba(239,68,68,.1);border-radius:8px">
+          <p style="color:var(--red);font-size:1.25rem">&#10007; Paid before a brick is laid</p>
+          <p style="color:var(--red);font-size:1.25rem">&#10007; Paper evidence - tampered</p>
+          <p style="color:var(--red);font-size:1.25rem">&#10007; Auditors arrive years late</p>
+          <p style="color:var(--red);font-size:1.25rem">&#10007; No citizen voice</p>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 3: Philippines
+  `<div class="slide-inner">
+    <h2>The Philippines Case Study</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card" style="border-left:4px solid var(--red)">
+        <h3 style="color:var(--red)">The Pattern</h3>
+        <p style="font-size:1.35rem">&#8226; &#8369;10B PDAF pork barrel scam</p>
+        <p style="font-size:1.35rem">&#8226; Billions in ghost infrastructure</p>
+        <p style="font-size:1.35rem">&#8226; Funds released upfront</p>
+        <p style="font-size:1.35rem">&#8226; No one held accountable</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--green)">
+        <h3 style="color:var(--green)">The Solution</h3>
+        <p style="font-size:1.45rem;color:var(--text);margin:.5em 0">Cryptographic proof of work <strong>BEFORE</strong> any peso is released.</p>
+        <p style="font-size:1.25rem">Every project becomes a PVO on Stellar</p>
+        <p style="font-size:1.25rem">Funds locked behind 5 gates</p>
+      </div>
+    </div>
+  </div>`,
+
+  // 4: Old vs New
+  `<div class="slide-inner">
+    <h2>Old Way vs PoPV Way</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card" style="border-left:4px solid var(--red)">
+        <h3 style="color:var(--red)">Old Way</h3>
+        <div style="margin:.8em 0;font-size:1.5rem;text-align:center;color:var(--muted)">
+          <p>&#128176; Budget Approved</p><p class="arrow-down">&#8595;</p>
+          <p>&#128184; Funds Released</p><p class="arrow-down">&#8595;</p>
+          <p>&#127959;&#65039; Work Happens (maybe)</p><p class="arrow-down">&#8595;</p>
+          <p>&#128269; Auditor Checks (years later)</p>
+        </div>
+      </div>
+      <div class="card" style="border-left:4px solid var(--green)">
+        <h3 style="color:var(--green)">PoPV Way</h3>
+        <div style="margin:.8em 0;font-size:1.5rem;text-align:center;color:var(--muted)">
+          <p>&#128176; Budget Approved</p><p class="arrow-down">&#8595;</p>
+          <p>&#128274; Funds Locked in Escrow</p><p class="arrow-down">&#8595;</p>
+          <p>&#9989; 5 Gates Verified</p><p class="arrow-down">&#8595;</p>
+          <p style="color:var(--green)">&#128184; Only Then, Released</p>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 5: The 5 Gates
+  `<div class="slide-inner">
+    <h2>The 5 Verification Gates</h2>
+    <p style="margin-bottom:1em;font-size:1.4rem">No single role can release funds. Each gate is independently verified on-chain.</p>
+    <div class="grid5">
+      <div class="card gate-card"><div class="gate-num">Gate 1</div><div class="gate-icon">&#128295;</div><div class="gate-who">Engineer</div><div class="gate-what">Physical work meets specs</div></div>
+      <div class="card gate-card"><div class="gate-num">Gate 2</div><div class="gate-icon">&#9878;&#65039;</div><div class="gate-who">Compliance</div><div class="gate-what">Procurement law &amp; budget</div></div>
+      <div class="card gate-card"><div class="gate-num">Gate 3</div><div class="gate-icon">&#128242;</div><div class="gate-who">Community Oracle</div><div class="gate-what">1+ verified citizen GPS report</div></div>
+      <div class="card gate-card"><div class="gate-num">Gate 4</div><div class="gate-icon">&#128101;</div><div class="gate-who">Community Confirm</div><div class="gate-what">N unique citizens confirm</div></div>
+      <div class="card gate-card" style="background:rgba(168,85,247,.08)"><div class="gate-num">Gate 5</div><div class="gate-icon">&#129504;</div><div class="gate-who">AI + Human</div><div class="gate-what">AI assesses, auditor decides</div></div>
+    </div>
+    <p style="text-align:center;margin-top:1em;color:var(--red);font-size:1.4rem">&#9888;&#65039; If ANY gate fails, funds stay locked</p>
+  </div>`,
+
+  // 6: Gate 5 Human Oversight
+  `<div class="slide-inner">
+    <h2>Gate 5 - AI Assesses, Human Decides</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card" style="border-left:4px solid var(--purple)">
+        <h3 style="color:var(--purple)">AI Oracle Forensic Engine</h3>
+        <p style="font-size:1.2rem">&#8226; LLM fraud detection (DeepSeek / GPT)</p>
+        <p style="font-size:1.2rem">&#8226; 13 forensic flags: GPS spoof, geo-mismatch, digital twin, duplicate evidence, budget anomaly</p>
+        <p style="font-size:1.2rem">&#8226; Risk score 0-100 with confidence</p>
+        <p style="font-size:1.2rem">&#8226; Recommends: Pass / Fail / Dispute</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--accent)">
+        <h3 style="color:var(--accent)">Human Auditor Oversight</h3>
+        <p style="font-size:1.2rem">&#8226; Dashboard shows pending reviews</p>
+        <p style="font-size:1.2rem">&#8226; Auditor sees AI rec + forensic evidence</p>
+        <p style="font-size:1.2rem">&#8226; Human decides: pass / fail / dispute</p>
+        <p style="font-size:1.2rem">&#8226; Decision recorded on-chain</p>
+        <div style="margin-top:.8em;padding:.7em;background:rgba(168,85,247,.08);border-radius:8px">
+          <p style="font-size:1.1rem;color:var(--purple)"><strong>AI never auto-passes Gate 5</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 7: Architecture Part 1
+  `<div class="slide-inner">
+    <h2>Architecture - 14 Contracts (1/2)</h2>
+    <p style="margin-bottom:.8em;font-size:1.3rem">Serverless. No backend. No database. Stellar is the infrastructure.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.8em;margin:.5em 0">
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--accent);font-size:1.3rem">access_control</strong><p style="font-size:1.05rem">14 roles with on-chain permissions</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--green);font-size:1.3rem">pvo_core</strong><p style="font-size:1.05rem">PVO + Milestone lifecycle</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--amber);font-size:1.3rem">escrow</strong><p style="font-size:1.05rem">5-gate conditional fund lock</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--purple);font-size:1.3rem">grant_commitment</strong><p style="font-size:1.05rem">Donor pledges, exact-match</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">community_oracle</strong><p style="font-size:1.05rem">Report verification</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">reputation</strong><p style="font-size:1.05rem">RPT gatekeeper, anti-Sybil</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">ai_oracle</strong><p style="font-size:1.05rem">Fraud detection + Gate 5</p></div>
+    </div>
+  </div>`,
+
+  // 8: Architecture Part 2
+  `<div class="slide-inner">
+    <h2>Architecture - 14 Contracts (2/2)</h2>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.8em;margin:1em 0">
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">compliance_engine</strong><p style="font-size:1.05rem">Regulatory checks</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">audit_trail</strong><p style="font-size:1.05rem">Immutable event log</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">value_score</strong><p style="font-size:1.05rem">0-100 public value rating</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">public_index</strong><p style="font-size:1.05rem">National rankings</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">procurement_market</strong><p style="font-size:1.05rem">Supplier registry</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--cyan);font-size:1.3rem">pphp_sac</strong><p style="font-size:1.05rem">CBDC settlement token</p></div>
+      <div class="card" style="text-align:center;padding:1em"><strong style="color:var(--text);font-size:1.3rem">popv_router</strong><p style="font-size:1.05rem">Query aggregator</p></div>
+    </div>
+    <p style="text-align:center;margin-top:.5em"><span class="tag tag-green">33 tests passing</span> <span class="tag tag-blue">0 npm vulnerabilities</span></p>
+  </div>`,
+
+  // 9: Token System
+  `<div class="slide-inner">
+    <h2>Token System - pPHP CBDC &amp; RPT</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card">
+        <h3>pPHP - CBDC Settlement Token</h3>
+        <p style="font-size:1.2rem">&#8226; Stellar Asset Contract, 7 decimals</p>
+        <p style="font-size:1.2rem">&#8226; Simulates Philippine Peso on testnet</p>
+        <p style="font-size:1.2rem">&#8226; Minted by <strong style="color:var(--cyan)">CentralBank</strong> role only</p>
+        <p style="font-size:1.2rem">&#8226; Escrow funding + citizen rewards</p>
+        <div style="margin-top:.6em;padding:.7em;background:rgba(6,182,212,.08);border-radius:8px">
+          <p style="font-size:1.1rem;color:var(--cyan)"><strong>SAC Units = Pesos &#215; 10&#8311;</strong></p>
+          <p style="font-size:1rem">&#8369;1 = 10M &#183; &#8369;1M = 10&#185;&#179; &#183; &#8369;500M = 5&#215;10&#185;&#8309;</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>RPT - Reputation Token</h3>
+        <p style="font-size:1.2rem">&#8226; <strong>Soulbound</strong> - cannot transfer</p>
+        <p style="font-size:1.2rem">&#8226; Citizens need &#8805; 1 RPT to report</p>
+        <p style="font-size:1.2rem">&#8226; Only admin can mint</p>
+        <p style="font-size:1.2rem">&#8226; Anti-Sybil gatekeeper</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:.8em;border-left:4px solid var(--cyan)">
+      <h3 style="color:var(--cyan);font-size:1.4rem">CentralBank - CBDC Issuer</h3>
+      <p style="font-size:1.15rem">Mints pPHP as Central Bank Digital Currency on Stellar testnet. Disburses donor pledges. Mints citizen rewards for verified field reports.</p>
+    </div>
+  </div>`,
+
+  // 10: Roles Part 1
+  `<div class="slide-inner">
+    <h2>14 Roles - The Trust Model (1/2)</h2>
+    <table>
+      <tr><th>Role</th><th>Key Action</th></tr>
+      <tr><td><span class="tag tag-cyan">CentralBank</span></td><td>Mint pPHP CBDC, disburse pledges, mint rewards</td></tr>
+      <tr><td><span class="tag tag-purple">Administrator</span></td><td>Assign roles, manage config (CANNOT mint)</td></tr>
+      <tr><td><span class="tag tag-blue">GovernmentAgency</span></td><td>Create PVOs, define milestones</td></tr>
+      <tr><td><span class="tag tag-green">FundingAgency</span></td><td>Create &amp; fund escrows per milestone</td></tr>
+      <tr><td><span class="tag tag-orange">InternationalDonor</span></td><td>Pledge exact PVO budget</td></tr>
+      <tr><td>Contractor</td><td>Submit evidence (drone, GPS, photos)</td></tr>
+      <tr><td>Engineer</td><td>Technical approval - Gate 1</td></tr>
+    </table>
+  </div>`,
+
+  // 11: Roles Part 2
+  `<div class="slide-inner">
+    <h2>14 Roles - The Trust Model (2/2)</h2>
+    <table>
+      <tr><th>Role</th><th>Key Action</th></tr>
+      <tr><td>AIAuditor</td><td>Fraud detection + Gate 5 decision</td></tr>
+      <tr><td>Auditor</td><td>Compliance check - Gate 2</td></tr>
+      <tr><td>CommissionOnAudit</td><td>Final compliance sign-off</td></tr>
+      <tr><td><span class="tag tag-green">Citizen</span></td><td>GPS field reports - Gates 3 &amp; 4</td></tr>
+      <tr><td>Inspector</td><td>Evidence quality assurance</td></tr>
+      <tr><td>Supplier</td><td>Pre-qualification registry</td></tr>
+      <tr><td><span class="tag tag-red">AntiCorruptionAgency</span></td><td>Raise disputes, investigate</td></tr>
+    </table>
+  </div>`,
+
+  // 12: PVO Lifecycle
+  `<div class="slide-inner">
+    <h2>PVO Lifecycle</h2>
+    <div class="flow-row" style="margin-top:1em">
+      <div class="flow-step"><div class="tag tag-orange" style="font-size:1.3rem">Proposed</div><p style="font-size:1rem;margin-top:.3em">PVO created</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><div class="tag tag-blue" style="font-size:1.3rem">InProgress</div><p style="font-size:1rem;margin-top:.3em">1st escrow released</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><div class="tag tag-green" style="font-size:1.3rem">Completed</div><p style="font-size:1rem;margin-top:.3em">All milestones done</p></div>
+    </div>
+    <div class="card" style="text-align:center;max-width:550px;margin:1.5em auto;border-left:4px solid var(--red)">
+      <h3 style="color:var(--red)">Completion Rules</h3>
+      <p style="font-size:1.2rem">&#9989; Every milestone is Released</p>
+      <p style="font-size:1.2rem">&#9989; Total released == final PVO budget</p>
+      <p style="font-size:1.05rem;color:var(--amber);margin-top:.5em">&#8369;50M of &#8369;500M? Stays InProgress</p>
+    </div>
+  </div>`,
+
+  // 13: Escrow Flow
+  `<div class="slide-inner">
+    <h2>Full Escrow Flow - 5 Gates in Order</h2>
+    <table>
+      <tr><th>Step</th><th>Gate</th><th>Who</th><th>What</th></tr>
+      <tr><td>1. Create</td><td>-</td><td>Funding Agency</td><td>Sets recipient, PVO, milestone</td></tr>
+      <tr><td>2. Fund</td><td>-</td><td>Funding Agency</td><td>Deposits pPHP into escrow</td></tr>
+      <tr><td>3</td><td><span class="tag tag-blue">Gate 1</span></td><td>Engineer</td><td>Signs off physical work</td></tr>
+      <tr><td>4</td><td><span class="tag tag-blue">Gate 2</span></td><td>Auditor / COA</td><td>Legal &amp; regulatory check</td></tr>
+      <tr><td>5</td><td><span class="tag tag-orange">Gate 3</span></td><td>Community Oracle</td><td>Auto-triggered by citizen report</td></tr>
+      <tr><td>6</td><td><span class="tag tag-green">Gate 4</span></td><td>Citizens</td><td>N unique confirmations</td></tr>
+      <tr><td>7</td><td><span class="tag tag-purple">Gate 5</span></td><td>AI Oracle &#8594; Auditor</td><td>AI assesses, human decides</td></tr>
+      <tr><td>8. Release</td><td><span class="tag tag-green">Released</span></td><td>Anyone</td><td>Funds to contractor</td></tr>
+    </table>
+  </div>`,
+
+  // 14: Mobile App
+  `<div class="slide-inner">
+    <h2>Mobile App - Flutter iOS &amp; Android</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card">
+        <h3>GPS PVO Hunter</h3>
+        <p style="font-size:1.1rem">&#8226; Real-time map, color-coded pins</p>
+        <p style="font-size:1.1rem">&#8226; Proximity alerts near sites</p>
+        <p style="font-size:1.1rem">&#8226; Seed data fallback, live replace</p>
+      </div>
+      <div class="card">
+        <h3>Field Reports</h3>
+        <p style="font-size:1.1rem">&#8226; Photo &#8594; IPFS &#8594; on-chain</p>
+        <p style="font-size:1.1rem">&#8226; Auto-triggers Gate 3</p>
+        <p style="font-size:1.1rem">&#8226; "Confirm Project" for Gate 4</p>
+      </div>
+      <div class="card">
+        <h3>Wallet &amp; Assets</h3>
+        <p style="font-size:1.1rem">&#8226; Native XLM, Soulbound RPT, CBDC pPHP</p>
+        <p style="font-size:1.1rem">&#8226; Transaction history per asset</p>
+        <p style="font-size:1.1rem">&#8226; Stellar Expert links</p>
+      </div>
+      <div class="card">
+        <h3>Civic Reputation</h3>
+        <p style="font-size:1.1rem">&#8226; Live on-chain reputation score</p>
+        <p style="font-size:1.1rem">&#8226; Drives reward tier</p>
+        <p style="font-size:1.1rem">&#8226; Rich iOS 17 notifications</p>
+      </div>
+    </div>
+  </div>`,
+
+  // 15: Citizen Rewards
+  `<div class="slide-inner">
+    <h2>Citizen Reward Engine</h2>
+    <p style="margin-bottom:1em;font-size:1.3rem">Citizens earn pPHP for verified reports. CentralBank mints rewards when AI Oracle confirms.</p>
+    <div class="flow-row">
+      <div class="flow-step"><span class="tag tag-green" style="font-size:1.2rem">Report</span><p style="font-size:.95rem;margin-top:.3em">GPS + photo</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><span class="tag tag-orange" style="font-size:1.2rem">Verified</span><p style="font-size:.95rem;margin-top:.3em">Oracle validates</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><span class="tag tag-purple" style="font-size:1.2rem">AI Oracle</span><p style="font-size:.95rem;margin-top:.3em">Confirms validity</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><span class="tag tag-cyan" style="font-size:1.2rem">CentralBank</span><p style="font-size:.95rem;margin-top:.3em">Mints pPHP</p></div>
+    </div>
+    <div class="grid3" style="margin-top:1em">
+      <div class="card" style="text-align:center"><h3 style="color:var(--green);font-size:1.4rem">Tier 1</h3><p style="font-size:1.1rem">High reputation</p><p style="font-size:1rem;color:var(--muted)">Higher reward %</p></div>
+      <div class="card" style="text-align:center"><h3 style="color:var(--amber);font-size:1.4rem">Tier 2</h3><p style="font-size:1.1rem">Medium reputation</p><p style="font-size:1rem;color:var(--muted)">Standard reward</p></div>
+      <div class="card" style="text-align:center"><h3 style="color:var(--red);font-size:1.4rem">Tier 3</h3><p style="font-size:1.1rem">Low reputation</p><p style="font-size:1rem;color:var(--muted)">Minimum reward</p></div>
+    </div>
+  </div>`,
+
+  // 16: Community Verification
+  `<div class="slide-inner">
+    <h2>Community Verification - The People's Gate</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card">
+        <h3>How It Works</h3>
+        <p style="font-size:1.1rem">1. Citizen visits site with mobile app</p>
+        <p style="font-size:1.1rem">2. Submits GPS report (photos, video)</p>
+        <p style="font-size:1.1rem">3. Uploaded to IPFS</p>
+        <p style="font-size:1.1rem">4. Oracle verifies &#8594; Gate 3 passes</p>
+        <p style="font-size:1.1rem">5. N citizens confirm &#8594; Gate 4 passes</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--orange)">Threshold Strategy</h3>
+        <p style="font-size:1.1rem"><span class="tag tag-green">1-3</span> Low-risk urban</p>
+        <p style="font-size:1.1rem"><span class="tag tag-blue">3-5</span> Rural, schools</p>
+        <p style="font-size:1.1rem"><span class="tag tag-red">5-10</span> High-corruption</p>
+        <div style="margin-top:.8em;padding:.7em;background:rgba(168,85,247,.08);border-radius:8px">
+          <p style="font-size:1.05rem;color:var(--purple)">RPT gatekeeper prevents Sybil attacks</p>
+        </div>
+      </div>
+    </div>
+  </div>`,
+
+  // 17: Provenance Indexer
+  `<div class="slide-inner">
+    <h2>Provenance Indexer - Audit Trail</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card">
+        <h3>What It Does</h3>
+        <p style="font-size:1.15rem">&#8226; Polls Stellar ledgers for all events</p>
+        <p style="font-size:1.15rem">&#8226; Builds provenance chains per PVO</p>
+        <p style="font-size:1.15rem">&#8226; Every event linked to tx hash</p>
+        <p style="font-size:1.15rem">&#8226; Serves Transparency Portal</p>
+      </div>
+      <div class="card">
+        <h3>Who It Serves</h3>
+        <p style="font-size:1.15rem">&#8226; <strong style="color:var(--accent)">Funding Agency</strong> - track pledges</p>
+        <p style="font-size:1.15rem">&#8226; <strong style="color:var(--green)">COA</strong> - independent verification</p>
+        <p style="font-size:1.15rem">&#8226; <strong style="color:var(--purple)">Public</strong> - real-time transparency</p>
+        <p style="font-size:1.15rem">&#8226; Every tx traceable to Stellar Expert</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:.8em;text-align:center">
+      <p style="font-size:1.15rem"><strong style="color:var(--cyan)">Live:</strong> provenance.chain.popv.quest &#183; 192+ events indexed</p>
+    </div>
+  </div>`,
+
+  // 18: Grant Lifecycle
+  `<div class="slide-inner">
+    <h2>Grant Lifecycle - Donor to Escrow</h2>
+    <div class="flow-row" style="margin:1.5em 0">
+      <div class="flow-step"><span class="tag tag-purple" style="font-size:1.2rem">Committed</span><p style="font-size:.95rem;margin-top:.3em">Donor pledged<br>Exact budget match</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><span class="tag tag-cyan" style="font-size:1.2rem">Disbursed</span><p style="font-size:.95rem;margin-top:.3em">CentralBank minted pPHP<br>Sent to Funding Agency</p></div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step"><span class="tag tag-green" style="font-size:1.2rem">Completed</span><p style="font-size:.95rem;margin-top:.3em">All escrows released<br>Grant settled</p></div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--orange);margin-top:.8em">
+      <h3 style="color:var(--orange)">Key Enforcement</h3>
+      <p style="font-size:1.1rem">&#8226; Pledge must <strong>exactly equal</strong> PVO remaining budget</p>
+      <p style="font-size:1.1rem">&#8226; Contract rejects mismatches on-chain</p>
+      <p style="font-size:1.1rem">&#8226; Multiple escrows per grant, one per milestone</p>
+    </div>
+  </div>`,
+
+  // 19: Budget Tracking
+  `<div class="slide-inner">
+    <h2>Budget Tracking - Funded vs Escrowed</h2>
+    <p style="margin-bottom:1em;font-size:1.3rem">Every PVO card shows a real-time bar of where the money is.</p>
+    <div class="card" style="margin-bottom:1em">
+      <div class="bar-label"><span style="color:var(--text)">PVO #30: Infrastructure Project</span><span style="color:var(--muted)">&#8369;500,000,000</span></div>
+      <div class="bar"><div class="bar-seg bar-green" style="width:40%"></div><div class="bar-seg bar-amber" style="width:60%"></div></div>
+      <div style="display:flex;gap:1.5em;margin-top:.4em;font-size:1.1rem">
+        <span>&#129001; &#8369;200M escrowed</span><span>&#128850; &#8369;300M available</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="bar-label"><span style="color:var(--text)">All milestones done</span><span style="color:var(--muted)">&#8369;500,000,000</span></div>
+      <div class="bar"><div class="bar-seg bar-green" style="width:100%"></div></div>
+      <div style="margin-top:.4em"><span class="tag tag-green">Ready for Completion &#10003;</span></div>
+    </div>
+  </div>`,
+
+  // 20: Demo State
+  `<div class="slide-inner">
+    <h2>Live on Testnet Right Now</h2>
+    <div class="grid3" style="margin-top:1em">
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:3.5rem">18</div>
+        <p style="font-size:1.2rem">PVOs across PH</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:3.5rem">4</div>
+        <p style="font-size:1.2rem">Escrows on PVO #30</p>
+        <p style="font-size:1rem;color:var(--green)">All 5 gates passed</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:3.5rem">20</div>
+        <p style="font-size:1.2rem">Citizen Reports</p>
+        <p style="font-size:1rem;color:var(--muted)">9 verified</p>
+      </div>
+    </div>
+    <div class="grid3" style="margin-top:.8em">
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:3.5rem">13</div>
+        <p style="font-size:1.2rem">Forensic Flags</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:3.5rem">192</div>
+        <p style="font-size:1.2rem">Events Indexed</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="stat-val" style="font-size:2.5rem">iOS + Android</div>
+        <p style="font-size:1.2rem">Flutter Mobile App</p>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:1em"><span class="tag tag-green">PVO #30 all gates passed</span> <span class="tag tag-cyan">CentralBank CBDC</span> <span class="tag tag-purple">Human auditor</span></p>
+  </div>`,
+
+  // 21: Tech Stack
+  `<div class="slide-inner">
+    <h2>Tech Stack</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card"><h3>Blockchain</h3><p style="font-size:1.1rem">Stellar Testnet (Soroban)</p><p style="font-size:1.1rem">Rust #![no_std], SDK v26</p></div>
+      <div class="card"><h3>Frontend</h3><p style="font-size:1.1rem">React 19, TypeScript, Vite</p><p style="font-size:1.1rem">Tailwind CSS v4, on Vercel</p></div>
+      <div class="card"><h3>Mobile</h3><p style="font-size:1.1rem">Flutter 3.x (iOS &amp; Android)</p><p style="font-size:1.1rem">GPS hunter + field reports</p></div>
+      <div class="card"><h3>AI Oracle</h3><p style="font-size:1.1rem">LLM (DeepSeek / GPT)</p><p style="font-size:1.1rem">13 forensic flags + human gate</p></div>
+      <div class="card"><h3>Provenance Indexer</h3><p style="font-size:1.1rem">Independent audit trail</p><p style="font-size:1.1rem">Public transparency API</p></div>
+      <div class="card"><h3>DeFi</h3><p style="font-size:1.1rem">SAC pPHP (7 decimals, CBDC)</p><p style="font-size:1.1rem">5-gate escrow + soulbound RPT</p></div>
+    </div>
+  </div>`,
+
+  // 22: Security
+  `<div class="slide-inner">
+    <h2>Security Features</h2>
+    <div class="grid2" style="margin-top:1em">
+      <div class="card"><h3>&#128273; RPT Gatekeeper</h3><p style="font-size:1.1rem">Soulbound tokens required to report. Anti-Sybil.</p></div>
+      <div class="card"><h3>&#128207; Exact-Amount Pledges</h3><p style="font-size:1.1rem">Contract rejects budget mismatches on-chain.</p></div>
+      <div class="card"><h3>&#128274; 5-Gate Consensus</h3><p style="font-size:1.1rem">No single role can release funds.</p></div>
+      <div class="card"><h3>&#129504; Human-in-the-Loop AI</h3><p style="font-size:1.1rem">AI recommends. Human decides Gate 5.</p></div>
+      <div class="card"><h3>&#128279; Immutable Audit Trail</h3><p style="font-size:1.1rem">Every decision on Stellar with tx hash.</p></div>
+      <div class="card"><h3>&#128737;&#65039; CentralBank CBDC Control</h3><p style="font-size:1.1rem">Only CentralBank mints pPHP. Admin cannot.</p></div>
+    </div>
+  </div>`,
+
+  // 23: Map Pins
+  `<div class="slide-inner">
+    <h2>Map Pins - Color-Coded by Status</h2>
+    <div class="grid3" style="margin-top:1em">
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--green);margin:.4em auto;border:2px solid white"></div><p style="color:var(--green);font-weight:600;font-size:1.15rem">Completed</p></div>
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--orange);margin:.4em auto;border:2px solid white"></div><p style="color:var(--orange);font-weight:600;font-size:1.15rem">Proposed</p></div>
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--accent);margin:.4em auto;border:2px solid white"></div><p style="color:var(--accent);font-weight:600;font-size:1.15rem">InProgress</p></div>
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--red);margin:.4em auto;border:2px solid white"></div><p style="color:var(--red);font-weight:600;font-size:1.15rem">Suspended</p></div>
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--purple);margin:.4em auto;border:2px solid white"></div><p style="color:var(--purple);font-weight:600;font-size:1.15rem">GPS Evidence</p></div>
+      <div class="card" style="text-align:center"><div style="font-size:2.5rem">&#128205;</div><div style="width:28px;height:28px;border-radius:50%;background:var(--muted);margin:.4em auto;border:2px solid white"></div><p style="color:var(--muted);font-weight:600;font-size:1.15rem">Under Review</p></div>
+    </div>
+  </div>`,
+
+  // 24: Differentiators
+  `<div class="slide-inner">
+    <h2>What Makes PoPV Different</h2>
+    <table>
+      <tr><th>Feature</th><th>Traditional</th><th>PoPV</th></tr>
+      <tr><td>Fund release</td><td style="color:var(--red)">Signatures</td><td style="color:var(--green)">5-gate proof</td></tr>
+      <tr><td>Evidence</td><td style="color:var(--red)">Paper</td><td style="color:var(--green)">On-chain + IPFS</td></tr>
+      <tr><td>Audit</td><td style="color:var(--red)">Years later</td><td style="color:var(--green)">Real-time</td></tr>
+      <tr><td>Citizen role</td><td style="color:var(--red)">None</td><td style="color:var(--green)">Required for Gates 3 &amp; 4</td></tr>
+      <tr><td>Fraud detection</td><td style="color:var(--red)">None</td><td style="color:var(--green)">AI Oracle, 13 flags</td></tr>
+      <tr><td>Mobile</td><td style="color:var(--red)">Paper forms</td><td style="color:var(--green)">Flutter GPS + photo</td></tr>
+      <tr><td>CBDC</td><td style="color:var(--red)">Centralized</td><td style="color:var(--green)">CentralBank on-chain</td></tr>
+      <tr><td>Infrastructure</td><td style="color:var(--red)">Central server</td><td style="color:var(--green)">Serverless on Stellar</td></tr>
+    </table>
+  </div>`,
+
+  // 25: Stellar Integration
+  `<div class="slide-inner">
+    <h2>Stellar Integration - Cross-Contract</h2>
+    <div class="card" style="margin:1em 0">
+      <p style="font-family:monospace;font-size:1.15rem;background:rgba(0,0,0,.3);padding:1em;border-radius:8px;margin:.3em 0">
+        Escrow.release() &#8594; pvo_core.update_pvo_status()<br>
+        Grant.commit() &#8594; pvo_core.get_pvo_budget()<br>
+        CommunityOracle.verify() &#8594; reputation.check_balance()<br>
+        AIOracle.validate() &#8594; escrow.ai_validate()<br>
+        CentralBank.mint() &#8594; pphp_sac.mint()
+      </p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="font-size:1.3rem">Soroban Events</h3>
+        <p style="font-size:1.1rem">Every state change emits typed events: PVOStatusChanged, EscrowReleased, ReportSubmitted, RewardMinted...</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1.3rem">Provenance Indexer</h3>
+        <p style="font-size:1.1rem">Polls ledgers, indexes all events, builds chains. Serves public transparency portal.</p>
+      </div>
+    </div>
+  </div>`,
+
+  // 26: Quick Start
+  `<div class="slide-inner">
+    <h2>Quick Start</h2>
+    <div class="card" style="font-family:monospace;font-size:1.2rem;padding:1.5em;margin:1em 0">
+      <p style="color:var(--accent)"># Frontend</p>
+      <p>cd frontend &amp;&amp; npm install &amp;&amp; npm run dev</p>
+      <p style="color:var(--accent);margin-top:.8em"># Mobile</p>
+      <p>cd mobile &amp;&amp; flutter pub get &amp;&amp; flutter run</p>
+      <p style="color:var(--accent);margin-top:.8em"># Tests</p>
+      <p>cargo test -p escrow -p pvo_core</p>
+      <p style="color:var(--accent);margin-top:.8em"># Provenance Indexer</p>
+      <p>npx tsx provenance-indexer/service.ts</p>
+    </div>
+    <p style="text-align:center;font-size:1.2rem"><span class="tag tag-cyan">Live: www.popv.quest</span> <span class="tag tag-green">18 PVOs on testnet</span></p>
+  </div>`,
+
+  // 27: Summary
+  `<div class="slide-inner" style="text-align:center">
+    <h1 style="font-size:3rem">PoPV = Programmable Accountability</h1>
+    <div class="grid3" style="margin:1.5em 0">
+      <div class="card"><div style="font-size:2.2rem">&#128203;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">PVOs</p><p style="font-size:.95rem">On-chain entities</p></div>
+      <div class="card"><div style="font-size:2.2rem">&#128274;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">5-Gate Escrows</p><p style="font-size:.95rem">No single authority</p></div>
+      <div class="card"><div style="font-size:2.2rem">&#128101;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">14 Roles</p><p style="font-size:.95rem">Including CentralBank</p></div>
+      <div class="card"><div style="font-size:2.2rem">&#128242;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">Citizens</p><p style="font-size:.95rem">Mobile + rewards</p></div>
+      <div class="card"><div style="font-size:2.2rem">&#129504;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">AI + Human</p><p style="font-size:.95rem">Forensic + decision</p></div>
+      <div class="card"><div style="font-size:2.2rem">&#129689;</div><p style="color:var(--text);font-weight:600;font-size:1.15rem">pPHP CBDC</p><p style="font-size:.95rem">CentralBank minted</p></div>
+    </div>
+    <p style="font-size:1.4rem;margin-top:.8em"><strong style="color:var(--accent)">Build Better. Prove Value. Release Funds.</strong></p>
+  </div>`,
+
+  // 28: Thank You
+  `<div class="slide-inner" style="text-align:center">
+    <div style="font-size:5rem;margin-bottom:.3em">&#127963;&#65039;</div>
+    <h1 style="font-size:3.5rem">Step Up, or Be Watched</h1>
+    <p style="font-size:1.6rem;color:var(--accent);margin:.6em 0">Proof of Public Value</p>
+    <p style="font-size:1.3rem;max-width:700px;margin:0 auto;line-height:1.7">
+      To officials: <strong style="color:var(--green)">do your job, and this system proves your integrity.</strong><br>
+      <strong style="color:var(--red)">Don't - and every citizen becomes your auditor.</strong><br><br>
+      Every peso tracked. Every decision recorded. Every citizen watching.
+    </p>
+    <div style="margin-top:1.2em;font-size:1.1rem;color:var(--muted)">
+      <p>Live: www.popv.quest &#183; Provenance: provenance.chain.popv.quest</p>
+    </div>
+  </div>`
+];
+
+// === Layout ===
+const COLS = 3;
+const COL_GAP = 1500;
+const ROW_GAP = 980;
+const ZONE_W = 1280;
+const ZONE_H = 820;
+
+const zoneData = slides.map((html, i) => {
+  const row = Math.floor(i / COLS);
+  const colInRow = i % COLS;
+  const reversed = row % 2 === 1;
+  const col = reversed ? (COLS - 1 - colInRow) : colInRow;
+  return { x: col * COL_GAP + 80, y: row * ROW_GAP + 80, w: ZONE_W, h: ZONE_H, html };
+});
+
+let canvasW = 0, canvasH = 0;
+zoneData.forEach(z => {
+  canvasW = Math.max(canvasW, z.x + z.w + 80);
+  canvasH = Math.max(canvasH, z.y + z.h + 80);
+});
+
+const canvas = document.getElementById('canvas');
+canvas.style.width = canvasW + 'px';
+canvas.style.height = canvasH + 'px';
+
+const navDots = document.getElementById('navDots');
+const progress = document.getElementById('progress');
+const slideNum = document.getElementById('slideNum');
+const minimap = document.getElementById('minimap');
+
+zoneData.forEach((z, i) => {
+  const el = document.createElement('div');
+  el.className = 'zone' + (i === 0 ? ' active' : '');
+  el.style.left = z.x + 'px';
+  el.style.top = z.y + 'px';
+  el.style.width = z.w + 'px';
+  el.style.height = z.h + 'px';
+  el.innerHTML = '<div class="zone-content">' + z.html + '</div>';
+  el.onclick = (e) => {
+    e.stopPropagation();
+    if (overviewActive) { overviewActive = false; document.getElementById('overviewBtn').classList.remove('active'); goTo(i); }
+  };
+  canvas.appendChild(el);
+
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => goTo(i);
+  navDots.appendChild(dot);
+});
+
+// Minimap
+const mmScale = Math.min(minimap.clientWidth / canvasW, minimap.clientHeight / canvasH);
+zoneData.forEach((z, i) => {
+  const mmDot = document.createElement('div');
+  mmDot.className = 'minimap-zone' + (i === 0 ? ' active' : '');
+  mmDot.style.left = (z.x * mmScale) + 'px';
+  mmDot.style.top = (z.y * mmScale) + 'px';
+  mmDot.style.width = Math.max(3, z.w * mmScale) + 'px';
+  mmDot.style.height = Math.max(2, z.h * mmScale) + 'px';
+  mmDot.dataset.idx = i;
+  minimap.appendChild(mmDot);
+});
+
+const zoneEls = canvas.querySelectorAll('.zone');
+const mmDots = minimap.querySelectorAll('.minimap-zone');
+
+let current = 0;
+let overviewActive = false;
+
+function getTransformForZone(index) {
+  const z = zoneData[index];
+  const pad = 0.97;
+  const scale = Math.min(window.innerWidth / z.w, window.innerHeight / z.h) * pad;
+  const cx = z.x + z.w / 2;
+  const cy = z.y + z.h / 2;
+  return { scale, tx: window.innerWidth / 2 - cx * scale, ty: window.innerHeight / 2 - cy * scale };
+}
+
+function getOverviewTransform() {
+  const pad = 60;
+  const scale = Math.min((window.innerWidth - pad * 2) / canvasW, (window.innerHeight - pad * 2) / canvasH);
+  return { scale, tx: window.innerWidth / 2 - (canvasW / 2) * scale, ty: window.innerHeight / 2 - (canvasH / 2) * scale };
+}
+
+function applyTransform(t) {
+  canvas.style.transform = 'translate(' + t.tx + 'px,' + t.ty + 'px) scale(' + t.scale + ')';
+  updateMinimap(t);
+}
+
+function updateMinimap(t) {
+  const mmW = minimap.clientWidth, mmH = minimap.clientHeight;
+  const ms = Math.min(mmW / canvasW, mmH / canvasH);
+  const vp = document.getElementById('minimapVP');
+  vp.style.width = (window.innerWidth / t.scale) * ms + 'px';
+  vp.style.height = (window.innerHeight / t.scale) * ms + 'px';
+  vp.style.left = ((-t.tx / t.scale) * ms) + 'px';
+  vp.style.top = ((-t.ty / t.scale) * ms) + 'px';
+}
+
+function goTo(index) {
+  if (index < 0 || index >= slides.length) return;
+  if (overviewActive) { overviewActive = false; document.getElementById('overviewBtn').classList.remove('active'); }
+  zoneEls[current].classList.remove('active');
+  mmDots[current].classList.remove('active');
+  navDots.children[current].classList.remove('active');
+  current = index;
+  zoneEls[current].classList.add('active');
+  mmDots[current].classList.add('active');
+  navDots.children[current].classList.add('active');
+  applyTransform(getTransformForZone(current));
+  progress.style.width = ((current + 1) / slides.length * 100) + '%';
+  slideNum.textContent = (current + 1) + ' / ' + slides.length;
+}
+
+function toggleOverview() {
+  overviewActive = !overviewActive;
+  const btn = document.getElementById('overviewBtn');
+  if (overviewActive) {
+    btn.classList.add('active');
+    zoneEls.forEach(z => z.classList.add('active'));
+    applyTransform(getOverviewTransform());
+  } else {
+    btn.classList.remove('active');
+    zoneEls.forEach((z, i) => { if (i !== current) z.classList.remove('active'); });
+    goTo(current);
+  }
+}
+
+document.getElementById('prevBtn').onclick = () => goTo(current - 1);
+document.getElementById('nextBtn').onclick = () => goTo(current + 1);
+document.getElementById('overviewBtn').onclick = toggleOverview;
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+  if (e.key === 'Home') goTo(0);
+  if (e.key === 'End') goTo(slides.length - 1);
+  if (e.key === 'o' || e.key === 'O') toggleOverview();
+  if (e.key === 'Escape' && overviewActive) toggleOverview();
+});
+
+let touchX, touchY;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; });
+document.addEventListener('touchend', e => {
+  if (!touchX) return;
+  const dx = touchX - e.changedTouches[0].clientX;
+  const dy = touchY - e.changedTouches[0].clientY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) goTo(current + (dx > 0 ? 1 : -1));
+  else if (Math.abs(dy) > 50) goTo(current + (dy > 0 ? 1 : -1));
+});
+
+window.addEventListener('resize', () => {
+  if (overviewActive) applyTransform(getOverviewTransform());
+  else applyTransform(getTransformForZone(current));
+});
+
+applyTransform(getTransformForZone(0));
+</script>
+</body>
+</html>
