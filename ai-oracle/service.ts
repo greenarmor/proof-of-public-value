@@ -580,9 +580,22 @@ async function rewardCitizenForReport(
   if (!CENTRAL_BANK_SECRET) { console.log("  [Reward] CENTRAL_BANK_SECRET not set, skipping"); return false; }
 
   try {
-    // Get citizen reputation
-    const rep = queryContract("reputation", "get_reputation", `--entity ${citizenAddress}`);
-    const confidence = Number(rep?.confidence_rating ?? rep?.reputation_score ?? 0);
+    // Get citizen reputation from community_oracle (NOT reputation contract which is for contractors)
+    let confidence = 50; // default starting confidence for new citizens
+    try {
+      const citizenRep = queryContract("community_oracle", "get_citizen_reputation", `--citizen ${citizenAddress}`);
+      if (citizenRep) {
+        confidence = Number(citizenRep.confidence_rating ?? citizenRep.confidence ?? 50);
+      }
+    } catch {}
+    // Also try reputation contract as fallback
+    if (confidence <= 50) {
+      try {
+        const rep = queryContract("reputation", "get_reputation", `--entity ${citizenAddress}`);
+        const repConfidence = Number(rep?.confidence_rating ?? rep?.reputation_score ?? 0);
+        if (repConfidence > confidence) confidence = repConfidence;
+      } catch {}
+    }
 
     const { tier, pct } = getRewardTier(confidence);
     const rewardStroops = Math.floor(winningBidStroops * pct);
