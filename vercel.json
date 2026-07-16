@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/((?!api|presentation\\.html).*)", "destination": "/index.html" }
+    { "source": "/((?!api|presentation\\.html|popv-presentation\\.pptx).*)", "destination": "/index.html" }
   ]
 }
