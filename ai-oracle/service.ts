@@ -955,12 +955,21 @@ async function collectForensicData(pvoId: number, pvo: any, milestones: any[]): 
     if (cr.verified && cr.citizen) {
       const rewardBudget = Number(pvo.total_budget || 0);
       if (rewardBudget > 0) {
-        rewardCitizenForReport(
-          String(cr.citizen),
-          Number(cr.id || 0),
-          pvoId,
-          rewardBudget
-        );
+        try {
+          const rewarded = await rewardCitizenForReport(
+            String(cr.citizen),
+            Number(cr.id || 0),
+            pvoId,
+            rewardBudget
+          );
+          if (!rewarded) {
+            console.log(`  [Reward] Report #${cr.id} not rewarded (dedup, too small, or config issue)`);
+          }
+        } catch (e: any) {
+          console.error(`  [Reward] Error rewarding report #${cr.id}: ${e.message?.slice(0, 150)}`);
+        }
+      } else {
+        console.log(`  [Reward] Skipping report #${cr.id} - PVO ${pvoId} budget is 0`);
       }
     }
   }
