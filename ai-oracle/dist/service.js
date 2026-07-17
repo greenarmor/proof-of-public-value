@@ -571,7 +571,7 @@ async function rewardCitizenForReport(citizenAddress, reportId, pvoId, winningBi
             console.log(`  [Reward] Amount too small: ${rewardStroops} stroops`);
             return false;
         }
-        const { Keypair, Address, Contract, TransactionBuilder, rpc, ScInt } = await Promise.resolve().then(() => __importStar(require("@stellar/stellar-sdk")));
+        const { Keypair, Address, Contract, TransactionBuilder, rpc, nativeToScVal } = await Promise.resolve().then(() => __importStar(require("@stellar/stellar-sdk")));
         const cbKp = Keypair.fromSecret(CENTRAL_BANK_SECRET);
         const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
         // Retry getAccount up to 3 times for RPC rate limit resilience
@@ -590,7 +590,7 @@ async function rewardCitizenForReport(citizenAddress, reportId, pvoId, winningBi
             return false;
         }
         const tokenContract = new Contract(PPHP_CONTRACT);
-        const mintOp = tokenContract.call("mint", new Address(cbKp.publicKey()).toScVal(), new Address(citizenAddress).toScVal(), new ScInt(rewardStroops).toI128());
+        const mintOp = tokenContract.call("mint", new Address(cbKp.publicKey()).toScVal(), new Address(citizenAddress).toScVal(), nativeToScVal(rewardStroops, { type: "i128" }));
         const tx = new TransactionBuilder(account, {
             fee: "100000",
             networkPassphrase: "Test SDF Network ; September 2015",
