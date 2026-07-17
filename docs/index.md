@@ -43,7 +43,7 @@ PoPV has **no backend server, no database, no API layer.** The Stellar blockchai
 | REST API endpoints | ❌ None  -  RPC calls to `soroban-testnet.stellar.org:443` |
 | Auth server (JWT/OAuth) | ❌ None  -  Freighter wallet signs transactions |
 | File storage (S3) | ❌ None  -  IPFS for evidence, Soroban events for audit trail |
-| Deployment server (EC2/VPS) | ❌ None  -  Static HTML/CSS/JS on Vercel (free) |
+| Deployment server (VPS) | nginx reverse proxy to Vite dev server on port 5174 |
 | Off-chain services | Provenance Indexer + AI Oracle  -  standalone TS services, optional |
 
 **14 Soroban smart contracts** execute every business rule on-chain:

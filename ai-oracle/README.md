@@ -40,7 +40,7 @@ npx tsx ai-oracle/service.ts
 | Manual | `npx tsx ai-oracle/service.ts --once` |
 | Continuous | `npx tsx ai-oracle/service.ts` |
 | Cron | `*/5 * * * * cd /path/to/popv && npx tsx ai-oracle/service.ts --once` |
-| Vercel | `frontend/api/ai-oracle.js` (serverless + Vercel Cron) |
+| VPS | `node dist/service.js` (tmux or systemd) |
 
 ## Requirements
 
@@ -57,4 +57,4 @@ The secret key is NEVER hardcoded. It reads from:
 1. `AI_AUDITOR_SECRET` environment variable (preferred - in-memory only)
 2. `.dev-logs/newrolecreden.md` (gitignored, fallback)
 
-Never commit `.env` files. Never paste the key in code. For production, use Vercel environment variables or a secrets manager.
+Never commit `.env` files. Never paste the key in code. For production, use environment variables or a secrets manager.
