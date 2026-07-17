@@ -42,7 +42,7 @@ async function getWcClient(): Promise<InstanceType<typeof SignClient>> {
       metadata: {
         name: "Proof of Public Value",
         description: "Government spending accountability on Stellar",
-        url: typeof window !== "undefined" ? window.location.origin : "https://www.popv.guest",
+        url: typeof window !== "undefined" ? window.location.origin : "https://www.popv.quest",
         icons: [],
       },
     });
