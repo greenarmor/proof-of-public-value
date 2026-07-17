@@ -587,14 +587,14 @@ async function rewardCitizenForReport(
       if (citizenRep) {
         confidence = Number(citizenRep.confidence_rating ?? citizenRep.confidence ?? 50);
       }
-    } catch {}
+    } catch (e: any) { console.log(`  [Reward] queryContract community_oracle failed: ${e.message?.slice(0, 120)}`); }
     // Also try reputation contract as fallback
     if (confidence <= 50) {
       try {
         const rep = queryContract("reputation", "get_reputation", `--entity ${citizenAddress}`);
         const repConfidence = Number(rep?.confidence_rating ?? rep?.reputation_score ?? 0);
         if (repConfidence > confidence) confidence = repConfidence;
-      } catch {}
+      } catch (e: any) { console.log(`  [Reward] queryContract reputation fallback failed: ${e.message?.slice(0, 120)}`); }
     }
 
     const { tier, pct } = getRewardTier(confidence);
@@ -620,6 +620,7 @@ async function rewardCitizenForReport(
     const tokenContract = new Contract(PPHP_CONTRACT);
     const mintOp = tokenContract.call(
       "mint",
+      new Address(cbKp.publicKey()).toScVal(),
       new Address(citizenAddress).toScVal(),
       new ScInt(rewardStroops).toI128(),
     );
@@ -633,12 +634,32 @@ async function rewardCitizenForReport(
     const result = await server.sendTransaction(prepared);
 
     if (result.status === "PENDING" || result.status === "DUPLICATE") {
-      rewardedReports.add(rewardKey);
-      persistRewards();
-      console.log(`  [Reward] ✅ ${tier} citizen rewarded ${(rewardStroops / 10_000_000).toFixed(2)} pPHP (${(pct * 100).toFixed(3)}% of bid) — report #${reportId}`);
-      return true;
+      // Poll for confirmation to verify the transaction actually succeeded on-chain
+      let confirmed = false;
+      const txHash = (result as any).hash || (result as any).transactionHash || "";
+      for (let wait = 0; wait < 10; wait++) {
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          const txResult = await server.getTransaction(txHash);
+          if (txResult.status === "SUCCESS") {
+            confirmed = true;
+            rewardedReports.add(rewardKey);
+            persistRewards();
+            console.log(`  [Reward] ✅ ${tier} citizen rewarded ${(rewardStroops / 10_000_000).toFixed(2)} pPHP (${(pct * 100).toFixed(3)}% of bid) — report #${reportId}`);
+            return true;
+          }
+          if (txResult.status === "FAILED") {
+            console.error(`  [Reward] ❌ TX FAILED on-chain: ${JSON.stringify(txResult.resultMetaXdr || txResult).slice(0, 200)}`);
+            break;
+          }
+        } catch (e: any) { /* keep polling */ }
+      }
+      if (!confirmed) {
+        console.log(`  [Reward] ⏳ TX submitted (hash: ${txHash.slice(0, 16)}...) but not confirmed yet — NOT adding to dedup`);
+        return false;
+      }
     }
-    console.log(`  [Reward] ❌ Failed: ${result.status}`);
+    console.log(`  [Reward] ❌ Send failed: status=${result.status}, details=${JSON.stringify(result).slice(0, 200)}`);
   } catch (e: any) {
     console.error(`  [Reward] Error: ${e.message?.slice(0, 100)}`);
   }
