@@ -420,11 +420,11 @@ const MIME: Record<string, string> = {
 
 function serveStatic(pathName: string, res: http.ServerResponse) {
   let filePath = join(DIST_DIR, pathName);
-  if (!existsSync(filePath)) {
+  if (pathName === "/" || !existsSync(filePath) || existsSync(filePath) && !readFileSync(filePath).length) {
     filePath = join(DIST_DIR, "index.html");
   }
   if (!existsSync(filePath)) {
-    sendJson(res, 404, { error: "Not found" });
+    sendJson(res, 404, { error: "Not found - build the frontend first with npm run build" });
     return;
   }
   const ext = filePath.substring(filePath.lastIndexOf("."));
@@ -452,7 +452,8 @@ const server = http.createServer(async (req, res) => {
 
     serveStatic(pathName, res);
   } catch (err: any) {
-    sendJson(res, 500, { error: "Internal server error" });
+    console.error("Server error:", err?.message?.slice(0, 200));
+    sendJson(res, 500, { error: "Internal server error", detail: err?.message?.slice(0, 100) });
   }
 });
 
