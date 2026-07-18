@@ -5,8 +5,8 @@ import { claimRptPlugin } from './vite-api.js'
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), claimRptPlugin()],
-  server: { port: 5174, strictPort: true, allowedHosts: ['www.popv.quest'] },
-  preview: { port: 5174, strictPort: true, allowedHosts: ['www.popv.quest'] },
+  server: { port: 5174, strictPort: true },
+  preview: { port: 5174, strictPort: true },
   define: {
     'import.meta.env.VITE_WC_PROJECT_ID': JSON.stringify(process.env.VITE_WC_PROJECT_ID || ''),
   },

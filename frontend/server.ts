@@ -1,0 +1,461 @@
+import http from "http";
+import { join } from "path";
+import { readFileSync, existsSync } from "fs";
+
+const HORIZON_URL = "https://horizon-testnet.stellar.org";
+const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
+const PPHP_ISSUER = "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO";
+const ACCESS_CONTROL = "CCZ3IEI6QUGRCVVN5BKVHNVI3UV3Y7J6FDXHFM2W75CMKNZNX3Q7W7YI";
+const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
+const PVO_CORE = "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B";
+
+const PROVENANCE_PATH = join(process.cwd(), "provenance-store.json");
+const DIST_DIR = join(process.cwd(), "dist");
+const PORT = 5174;
+
+function readBody(req: http.IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk: any) => { data += chunk; });
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
+  });
+}
+
+function sendJson(res: http.ServerResponse, status: number, body: any) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(body));
+}
+
+async function handleClaimRpt(req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    let address: string | null = null;
+    if (req.method === "GET") {
+      const url = new URL(req.url || "", `http://${req.headers.host}`);
+      address = url.searchParams.get("address");
+    } else if (req.method === "POST") {
+      const body = await readBody(req);
+      try { address = JSON.parse(body).address; } catch {
+        return sendJson(res, 400, { error: "Invalid JSON body" });
+      }
+    }
+    if (!address || !address.startsWith("G")) return sendJson(res, 400, { error: "Valid address required" });
+
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
+    if (!ADMIN_SECRET) return sendJson(res, 500, { error: "Server not configured" });
+
+    const { Keypair, Asset, Operation, TransactionBuilder, Networks, Horizon } =
+      await import("@stellar/stellar-sdk");
+    const stellarServer = new Horizon.Server(HORIZON_URL);
+    const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
+
+    let alreadyHasRpt = false;
+    try {
+      const acctData = await stellarServer.loadAccount(address);
+      const rptBalance = acctData.balances.find(
+        (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+      );
+      if (rptBalance && Number(rptBalance.balance) >= 1) alreadyHasRpt = true;
+    } catch {
+      return sendJson(res, 400, { error: "Wallet not found or no trustline" });
+    }
+    if (alreadyHasRpt) return sendJson(res, 200, { success: true, alreadyOwned: true, message: "Already has RPT" });
+
+    const acctData = await stellarServer.loadAccount(address);
+    const hasTrustline = acctData.balances.some(
+      (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+    );
+    if (!hasTrustline) return sendJson(res, 400, { error: "No RPT trustline", needsTrustline: true });
+
+    const adminAccount = await stellarServer.loadAccount(adminKeypair.publicKey());
+    const rptAsset = new Asset("RPT", RPT_ISSUER);
+    const tx = new TransactionBuilder(adminAccount, { fee: "100000", networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.payment({ destination: address, asset: rptAsset, amount: "1" }))
+      .setTimeout(30).build();
+    tx.sign(adminKeypair);
+    const result = await stellarServer.submitTransaction(tx);
+    sendJson(res, 200, { success: true, txHash: result.hash, alreadyOwned: false });
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.response?.data?.extras?.result_codes?.transaction || err.message || "Unknown error" });
+  }
+}
+
+async function handleClaimCitizen(req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    let address: string | null = null;
+    if (req.method === "GET") {
+      const url = new URL(req.url || "", `http://${req.headers.host}`);
+      address = url.searchParams.get("address");
+    } else if (req.method === "POST") {
+      const body = await readBody(req);
+      try { address = JSON.parse(body).address; } catch {
+        return sendJson(res, 400, { error: "Invalid JSON body" });
+      }
+    }
+    if (!address || !address.startsWith("G")) return sendJson(res, 400, { error: "Valid address required" });
+
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
+    if (!ADMIN_SECRET) return sendJson(res, 500, { error: "Server not configured" });
+
+    const { Keypair, Address, Contract, TransactionBuilder, Horizon, rpc, xdr } =
+      await import("@stellar/stellar-sdk");
+    const horizonServer = new Horizon.Server(HORIZON_URL);
+    let hasRpt = false;
+    try {
+      const acctData = await horizonServer.loadAccount(address);
+      const rptBalance = acctData.balances.find(
+        (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER,
+      );
+      if (rptBalance && Number(rptBalance.balance) >= 1) hasRpt = true;
+    } catch {
+      return sendJson(res, 400, { error: "Wallet not found on testnet" });
+    }
+    if (!hasRpt) return sendJson(res, 403, { error: "Must hold 1+ RPT to become a citizen" });
+
+    const sorobanServer = new rpc.Server(RPC_URL);
+    const adminKeypair = Keypair.fromSecret(ADMIN_SECRET);
+    const adminAddr = adminKeypair.publicKey();
+    const adminAccount = await sorobanServer.getAccount(adminAddr);
+    const adminAddress = new Address(adminAddr);
+    const targetAddr = new Address(address);
+    const acContract = new Contract(ACCESS_CONTROL);
+
+    const tx = new TransactionBuilder(adminAccount, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(
+        acContract.call("assign_role",
+          adminAddress.toScVal(),
+          targetAddr.toScVal(),
+          xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("Citizen")]),
+        ),
+      ).setTimeout(30).build();
+
+    const prepared = await sorobanServer.prepareTransaction(tx);
+    prepared.sign(adminKeypair);
+    const result = await sorobanServer.sendTransaction(prepared);
+
+    if (result.status === "PENDING" || result.status === "DUPLICATE") {
+      sendJson(res, 200, { success: true, txHash: (result as any).hash, alreadyCitizen: false });
+    } else {
+      sendJson(res, 500, { error: `Transaction status: ${result.status}` });
+    }
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.response?.data?.extras?.result_codes?.transaction || err.message || "Unknown error" });
+  }
+}
+
+async function handleSetupTrustline(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { secretKey } = JSON.parse(body);
+    if (!secretKey?.startsWith("S") || secretKey.length < 55) return sendJson(res, 400, { error: "Valid secret key required" });
+
+    const { Keypair, Asset, Operation, TransactionBuilder, Networks } = await import("@stellar/stellar-sdk");
+    const walletKp = Keypair.fromSecret(secretKey);
+    const walletAddr = walletKp.publicKey();
+
+    const acctR = await fetch(`${HORIZON_URL}/accounts/${walletAddr}`);
+    if (!acctR.ok) return sendJson(res, 400, { error: "Wallet account not found on testnet" });
+    const acct: any = await acctR.json();
+    const balances = acct.balances || [];
+
+    const hasRpt = balances.some((b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER);
+    const hasPphp = balances.some((b: any) => b.asset_code === "pPHP" && b.asset_issuer === PPHP_ISSUER);
+
+    if (hasRpt && hasPphp) return sendJson(res, 200, { success: true, alreadySetup: true, created: [] });
+
+    const ops: any[] = [];
+    const created: string[] = [];
+    if (!hasRpt) { ops.push(Operation.changeTrust({ asset: new Asset("RPT", RPT_ISSUER) })); created.push("RPT"); }
+    if (!hasPphp) { ops.push(Operation.changeTrust({ asset: new Asset("pPHP", PPHP_ISSUER) })); created.push("pPHP"); }
+
+    const source = { accountId: () => walletAddr, sequenceNumber: () => acct.sequence, incrementSequenceNumber: () => {} };
+    const txB = new TransactionBuilder(source as any, { fee: "100000", networkPassphrase: Networks.TESTNET });
+    for (const op of ops) txB.addOperation(op);
+    const tx = txB.setTimeout(30).build();
+    tx.sign(walletKp);
+
+    const subR = await fetch(`${HORIZON_URL}/transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `tx=${encodeURIComponent(tx.toXDR())}`,
+    });
+    const sub: any = await subR.json();
+    if (!subR.ok) return sendJson(res, 500, { error: sub.extras?.result_codes?.transaction || "Transaction failed" });
+    sendJson(res, 200, { success: true, created, txHash: sub.hash });
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+  }
+}
+
+const challenges = new Map<string, { challenge: string; expires: number }>();
+
+async function handleSubmitReport(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { pvoId, milestoneId, lat, lng, citizenAddress, challenge } = JSON.parse(body);
+    if (!pvoId || !milestoneId || !citizenAddress?.startsWith("G"))
+      return sendJson(res, 400, { error: "pvoId, milestoneId, lat, lng, citizenAddress required" });
+
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
+    if (!ADMIN_SECRET) return sendJson(res, 500, { error: "Server not configured" });
+
+    const { Keypair, Address, Contract, TransactionBuilder, rpc, xdr } = await import("@stellar/stellar-sdk");
+    const rptResp = await fetch(`${HORIZON_URL}/accounts/${citizenAddress}`);
+    if (!rptResp.ok) return sendJson(res, 403, { error: "Wallet not found" });
+    const rptData: any = await rptResp.json();
+    const hasRpt = rptData.balances?.some(
+      (b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER && Number(b.balance) >= 1,
+    );
+    if (!hasRpt) return sendJson(res, 403, { error: "Wallet must hold 1+ RPT" });
+    if (challenge && !challenge.startsWith("popv-report-")) return sendJson(res, 401, { error: "Invalid challenge" });
+
+    const adminKp = Keypair.fromSecret(ADMIN_SECRET);
+    const server = new rpc.Server(RPC_URL);
+    const account = await server.getAccount(adminKp.publicKey());
+    const dataHash = `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
+    const latMicro = Math.round((lat || 0) * 1_000_000);
+    const lngMicro = Math.round((lng || 0) * 1_000_000);
+
+    const contract = new Contract(COMMUNITY_ORACLE);
+    const op = contract.call("submit_report",
+      new Address(citizenAddress).toScVal(),
+      xdr.ScVal.scvU32(pvoId),
+      xdr.ScVal.scvU32(milestoneId),
+      xdr.ScVal.scvVec([xdr.ScVal.scvSymbol("GpsPhoto")]),
+      xdr.ScVal.scvString(dataHash),
+      xdr.ScVal.scvI128({ hi: 0, lo: latMicro } as any),
+      xdr.ScVal.scvI128({ hi: 0, lo: lngMicro } as any),
+    );
+
+    const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(op).setTimeout(30).build();
+    const prepared = await server.prepareTransaction(tx);
+    prepared.sign(adminKp);
+    const result = await server.sendTransaction(prepared);
+
+    if (result.status === "PENDING" || result.status === "DUPLICATE") {
+      sendJson(res, 200, { success: true, txHash: (result as any).hash });
+    } else {
+      sendJson(res, 500, { error: `Status: ${result.status}` });
+    }
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.message?.slice(0, 200) });
+  }
+}
+
+async function handleReportChallenge(req: http.IncomingMessage, res: http.ServerResponse) {
+  const url = new URL(req.url || "", `http://${req.headers.host}`);
+  const address = url.searchParams.get("address");
+  if (!address?.startsWith("G")) return sendJson(res, 400, { error: "Valid address required" });
+  const c = `popv-report-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  challenges.set(address, { challenge: c, expires: Date.now() + 300000 });
+  for (const [k, v] of challenges) { if (v.expires < Date.now()) challenges.delete(k); }
+  sendJson(res, 200, { challenge: c, expiresIn: 300 });
+}
+
+async function handleProvenance(_req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    const raw = readFileSync(PROVENANCE_PATH, "utf-8");
+    const parsed = JSON.parse(raw);
+    sendJson(res, 200, parsed.pvOs || []);
+  } catch {
+    sendJson(res, 200, []);
+  }
+}
+
+async function handleSendPayment(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { secretKey, destination, amount, asset } = JSON.parse(body);
+    if (!secretKey?.startsWith("S") || secretKey.length < 55) return sendJson(res, 400, { error: "Valid secret key required" });
+    if (!destination?.startsWith("G") || destination.length !== 56) return sendJson(res, 400, { error: "Valid destination required" });
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return sendJson(res, 400, { error: "Valid amount required" });
+    if (!["XLM", "RPT", "pPHP"].includes(asset)) return sendJson(res, 400, { error: "Asset must be XLM, RPT, or pPHP" });
+
+    const { Keypair, Asset, Operation, TransactionBuilder, Networks } = await import("@stellar/stellar-sdk");
+    const walletKp = Keypair.fromSecret(secretKey);
+    const walletAddr = walletKp.publicKey();
+
+    const acctR = await fetch(`${HORIZON_URL}/accounts/${walletAddr}`);
+    if (!acctR.ok) return sendJson(res, 400, { error: "Wallet not funded on testnet" });
+    const acct: any = await acctR.json();
+
+    let paymentAsset: any;
+    if (asset === "RPT") paymentAsset = new Asset("RPT", RPT_ISSUER);
+    else if (asset === "pPHP") paymentAsset = new Asset("pPHP", PPHP_ISSUER);
+    else paymentAsset = Asset.native();
+
+    const source = { accountId: () => walletAddr, sequenceNumber: () => acct.sequence, incrementSequenceNumber: () => {} };
+    const tx = new TransactionBuilder(source as any, { fee: "100000", networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.payment({ destination, asset: paymentAsset, amount: String(amt) }))
+      .setTimeout(30).build();
+    tx.sign(walletKp);
+
+    const subR = await fetch(`${HORIZON_URL}/transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `tx=${encodeURIComponent(tx.toXDR())}`,
+    });
+    const sub: any = await subR.json();
+    if (!subR.ok) return sendJson(res, 500, { error: sub.extras?.result_codes?.transaction || sub.extras?.result_codes?.operations?.[0] || "Transaction failed" });
+    sendJson(res, 200, { success: true, txHash: sub.hash });
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+  }
+}
+
+function handleHealth(_req: http.IncomingMessage, res: http.ServerResponse) {
+  sendJson(res, 200, { status: "ok", version: "prod", uptime: process.uptime() });
+}
+
+async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(PVO_CORE);
+    const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+    const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
+
+    async function sim(fnName: string, ...args: any[]) {
+      const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(contract.call(fnName, ...args)).setTimeout(30).build();
+      const s: any = await server.simulateTransaction(tx);
+      if (s.error) return null;
+      return s.result?.retval;
+    }
+
+    function parseMap(sv: any): Record<string, any> {
+      const result: Record<string, any> = {};
+      for (const entry of sv.map()) {
+        const key = entry.key().sym().toString();
+        const val = entry.val();
+        switch (val.switch().name) {
+          case "scvU32": result[key] = val.u32(); break;
+          case "scvU64": result[key] = Number(val.u64().toString()); break;
+          case "scvI128": result[key] = val.i128().lo().toString(); break;
+          case "scvString": result[key] = val.str().toString(); break;
+          case "scvBool": result[key] = val.b(); break;
+          case "scvVec": result[key] = val.vec().length; break;
+          case "scvMap": result[key] = parseMap(val); break;
+          default: result[key] = null;
+        }
+      }
+      return result;
+    }
+
+    const cntVal = await sim("get_pvo_count");
+    if (!cntVal) return sendJson(res, 500, { error: "Failed to get count" });
+    const count = Number(cntVal.u32().toString());
+
+    const pvos: any[] = [];
+    for (let i = 1; i <= count; i++) {
+      try {
+        const rv = await sim("get_pvo", nativeToScVal(i, { type: "u32" }));
+        if (!rv || rv.switch().name === "scvVoid") continue;
+        const parsed = parseMap(rv);
+        if (parsed.title) pvos.push(parsed);
+      } catch {}
+    }
+
+    let scanId = count + 1;
+    let misses = 0;
+    while (misses < 15) {
+      try {
+        const rv = await sim("get_pvo", nativeToScVal(scanId, { type: "u32" }));
+        if (!rv || rv.switch().name === "scvVoid") { misses++; }
+        else {
+          const parsed = parseMap(rv);
+          if (parsed.title) { pvos.push(parsed); misses = 0; }
+          else misses++;
+        }
+      } catch { misses++; }
+      scanId++;
+    }
+
+    const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
+    const formatted = pvos.map((p: any) => ({
+      id: p.id ?? 0,
+      title: p.title ?? "Untitled",
+      description: p.description ?? "",
+      department: p.department ?? "",
+      municipality: p.municipality ?? "",
+      total_budget: String(p.total_budget ?? 0),
+      status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
+      fund_source: p.fund_source ?? "",
+      milestone_count: p.milestones ?? 0,
+      milestones_released: 0,
+      public_value_score: p.public_value_score ?? 0,
+    }));
+
+    sendJson(res, 200, { pvos: formatted, count: formatted.length });
+  } catch (err: any) {
+    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+  }
+}
+
+const MIME: Record<string, string> = {
+  ".html": "text/html",
+  ".js": "application/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".eot": "application/vnd.ms-fontobject",
+  ".wasm": "application/wasm",
+};
+
+function serveStatic(pathName: string, res: http.ServerResponse) {
+  let filePath = join(DIST_DIR, pathName);
+  if (!existsSync(filePath)) {
+    filePath = join(DIST_DIR, "index.html");
+  }
+  if (!existsSync(filePath)) {
+    sendJson(res, 404, { error: "Not found" });
+    return;
+  }
+  const ext = filePath.substring(filePath.lastIndexOf("."));
+  const mime = MIME[ext] || "application/octet-stream";
+  const data = readFileSync(filePath);
+  res.writeHead(200, { "Content-Type": mime });
+  res.end(data);
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url || "", `http://${req.headers.host}`);
+  const pathName = url.pathname;
+
+  try {
+    if (pathName === "/api/claim-rpt") return await handleClaimRpt(req, res);
+    if (pathName === "/api/claim-citizen") return await handleClaimCitizen(req, res);
+    if (pathName === "/api/setup-trustline") return await handleSetupTrustline(req, res);
+    if (pathName === "/api/submit-report") return await handleSubmitReport(req, res);
+    if (pathName === "/api/report-challenge") return await handleReportChallenge(req, res);
+    if (pathName === "/api/provenance") return await handleProvenance(req, res);
+    if (pathName === "/api/send-payment") return await handleSendPayment(req, res);
+    if (pathName === "/api/health") return handleHealth(req, res);
+    if (pathName === "/api/pvos") return await handlePvos(req, res);
+    if (pathName.startsWith("/api/")) return sendJson(res, 404, { error: "Not found" });
+
+    serveStatic(pathName, res);
+  } catch (err: any) {
+    sendJson(res, 500, { error: "Internal server error" });
+  }
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`POPV production server running on port ${PORT}`);
+});

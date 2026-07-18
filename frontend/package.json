@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "start": "vite preview --host --port 5174",
+    "build": "tsc -b && vite build && tsc -p tsconfig.server.json",
+    "start": "node dist/server.js",
+    "serve": "node dist/server.js",
     "lint": "oxlint",
     "preview": "vite preview",
     "ai": "NODE_PATH=./node_modules npx tsx ../.aim/ai-service.ts"
