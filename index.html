@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2404,8 +2404,8 @@
 <td>❌ None  -  IPFS for evidence, Soroban events for audit trail</td>
 </tr>
 <tr>
-<td>Deployment server (EC2/VPS)</td>
-<td>❌ None  -  Static HTML/CSS/JS on Vercel (free)</td>
+<td>Deployment server (VPS)</td>
+<td>nginx reverse proxy to Vite dev server on port 5174</td>
 </tr>
 <tr>
 <td>Off-chain services</td>
@@ -2440,9 +2440,13 @@
 <p>The AI Oracle and Provenance Indexer are the <strong>only off-chain components</strong>. These standalone TypeScript services run independently:</p>
 <p><strong>AI Oracle</strong> (<code>ai-oracle/service.ts</code>):</p>
 <ul>
-<li>Polls testnet for EngineerApproved milestones</li>
-<li>Runs local fraud detection (GPS bounding box, metadata scanning, description analysis)</li>
-<li>Submits <code>ai_validate(passed, risk_score)</code> on-chain</li>
+<li>Polls Stellar testnet for milestones awaiting Gate 5 validation</li>
+<li>Runs LLM-powered fraud detection (DeepSeek/GPT configurable, falls back to rule-based)</li>
+<li>Submits fraud detection, risk prediction, geo risk, digital twin, GPS validation on-chain</li>
+<li>Auto-verifies unverified community reports as fallback</li>
+<li>Issues Gate 5 recommendation with risk score - amber state for human review</li>
+<li><strong>Human AI Auditor</strong> reviews forensic data and makes final pass/fail decision</li>
+<li><strong>Citizen reward engine</strong> - mints pPHP to verified reporters based on reputation tier</li>
 <li><strong>One instance serves all frontend deployments</strong></li>
 </ul>
 <p><strong>Provenance Indexer</strong> (<code>provenance-indexer/service.ts</code>):</p>
@@ -2631,11 +2635,11 @@
 <p>Each gate is an independent on-chain verification.</p>
 <p><strong>Before the gates - Evidence + Inspector:</strong>
 The contractor submits milestone evidence (drone imagery, GPS, photos, engineering reports). The <strong>Inspector</strong> independently reviews this evidence for quality, clarity, and completeness - submitting an <code>InspectionReport</code> on-chain. This report strengthens the Engineer's decision at Gate 1.</p>
-<p><strong>Gate 1  -  Engineer:</strong> Licensed engineer signs off that physical work meets specifications. References contractor evidence AND the Inspector's independent quality report.</p>
-<p><strong>Gate 2  -  Compliance:</strong> Auditor or COA validates procurement law, budget rules, safety regulations.</p>
-<p><strong>Gate 3  -  Community Oracle:</strong> Citizens submit GPS-tagged field reports through the mobile app. The Community Oracle contract verifies report authenticity.</p>
-<p><strong>Gate 4  -  Community Confirmations:</strong> Each verified report increments a counter. When the counter reaches the threshold set at escrow creation, this gate passes. Higher thresholds = stronger anti-corruption for high-risk projects.</p>
-<p><strong>Gate 5  -  AI Fraud Detection:</strong> AI scans ALL evidence submitted across all prior gates for anomalies  -  duplicate GPS, metadata tampering, suspicious patterns, description completeness. Runs last so it has maximum data to analyze.</p>
+<p><strong>Gate 1  -  Engineer:</strong> Licensed engineer signs off that physical work meets specifications. Reviews contractor evidence AND inspector's independent quality report.</p>
+<p><strong>Gate 2  -  Compliance:</strong> Compliance engine validates procurement law, budget rules, and regulatory requirements.</p>
+<p><strong>Gate 3  -  Community Oracle:</strong> Citizens submit GPS-tagged field reports through the mobile app. At least 1 verified citizen report is required. Reports are auto-verified and the oracle validation triggers on-chain.</p>
+<p><strong>Gate 4  -  Community Confirmations:</strong> Each unique citizen wallet confirms the escrow independently (one per wallet). When the counter reaches the threshold set at escrow creation (default 5), this gate passes. Higher thresholds for high-risk projects.</p>
+<p><strong>Gate 5  -  AI Risk Check (Human Review):</strong> AI Oracle scans all evidence across all prior gates for anomalies - duplicate GPS, metadata tampering, fraud patterns. Issues a recommendation with risk score. Gate shows amber until a <strong>human AI Auditor</strong> reviews the forensic data and makes the final pass/fail decision. AI recommends, human decides.</p>
 <h3 id="10-escrow-releases-pvo-goes-inprogress">10. Escrow Releases  -  PVO Goes InProgress<a class="headerlink" href="#10-escrow-releases-pvo-goes-inprogress" title="Permanent link">&para;</a></h3>
 <p>Once all 5 gates pass, anyone can trigger release. The escrow contract:</p>
 <ol>
@@ -2964,7 +2968,8 @@ The contractor submits milestone evidence (drone imagery, GPS, photos, engineeri
 <hr />
 <h2 id="try-it-live">Try It Live<a class="headerlink" href="#try-it-live" title="Permanent link">&para;</a></h2>
 <p><strong>Production build:</strong> <code>npm run build &amp;&amp; npm start</code> from project root → <code>http://localhost:5174</code></p>
-<p><strong>Live Demo:</strong> <a href="https://greenarmor.github.io/proof-of-public-value/">greenarmor.github.io/proof-of-public-value</a></p>
+<p><strong>Live Demo:</strong> <a href="https://www.popv.quest/">www.popv.quest</a> - connect Freighter wallet</p>
+<p><strong>Mobile App:</strong> Flutter PVO Hunter with GPS proximity alerts, photo evidence upload to IPFS, on-chain field reports, community confirmation (Gate 4), asset wallet with XLM/RPT/pPHP transaction history, and live civic reputation scoring. See <a href="citizen-field-reporting/">Citizen Field Reporting</a>.</p>
 <p><strong>Quick Start:</strong>
 1. <strong>Public pages</strong>  -  Browse projects, national index, map, search  -  no wallet needed
 2. <strong>Role-Play</strong>  -  Go to <code>/onboarding</code> → pick any role → get a demo wallet → walk through the system
@@ -3749,6 +3754,9 @@ The Inspector's reports are <strong>advisory</strong> - they inform the Engineer
 <p><strong>Role:</strong> Citizen<br />
 <strong>Wallets:</strong> citizen_1 through citizen_4 (see credentials file)<br />
 <strong>Dashboard:</strong> Citizen Report Form</p>
+<blockquote>
+<p>📱 <strong>Mobile version available:</strong> The PVO Hunter mobile app supports GPS field reporting from a phone. See <a href="citizen-field-reporting/">Citizen Field Reporting</a> and <a href="reward-system/">Reward System</a> for the mobile experience and pPHP incentives.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -4237,7 +4245,7 @@ The Inspector's reports are <strong>advisory</strong> - they inform the Engineer
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

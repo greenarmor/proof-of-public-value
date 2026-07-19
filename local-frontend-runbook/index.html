@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2041,15 +2041,12 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <li>Confirm the recovery phrase</li>
 </ol>
 <h3 id="import-existing-role-wallets">Import Existing Role Wallets<a class="headerlink" href="#import-existing-role-wallets" title="Permanent link">&para;</a></h3>
-<p>You'll need wallets with on-chain roles. Get the secret keys from the project maintainer or <code>.dev-logs/newrolecreden.md</code>.</p>
+<p>You'll need wallets with on-chain roles. Get the secret keys from the project maintainer.</p>
 <p>For each role you want to test:
 1. Freighter → settings gear → <strong>"Add Account"</strong>
 2. Select <strong>"Import Secret Key"</strong>
 3. Paste the secret key (starts with <code>S</code>, 56 characters)
 4. Name it so you remember the role (e.g. "alice-admin", "agency", "contractor")</p>
-<p>Example secret key format:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>REDACTED_SECRET_KEY
-</code></pre></div></p>
 <h3 id="fund-new-wallets">Fund New Wallets<a class="headerlink" href="#fund-new-wallets" title="Permanent link">&para;</a></h3>
 <p>If your wallet has 0 XLM, you can't pay transaction fees. Fund it:</p>
 <ol>
@@ -2060,37 +2057,37 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 </ol>
 <hr />
 <h2 id="step-4-clone-the-repo">Step 4: Clone the Repo<a class="headerlink" href="#step-4-clone-the-repo" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/greenarmor/proof-of-public-value.git
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">cd</span><span class="w"> </span>proof-of-public-value
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/greenarmor/proof-of-public-value.git
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">cd</span><span class="w"> </span>proof-of-public-value
 </code></pre></div>
 <hr />
 <h2 id="step-5-install-dependencies">Step 5: Install Dependencies<a class="headerlink" href="#step-5-install-dependencies" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Install root dependencies (concurrently, typescript, stellar-sdk)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Install frontend dependencies (React, Vite, Tailwind)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Install root dependencies (concurrently, typescript, stellar-sdk)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Install frontend dependencies (React, Vite, Tailwind)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
 </code></pre></div>
 <p>This takes 1-2 minutes depending on your internet.</p>
 <hr />
 <h2 id="step-6-verify-contract-ids">Step 6: Verify Contract IDs<a class="headerlink" href="#step-6-verify-contract-ids" title="Permanent link">&para;</a></h2>
 <p>The frontend reads from already-deployed contracts on Stellar testnet. Contract IDs are in <code>frontend/src/config.ts</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>head<span class="w"> </span>-16<span class="w"> </span>frontend/src/config.ts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>head<span class="w"> </span>-16<span class="w"> </span>frontend/src/config.ts
 </code></pre></div>
 <p>You should see entries like:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nx">access_control</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCAL...&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCA3...&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nx">pvo_core</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CBZM...&quot;</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nx">access_control</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCAL...&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nx">escrow</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CCA3...&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nx">pvo_core</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;CBZM...&quot;</span><span class="p">,</span>
 </code></pre></div></p>
 <p>These point to the live testnet contracts. No changes needed. If the project maintainer redeployed contracts, they updated this file. Run <code>git pull</code> to stay in sync.</p>
 <hr />
 <h2 id="step-7-start-the-dev-server">Step 7: Start the Dev Server<a class="headerlink" href="#step-7-start-the-dev-server" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div>
 <p>This starts Vite on <strong>http://localhost:5174</strong> with hot reload.</p>
 <p>If port 5174 is already in use:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div></p>
 <hr />
 <h2 id="step-8-open-the-app">Step 8: Open the App<a class="headerlink" href="#step-8-open-the-app" title="Permanent link">&para;</a></h2>
@@ -2344,13 +2341,13 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <h2 id="optional-off-chain-services">Optional: Off-Chain Services<a class="headerlink" href="#optional-off-chain-services" title="Permanent link">&para;</a></h2>
 <p>These enhance the experience but are NOT required:</p>
 <h3 id="provenance-indexer-adds-tx-hash-links-to-gates">Provenance Indexer (adds tx hash links to gates)<a class="headerlink" href="#provenance-indexer-adds-tx-hash-links-to-gates" title="Permanent link">&para;</a></h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npx<span class="w"> </span>tsx<span class="w"> </span>provenance-indexer/service.ts
 </code></pre></div>
 - Runs on http://127.0.0.1:3111
 - Adds clickable Stellar transaction links to every gate
 - Shows full audit timeline per PVO</p>
 <h3 id="ai-oracle-auto-fraud-detection">AI Oracle (auto fraud detection)<a class="headerlink" href="#ai-oracle-auto-fraud-detection" title="Permanent link">&para;</a></h3>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">AI_AUDITOR_SECRET</span><span class="o">=</span>&lt;secret-key&gt;<span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">AI_AUDITOR_SECRET</span><span class="o">=</span>&lt;secret-key&gt;<span class="w"> </span>npx<span class="w"> </span>tsx<span class="w"> </span>ai-oracle/service.ts<span class="w"> </span>--once
 </code></pre></div>
 - Auto-scans for PVOs needing AI validation
 - Submits Gate 5 verdict on-chain
@@ -2358,13 +2355,13 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="module-not-found-errors">"Module not found" errors<a class="headerlink" href="#module-not-found-errors" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">cd</span><span class="w"> </span>frontend<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>--include<span class="o">=</span>dev<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
 </code></pre></div>
 <h3 id="blank-pvo-list-no-projects-showing">Blank PVO list / No projects showing<a class="headerlink" href="#blank-pvo-list-no-projects-showing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>git<span class="w"> </span>pull<span class="w">  </span><span class="c1"># get latest contract IDs</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">  </span><span class="c1"># restart server</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># Hard refresh browser: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Win)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>git<span class="w"> </span>pull<span class="w">  </span><span class="c1"># get latest contract IDs</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">  </span><span class="c1"># restart server</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Hard refresh browser: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Win)</span>
 </code></pre></div>
 <h3 id="freighter-wont-connect">Freighter won't connect<a class="headerlink" href="#freighter-wont-connect" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2379,7 +2376,7 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
 <li>Connect as <code>alice</code> (admin) → Admin Panel → assign the role</li>
 </ul>
 <h3 id="port-5174-already-in-use">Port 5174 already in use<a class="headerlink" href="#port-5174-already-in-use" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>lsof<span class="w"> </span>-ti:5174<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span><span class="nb">kill</span><span class="w"> </span>-9
 </code></pre></div>
 <h3 id="insufficient-balance-on-transaction">"insufficient balance" on transaction<a class="headerlink" href="#insufficient-balance-on-transaction" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2451,7 +2448,7 @@ No Rust, no <code>stellar contract build</code>, no lean-reset. Just the UI.<br 
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
