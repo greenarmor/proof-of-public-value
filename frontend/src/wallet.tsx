@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { isConnected, getAddress, requestAccess, WatchWalletChanges, signTransaction as freighterSign } from "@stellar/freighter-api";
+import { isConnected, isAllowed, getAddress, requestAccess, WatchWalletChanges, signTransaction as freighterSign } from "@stellar/freighter-api";
 import { Client as AccessControlClient } from "./contracts/access_control/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "./config";
 import { SignClient } from "@walletconnect/sign-client";
@@ -93,13 +93,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       try {
         const c = await isConnected();
-        if (c) {
-          if (cancelled) return;
-          const r = await getAddress();
-          if (cancelled) return;
-          setAddress(r.address);
-          setWalletType("freighter");
-          fetchRoles(r.address);
+        if (c.isConnected) {
+          const allowed = await isAllowed();
+          if (allowed.isAllowed) {
+            if (cancelled) return;
+            const r = await getAddress();
+            if (cancelled) return;
+            if (r.address) {
+              setAddress(r.address);
+              setWalletType("freighter");
+              fetchRoles(r.address);
+            }
+          } else if (attempt < 10) {
+            setTimeout(() => checkWithRetry(attempt + 1), 500);
+          }
         } else if (attempt < 10) {
           setTimeout(() => checkWithRetry(attempt + 1), 500);
         }
@@ -144,12 +151,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(async () => {
     try {
-      try { await isConnected(); } catch {
+      const c = await isConnected();
+      if (!c.isConnected) {
         window.open("https://freighter.app", "_blank");
         return;
       }
       await requestAccess();
       const r = await getAddress();
+      if (!r.address) throw new Error("No address returned");
       setAddress(r.address);
       setWalletType("freighter");
       fetchRoles(r.address);
