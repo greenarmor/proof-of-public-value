@@ -1170,12 +1170,12 @@ async function analyzePvo(caseFile) {
     // 1. Submit Geo Risk (once per PVO)
     if (!hasGeoRisk(pvoId)) {
         console.log(`  [Geo Risk] ${geo.region}: flood=${geo.flood} seismic=${geo.seismic} landslide=${geo.landslide}`);
-        if (submitGeoRisk(pvoId, geo.region, geo.flood, geo.seismic, geo.landslide)) {
-            console.log(`  [Geo Risk] Submitted`);
-        }
-        else {
-            console.error(`  [Geo Risk] Failed`);
-        }
+        submitGeoRisk(pvoId, geo.region, geo.flood, geo.seismic, geo.landslide).then(ok => {
+            if (ok)
+                console.log(`  [Geo Risk] Submitted`);
+            else
+                console.error(`  [Geo Risk] Failed`);
+        });
     }
     else {
         console.log(`  [Geo Risk] Already exists, skipping`);
@@ -1197,12 +1197,12 @@ async function analyzePvo(caseFile) {
             deviation = true;
         }
         console.log(`  [Digital Twin] Expected cost: ${totalBudgetPesos.toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx} | deviation: ${deviation}`);
-        if (submitDigitalTwin(pvoId, budgetForTwin, materialIdx, laborIdx, deviation)) {
-            console.log(`  [Digital Twin] Submitted`);
-        }
-        else {
-            console.error(`  [Digital Twin] Failed`);
-        }
+        submitDigitalTwin(pvoId, budgetForTwin, materialIdx, laborIdx, deviation).then(ok => {
+            if (ok)
+                console.log(`  [Digital Twin] Submitted`);
+            else
+                console.error(`  [Digital Twin] Failed`);
+        });
     }
     else {
         console.log(`  [Digital Twin] Already exists, skipping`);
@@ -1305,12 +1305,12 @@ async function analyzePvo(caseFile) {
         const riskKey = cacheKey("risk", `${contractor}:${pvoId}`);
         const riskData = `${delayProb}:${overrunProb}:${riskCat}:${confid}:${factors.join("|")}`;
         if (shouldSubmit(riskKey, riskData)) {
-            if (submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid)) {
-                console.log(`  [Risk] Submitted`);
-            }
-            else {
-                console.error(`  [Risk] Failed`);
-            }
+            submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid).then(ok => {
+                if (ok)
+                    console.log(`  [Risk] Submitted`);
+                else
+                    console.error(`  [Risk] Failed`);
+            });
         }
         else {
             console.log(`  [Risk] Unchanged, skipped`);
@@ -1454,12 +1454,12 @@ async function analyzePvo(caseFile) {
             const fraudKey = cacheKey("fraud", pvoId);
             const fraudData = `${finalRiskScore}:${confidence}:${indicators.join(",")}`;
             if (shouldSubmit(fraudKey, fraudData)) {
-                if (submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash)) {
-                    console.log(`  [Fraud] Submitted on-chain`);
-                }
-                else {
-                    console.error(`  [Fraud] Failed to submit`);
-                }
+                submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash).then(ok => {
+                    if (ok)
+                        console.log(`  [Fraud] Submitted on-chain`);
+                    else
+                        console.error(`  [Fraud] Failed to submit`);
+                });
             }
             else {
                 console.log(`  [Fraud] Unchanged, skipped`);

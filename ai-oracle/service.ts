@@ -694,7 +694,7 @@ function submitEscrowGate3(escrowId: number): void {
 }
 
 // ── On-Chain: AI Oracle Submissions ─────────────────────
-function submitFraudDetection(pvoId: number, riskScore: number, indicators: string[], confidence: number, evidenceHash: string): boolean {
+function submitFraudDetection(pvoId: number, riskScore: number, indicators: string[], confidence: number, evidenceHash: string): Promise<boolean> {
   const { Address, xdr } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("submit_fraud_detection", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -706,7 +706,7 @@ function submitFraudDetection(pvoId: number, riskScore: number, indicators: stri
   ]);
 }
 
-function submitRiskPrediction(contractor: string, delayProb: number, overrunProb: number, riskCategory: number, confidence: number): boolean {
+function submitRiskPrediction(contractor: string, delayProb: number, overrunProb: number, riskCategory: number, confidence: number): Promise<boolean> {
   const { Address, xdr } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("submit_risk_prediction", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -718,7 +718,7 @@ function submitRiskPrediction(contractor: string, delayProb: number, overrunProb
   ]);
 }
 
-function submitImageVerification(evidenceId: number, progressPercent: number, authenticityScore: number, summary: string): boolean {
+function submitImageVerification(evidenceId: number, progressPercent: number, authenticityScore: number, summary: string): Promise<boolean> {
   const { Address, xdr } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("submit_image_verification", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -729,7 +729,7 @@ function submitImageVerification(evidenceId: number, progressPercent: number, au
   ]);
 }
 
-function submitDigitalTwin(pvoId: number, expectedCost: number, materialIdx: number, laborIdx: number, deviation: boolean): boolean {
+function submitDigitalTwin(pvoId: number, expectedCost: number, materialIdx: number, laborIdx: number, deviation: boolean): Promise<boolean> {
   const { Address, xdr } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("update_digital_twin", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -741,7 +741,7 @@ function submitDigitalTwin(pvoId: number, expectedCost: number, materialIdx: num
   ]);
 }
 
-function submitGeoRisk(pvoId: number, region: string, flood: number, seismic: number, landslide: number): boolean {
+function submitGeoRisk(pvoId: number, region: string, flood: number, seismic: number, landslide: number): Promise<boolean> {
   const { Address, xdr } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("submit_geo_risk", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -753,7 +753,7 @@ function submitGeoRisk(pvoId: number, region: string, flood: number, seismic: nu
   ]);
 }
 
-function submitGpsValidation(evidenceId: number, expectedLat: number, expectedLon: number, reportedLat: number, reportedLon: number, maxDistM: number): boolean {
+function submitGpsValidation(evidenceId: number, expectedLat: number, expectedLon: number, reportedLat: number, reportedLon: number, maxDistM: number): Promise<boolean> {
   const { Address, xdr, nativeToScVal } = require("@stellar/stellar-sdk");
   return sdkSubmitOracle("submit_gps_validation", [
     new Address(AI_AUDITOR_PUBLIC).toScVal(),
@@ -1224,11 +1224,10 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
   // 1. Submit Geo Risk (once per PVO)
   if (!hasGeoRisk(pvoId)) {
     console.log(`  [Geo Risk] ${geo.region}: flood=${geo.flood} seismic=${geo.seismic} landslide=${geo.landslide}`);
-    if (submitGeoRisk(pvoId, geo.region, geo.flood, geo.seismic, geo.landslide)) {
-      console.log(`  [Geo Risk] Submitted`);
-    } else {
-      console.error(`  [Geo Risk] Failed`);
-    }
+    submitGeoRisk(pvoId, geo.region, geo.flood, geo.seismic, geo.landslide).then(ok => {
+      if (ok) console.log(`  [Geo Risk] Submitted`);
+      else console.error(`  [Geo Risk] Failed`);
+    });
   } else {
     console.log(`  [Geo Risk] Already exists, skipping`);
   }
@@ -1250,11 +1249,10 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
       deviation = true;
     }
     console.log(`  [Digital Twin] Expected cost: ${totalBudgetPesos.toLocaleString()} | material idx: ${materialIdx} | labor idx: ${laborIdx} | deviation: ${deviation}`);
-    if (submitDigitalTwin(pvoId, budgetForTwin, materialIdx, laborIdx, deviation)) {
-      console.log(`  [Digital Twin] Submitted`);
-    } else {
-      console.error(`  [Digital Twin] Failed`);
-    }
+    submitDigitalTwin(pvoId, budgetForTwin, materialIdx, laborIdx, deviation).then(ok => {
+      if (ok) console.log(`  [Digital Twin] Submitted`);
+      else console.error(`  [Digital Twin] Failed`);
+    });
   } else {
     console.log(`  [Digital Twin] Already exists, skipping`);
   }
@@ -1367,11 +1365,10 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
     const riskKey = cacheKey("risk", `${contractor}:${pvoId}`);
     const riskData = `${delayProb}:${overrunProb}:${riskCat}:${confid}:${factors.join("|")}`;
     if (shouldSubmit(riskKey, riskData)) {
-      if (submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid)) {
-        console.log(`  [Risk] Submitted`);
-      } else {
-        console.error(`  [Risk] Failed`);
-      }
+      submitRiskPrediction(contractor, delayProb, overrunProb, riskCat, confid).then(ok => {
+        if (ok) console.log(`  [Risk] Submitted`);
+        else console.error(`  [Risk] Failed`);
+      });
     } else {
       console.log(`  [Risk] Unchanged, skipped`);
     }
@@ -1502,11 +1499,10 @@ async function analyzePvo(caseFile: ForensicCaseFile): Promise<void> {
       const fraudKey = cacheKey("fraud", pvoId);
       const fraudData = `${finalRiskScore}:${confidence}:${indicators.join(",")}`;
       if (shouldSubmit(fraudKey, fraudData)) {
-        if (submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash)) {
-          console.log(`  [Fraud] Submitted on-chain`);
-        } else {
-          console.error(`  [Fraud] Failed to submit`);
-        }
+        submitFraudDetection(pvoId, finalRiskScore, indicators, confidence, hash).then(ok => {
+          if (ok) console.log(`  [Fraud] Submitted on-chain`);
+          else console.error(`  [Fraud] Failed to submit`);
+        });
       } else {
         console.log(`  [Fraud] Unchanged, skipped`);
       }
