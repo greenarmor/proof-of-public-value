@@ -1,6 +1,6 @@
 import http from "http";
 import { join } from "path";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, statSync } from "fs";
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
@@ -420,17 +420,25 @@ const MIME: Record<string, string> = {
 
 function serveStatic(pathName: string, res: http.ServerResponse) {
   let filePath = join(DIST_DIR, pathName);
-  if (pathName === "/" || !existsSync(filePath) || existsSync(filePath) && !readFileSync(filePath).length) {
+  if (pathName === "/" || !existsSync(filePath)) {
     filePath = join(DIST_DIR, "index.html");
   }
   if (!existsSync(filePath)) {
     sendJson(res, 404, { error: "Not found - build the frontend first with npm run build" });
     return;
   }
+  const stat = statSync(filePath);
+  if (stat.isDirectory()) {
+    filePath = join(DIST_DIR, "index.html");
+    if (!existsSync(filePath)) {
+      sendJson(res, 404, { error: "Not found" });
+      return;
+    }
+  }
   const ext = filePath.substring(filePath.lastIndexOf("."));
   const mime = MIME[ext] || "application/octet-stream";
   const data = readFileSync(filePath);
-  res.writeHead(200, { "Content-Type": mime });
+  res.writeHead(200, { "Content-Type": mime, "Content-Length": data.length });
   res.end(data);
 }
 
