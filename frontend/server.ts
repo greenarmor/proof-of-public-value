@@ -29,6 +29,13 @@ function sendJson(res: http.ServerResponse, status: number, body: any) {
   res.end(JSON.stringify(body));
 }
 
+const REDACTED = "redacted";
+
+function safeError(err: any): string {
+  const raw = err?.response?.data?.extras?.result_codes?.transaction || err?.message || "Unknown error";
+  return typeof raw === "string" ? raw.slice(0, 120).replace(/S[A-Z0-9]{55}/g, REDACTED) : "Internal error";
+}
+
 async function handleClaimRpt(req: http.IncomingMessage, res: http.ServerResponse) {
   try {
     let address: string | null = null;
@@ -78,7 +85,7 @@ async function handleClaimRpt(req: http.IncomingMessage, res: http.ServerRespons
     const result = await stellarServer.submitTransaction(tx);
     sendJson(res, 200, { success: true, txHash: result.hash, alreadyOwned: false });
   } catch (err: any) {
-    sendJson(res, 500, { error: err.response?.data?.extras?.result_codes?.transaction || err.message || "Unknown error" });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 
@@ -141,7 +148,7 @@ async function handleClaimCitizen(req: http.IncomingMessage, res: http.ServerRes
       sendJson(res, 500, { error: `Transaction status: ${result.status}` });
     }
   } catch (err: any) {
-    sendJson(res, 500, { error: err.response?.data?.extras?.result_codes?.transaction || err.message || "Unknown error" });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 
@@ -186,7 +193,7 @@ async function handleSetupTrustline(req: http.IncomingMessage, res: http.ServerR
     if (!subR.ok) return sendJson(res, 500, { error: sub.extras?.result_codes?.transaction || "Transaction failed" });
     sendJson(res, 200, { success: true, created, txHash: sub.hash });
   } catch (err: any) {
-    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 
@@ -243,7 +250,7 @@ async function handleSubmitReport(req: http.IncomingMessage, res: http.ServerRes
       sendJson(res, 500, { error: `Status: ${result.status}` });
     }
   } catch (err: any) {
-    sendJson(res, 500, { error: err.message?.slice(0, 200) });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 
@@ -306,7 +313,7 @@ async function handleSendPayment(req: http.IncomingMessage, res: http.ServerResp
     if (!subR.ok) return sendJson(res, 500, { error: sub.extras?.result_codes?.transaction || sub.extras?.result_codes?.operations?.[0] || "Transaction failed" });
     sendJson(res, 200, { success: true, txHash: sub.hash });
   } catch (err: any) {
-    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 
@@ -395,7 +402,7 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
 
     sendJson(res, 200, { pvos: formatted, count: formatted.length });
   } catch (err: any) {
-    sendJson(res, 500, { error: err.message?.slice(0, 200) || "Unknown error" });
+    sendJson(res, 500, { error: safeError(err) });
   }
 }
 

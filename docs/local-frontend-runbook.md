@@ -88,18 +88,13 @@ Freighter is the Stellar browser extension wallet. You need it to sign transacti
 
 ### Import Existing Role Wallets
 
-You'll need wallets with on-chain roles. Get the secret keys from the project maintainer or `.dev-logs/newrolecreden.md`.
+You'll need wallets with on-chain roles. Get the secret keys from the project maintainer.
 
 For each role you want to test:
 1. Freighter → settings gear → **"Add Account"**
 2. Select **"Import Secret Key"**
 3. Paste the secret key (starts with `S`, 56 characters)
 4. Name it so you remember the role (e.g. "alice-admin", "agency", "contractor")
-
-Example secret key format:
-```
-REDACTED_SECRET_KEY
-```
 
 ### Fund New Wallets
 

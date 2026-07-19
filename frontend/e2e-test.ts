@@ -3,7 +3,7 @@
  * Each test corresponds to a live query a dashboard makes.
  */
 
-import { rpc } from "@stellar/stellar-sdk";
+import { rpc, Contract, Address, TransactionBuilder, Account, nativeToScVal } from "@stellar/stellar-sdk";
 import { Client as PvoCoreClient } from "./src/contracts/pvo_core/src/index.ts";
 import { Client as ValueScoreClient } from "./src/contracts/value_score/src/index.ts";
 import { Client as ReputationClient } from "./src/contracts/reputation/src/index.ts";
@@ -15,6 +15,7 @@ import { Client as GrantClient } from "./src/contracts/grant_commitment/src/inde
 import { Client as AIOracleClient } from "./src/contracts/ai_oracle/src/index.ts";
 import { Client as ComplianceClient } from "./src/contracts/compliance_engine/src/index.ts";
 import { Client as ProcurementClient } from "./src/contracts/procurement_market/src/index.ts";
+import { Client as PublicIndexClient } from "./src/contracts/public_index/src/index.ts";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "./src/config.ts";
 
 const PASS = "✅";
@@ -234,6 +235,91 @@ async function main() {
     const client = createClient(CONTRACT_IDS.community_oracle, CommunityOracleClient);
     const result = await client.get_report_count();
     console.log(`  -> ${result.result} community reports`);
+  });
+
+  // ── public_index (IndexLeaderboard, TransparencyPortal) ──
+
+  await test("public_index: get_department_count", async () => {
+    const client = createClient(CONTRACT_IDS.public_index, PublicIndexClient);
+    const result = await client.get_department_count();
+    console.log(`  -> ${result.result} departments tracked`);
+  });
+
+  await test("public_index: get_all_benchmarks", async () => {
+    const client = createClient(CONTRACT_IDS.public_index, PublicIndexClient);
+    const result = await client.get_all_benchmarks();
+    console.log(`  -> ${(result.result || []).length} department benchmarks`);
+  });
+
+  await test("public_index: get_latest_snapshot", async () => {
+    const client = createClient(CONTRACT_IDS.public_index, PublicIndexClient);
+    const result = await client.get_latest_snapshot();
+    console.log(`  -> Latest snapshot: ${result.result ? "found" : "none yet"}`);
+  });
+
+  // ── pphp token (AdminPanel, CentralBankDashboard, FunderDashboard, CreatePphpTrustline) ──
+
+  await test("pphp_token: name", async () => {
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(CONTRACT_IDS.pphp);
+    const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+    const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call("name")).setTimeout(30).build();
+    const sim: any = await server.simulateTransaction(tx);
+    if (sim.error) throw new Error(sim.error);
+    const name = sim.result?.retval?.value()?.toString();
+    if (!name) throw new Error("Token name empty");
+    console.log(`  -> Name: ${name}`);
+  });
+
+  await test("pphp_token: symbol", async () => {
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(CONTRACT_IDS.pphp);
+    const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+    const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call("symbol")).setTimeout(30).build();
+    const sim: any = await server.simulateTransaction(tx);
+    if (sim.error) throw new Error(sim.error);
+    const symbol = sim.result?.retval?.value()?.toString();
+    if (!symbol) throw new Error("Token symbol empty");
+    console.log(`  -> Symbol: ${symbol}`);
+  });
+
+  await test("pphp_token: decimals", async () => {
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(CONTRACT_IDS.pphp);
+    const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+    const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call("decimals")).setTimeout(30).build();
+    const sim: any = await server.simulateTransaction(tx);
+    if (sim.error) throw new Error(sim.error);
+    const decimals = Number(sim.result?.retval?.value());
+    console.log(`  -> Decimals: ${decimals}`);
+  });
+
+  await test("pphp_token: total_supply", async () => {
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(CONTRACT_IDS.pphp);
+    const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+    const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call("total_supply")).setTimeout(30).build();
+    const sim: any = await server.simulateTransaction(tx);
+    if (sim.error) throw new Error(sim.error);
+    const supply = sim.result?.retval?.value();
+    console.log(`  -> Total supply: ${supply?.toString?.() || supply}`);
+  });
+
+  await test("pphp_token: balance(CentralBank)", async () => {
+    const server = new rpc.Server(RPC_URL);
+    const contract = new Contract(CONTRACT_IDS.pphp);
+    const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
+    const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call("balance", new Address("GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO").toScVal()))
+      .setTimeout(30).build();
+    const sim: any = await server.simulateTransaction(tx);
+    if (sim.error) throw new Error(sim.error);
+    const balance = sim.result?.retval?.value();
+    console.log(`  -> CentralBank balance: ${balance?.toString?.() || balance}`);
   });
 
   // ── cross-contract (TransparencyPortal + escrow integration) ──

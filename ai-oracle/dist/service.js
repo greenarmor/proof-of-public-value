@@ -241,7 +241,7 @@ function getSecretKey() {
         const creds = (0, fs_1.readFileSync)(CREDS_PATH, "utf-8");
         const match = creds.match(/AIAuditor.*?\|\s*(S[A-Z0-9]+)/);
         if (match) {
-            console.log("  Read AI Auditor key from newrolecreden.md");
+            console.log("  Read AI Auditor key from credentials file");
             return match[1];
         }
     }

@@ -455,9 +455,7 @@ export function RolePlayOnboarding() {
                         📋 Copy Public Key
                       </button>
                       <p className="text-[10px] text-slate-400 mt-2 text-center">
-                        Secret key:{" "}
-                        <code className="text-brand-600">.dev-logs/newrolecreden.md</code>{" "}
-                        (gitignored)
+                        Secret keys are stored securely. Ask the project maintainer if you need them.
                       </p>
                     </div>
                   )}
