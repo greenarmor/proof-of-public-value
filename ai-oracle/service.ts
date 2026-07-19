@@ -518,11 +518,11 @@ function persistRewards(): void {
 }
 
 function getRewardTier(confidenceRating: number): { tier: string; pct: number } {
-  if (confidenceRating >= 96) return { tier: "Guardian", pct: 0.001 };
-  if (confidenceRating >= 81) return { tier: "Elite", pct: 0.0007 };
-  if (confidenceRating >= 51) return { tier: "Trusted", pct: 0.0005 };
-  if (confidenceRating >= 21) return { tier: "Rising", pct: 0.0003 };
-  return { tier: "New", pct: 0.0001 };
+  if (confidenceRating >= 96) return { tier: "Guardian", pct: 0.00001 };
+  if (confidenceRating >= 81) return { tier: "Elite", pct: 0.000007 };
+  if (confidenceRating >= 51) return { tier: "Trusted", pct: 0.000005 };
+  if (confidenceRating >= 21) return { tier: "Rising", pct: 0.000003 };
+  return { tier: "New", pct: 0.000001 };
 }
 
 // ── Pending Auditor Reviews (Gate 5 human oversight) ─────
