@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL } from "../config";
+import { signTransaction } from "@stellar/freighter-api";
+import { Asset, Operation, TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 
 const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
@@ -47,9 +49,7 @@ export function CitizenOnboarding() {
     setClaimState("adding-trustline");
     setErrorMsg("");
     try {
-      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, {
         fee: "100000",

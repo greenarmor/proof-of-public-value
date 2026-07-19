@@ -8,6 +8,8 @@ import { uploadToIPFS } from "../ipfs";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -264,10 +266,7 @@ function SubmitInspection({ address, onDone }: { address: string; onDone: () => 
     }
 
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const metadata = `${rating}: ${notes}`;
+            const metadata = `${rating}: ${notes}`;
 
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -578,10 +577,7 @@ function InspectionForm({ address, pvoId, milestoneId, milestoneTitle, onDone }:
     setTxMsg("");
 
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_IDS.pvo_core);
 
       const metadata = JSON.stringify({

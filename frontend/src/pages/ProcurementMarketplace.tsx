@@ -6,6 +6,8 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } fr
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { Contract, rpc, TransactionBuilder, Account, Address, xdr, ScInt, nativeToScVal } from "@stellar/stellar-sdk";
 
 interface Tender {
   id: number;
@@ -31,7 +33,6 @@ export function ProcurementMarketplace() {
   useEffect(() => {
     (async () => {
       try {
-        const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
         const contract = new Contract(CONTRACT_IDS.procurement_market);
         const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
@@ -141,8 +142,7 @@ function BrowseTenders({ tenders, loading, canBid, address }: { tenders: Tender[
     if (!canBid || !address) return;
     (async () => {
       try {
-        const { Client: PM } = await import("../contracts/procurement_market/src");
-        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pm = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const bidSet = new Set<number>();
         for (const t of tenders.filter(t => t.status.tag === "Open")) {
           try {
@@ -214,10 +214,7 @@ function CreateTenderForm({ address, onDone }: { address: string; onDone: () => 
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const amt = Number(budget);
+            const amt = Number(budget);
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
       if (!deadline) throw new Error("Deadline required");
 
@@ -386,9 +383,7 @@ function TenderAwardCard({ tender, currency, address, canAward, minBids }: { ten
   const handleAward = async () => {
     setTxState("preparing"); setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
       const op = contract.call("award_tender", new Address(address).toScVal(), xdr.ScVal.scvU32(tender.id));
@@ -484,10 +479,7 @@ function BidForm({ tender, onDone }: { tender: Tender; onDone: () => void }) {
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address!);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
 

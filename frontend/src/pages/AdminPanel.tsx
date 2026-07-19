@@ -2,10 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as AccessControlClient } from "../contracts/access_control/src";
+import { Client as GrantCommitmentClient } from "../contracts/grant_commitment/src";
+import { Client as EscrowClient } from "../contracts/escrow/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE, RPT_ASSET } from "../config";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { Account, Address, Contract, ScInt, TransactionBuilder, nativeToScVal, rpc, xdr } from "@stellar/stellar-sdk";;
 
 const ROLES = [
   "Citizen",
@@ -159,10 +163,7 @@ function RoleManagement() {
   const handleRevoke = async (addr: string, r: string) => {
     if (!address) return;
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.access_control);
       const op = contract.call(
@@ -304,10 +305,7 @@ function AssignRoleForm({ onDone }: { onDone: () => void }) {
     setSubmitting(true);
     setMessage(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const adminAddr = new Address(address);
       const targetAddr = new Address(userAddress);
@@ -437,11 +435,7 @@ function MintRPTForm({ onDone }: { onDone: () => void }) {
     setSubmitting(true);
     setMessage(null);
     try {
-      const { Contract, Address, rpc, TransactionBuilder, nativeToScVal } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
 
       const rptContract = new Contract("CCZCWNF4N7ZAZT4GWEWNW44LIOAEWILB56GUIA6BJZ3BYJKTHTEJFCAQ");
@@ -580,8 +574,7 @@ function AdminPledgeManager() {
   const load = async () => {
     setLoading(true);
     try {
-      const { Client: GC } = await import("../contracts/grant_commitment/src");
-      const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const gc = new GrantCommitmentClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const raw = (await gc.get_all_grants()).result || [];
       const committed = raw.filter((g: any) => (g.status as any)?.tag === "Committed" || g.status === "Committed");
       setPledges(committed);
@@ -595,9 +588,7 @@ function AdminPledgeManager() {
     setBusy(pledge.id);
     setBusyStep("Minting pPHP...");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
+            const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
       const pphpAmount = Number(pledge.amount);
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
@@ -612,8 +603,7 @@ function AdminPledgeManager() {
 
       setBusyStep("Marking disbursed...");
       await new Promise((r) => setTimeout(r, 1500));
-      const { Client: GC } = await import("../contracts/grant_commitment/src");
-      const gc2 = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const gc2 = new GrantCommitmentClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       await gc2.update_status({
         donor: address,
         grant_id: pledge.id,
@@ -662,8 +652,7 @@ function DisputeResolution() {
     (async () => {
       setLoading(true);
       try {
-        const { Client: EscClient } = await import("../contracts/escrow/src");
-        const client = new EscClient({
+        const client = new EscrowClient({
           contractId: CONTRACT_IDS.escrow,
           networkPassphrase: NETWORK_PASSPHRASE,
           rpcUrl: RPC_URL,
@@ -929,7 +918,6 @@ function ProcurementSettings() {
 
   const loadMinBids = useCallback(async () => {
     try {
-      const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
       const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
       const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");
@@ -960,9 +948,7 @@ function ProcurementSettings() {
     setBusy(true);
     setMsg(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
       const op = contract.call("set_min_bids", new Address(address).toScVal(), xdr.ScVal.scvU32(val));

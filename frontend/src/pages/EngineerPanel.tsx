@@ -7,6 +7,8 @@ import { Client as EscrowClient } from "../contracts/escrow/src";
 import { Client as ReputationClient } from "../contracts/reputation/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { ipfsGatewayUrl } from "../ipfs";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 interface MilestoneData {
   id: number; pvoId: number; pvoTitle: string;
@@ -195,10 +197,7 @@ function MilestoneReviewCard({ milestone, currency, address, onAction, onApprove
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+            const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       // Find the escrow for this milestone
       const escrowsResult = await escrowClient.get_escrows_by_pvo({ pvo_id: milestone.pvoId });
       const escrows = (escrowsResult.result || []) as any[];

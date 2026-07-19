@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, PPHP_SCALE, getCurrency } from "../config";
+import { Client as GrantCommitmentClient } from "../contracts/grant_commitment/src";
+import { Client as EscrowClient } from "../contracts/escrow/src";
+import { signTransaction } from "@stellar/freighter-api";
+import { Address, Contract, ScInt, TransactionBuilder, nativeToScVal, rpc, xdr } from "@stellar/stellar-sdk";;
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -73,9 +77,7 @@ function DirectFundForm({ address }: { address: string }) {
     setIsBusy(true);
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const FA = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
@@ -116,8 +118,7 @@ function PledgeManager({ address }: { address: string }) {
     (async () => {
       setLoading(true);
       try {
-        const { Client } = await import("../contracts/grant_commitment/src");
-        const gc = new Client({
+        const gc = new GrantCommitmentClient({
           contractId: CONTRACT_IDS.grant_commitment,
           networkPassphrase: NETWORK_PASSPHRASE,
           rpcUrl: RPC_URL,
@@ -142,10 +143,7 @@ function PledgeManager({ address }: { address: string }) {
     setBusyStep("Minting pPHP...");
     let mintSucceeded = false;
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt, xdr, nativeToScVal } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
+            const FUNDING = "GBM5YDPFH5NI7IRLHYFGLBAAIZGBOO5WGQQRNG3YWLTLHVF7GVJZ5PBO";
       const pphpAmount = Number(pledge.amount);
 
       const server = new rpc.Server(RPC_URL);
@@ -267,9 +265,7 @@ function RedeemPanel({ address }: { address: string }) {
     setIsBusy(true);
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tokenContract = new Contract(CONTRACT_IDS.pphp);
       const redeemAmt = Math.round(Number(amount) * PPHP_SCALE);
@@ -311,7 +307,6 @@ function GrantsOverview() {
   useEffect(() => {
     (async () => {
       try {
-        const { Client: EscrowClient } = await import("../contracts/escrow/src");
         const ec = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const statusMap: Record<number, { escrowCount: number; releasedCount: number }> = {};
         const cnt = await ec.get_escrow_count();
@@ -336,9 +331,7 @@ function GrantsOverview() {
     if (!address) return;
     setCompleting(grantId);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_IDS.grant_commitment);
       const op = contract.call("update_status", new Address(address).toScVal(), xdr.ScVal.scvU32(grantId), xdr.ScVal.scvSymbol("Completed"));
       const tx = new TransactionBuilder(await server.getAccount(address), { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE }).addOperation(op).setTimeout(30).build();
@@ -355,8 +348,7 @@ function GrantsOverview() {
     (async () => {
       setLoading(true);
       try {
-        const { Client } = await import("../contracts/grant_commitment/src");
-        const gc = new Client({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const gc = new GrantCommitmentClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await gc.get_all_grants();
         const all = (result.result || []).sort((a: any, b: any) => Number(b.id) - Number(a.id));
         setGrants(all);

@@ -2,10 +2,20 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../wallet";
 import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
+import { Client as GrantClient } from "../contracts/grant_commitment/src";
+import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
+import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
+import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
+import { Client as ComplianceEngineClient } from "../contracts/compliance_engine/src";
+import { Client as ReputationClient } from "../contracts/reputation/src";
+import { Client as ValueScoreClient } from "../contracts/value_score/src";
+import { Client as AuditTrailClient } from "../contracts/audit_trail/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatAddress } from "../helpers";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { getCached, setCached } from "../dataCache";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 interface FraudResult {
   id: number;
@@ -185,8 +195,7 @@ function RiskTab() {
       setLoading(true);
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
-        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pvoClient.get_pvo_count();
         const seen = new Set<string>();
         const results: any[] = [];
@@ -368,8 +377,7 @@ function DigitalTwinTab() {
       setLoading(true);
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
-        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pvoClient.get_pvo_count();
         const items: any[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {
@@ -422,8 +430,7 @@ function GeoRiskTab({ pvoId }: { pvoId: number }) {
       setLoading(true);
       try {
         const client = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const { Client: PvoClient } = await import("../contracts/pvo_core/src");
-        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pvoClient.get_pvo_count();
         const items: any[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {
@@ -561,8 +568,7 @@ function EscrowGateTab({ address, connected, onConnect }: { address: string | nu
     try {
       const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
       const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-      const { Client: PvoClient } = await import("../contracts/pvo_core/src");
-      const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+      const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
 
       const cnt = await escrowClient.get_escrow_count();
       const list: EscrowWithOracle[] = [];
@@ -782,9 +788,7 @@ function AIGateCard({ data, currency, address, onAction }: { data: EscrowWithOra
   const submitVerdict = async (passed: boolean) => {
     setTxState("preparing"); setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
       const op = contract.call("ai_validate", new Address(address).toScVal(), xdr.ScVal.scvU32(escrowId), xdr.ScVal.scvBool(passed));
@@ -1027,24 +1031,16 @@ function ForensicCaseTab() {
     (async () => {
       setLoading(true);
       try {
-        const PvoClient = (await import("../contracts/pvo_core/src")).Client;
-        const pvoClient = new PvoClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pvoClient = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const escrowClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const aiClient = new AIOracleClient({ contractId: CONTRACT_IDS.ai_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const GrantClient = (await import("../contracts/grant_commitment/src")).Client;
         const grantClient = new GrantClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const ComplianceClient = (await import("../contracts/compliance_engine/src")).Client;
-        const complianceClient = new ComplianceClient({ contractId: CONTRACT_IDS.compliance_engine, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const CommunityClient = (await import("../contracts/community_oracle/src")).Client;
-        const communityClient = new CommunityClient({ contractId: CONTRACT_IDS.community_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const RepClient = (await import("../contracts/reputation/src")).Client;
-        const repClient = new RepClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const ValueClient = (await import("../contracts/value_score/src")).Client;
-        const valueClient = new ValueClient({ contractId: CONTRACT_IDS.value_score, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const AuditClient = (await import("../contracts/audit_trail/src")).Client;
-        const auditClient = new AuditClient({ contractId: CONTRACT_IDS.audit_trail, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
-        const ProcClient = (await import("../contracts/procurement_market/src")).Client;
-        const procClient = new ProcClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const complianceClient = new ComplianceEngineClient({ contractId: CONTRACT_IDS.compliance_engine, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const communityClient = new CommunityOracleClient({ contractId: CONTRACT_IDS.community_oracle, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const repClient = new ReputationClient({ contractId: CONTRACT_IDS.reputation, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const valueClient = new ValueScoreClient({ contractId: CONTRACT_IDS.value_score, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const auditClient = new AuditTrailClient({ contractId: CONTRACT_IDS.audit_trail, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const procClient = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
 
         const cnt = await pvoClient.get_pvo_count();
         const allPvos: { pvoId: number; contractor: string }[] = [];

@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, RPT_MIN_BALANCE } from "../config";
+import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { uploadToIPFS } from "../ipfs";
 import { Autosuggest } from "../components/Autosuggest";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } from "@stellar/stellar-sdk";
 
 const REPORT_TYPES = ["GpsPhoto","GpsVideo","FloodReport","CompletionVerification","QualityReport","DamageReport","UsageReport"] as const;
 
@@ -28,8 +31,7 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
   useEffect(() => {
     (async () => {
       try {
-        const { Client } = await import("../contracts/pvo_core/src");
-        const client = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await client.get_pvo_count();
         const list: PVOOption[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {
@@ -45,8 +47,7 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
     if (!pvoId) { setMilestoneOptions([]); return; }
     (async () => {
       try {
-        const { Client } = await import("../contracts/pvo_core/src");
-        const client = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const client = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await client.get_pvo_milestones({ pvo_id: pvoId });
         const milestones = (result.result || []) as any[];
         setMilestoneOptions(milestones.map((m: any) => ({ id: Number(m.id), title: m.title })));
@@ -71,10 +72,7 @@ export default function CitizenReportForm({ onDone }: { onDone?: () => void }) {
     setMessage({ text: "Simulating transaction...", ok: true });
 
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      if (!pvoId || pvoId <= 0 || !milestoneId || milestoneId <= 0) {
+            if (!pvoId || pvoId <= 0 || !milestoneId || milestoneId <= 0) {
         setMessage({ text: "❌ Select a PVO and milestone.", ok: false }); setSubmitting(false); return;
       }
 

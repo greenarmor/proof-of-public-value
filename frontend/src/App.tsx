@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BrowserRouter, Routes, Route, NavLink, useNavigate } from "react-router-dom";
 import { Fragment } from "react";
+import { Contract, rpc, TransactionBuilder, Account } from "@stellar/stellar-sdk";
 import { WalletProvider, useWallet } from "./wallet";
 import { TransparencyPortal } from "./pages/TransparencyPortal";
 import { RolePlayOnboarding } from "./pages/RolePlayOnboarding";
@@ -547,7 +548,6 @@ function DevBanner() {
 
   const checkPvoCount = useCallback(async () => {
     try {
-      const { Contract, rpc, TransactionBuilder, Account } = await import("@stellar/stellar-sdk");
       const server = new rpc.Server(RPC_URL);
       const contract = new Contract(CONTRACT_IDS.pvo_core);
       const account = new Account("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF", "0");

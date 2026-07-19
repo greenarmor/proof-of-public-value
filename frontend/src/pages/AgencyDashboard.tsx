@@ -2,10 +2,14 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
+import { Client as GrantCommitmentClient } from "../contracts/grant_commitment/src";
+import { Client as EscrowClient } from "../contracts/escrow/src";
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } from "@stellar/stellar-sdk";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -105,7 +109,6 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
         setPvos(list);
 
         // Check escrow release status per PVO to compute Completed
-        const { Client: EscrowClient } = await import("../contracts/escrow/src");
         const escClient = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const completedMap: Record<number, boolean> = {};
         for (const pvo of list) {
@@ -131,11 +134,9 @@ function ProjectOverview({ onNewPvo, onNewMilestone, onOpenTender }: { onNewPvo:
     // Fetch escrow and grant totals per PVO
     (async () => {
       try {
-        const { Client: GC } = await import("../contracts/grant_commitment/src");
-        const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const gc = new GrantCommitmentClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const grants = (await gc.get_all_grants()).result || [];
-        const { Client: EC } = await import("../contracts/escrow/src");
-        const ec = new EC({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ec = new EscrowClient({ contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const ecCnt = Number((await ec.get_escrow_count()).result);
         const funding: Record<number, { funded: number; escrowed: number; released: number }> = {};
         for (const g of grants) { const pid = Number(g.pvo_id); if (!funding[pid]) funding[pid]={funded:0,escrowed:0,released:0}; funding[pid].funded += Number(g.amount); }
@@ -315,10 +316,7 @@ function CreatePVOForm({ address, onDone }: { address: string; onDone: () => voi
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const amt = Math.round(Number(budget) * PPHP_SCALE);
+            const amt = Math.round(Number(budget) * PPHP_SCALE);
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
       const deadlineTs = deadline ? Math.floor(new Date(deadline).getTime() / 1000) : Math.floor(Date.now() / 1000) + 365 * 24 * 3600;
 
@@ -489,9 +487,7 @@ function TenderForm({ pvoId, address, onDone }: { pvoId: number; address: string
     e.preventDefault();
     setTxState("preparing");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.procurement_market);
       const dl = deadline ? Math.floor(new Date(deadline).getTime() / 1000) : Math.floor(Date.now() / 1000) + 30 * 24 * 3600;
@@ -618,10 +614,7 @@ function CreateMilestoneForm({ address, prefillPvoId, onDone }: { address: strin
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const amt = Math.round(Number(budget) * PPHP_SCALE);
+            const amt = Math.round(Number(budget) * PPHP_SCALE);
       if (!amt || amt <= 0) throw new Error("Budget must be positive");
       if (evidenceTypes.length === 0) throw new Error("Select at least one evidence type");
 

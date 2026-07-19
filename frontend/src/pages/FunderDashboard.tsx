@@ -7,7 +7,12 @@ import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } fr
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Client as GrantClient } from "../contracts/grant_commitment/src";
+import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
+import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
+import { Client as AccessControlClient } from "../contracts/access_control/src";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { Contract, Address, rpc, TransactionBuilder, scValToBigInt, xdr, nativeToScVal } from "@stellar/stellar-sdk";
 
 type EscrowStatus =
   | "Created" | "Funded" | "EngineerApproved" | "AIValidated"
@@ -236,7 +241,6 @@ function EscrowCard({ escrow, currency, address, onAction }: {
     if (!isFunder || escrow.status !== "Created") return;
     (async () => {
       try {
-        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
         const contract = new Contract(CONTRACT_IDS.pphp);
         const account = await server.getAccount(address);
@@ -267,10 +271,7 @@ function EscrowCard({ escrow, currency, address, onAction }: {
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
       const op = contract.call(fnName, ...fnArgs);
@@ -297,7 +298,6 @@ function EscrowCard({ escrow, currency, address, onAction }: {
   };
 
   const handleFund = async () => {
-    const { Address, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
     await sendTx("fund_escrow", [
       new Address(address).toScVal(),
       xdr.ScVal.scvU32(escrow.id),
@@ -306,17 +306,14 @@ function EscrowCard({ escrow, currency, address, onAction }: {
   };
 
   const handleRelease = async () => {
-    const { Address, xdr } = await import("@stellar/stellar-sdk");
     await sendTx("release", [new Address(address).toScVal(), xdr.ScVal.scvU32(escrow.id)]);
   };
 
   const handleDispute = async () => {
-    const { Address, xdr } = await import("@stellar/stellar-sdk");
     await sendTx("dispute", [new Address(address).toScVal(), xdr.ScVal.scvU32(escrow.id)]);
   };
 
   const handleRefund = async () => {
-    const { Address, xdr } = await import("@stellar/stellar-sdk");
     await sendTx("refund", [new Address(address).toScVal(), xdr.ScVal.scvU32(escrow.id)]);
   };
 
@@ -431,11 +428,9 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
   useEffect(() => {
     (async () => {
       try {
-        const { Client: GC } = await import("../contracts/grant_commitment/src");
-        const gc = new GC({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const gc = new GrantClient({ contractId: CONTRACT_IDS.grant_commitment, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         setGrantsF(((await gc.get_all_grants()).result || []));
-        const { Client: PC } = await import("../contracts/pvo_core/src");
-        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await pc.get_pvo_count();
         const b: Record<number,number> = {};
         const pl: {id:number;title:string;municipality:string;budget:number}[] = [];
@@ -445,8 +440,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
         setPvList(pl);
       } catch {}
       try {
-        const { Client: AC } = await import("../contracts/access_control/src");
-        const ac = new AC({ contractId: CONTRACT_IDS.access_control, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const ac = new AccessControlClient({ contractId: CONTRACT_IDS.access_control, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await ac.get_addresses_by_role({ role: { tag: "Contractor", values: undefined } as any });
         setContractors(result.result || []);
       } catch {}
@@ -458,15 +452,13 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
     if (!pvoId) { setMilestones([]); setMilestoneBidPrices({}); return; }
     (async () => {
       try {
-        const { Client: PC } = await import("../contracts/pvo_core/src");
-        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await pc.get_pvo_milestones({ pvo_id: Number(pvoId) });
         const ml = (result.result || []).map((m: any) => ({ id: Number(m.id), title: m.title || "", budget: Number(m.budget) }));
         setMilestones(ml);
         // Fetch awarded tender bid prices for these milestones
         try {
-          const { Client: PM } = await import("../contracts/procurement_market/src");
-          const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+          const pm = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
           const tCount = await pm.get_tender_count();
           let totalBid = 0;
           let tenderBudget = 0;
@@ -515,10 +507,7 @@ function CreateEscrowForm({ address, prefillPvoId, prefillMilestoneId, prefillAm
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const amt = Number(amount);
+            const amt = Number(amount);
       if (!amt || amt <= 0) throw new Error("Amount must be positive");
       const amtSAC = Math.round(amt * PPHP_SCALE);
 
@@ -696,8 +685,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
   useEffect(() => {
     (async () => {
       try {
-        const { Client: PM } = await import("../contracts/procurement_market/src");
-        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pm = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const tCount = await pm.get_tender_count();
         const awardedPvoIds = new Set<number>();
         const contractorMap: Record<number, string> = {};
@@ -742,8 +730,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
         setBidPriceMap(bpMap);
         setTenderBudgetMap(tenderBudgetByPvo);
         if (awardedPvoIds.size === 0) { setAwardedPvos([]); return; }
-        const { Client: PC } = await import("../contracts/pvo_core/src");
-        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const list: any[] = [];
         for (const pid of awardedPvoIds) {
           try {
@@ -766,8 +753,7 @@ function AwardedPvosTab({ onCreateEscrow, existingEscrows }: {
     setExpandedId(pvoId);
     if (!milestoneCache[pvoId]) {
       try {
-        const { Client: PC } = await import("../contracts/pvo_core/src");
-        const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const result = await pc.get_pvo_milestones({ pvo_id: pvoId });
         const milestones = (result.result || []).map((m: any) => ({
           id: Number(m.id), title: m.title || "", description: m.description || "", budget: Number(m.budget),
@@ -909,7 +895,7 @@ function DonorCommitmentsTab() {
   }, [refreshKey]);
 
   const [pvoBudgets, setPvoBudgets] = useState<Record<number, string>>({});
-  useEffect(() => { (async () => { try { const { Client } = await import("../contracts/pvo_core/src"); const pc = new Client({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; const maxId = Number(cnt.result); for(let i=1;i<=maxId;i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} let consecutiveNones = 0; let scanId = maxId + 1; while (consecutiveNones < 15) { try { const r=await pc.get_pvo({pvo_id:scanId}); if(r.result) { b[r.result.id]=String(r.result.total_budget); consecutiveNones=0; } else { consecutiveNones++; } } catch { consecutiveNones++; } scanId++; } setPvoBudgets(b); }catch{}})(); }, []);
+  useEffect(() => { (async () => { try { const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL }); const cnt = await pc.get_pvo_count(); const b: Record<number,string>={}; const maxId = Number(cnt.result); for(let i=1;i<=maxId;i++){ try{const r=await pc.get_pvo({pvo_id:i}); if(r.result) b[r.result.id]=String(r.result.total_budget); }catch{}} let consecutiveNones = 0; let scanId = maxId + 1; while (consecutiveNones < 15) { try { const r=await pc.get_pvo({pvo_id:scanId}); if(r.result) { b[r.result.id]=String(r.result.total_budget); consecutiveNones=0; } else { consecutiveNones++; } } catch { consecutiveNones++; } scanId++; } setPvoBudgets(b); }catch{}})(); }, []);
 
   const statusTag = (s: any): string => {
     if (s && typeof s === "object" && s.tag) return s.tag;

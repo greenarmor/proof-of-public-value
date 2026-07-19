@@ -3,10 +3,13 @@ import { useWallet } from "../wallet";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { Client as CommunityOracleClient } from "../contracts/community_oracle/src";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS } from "../config";
+import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { formatAddress } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { IpfsLink } from "../components/IpfsLink";
 import { RPT_ASSET, RPT_MIN_BALANCE } from "../config";
+import { signTransaction } from "@stellar/freighter-api";
+import { Asset, Operation, TransactionBuilder, rpc, Contract, Address, xdr } from "@stellar/stellar-sdk";
 
 export function CitizenInterface() {
   const { address, connected, connect } = useWallet();
@@ -74,9 +77,7 @@ function CitizenDashboard() {
     if (!address) return;
     setTrustlineLoading(true); setMessage(null);
     try {
-      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct,{fee:"100000",networkPassphrase:NETWORK_PASSPHRASE}).addOperation(Operation.changeTrust({asset:new Asset("RPT","GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV")})).setTimeout(30).build();
       setMessage({text:"Check Freighter popup to sign...",ok:true});
@@ -156,10 +157,7 @@ function CitizenBrowse() {
     if (!address) return;
     setVerifying(reportId); setVmsg(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.community_oracle);
       const op = contract.call("verify_report",
@@ -251,8 +249,7 @@ function PvoHunter() {
           setError("IP check blocked — your connection may be routing through a VPN");
         }
         try {
-          const { Client: PC } = await import("../contracts/pvo_core/src");
-          const pc = new PC({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+          const pc = new PvoCoreClient({ contractId: CONTRACT_IDS.pvo_core, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
           const cnt = await pc.get_pvo_count();
           const found: any[] = [];
           for (let i = 1; i <= Number(cnt.result); i++) {
@@ -415,9 +412,7 @@ function CreatePphpTrustlineButton({ address }: { address: string }) {
   const addTl = async () => {
     setLoading(true);
     try {
-      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({ asset: new Asset("pPHP", "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO") }))

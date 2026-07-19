@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { NETWORK_PASSPHRASE, CONTRACT_IDS, RPC_URL } from "../config";
+import { signTransaction } from "@stellar/freighter-api";
+import { Contract, Address, rpc, TransactionBuilder, scValToBigInt, Asset, Operation } from "@stellar/stellar-sdk";
 
 export function CreatePphpTrustline({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
@@ -12,7 +14,6 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   useEffect(() => {
     (async () => {
       try {
-        const { Contract, Address, rpc, TransactionBuilder, scValToBigInt } = await import("@stellar/stellar-sdk");
         const server = new rpc.Server(RPC_URL);
         const contract = new Contract(CONTRACT_IDS.pphp);
         const account = await server.getAccount(address);
@@ -39,9 +40,7 @@ export function CreatePphpTrustline({ address }: { address: string }) {
   const setup = async () => {
     setLoading(true); setMsg(null);
     try {
-      const { Asset, Operation, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const acct = await server.getAccount(address);
       const tx = new TransactionBuilder(acct, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
         .addOperation(Operation.changeTrust({

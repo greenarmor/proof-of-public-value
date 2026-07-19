@@ -5,8 +5,11 @@ import { formatAddress, formatBudget } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as GrantClient, type Grant as ChainGrant } from "../contracts/grant_commitment/src";
+import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } from "@stellar/stellar-sdk";
 
 type GrantStatusTag = "Committed" | "Disbursed" | "Completed" | "Cancelled";
 
@@ -76,8 +79,7 @@ export function DonorDashboard() {
       }
       // Look up winning bid amounts
       try {
-        const { Client: PM } = await import("../contracts/procurement_market/src");
-        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pm = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const tCount = await pm.get_tender_count();
         const maxScan = Number(tCount.result) + 10;
         for (let i = 1; i <= maxScan; i++) {
@@ -232,9 +234,7 @@ function PledgeForm({ address, pvoId, remaining, onDone }: { address: string; pv
     e.preventDefault();
     setTxState("preparing"); setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const amt = Number(amount);
+            const amt = Number(amount);
       if (!amt || amt <= 0) throw new Error("Amount must be positive");
       const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);

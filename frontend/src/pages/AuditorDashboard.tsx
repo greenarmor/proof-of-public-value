@@ -4,8 +4,11 @@ import { useWallet } from "../wallet";
 import { NETWORK_PASSPHRASE, RPC_URL, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { Client as AuditClient } from "../contracts/audit_trail/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
+import { Client as ComplianceEngineClient } from "../contracts/compliance_engine/src";
 import { formatAddress, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -191,10 +194,7 @@ function EscrowComplianceCard({ escrow, currency, address, onAction }: {
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
 
@@ -300,8 +300,7 @@ function ViolationsTab() {
     (async () => {
       setLoading(true);
       try {
-        const { Client: ComplianceClient } = await import("../contracts/compliance_engine/src");
-        const client = new ComplianceClient({ contractId: CONTRACT_IDS.compliance_engine, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const client = new ComplianceEngineClient({ contractId: CONTRACT_IDS.compliance_engine, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const cnt = await client.get_violation_count();
         const list: any[] = [];
         for (let i = 1; i <= Number(cnt.result); i++) {

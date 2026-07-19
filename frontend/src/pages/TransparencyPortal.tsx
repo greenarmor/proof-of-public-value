@@ -2,12 +2,16 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Client as PvoCoreClient } from "../contracts/pvo_core/src";
 import { Client as EscrowClient, type Escrow as ChainEscrow } from "../contracts/escrow/src";
 import { Client as AIOracleClient } from "../contracts/ai_oracle/src";
+import { Client as ProcurementMarketClient } from "../contracts/procurement_market/src";
+import { Client as GrantCommitmentClient } from "../contracts/grant_commitment/src";
 import { RPC_URL, NETWORK_PASSPHRASE, CONTRACT_IDS, getCurrency, PPHP_SCALE } from "../config";
 import { formatBudget, formatAddress, formatTimestamp, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { useWallet } from "../wallet";
 import { BlockchainLoader } from "../components/BlockchainLoader";
 import { getCached, setCached } from "../dataCache";
+import { signTransaction } from "@stellar/freighter-api";
+import { Address, Contract, TransactionBuilder, nativeToScVal, rpc, xdr } from "@stellar/stellar-sdk";
 
 const PROVENANCE_API_BASE = "https://provenance.chain.popv.quest";
 const PROV_API_KEY = "";
@@ -246,8 +250,7 @@ export function TransparencyPortal() {
     if (loading || pvos.length === 0) return;
     (async () => {
       try {
-        const { Client: PM } = await import("../contracts/procurement_market/src");
-        const pm = new PM({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
+        const pm = new ProcurementMarketClient({ contractId: CONTRACT_IDS.procurement_market, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL });
         const tCount = await pm.get_tender_count();
         const bMap: Record<number, number> = {};
         const maxScan = Number(tCount.result) + 10;
@@ -279,8 +282,7 @@ export function TransparencyPortal() {
   useEffect(() => {
     (async () => {
       try {
-        const { Client: GC } = await import("../contracts/grant_commitment/src");
-        const gc = new GC({
+        const gc = new GrantCommitmentClient({
           contractId: CONTRACT_IDS.grant_commitment,
           networkPassphrase: NETWORK_PASSPHRASE,
           rpcUrl: RPC_URL,
@@ -1081,10 +1083,7 @@ function CitizenReportBadge({
     setSubmitting(true);
     setMessage(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, nativeToScVal } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.community_oracle);
       const op = contract.call(
@@ -1128,10 +1127,7 @@ function CitizenReportBadge({
     setSubmitting(true);
     setMessage(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
       const op = contract.call(
@@ -1167,10 +1163,7 @@ function CitizenReportBadge({
     setSubmitting(true);
     setMessage(null);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
       const op = contract.call(
@@ -1342,10 +1335,7 @@ function ReleaseButton({ escrowId }: { escrowId: number }) {
     if (!address) return;
     setReleasing(true);
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } =
-        await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.escrow);
       const op = contract.call(

@@ -10,6 +10,8 @@ import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { CreatePphpTrustline } from "../components/CreatePphpTrustline";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 // --- chain data types ---
 
@@ -66,9 +68,7 @@ export function ContractorPortal() {
   const confirmRegistration = async () => {
     setConfirming(true);
     try {
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const repClient = new RepClient({
+            const repClient = new RepClient({
         contractId: CONTRACT_IDS.reputation,
         networkPassphrase: NETWORK_PASSPHRASE,
         rpcUrl: RPC_URL,
@@ -474,10 +474,7 @@ function EvidenceTab({ address, prefillPvoId, prefillMilestoneId, onDone }: { ad
 
     // Submit evidence on-chain via raw TransactionBuilder
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.pvo_core);
 

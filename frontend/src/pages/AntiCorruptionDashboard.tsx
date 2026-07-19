@@ -9,6 +9,8 @@ import { Client as AiOracleClient, type FraudDetectionResult } from "../contract
 import { Client as ComplianceClient, type ViolationRecord } from "../contracts/compliance_engine/src";
 import { Client as AuditClient, type AuditEntry } from "../contracts/audit_trail/src";
 import { Client as EscrowClient } from "../contracts/escrow/src";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr } from "@stellar/stellar-sdk";
 
 const FRAUD_INDICATORS = [
   "DuplicateInvoice", "GhostProject", "AbnormalBudgetGrowth", "UnusualPaymentTiming",
@@ -176,10 +178,7 @@ function FraudTab({ frauds, address, onAction }: {
   const handleDisputeEscrow = async (pvoId: number, fraudId: number) => {
     setDisputeTx(s => ({ ...s, [fraudId]: "preparing" }));
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const escrowClient = new EscrowClient({
+            const escrowClient = new EscrowClient({
         contractId: CONTRACT_IDS.escrow, networkPassphrase: NETWORK_PASSPHRASE, rpcUrl: RPC_URL,
       });
 
@@ -314,10 +313,7 @@ function ViolationsTab({ violations, address, onAction }: {
   const handleResolve = async (vId: number) => {
     setResolveTx(s => ({ ...s, [vId]: "preparing" }));
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.compliance_engine);
       const op = contract.call("resolve_violation",
@@ -565,10 +561,7 @@ function ReportTab({ address, onSubmitted }: { address: string; onSubmitted: () 
         setFdUploading(false);
       }
 
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.ai_oracle);
 
@@ -622,10 +615,7 @@ function ReportTab({ address, onSubmitted }: { address: string; onSubmitted: () 
       }
       const fullDescription = evidenceHash ? `${vlDescription} [Evidence: ${evidenceHash}]` : vlDescription;
 
-      const { TransactionBuilder, Contract, Address, rpc, xdr } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const server = new rpc.Server(RPC_URL);
+            const server = new rpc.Server(RPC_URL);
       const account = await server.getAccount(address);
       const contract = new Contract(CONTRACT_IDS.compliance_engine);
 

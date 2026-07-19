@@ -6,6 +6,8 @@ import { Client as ProcurementClient } from "../contracts/procurement_market/src
 import { formatAddress, formatBudget, statusToString } from "../helpers";
 import { WalletAddress } from "../components/WalletAddress";
 import { Modal } from "../components/Modal";
+import { signTransaction } from "@stellar/freighter-api";
+import { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } from "@stellar/stellar-sdk";
 
 type TxState = "idle" | "preparing" | "signing" | "sending" | "done" | "error";
 
@@ -151,10 +153,7 @@ function SubmitBidTab({ address, onDone }: { address: string; onDone: () => void
     setTxState("preparing");
     setTxMsg("");
     try {
-      const { TransactionBuilder, Contract, Address, rpc, xdr, ScInt } = await import("@stellar/stellar-sdk");
-      const { signTransaction } = await import("@stellar/freighter-api");
-
-      const priceAmt = Number(price);
+            const priceAmt = Number(price);
       if (!priceAmt || priceAmt <= 0) throw new Error("Price must be positive");
 
       const server = new rpc.Server(RPC_URL);
