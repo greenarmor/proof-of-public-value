@@ -582,6 +582,52 @@ async function handleSubmitSigned(req: http.IncomingMessage, res: http.ServerRes
   }
 }
 
+function handleReputation(req: http.IncomingMessage, res: http.ServerResponse) {
+  const url = new URL(req.url || "", `http://${req.headers.host}`);
+  const citizen = url.searchParams.get("citizen");
+  if (!citizen?.startsWith("G")) return sendJson(res, 400, { error: "Valid citizen address required" });
+
+  (async () => {
+    try {
+      const { Contract, rpc, TransactionBuilder, Address } = await import("@stellar/stellar-sdk");
+      const server = new rpc.Server(RPC_URL);
+      const contract = new Contract(COMMUNITY_ORACLE);
+      const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+      const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
+
+      const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(contract.call("get_citizen_reputation", new Address(citizen).toScVal()))
+        .setTimeout(30).build();
+      const sim: any = await server.simulateTransaction(tx);
+
+      if (sim.error || !sim.result?.retval || sim.result.retval.switch().name === "scvVoid") {
+        return sendJson(res, 200, { total_reports: 0, verified_reports: 0, confidence_rating: 0 });
+      }
+
+      const rv = sim.result.retval;
+      const data: Record<string, any> = {};
+      for (const entry of rv.map()) {
+        const key = entry.key().sym().toString();
+        const val = entry.val();
+        switch (val.switch().name) {
+          case "scvU32": data[key] = val.u32(); break;
+          case "scvString": data[key] = val.str().toString(); break;
+          case "scvBool": data[key] = val.b(); break;
+          default: data[key] = null;
+        }
+      }
+
+      sendJson(res, 200, {
+        total_reports: data.total_reports ?? 0,
+        verified_reports: data.verified_reports ?? 0,
+        confidence_rating: data.confidence_rating ?? 0,
+      });
+    } catch (err: any) {
+      sendJson(res, 500, { error: safeError(err) });
+    }
+  })();
+}
+
 function serveStatic(pathName: string, res: http.ServerResponse) {
   let filePath = join(DIST_DIR, pathName);
   if (pathName === "/" || !existsSync(filePath)) {
@@ -624,6 +670,7 @@ const server = http.createServer(async (req, res) => {
     if (pathName === "/api/submit-signed") return await handleSubmitSigned(req, res);
     if (pathName === "/api/health") return handleHealth(req, res);
     if (pathName === "/api/pvos") return await handlePvos(req, res);
+    if (pathName === "/api/reputation") return await handleReputation(req, res);
     if (pathName.startsWith("/api/")) return sendJson(res, 404, { error: "Not found" });
 
     serveStatic(pathName, res);
