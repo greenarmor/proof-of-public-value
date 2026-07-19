@@ -326,15 +326,24 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
     const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
     const server = new rpc.Server(RPC_URL);
     const contract = new Contract(PVO_CORE);
+    const escrowContract = new Contract("CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7"); // escrow contract
     const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
     const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
 
-    async function sim(fnName: string, ...args: any[]) {
+    async function sim(fnName: string, contractRef: any, ...args: any[]) {
       const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
-        .addOperation(contract.call(fnName, ...args)).setTimeout(30).build();
+        .addOperation(contractRef.call(fnName, ...args)).setTimeout(30).build();
       const s: any = await server.simulateTransaction(tx);
       if (s.error) return null;
       return s.result?.retval;
+    }
+
+    async function pvoSim(fnName: string, ...args: any[]) {
+      return sim(fnName, contract, ...args);
+    }
+
+    async function escrowSim(fnName: string, ...args: any[]) {
+      return sim(fnName, escrowContract, ...args);
     }
 
     function parseMap(sv: any): Record<string, any> {
@@ -356,14 +365,14 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       return result;
     }
 
-    const cntVal = await sim("get_pvo_count");
+    const cntVal = await pvoSim("get_pvo_count");
     if (!cntVal) return sendJson(res, 500, { error: "Failed to get count" });
     const count = Number(cntVal.u32().toString());
 
     const pvos: any[] = [];
     for (let i = 1; i <= count; i++) {
       try {
-        const rv = await sim("get_pvo", nativeToScVal(i, { type: "u32" }));
+        const rv = await pvoSim("get_pvo", nativeToScVal(i, { type: "u32" }));
         if (!rv || rv.switch().name === "scvVoid") continue;
         const parsed = parseMap(rv);
         if (parsed.title) pvos.push(parsed);
@@ -374,7 +383,7 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
     let misses = 0;
     while (misses < 15) {
       try {
-        const rv = await sim("get_pvo", nativeToScVal(scanId, { type: "u32" }));
+        const rv = await pvoSim("get_pvo", nativeToScVal(scanId, { type: "u32" }));
         if (!rv || rv.switch().name === "scvVoid") { misses++; }
         else {
           const parsed = parseMap(rv);
@@ -385,20 +394,50 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       scanId++;
     }
 
+    // Fetch gate statuses from escrow contract per PVO
+    const escrowCountVal = await escrowSim("get_escrow_count");
+    const escrowCount = escrowCountVal ? Number(escrowCountVal.u32().toString()) : 0;
+    const pvoGates: Record<number, { engineer: boolean; compliance: boolean; oracle: boolean; community: boolean; ai: boolean; communityCount: number; communityRequired: number }> = {};
+
+    for (let i = 1; i <= escrowCount; i++) {
+      try {
+        const ev = await escrowSim("get_escrow", nativeToScVal(i, { type: "u32" }));
+        if (!ev || ev.switch().name === "scvVoid") continue;
+        const esc = parseMap(ev);
+        const pvoId = Number(esc.pvo_id);
+        if (!pvoGates[pvoId]) {
+          pvoGates[pvoId] = { engineer: false, compliance: false, oracle: false, community: false, ai: false, communityCount: 0, communityRequired: 0 };
+        }
+        const conditions = esc.conditions || {};
+        if (conditions.engineer_approval === true) pvoGates[pvoId].engineer = true;
+        if (conditions.compliance_validation === true) pvoGates[pvoId].compliance = true;
+        if (conditions.community_oracle_validation === true) pvoGates[pvoId].oracle = true;
+        if (conditions.community_confirmation >= (conditions.community_required || 1)) pvoGates[pvoId].community = true;
+        if (conditions.ai_risk_check === true) pvoGates[pvoId].ai = true;
+        if (typeof conditions.community_confirmation === "number") pvoGates[pvoId].communityCount = conditions.community_confirmation;
+        if (typeof conditions.community_required === "number") pvoGates[pvoId].communityRequired = conditions.community_required;
+      } catch {}
+    }
+
     const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
-    const formatted = pvos.map((p: any) => ({
-      id: p.id ?? 0,
-      title: p.title ?? "Untitled",
-      description: p.description ?? "",
-      department: p.department ?? "",
-      municipality: p.municipality ?? "",
-      total_budget: String(p.total_budget ?? 0),
-      status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
-      fund_source: p.fund_source ?? "",
-      milestone_count: p.milestones ?? 0,
-      milestones_released: 0,
-      public_value_score: p.public_value_score ?? 0,
-    }));
+    const formatted = pvos.map((p: any) => {
+      const pid = Number(p.id);
+      const gates = pvoGates[pid] || { engineer: false, compliance: false, oracle: false, community: false, ai: false, communityCount: 0, communityRequired: 0 };
+      return {
+        id: pid,
+        title: p.title ?? "Untitled",
+        description: p.description ?? "",
+        department: p.department ?? "",
+        municipality: p.municipality ?? "",
+        total_budget: String(p.total_budget ?? 0),
+        status: typeof p.status === "string" ? p.status : statusMap[p.status] ?? "Proposed",
+        fund_source: p.fund_source ?? "",
+        milestone_count: p.milestones ?? 0,
+        milestones_released: 0,
+        public_value_score: p.public_value_score ?? 0,
+        gates,
+      };
+    });
 
     sendJson(res, 200, { pvos: formatted, count: formatted.length });
   } catch (err: any) {
