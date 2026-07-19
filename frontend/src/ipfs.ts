@@ -1,19 +1,9 @@
-const PINATA_KEY = import.meta.env.VITE_PINATA_API_KEY || "";
-const PINATA_SECRET = import.meta.env.VITE_PINATA_SECRET || "";
-
 export async function uploadToIPFS(file: File): Promise<string> {
-  if (!PINATA_KEY || !PINATA_SECRET) {
-    throw new Error("Pinata API keys not configured");
-  }
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+  const res = await fetch("/api/upload-ipfs", {
     method: "POST",
     body: fd,
-    headers: {
-      pinata_api_key: PINATA_KEY,
-      pinata_secret_api_key: PINATA_SECRET,
-    },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

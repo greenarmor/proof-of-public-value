@@ -425,6 +425,124 @@ const MIME: Record<string, string> = {
   ".wasm": "application/wasm",
 };
 
+async function handleUploadIpfs(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  const PINATA_KEY = process.env.PINATA_API_KEY;
+  const PINATA_SECRET = process.env.PINATA_SECRET;
+  if (!PINATA_KEY || !PINATA_SECRET) return sendJson(res, 500, { error: "IPFS not configured" });
+  try {
+    const boundary = req.headers["content-type"]?.split("boundary=")[1];
+    if (!boundary) return sendJson(res, 400, { error: "Missing multipart boundary" });
+
+    const pinataResp = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        "pinata_api_key": PINATA_KEY,
+        "pinata_secret_api_key": PINATA_SECRET,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      },
+      body: req,
+    });
+    const data: any = await pinataResp.json();
+    if (!pinataResp.ok) return sendJson(res, pinataResp.status, { error: data.error || "IPFS upload failed" });
+    sendJson(res, 200, { IpfsHash: data.IpfsHash });
+  } catch (err: any) {
+    sendJson(res, 500, { error: safeError(err) });
+  }
+}
+
+async function handleBuildTrustline(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { publicKey } = JSON.parse(body);
+    if (!publicKey?.startsWith("G")) return sendJson(res, 400, { error: "Valid public key required" });
+
+    const { Asset, Operation, TransactionBuilder, Networks } = await import("@stellar/stellar-sdk");
+    const acctR = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
+    if (!acctR.ok) return sendJson(res, 400, { error: "Wallet account not found" });
+    const acct: any = await acctR.json();
+
+    const balances = acct.balances || [];
+    const hasRpt = balances.some((b: any) => b.asset_code === "RPT" && b.asset_issuer === RPT_ISSUER);
+    const hasPphp = balances.some((b: any) => b.asset_code === "pPHP" && b.asset_issuer === PPHP_ISSUER);
+    if (hasRpt && hasPphp) return sendJson(res, 200, { alreadySetup: true });
+
+    const ops: any[] = [];
+    if (!hasRpt) ops.push(Operation.changeTrust({ asset: new Asset("RPT", RPT_ISSUER) }));
+    if (!hasPphp) ops.push(Operation.changeTrust({ asset: new Asset("pPHP", PPHP_ISSUER) }));
+
+    const source = { accountId: () => publicKey, sequenceNumber: () => acct.sequence, incrementSequenceNumber: () => {} };
+    const txB = new TransactionBuilder(source as any, { fee: "100000", networkPassphrase: Networks.TESTNET });
+    for (const op of ops) txB.addOperation(op);
+    const tx = txB.setTimeout(30).build();
+
+    sendJson(res, 200, { xdr: tx.toXDR(), txHash: tx.hash().toString("hex") });
+  } catch (err: any) {
+    sendJson(res, 500, { error: safeError(err) });
+  }
+}
+
+async function handleBuildPayment(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { publicKey, destination, amount, asset } = JSON.parse(body);
+    if (!publicKey?.startsWith("G")) return sendJson(res, 400, { error: "Valid public key required" });
+    if (!destination?.startsWith("G") || destination.length !== 56) return sendJson(res, 400, { error: "Valid destination required" });
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return sendJson(res, 400, { error: "Valid amount required" });
+    if (!["XLM", "RPT", "pPHP"].includes(asset)) return sendJson(res, 400, { error: "Asset must be XLM, RPT, or pPHP" });
+
+    const { Asset, Operation, TransactionBuilder, Networks } = await import("@stellar/stellar-sdk");
+    const acctR = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
+    if (!acctR.ok) return sendJson(res, 400, { error: "Wallet not funded" });
+    const acct: any = await acctR.json();
+
+    let paymentAsset: any;
+    if (asset === "RPT") paymentAsset = new Asset("RPT", RPT_ISSUER);
+    else if (asset === "pPHP") paymentAsset = new Asset("pPHP", PPHP_ISSUER);
+    else paymentAsset = Asset.native();
+
+    const source = { accountId: () => publicKey, sequenceNumber: () => acct.sequence, incrementSequenceNumber: () => {} };
+    const tx = new TransactionBuilder(source as any, { fee: "100000", networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.payment({ destination, asset: paymentAsset, amount: String(amt) }))
+      .setTimeout(30).build();
+
+    sendJson(res, 200, { xdr: tx.toXDR(), txHash: tx.hash().toString("hex") });
+  } catch (err: any) {
+    sendJson(res, 500, { error: safeError(err) });
+  }
+}
+
+async function handleSubmitSigned(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed" });
+  try {
+    const body = await readBody(req);
+    const { xdr, signature, publicKey } = JSON.parse(body);
+    if (!xdr || !signature || !publicKey) return sendJson(res, 400, { error: "xdr, signature, publicKey required" });
+
+    const sdk = await import("@stellar/stellar-sdk");
+    const tx = sdk.TransactionBuilder.fromXDR(xdr, sdk.Networks.TESTNET);
+    const kp = sdk.Keypair.fromPublicKey(publicKey);
+    tx.signatures.push(new sdk.xdr.DecoratedSignature({
+      hint: kp.signatureHint(),
+      signature: Buffer.from(signature, "hex"),
+    }));
+
+    const subR = await fetch(`${HORIZON_URL}/transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `tx=${encodeURIComponent(tx.toXDR())}`,
+    });
+    const sub: any = await subR.json();
+    if (!subR.ok) return sendJson(res, 500, { error: sub.extras?.result_codes?.transaction || "Transaction failed" });
+    sendJson(res, 200, { success: true, txHash: sub.hash });
+  } catch (err: any) {
+    sendJson(res, 500, { error: safeError(err) });
+  }
+}
+
 function serveStatic(pathName: string, res: http.ServerResponse) {
   let filePath = join(DIST_DIR, pathName);
   if (pathName === "/" || !existsSync(filePath)) {
@@ -461,6 +579,10 @@ const server = http.createServer(async (req, res) => {
     if (pathName === "/api/report-challenge") return await handleReportChallenge(req, res);
     if (pathName === "/api/provenance") return await handleProvenance(req, res);
     if (pathName === "/api/send-payment") return await handleSendPayment(req, res);
+    if (pathName === "/api/upload-ipfs") return await handleUploadIpfs(req, res);
+    if (pathName === "/api/build-trustline") return await handleBuildTrustline(req, res);
+    if (pathName === "/api/build-payment") return await handleBuildPayment(req, res);
+    if (pathName === "/api/submit-signed") return await handleSubmitSigned(req, res);
     if (pathName === "/api/health") return handleHealth(req, res);
     if (pathName === "/api/pvos") return await handlePvos(req, res);
     if (pathName.startsWith("/api/")) return sendJson(res, 404, { error: "Not found" });
