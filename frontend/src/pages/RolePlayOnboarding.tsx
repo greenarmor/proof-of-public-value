@@ -7,7 +7,7 @@ const ROLES = [
     title: "Citizen Reporter",
     icon: "\u{1F4F8}",
     color: "bg-emerald-500",
-    desc: "Download the PoPV Citizen mobile app. Visit project sites. Submit GPS-tagged field reports. Your evidence is the final gate  -  without citizens, no funds are released.",
+    desc: "Download the PoPV Citizen mobile app. Visit project sites. Submit GPS-tagged field reports. Earn testnet pPHP rewards. Your evidence is the final gate  -  without citizens, no funds are released.",
     steps: [
       "Download & install PoPV Citizen from GitHub Releases",
       "Create or import a Stellar wallet in the app",
@@ -16,6 +16,7 @@ const ROLES = [
       "The Hunter Panel auto-detects the project",
       "Tap 'Show on Map & Report' or 'Field Report'",
       "Submit GPS-tagged photo evidence on-chain",
+      "Earn testnet pPHP rewards based on your civic reputation tier",
     ],
   },
   {
