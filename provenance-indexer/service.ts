@@ -22,7 +22,7 @@
  *   GET /api/events/:contractName                → events for a specific contract
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { createServer, IncomingMessage, ServerResponse } from "http";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
@@ -78,10 +78,7 @@ if (existsSync(envPath)) {
   console.log("  Loaded .env from", envPath);
 }
 
-// API key gate disabled - Vercel VITE_ vars not embedding correctly at build time.
-// To re-enable: set PROVENANCE_API_KEY in VPS .env AND set VITE_PROVENANCE_API_KEY
-// in Vercel, then change this back to: process.env.PROVENANCE_API_KEY ?? ""
-const API_KEY = "";
+const API_KEY = process.env.PROVENANCE_API_KEY ?? "";
 
 const STORE_DIR = join(__dirname_local, "..");
 const STORE_PATH = join(STORE_DIR, "provenance-store.json");
@@ -211,19 +208,26 @@ interface ProvenanceStore {
 }
 
 // ── CLI Helper ──────────────────────────────────────────
-function cli(cmd: string): string {
+function cli(args: string[]): string {
   try {
-    return execSync(`${STELLAR} ${cmd} 2>/dev/null`, opts).trim();
+    return execFileSync(STELLAR, args, { ...opts, stdio: ["pipe", "pipe", "ignore"] }).toString().trim();
   } catch {
     return "";
   }
 }
 
 function invokeJSON(contractId: string, fn: string, args: string[] = []): any {
-  const argStr = args.length > 0 ? ` -- ${fn} ${args.join(" ")}` : ` -- ${fn}`;
-  const raw = cli(
-    `contract invoke --id ${contractId} --source-account ${READ_SOURCE} --network testnet ${argStr}`
-  );
+  const cliArgs = [
+    "contract", "invoke",
+    "--id", contractId,
+    "--source-account", READ_SOURCE,
+    "--network", "testnet",
+    "--", fn,
+  ];
+  for (const a of args) {
+    cliArgs.push(...a.split(/\s+/).filter(Boolean));
+  }
+  const raw = cli(cliArgs);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -1040,6 +1044,7 @@ function saveStore(store: ProvenanceStore): void {
 // ── Rate Limiter ────────────────────────────────────────
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 120;
+const ALLOWED_ORIGIN = process.env.CORS_ORIGIN ?? "https://www.popv.quest";
 const rateTracker = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string): boolean {
@@ -1066,9 +1071,9 @@ let currentStore: ProvenanceStore | null = null;
 function sendJSON(res: ServerResponse, data: unknown, status = 200): void {
   res.writeHead(status, {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, x-api-key, Authorization",
   });
   res.end(JSON.stringify(data, null, 2));
 }
@@ -1076,7 +1081,7 @@ function sendJSON(res: ServerResponse, data: unknown, status = 200): void {
 function sendHTML(res: ServerResponse, html: string): void {
   res.writeHead(200, {
     "Content-Type": "text/html",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   });
   res.end(html);
 }
@@ -1144,7 +1149,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     }
     res.writeHead(200, {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
       "Cache-Control": "public, max-age=30",
       "Content-Disposition": "inline; filename=\"provenance-store.json\"",
     });

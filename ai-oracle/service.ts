@@ -28,7 +28,7 @@
  * Falls back to rule-based analysis if LLM is unavailable.
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, join } from "path";
 import { Keypair } from "@stellar/stellar-sdk";
@@ -104,13 +104,20 @@ function isMaybeIpfsHash(s: string): boolean {
 }
 
 async function fetchIpfsContent(hash: string): Promise<Buffer | null> {
+  const MAX_IPFS_SIZE = 50_000_000;
   for (const gw of IPFS_GATEWAYS) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
       const resp = await fetch(gw + hash, { signal: controller.signal });
       clearTimeout(timeout);
-      if (resp.ok) return Buffer.from(await resp.arrayBuffer());
+      if (resp.ok) {
+        const contentLength = parseInt(resp.headers.get("content-length") || "0");
+        if (contentLength > MAX_IPFS_SIZE) { continue; }
+        const buf = Buffer.from(await resp.arrayBuffer());
+        if (buf.length > MAX_IPFS_SIZE) { continue; }
+        return buf;
+      }
     } catch { /* try next gateway */ }
   }
   return null;
@@ -262,8 +269,7 @@ const AI_AUDITOR_SECRET = getSecretKey();
 const HOME = process.env.HOME ?? "/root";
 const STELLAR = `${HOME}/.local/bin/stellar`;
 const AI_AUDITOR_PUBLIC = Keypair.fromSecret(AI_AUDITOR_SECRET).publicKey();
-// Use raw secret key as --source so signing matches auditor for require_auth()
-const AI_SOURCE_KEY = AI_AUDITOR_SECRET;
+
 
 // In-memory cache to prevent re-submitting identical data
 const submittedCache: Record<string, string> = {};
@@ -328,9 +334,9 @@ async function sdkVerifyCommunityReport(reportId: number, weight: number = 30): 
   ]);
 }
 
-function cli(cmd: string): string {
+function cliArgs(args: string[]): string {
   try {
-    const raw = execSync(`${STELLAR} ${cmd}`, { ...opts, stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
+    const raw = execFileSync(STELLAR, args, { ...opts, stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
     const lines = raw.split("\n").filter(l => l.trim());
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
@@ -347,6 +353,10 @@ function cli(cmd: string): string {
     if (stderr) console.error(`  CLI stderr: ${stderr.slice(0, 150)}`);
     return "";
   }
+}
+
+function cli(cmd: string): string {
+  return cliArgs(cmd.split(/\s+/).filter(Boolean));
 }
 
 // ── LLM Fraud Analysis ──────────────────────────────────
@@ -386,6 +396,8 @@ Return ONLY valid JSON (no markdown, no code blocks):
 }`;
 
   try {
+    const controller = new AbortController();
+    const llmTimeout = setTimeout(() => controller.abort(), 30000);
     const resp = await fetch(`${LLM_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
@@ -401,7 +413,9 @@ Return ONLY valid JSON (no markdown, no code blocks):
         temperature: 0.1,
         max_tokens: 300,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(llmTimeout);
 
     if (!resp.ok) throw new Error(`LLM API error: ${resp.status}`);
 
@@ -415,7 +429,9 @@ Return ONLY valid JSON (no markdown, no code blocks):
     return {
       passed: Boolean(result.passed),
       riskScore: Math.min(100, Math.max(0, Number(result.riskScore) || 0)),
-      flags: Array.isArray(result.flags) ? result.flags : [],
+      flags: Array.isArray(result.flags)
+      ? result.flags.filter((f: any) => typeof f === "string").slice(0, 20).map((f: string) => f.slice(0, 100))
+      : [],
       reasoning: String(result.reasoning || "").slice(0, 200),
     };
   } catch (e: any) {
@@ -769,7 +785,7 @@ function submitGpsValidation(evidenceId: number, expectedLat: number, expectedLo
 // ── Check if already submitted ──────────────────────────
 function getFraudCount(): number {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source ${AI_SOURCE_KEY} --network testnet -- get_fraud_count`
+    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_fraud_count`
   );
   const m = raw.match(/(\d+)/);
   return m ? parseInt(m[1]) : 0;
@@ -777,7 +793,7 @@ function getFraudCount(): number {
 
 function getFraudByPvo(pvoId: number): any[] {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source ${AI_SOURCE_KEY} --network testnet -- get_fraud_by_pvo --pvo_id ${pvoId}`
+    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_fraud_by_pvo --pvo_id ${pvoId}`
   );
   if (!raw) return [];
   try {
@@ -788,7 +804,7 @@ function getFraudByPvo(pvoId: number): any[] {
 
 function hasGeoRisk(pvoId: number): boolean {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source ${AI_SOURCE_KEY} --network testnet -- get_geo_risk --pvo_id ${pvoId}`
+    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_geo_risk --pvo_id ${pvoId}`
   );
   if (!raw) return false;
   try {
@@ -800,7 +816,7 @@ function hasGeoRisk(pvoId: number): boolean {
 
 function hasDigitalTwin(pvoId: number): boolean {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source ${AI_SOURCE_KEY} --network testnet -- get_digital_twin --pvo_id ${pvoId}`
+    `contract invoke --id ${CONTRACT_IDS.ai_oracle} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_digital_twin --pvo_id ${pvoId}`
   );
   if (!raw) return false;
   try {
@@ -826,7 +842,7 @@ function extractGpsFromDesc(description: string): { lat: number; lng: number } |
 // ── Escrow Query ────────────────────────────────────────
 function getEscrowsByPvo(pvoId: number): any[] {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrows_by_pvo --pvo_id ${pvoId}`
+    `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_escrows_by_pvo --pvo_id ${pvoId}`
   );
   if (!raw) return [];
   try {
@@ -838,7 +854,7 @@ function getEscrowsByPvo(pvoId: number): any[] {
 // ── Forensic Data Collection (All Contracts) ────────────
 function queryContract(contractKey: string, method: string, args: string = ""): any {
   const raw = cli(
-    `contract invoke --id ${CONTRACT_IDS[contractKey]} --source ${AI_SOURCE_KEY} --network testnet -- ${method} ${args}`
+    `contract invoke --id ${CONTRACT_IDS[contractKey]} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- ${method} ${args}`
   );
   if (!raw) return null;
   try {
@@ -1544,7 +1560,7 @@ function detectCollusion(allPvoData: { pvoId: number; contractor: string; wonTen
 // ── Escrow Gate Checks (Gate 3 + Gate 5) ──────────────────
 function checkEscrowGates(): void {
   const escCountRaw = cli(
-    `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow_count`
+    `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_escrow_count`
   );
   let escCount = parseInt(escCountRaw.match(/(\d+)/)?.[1] ?? "0");
   if (isNaN(escCount) || escCount === 0) escCount = parseInt(escCountRaw) || 0;
@@ -1553,7 +1569,7 @@ function checkEscrowGates(): void {
 
   for (let escrowId = 1; escrowId <= escCount; escrowId++) {
     const raw = cli(
-      `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow --escrow_id ${escrowId}`
+      `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_escrow --escrow_id ${escrowId}`
     );
     if (!raw) continue;
     processEscrowGates(escrowId, raw);
@@ -1563,7 +1579,7 @@ function checkEscrowGates(): void {
   let escId = escCount + 1;
   while (escNones < 15) {
     const raw = cli(
-      `contract invoke --id ${CONTRACT_IDS.escrow} --source ${AI_SOURCE_KEY} --network testnet -- get_escrow --escrow_id ${escId}`
+      `contract invoke --id ${CONTRACT_IDS.escrow} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_escrow --escrow_id ${escId}`
     );
     if (!raw) { escNones++; escId++; continue; }
     try {
@@ -1617,7 +1633,7 @@ async function poll(): Promise<void> {
 
   try {
     const pvoCountRaw = cli(
-      `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_count`
+      `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_pvo_count`
     );
     let pvoCount = parseInt(pvoCountRaw.match(/(\d+)/)?.[1] ?? "0");
     if (isNaN(pvoCount) || pvoCount === 0) pvoCount = parseInt(pvoCountRaw) || 0;
@@ -1649,14 +1665,14 @@ async function poll(): Promise<void> {
     for (let pvoId = 1; pvoId <= pvoCount; pvoId++) {
       try {
         const pvoRaw = cli(
-          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo --pvo_id ${pvoId}`
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_pvo --pvo_id ${pvoId}`
         );
         if (!pvoRaw) { pvoDataCache.push({ pvo: null, milestones: [] }); continue; }
         const pvo = JSON.parse(pvoRaw).result || JSON.parse(pvoRaw);
         if (!pvo) { pvoDataCache.push({ pvo: null, milestones: [] }); continue; }
 
         const milestonesRaw = cli(
-          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_pvo_milestones --pvo_id ${pvoId}`
         );
         let milestones: any[] = [];
         if (milestonesRaw) {
@@ -1681,14 +1697,14 @@ async function poll(): Promise<void> {
     while (pvoNones < 15) {
       try {
         const pvoRaw = cli(
-          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo --pvo_id ${pvoScanId}`
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_pvo --pvo_id ${pvoScanId}`
         );
         if (!pvoRaw) { pvoNones++; pvoScanId++; continue; }
         const pvo = JSON.parse(pvoRaw).result || JSON.parse(pvoRaw);
         if (!pvo) { pvoNones++; pvoScanId++; continue; }
         pvoNones = 0;
         const milestonesRaw = cli(
-          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source ${AI_SOURCE_KEY} --network testnet -- get_pvo_milestones --pvo_id ${pvoScanId}`
+          `contract invoke --id ${CONTRACT_IDS.pvo_core} --source-account ${AI_AUDITOR_PUBLIC} --network testnet -- get_pvo_milestones --pvo_id ${pvoScanId}`
         );
         let milestones: any[] = [];
         if (milestonesRaw) { const mParsed = JSON.parse(milestonesRaw); milestones = Array.isArray(mParsed) ? mParsed : (mParsed.result || []); }
