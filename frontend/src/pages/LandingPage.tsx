@@ -122,12 +122,14 @@ export function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {isMobile ? (
-              <button
-                onClick={connectMobile}
+              <a
+                href="https://github.com/greenarmor/proof-of-public-value/releases"
+                target="_blank"
+                rel="noopener"
                 className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200"
               >
-                📱 Connect Wallet
-              </button>
+                📱 Download the App
+              </a>
             ) : (
               <button
                 onClick={connect}
