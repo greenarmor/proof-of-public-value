@@ -7,6 +7,9 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
+  "overrides": {
+    "axios": "1.18.0"
+  },
   "dependencies": {
     "@stellar/stellar-sdk": "^16.0.1"
   }

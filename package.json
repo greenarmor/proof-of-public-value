@@ -16,6 +16,10 @@
     "build:contracts": "stellar contract build",
     "deploy": "./scripts/deploy.sh"
   },
+  "overrides": {
+    "axios": "1.18.0",
+    "shell-quote": "1.9.0"
+  },
   "devDependencies": {
     "@types/node": "^26.1.0",
     "concurrently": "^9.0.0",
