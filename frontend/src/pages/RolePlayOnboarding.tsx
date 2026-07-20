@@ -5,17 +5,17 @@ const ROLES = [
   {
     id: "citizen",
     title: "Citizen Reporter",
-    icon: "📸",
+    icon: "\u{1F4F8}",
     color: "bg-emerald-500",
-    desc: "Visit project sites. Submit GPS-tagged field reports. Your evidence is the final gate  -  without citizens, no funds are released.",
+    desc: "Download the PoPV Citizen mobile app. Visit project sites. Submit GPS-tagged field reports. Your evidence is the final gate  -  without citizens, no funds are released.",
     steps: [
-      "Connect the Citizen wallet in Freighter",
-      "Go to Citizen Report Form",
-      "Select a PVO and milestone",
-      "Enter GPS coordinates + description + photos",
-      "Submit your report on-chain",
-      "Another citizen verifies your report",
-      "Your report helps unlock Gates 3 & 4",
+      "Download & install PoPV Citizen from GitHub Releases",
+      "Create or import a Stellar wallet in the app",
+      "Enable location + camera permissions",
+      "Walk within 100m of any project site",
+      "The Hunter Panel auto-detects the project",
+      "Tap 'Show on Map & Report' or 'Field Report'",
+      "Submit GPS-tagged photo evidence on-chain",
     ],
   },
   {
@@ -526,10 +526,12 @@ export function RolePlayOnboarding() {
                       ⚖️ Auditor Dashboard
                     </a>
                     <a
-                      href="/citizen"
+                      href="https://github.com/greenarmor/proof-of-public-value/releases"
+                      target="_blank"
+                      rel="noopener"
                       className="px-3 py-2 bg-slate-50 rounded-lg text-xs text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
                     >
-                      📸 Citizen Report
+                      📱 Download PoPV Citizen App
                     </a>
                     <a
                       href="/central-bank"
