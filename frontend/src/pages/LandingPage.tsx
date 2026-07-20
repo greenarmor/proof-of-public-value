@@ -63,21 +63,23 @@ export function LandingPage() {
         <div className="relative z-10 max-w-4xl">
           <div className="mb-8 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50">
             <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-            <span className="text-sm font-medium text-brand-600">Now live on Stellar Testnet</span>
+            <span className="text-sm font-medium text-brand-600">Now live on Stellar Testnet — Mobile App Available</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none mb-6">
-            <span className="text-slate-900">No Proof.</span>
+            <span className="text-slate-900">Be the</span>
             <br />
             <span className="gradient-brand bg-clip-text text-transparent">
-              No Payment.
+              Change.
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Public money must prove measurable value before it's released.
-            Every budget allocation becomes a programmable digital entity with
-            5-gate conditional payments on the Stellar blockchain.
+          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-4 leading-relaxed">
+            You don't fight corruption with anger. You defeat it with awareness.
+          </p>
+          <p className="text-base md:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Step into every role of government — citizen, engineer, auditor, central banker — and see how blockchain
+            transforms public funds into accountable, verifiable proof. No wrestling. No protests. Just clarity.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -92,9 +94,9 @@ export function LandingPage() {
                 👛 Connect Freighter
               </button>
             )}
-            <a href="#features"
+            <a href="#journey"
               className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-600 font-medium text-lg hover:bg-slate-200 transition-all">
-              See How It Works ↓
+              Start Your Journey ↓
             </a>
           </div>
 
@@ -107,6 +109,44 @@ export function LandingPage() {
           <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
+        </div>
+      </section>
+
+      {/* ──── Your Journey ──── */}
+      <section id="journey" className="relative py-24 px-6 bg-white overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">Your Journey to Accountability</h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+              Start as a Citizen. Earn trust. Rise through every role of government — while blockchain keeps score.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { step: "1", emoji: "📸", title: "Citizen Reporter", desc: "Download the app. Walk to project sites. Submit GPS-tagged proof. Earn pPHP rewards.", color: "border-emerald-400 bg-emerald-50" },
+              { step: "2", emoji: "⭐", title: "Build Reputation", desc: "Verified reports increase your civic score. Higher tiers unlock bigger rewards and new role invitations.", color: "border-amber-400 bg-amber-50" },
+              { step: "3", emoji: "🎭", title: "Role-Play Government", desc: "Get promoted to Engineer, Auditor, or Central Banker. Experience how every peso is tracked.", color: "border-brand-400 bg-brand-50" },
+              { step: "4", emoji: "🔗", title: "Blockchain Judge", desc: "Every action is recorded on Stellar. Smart contracts verify, release, or freeze funds automatically.", color: "border-sky-400 bg-sky-50" },
+            ].map((item) => (
+              <div key={item.step} className={`relative p-6 rounded-2xl border-2 ${item.color} transition-transform hover:scale-105`}>
+                <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-sm font-bold text-slate-600">{item.step}</div>
+                <div className="text-3xl mb-3">{item.emoji}</div>
+                <h3 className="font-bold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-sm text-slate-500">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-slate-400 text-sm mb-4">
+              The system doesn't ask for permission. It asks for proof.
+            </p>
+            <a href="/onboarding"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white font-semibold hover:scale-105 transition-all shadow-lg shadow-brand-200">
+              🎭 Start Role-Playing Now
+            </a>
+          </div>
         </div>
       </section>
 
