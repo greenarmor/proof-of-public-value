@@ -9,7 +9,8 @@ const ROLES = [
     color: "bg-emerald-500",
     desc: "Download the PoPV Citizen mobile app. Visit project sites. Submit GPS-tagged field reports. Earn testnet pPHP rewards. Your evidence is the final gate  -  without citizens, no funds are released.",
     steps: [
-      "Download & install PoPV Citizen from GitHub Releases",
+      "Download PoPV Citizen from GitHub Releases (verify with SHA-256 hash)",
+      "Install the APK on your Android device",
       "Create or import a Stellar wallet in the app",
       "Enable location + camera permissions",
       "Walk within 100m of any project site",
@@ -483,6 +484,19 @@ export function RolePlayOnboarding() {
                         <p className="text-sm text-slate-600 pt-0.5">{step}</p>
                       </div>
                     ))}
+                    {role.id === "citizen" && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-xs text-amber-700 mb-1">
+                          <strong>🔐 Verify your download:</strong>
+                        </p>
+                        <code className="text-xs text-amber-800 bg-amber-100 px-2 py-1 rounded block mt-1">
+                          shasum -a 256 -c PoPV-Citizen-debug.apk.sha256
+                        </code>
+                        <a href="https://github.com/greenarmor/proof-of-public-value/releases" target="_blank" rel="noopener" className="text-xs text-brand-600 hover:underline mt-1 inline-block">
+                          GitHub Releases →
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
