@@ -407,12 +407,14 @@ function Header() {
           ) : (
             <div className="flex items-center gap-2">
               {isMobile ? (
-                <button
-                  onClick={connectMobile}
+                <a
+                  href="https://github.com/greenarmor/proof-of-public-value/releases"
+                  target="_blank"
+                  rel="noopener"
                   className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700"
                 >
-                  📱 Connect Wallet
-                </button>
+                  📱 Download the App
+                </a>
               ) : (
                 <button onClick={connect} className="btn-primary text-xs px-3 py-2">
                   👛 Connect Freighter
