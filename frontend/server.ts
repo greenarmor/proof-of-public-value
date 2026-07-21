@@ -419,10 +419,63 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       } catch {}
     }
 
+    // Fetch transaction hashes for gate events from Soroban RPC
+    const pvoTxHashes: Record<number, { gate1?: string; gate2?: string; gate3?: string; gate4?: string; gate5?: string }> = {};
+    try {
+      const latestLedger = (await server.getLatestLedger()).sequence;
+      const escrowId = "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7";
+      const eventsResp = await server.getEvents({
+        startLedger: Math.max(1, Number(latestLedger) - 200000),
+        filters: [{ type: "contract", contractIds: [escrowId] }],
+        limit: 200,
+      });
+      for (const ev of eventsResp.events) {
+        try {
+          const val = ev.value;
+          if (!val) continue;
+          const data: Record<string, any> = {};
+          // Decode ScVal map from event value
+          try {
+            const entries = val.map();
+            if (!entries) continue;
+            for (const entry of entries) {
+              const key = entry.key().sym().toString();
+              let v: any = entry.val();
+              try { v = v.u32(); } catch {}
+              try { v = v.bool(); } catch {}
+              try { v = v.address()?.toString() ?? v; } catch {}
+              try { v = v.sym()?.toString() ?? v; } catch {}
+              try { v = v.str()?.toString() ?? v; } catch {}
+              data[key] = v;
+            }
+          } catch {}
+          const escId = data.id ?? data.escrow_id;
+          if (escId === undefined) continue;
+          const pvoId = Number(data.pvo_id ?? 0);
+          if (!pvoId) continue;
+          if (!pvoTxHashes[pvoId]) pvoTxHashes[pvoId] = {};
+          const eventName = ev.topic?.[0]?.sym?.()?.toString() ?? "";
+          const status = data.status ?? "";
+          const condition = data.condition ?? "";
+          // Map conditions to gate numbers
+          if (eventName.includes("condition") || eventName.includes("Condition")) {
+            const cVal = typeof condition === "number" ? condition : 0;
+            const stStr = typeof status === "string" ? status.toLowerCase() : String(status ?? "").toLowerCase();
+            if (cVal === 0 || stStr.includes("engineer")) pvoTxHashes[pvoId].gate1 = ev.txHash;
+            if (cVal === 1 || stStr.includes("compliance")) pvoTxHashes[pvoId].gate2 = ev.txHash;
+            if (cVal === 2 || stStr.includes("oracle")) pvoTxHashes[pvoId].gate3 = ev.txHash;
+            if (cVal === 3 || stStr.includes("community")) pvoTxHashes[pvoId].gate4 = ev.txHash;
+            if (cVal === 4 || stStr.includes("ai") || stStr.includes("risk")) pvoTxHashes[pvoId].gate5 = ev.txHash;
+          }
+        } catch {}
+      }
+    } catch { /* event scan optional */ }
+
     const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
     const formatted = pvos.map((p: any) => {
       const pid = Number(p.id);
       const gates = pvoGates[pid] || { engineer: false, compliance: false, oracle: false, community: false, ai: false, communityCount: 0, communityRequired: 0 };
+      const txHashes = pvoTxHashes[pid] || {};
       return {
         id: pid,
         title: p.title ?? "Untitled",
@@ -435,7 +488,7 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
         milestone_count: p.milestones ?? 0,
         milestones_released: 0,
         public_value_score: p.public_value_score ?? 0,
-        gates,
+        gates: { ...gates, tx_hashes: txHashes },
       };
     });
 
