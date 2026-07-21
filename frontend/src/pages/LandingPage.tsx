@@ -121,23 +121,14 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {isMobile ? (
-              <a
-                href="https://github.com/greenarmor/proof-of-public-value/releases"
-                target="_blank"
-                rel="noopener"
-                className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200"
-              >
-                📱 Download the App
-              </a>
-            ) : (
-              <button
-                onClick={connect}
-                className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200"
-              >
-                👛 Connect Freighter
-              </button>
-            )}
+            <a
+              href="https://github.com/greenarmor/proof-of-public-value/releases"
+              target="_blank"
+              rel="noopener"
+              className="px-8 py-4 rounded-2xl gradient-brand text-white font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-brand-200"
+            >
+              📱 Download the App
+            </a>
             <a
               href="#journey"
               className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-600 font-medium text-lg hover:bg-slate-200 transition-all"
@@ -448,16 +439,18 @@ export function LandingPage() {
             <span className="gradient-brand bg-clip-text text-transparent">proof-based.</span>
           </h2>
           <p className="text-lg text-slate-500 mb-10 max-w-xl mx-auto">
-            Connect your wallet to access all 13 role dashboards. Browse projects, commit grants,
-            approve milestones, and verify public value.
+            Download the mobile app to browse projects, submit field reports, and verify
+            public value on the go.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={connect}
+            <a
+              href="https://github.com/greenarmor/proof-of-public-value/releases"
+              target="_blank"
+              rel="noopener"
               className="px-10 py-5 rounded-2xl gradient-brand text-white font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-xl shadow-brand-200"
             >
               <span className="flex items-center gap-3">
-                Connect Wallet
+                📱 Download the App
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -467,7 +460,7 @@ export function LandingPage() {
                   />
                 </svg>
               </span>
-            </button>
+            </a>
             <NavLink
               to="/onboarding"
               className="px-8 py-5 rounded-2xl bg-white border-2 border-brand-200 text-brand-700 font-semibold text-lg hover:border-brand-400 hover:bg-brand-50 transition-all duration-300"

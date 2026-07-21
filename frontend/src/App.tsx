@@ -406,28 +406,13 @@ function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {isMobile ? (
-                <a
-                  href="https://github.com/greenarmor/proof-of-public-value/releases"
-                  target="_blank"
-                  rel="noopener"
-                  className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700"
-                >
-                  📱 Download the App
-                </a>
-              ) : (
-                <button onClick={connect} className="btn-primary text-xs px-3 py-2">
-                  👛 Connect Freighter
-                </button>
-              )}
               <a
-                href="https://freighter.app"
+                href="https://github.com/greenarmor/proof-of-public-value/releases"
                 target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-1 text-xs text-slate-400 hover:text-brand-600 transition-colors"
+                rel="noopener"
+                className="btn-primary text-xs px-3 py-2 bg-indigo-600 hover:bg-indigo-700"
               >
-                <span>Need Freighter?</span>
-                <span className="text-[10px]">↗</span>
+                📱 Download the App
               </a>
             </div>
           )}
