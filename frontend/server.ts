@@ -419,53 +419,136 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       } catch {}
     }
 
-    // Fetch transaction hashes for gate events from Soroban RPC
+    // Fetch full transaction history per PVO from Soroban RPC events
+    const PVO_CORE_ID = "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B";
+    const ESCROW_ID = "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7";
+    const AUDIT_ID = "CB6AXOUYHEOWUUSEP6543GZYHMN6D2VA5WV5LXOMPNMJFYJ3XQNPZBV6";
+    const COMMUNITY_ID = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
+
+    type TxRecord = { description: string; tx_hash: string; ledger: number; timestamp: string; contract: string; type: string };
+    const pvoTxHistory: Record<number, TxRecord[]> = {};
     const pvoTxHashes: Record<number, { gate1?: string; gate2?: string; gate3?: string; gate4?: string; gate5?: string }> = {};
+
+    function addTx(pvoId: number, rec: TxRecord) {
+      if (!pvoTxHistory[pvoId]) pvoTxHistory[pvoId] = [];
+      pvoTxHistory[pvoId].push(rec);
+    }
+
     try {
-      const latestLedger = (await server.getLatestLedger()).sequence;
-      const escrowId = "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7";
-      const eventsResp = await server.getEvents({
-        startLedger: Math.max(1, Number(latestLedger) - 200000),
-        filters: [{ type: "contract", contractIds: [escrowId] }],
-        limit: 200,
-      });
-      for (const ev of eventsResp.events) {
+      const latestLedger = Number((await server.getLatestLedger()).sequence);
+      const startLedger = Math.max(1, latestLedger - 200000);
+
+      const contractList = [
+        { id: PVO_CORE_ID, name: "pvo_core" },
+        { id: ESCROW_ID, name: "escrow" },
+        { id: AUDIT_ID, name: "audit_trail" },
+        { id: COMMUNITY_ID, name: "community_oracle" },
+      ];
+
+      for (const { id: contractId, name: contractName } of contractList) {
         try {
-          const val = ev.value;
-          if (!val) continue;
-          const data: Record<string, any> = {};
-          // Decode ScVal map from event value
-          try {
-            const entries = val.map();
-            if (!entries) continue;
-            for (const entry of entries) {
-              const key = entry.key().sym().toString();
-              let v: any = entry.val();
-              try { v = v.u32(); } catch {}
-              try { v = v.bool(); } catch {}
-              try { v = v.address()?.toString() ?? v; } catch {}
-              try { v = v.sym()?.toString() ?? v; } catch {}
-              try { v = v.str()?.toString() ?? v; } catch {}
-              data[key] = v;
+          let cursor: string | undefined;
+          // Paginate through events (max 200 per page, get up to 5 pages)
+          for (let page = 0; page < 5; page++) {
+            const filters = [{ type: "contract" as const, contractIds: [contractId] }];
+            const eventsResp = await server.getEvents(
+              cursor
+                ? { filters, cursor, limit: 200 }
+                : { filters, startLedger, limit: 200 }
+            );
+            if (!eventsResp.events || eventsResp.events.length === 0) break;
+
+            for (const ev of eventsResp.events) {
+              try {
+                const data: Record<string, any> = {};
+                try {
+                  const entries = ev.value?.map();
+                  if (entries) {
+                    for (const entry of entries) {
+                      const key = entry.key().sym().toString();
+                      let v: any = entry.val();
+                      try { v = v.u32(); } catch {}
+                      try { v = v.bool(); } catch {}
+                      try { v = v.sym()?.toString() ?? v; } catch {}
+                      try { v = v.str()?.toString() ?? v; } catch {}
+                      try { v = v.i128(); } catch {}
+                      try { v = Number(v.toString()); } catch {}
+                      data[key] = v;
+                    }
+                  }
+                } catch {}
+
+                const eventName = ev.topic?.[0]?.sym?.()?.toString() ?? "";
+                const pvoId = Number(data.pvo_id ?? data.pvo ?? 0);
+                const escId = data.id ?? data.escrow_id;
+                const ledgerClosedAt = ev.ledgerClosedAt ?? "";
+                const txHash = ev.txHash ?? "";
+                const lowerName = eventName.toLowerCase();
+
+                // Skip if no PVO association
+                if (pvoId === 0 && escId === undefined) continue;
+
+                // PVO Core events
+                if (contractName === "pvo_core" && pvoId > 0) {
+                  if (lowerName.includes("created") || lowerName.includes("pvo_created")) {
+                    addTx(pvoId, { description: `PVO "${data.title ?? ""}" created`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "genesis" });
+                  } else if (lowerName.includes("status")) {
+                    addTx(pvoId, { description: `Status changed to ${data.new_status ?? data.status ?? ""}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "status" });
+                  } else if (lowerName.includes("milestone")) {
+                    addTx(pvoId, { description: `Milestone "${data.title ?? "#"+(data.milestone_id ?? "")}" created`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "milestone" });
+                  } else if (lowerName.includes("evidence")) {
+                    addTx(pvoId, { description: `Evidence submitted (${data.evidence_type ?? "unknown"})`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "evidence" });
+                  } else if (lowerName.includes("contractor")) {
+                    addTx(pvoId, { description: `Contractor assigned`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "contractor" });
+                  } else if (lowerName.includes("score") || lowerName.includes("value")) {
+                    addTx(pvoId, { description: `Value score updated to ${data.score ?? ""}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "score" });
+                  } else {
+                    addTx(pvoId, { description: `${eventName} on ${contractName}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "event" });
+                  }
+                }
+
+                // Escrow events
+                if (contractName === "escrow") {
+                  const escPvoId = pvoId > 0 ? pvoId : 0;
+                  if (escPvoId === 0) continue;
+
+                  if (lowerName.includes("created")) {
+                    addTx(escPvoId, { description: `Escrow #${escId} created (${data.amount ?? ""} stroops)`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "escrow_created" });
+                  } else if (lowerName.includes("funded")) {
+                    addTx(escPvoId, { description: `Escrow #${escId} funded`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "escrow_funded" });
+                  } else if (lowerName.includes("released")) {
+                    addTx(escPvoId, { description: `Escrow #${escId} released`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "escrow_released" });
+                  } else if (lowerName.includes("disputed")) {
+                    addTx(escPvoId, { description: `Escrow #${escId} disputed`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "escrow_disputed" });
+                  } else if (lowerName.includes("condition")) {
+                    const stStr = String(data.status ?? data.condition ?? "").toLowerCase();
+                    let gateName = "Gate update";
+                    let gateNum = 0;
+                    if (stStr.includes("engineer") || data.condition === 0) { gateName = "G1: Engineer Approval"; gateNum = 1; if (!pvoTxHashes[escPvoId]) pvoTxHashes[escPvoId] = {}; pvoTxHashes[escPvoId].gate1 = txHash; }
+                    else if (stStr.includes("compliance") || data.condition === 1) { gateName = "G2: Compliance Check"; gateNum = 2; if (!pvoTxHashes[escPvoId]) pvoTxHashes[escPvoId] = {}; pvoTxHashes[escPvoId].gate2 = txHash; }
+                    else if (stStr.includes("oracle") || data.condition === 2) { gateName = "G3: Community Oracle"; gateNum = 3; if (!pvoTxHashes[escPvoId]) pvoTxHashes[escPvoId] = {}; pvoTxHashes[escPvoId].gate3 = txHash; }
+                    else if (stStr.includes("community") || data.condition === 3) { gateName = "G4: Community Confirmation"; gateNum = 4; if (!pvoTxHashes[escPvoId]) pvoTxHashes[escPvoId] = {}; pvoTxHashes[escPvoId].gate4 = txHash; }
+                    else if (stStr.includes("ai") || stStr.includes("risk") || data.condition === 4) { gateName = "G5: AI Risk Check"; gateNum = 5; if (!pvoTxHashes[escPvoId]) pvoTxHashes[escPvoId] = {}; pvoTxHashes[escPvoId].gate5 = txHash; }
+                    addTx(escPvoId, { description: `${gateName}: ${data.status ?? "updated"}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: `gate${gateNum}` });
+                  } else {
+                    addTx(escPvoId, { description: `${eventName}: Escrow #${escId}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "escrow_event" });
+                  }
+                }
+
+                // Audit trail events
+                if (contractName === "audit_trail" && pvoId > 0) {
+                  addTx(pvoId, { description: `Audit: ${data.action ?? data.category ?? eventName}`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "audit" });
+                }
+
+                // Community oracle events
+                if (contractName === "community_oracle" && pvoId > 0) {
+                  addTx(pvoId, { description: `Community report ${data.verified ? "verified" : "submitted"} by ${String(data.citizen ?? "").slice(0, 8)}...`, tx_hash: txHash, ledger: ev.ledger, timestamp: ledgerClosedAt, contract: contractName, type: "community" });
+                }
+              } catch {}
             }
-          } catch {}
-          const escId = data.id ?? data.escrow_id;
-          if (escId === undefined) continue;
-          const pvoId = Number(data.pvo_id ?? 0);
-          if (!pvoId) continue;
-          if (!pvoTxHashes[pvoId]) pvoTxHashes[pvoId] = {};
-          const eventName = ev.topic?.[0]?.sym?.()?.toString() ?? "";
-          const status = data.status ?? "";
-          const condition = data.condition ?? "";
-          // Map conditions to gate numbers
-          if (eventName.includes("condition") || eventName.includes("Condition")) {
-            const cVal = typeof condition === "number" ? condition : 0;
-            const stStr = typeof status === "string" ? status.toLowerCase() : String(status ?? "").toLowerCase();
-            if (cVal === 0 || stStr.includes("engineer")) pvoTxHashes[pvoId].gate1 = ev.txHash;
-            if (cVal === 1 || stStr.includes("compliance")) pvoTxHashes[pvoId].gate2 = ev.txHash;
-            if (cVal === 2 || stStr.includes("oracle")) pvoTxHashes[pvoId].gate3 = ev.txHash;
-            if (cVal === 3 || stStr.includes("community")) pvoTxHashes[pvoId].gate4 = ev.txHash;
-            if (cVal === 4 || stStr.includes("ai") || stStr.includes("risk")) pvoTxHashes[pvoId].gate5 = ev.txHash;
+
+            cursor = eventsResp.cursor ?? eventsResp.events?.[eventsResp.events.length - 1]?.id;
+            if (!cursor || eventsResp.events.length < 200) break;
           }
         } catch {}
       }
@@ -476,6 +559,10 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       const pid = Number(p.id);
       const gates = pvoGates[pid] || { engineer: false, compliance: false, oracle: false, community: false, ai: false, communityCount: 0, communityRequired: 0 };
       const txHashes = pvoTxHashes[pid] || {};
+      const txHistory = (pvoTxHistory[pid] || []).sort((a, b) => {
+        // Sort by ledger ascending (oldest first = genesis first)
+        return a.ledger - b.ledger;
+      });
       return {
         id: pid,
         title: p.title ?? "Untitled",
@@ -489,6 +576,7 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
         milestones_released: 0,
         public_value_score: p.public_value_score ?? 0,
         gates: { ...gates, tx_hashes: txHashes },
+        tx_history: txHistory,
       };
     });
 
