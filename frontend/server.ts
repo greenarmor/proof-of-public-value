@@ -445,11 +445,10 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
         { id: COMMUNITY_ID, name: "community_oracle" },
       ];
 
-      for (const { id: contractId, name: contractName } of contractList) {
+      const scanOneContract = async (contractId: string, contractName: string) => {
         try {
           let cursor: string | undefined;
-          // Paginate through events (max 200 per page, get up to 5 pages)
-          for (let page = 0; page < 5; page++) {
+          for (let page = 0; page < 3; page++) {
             const filters = [{ type: "contract" as const, contractIds: [contractId] }];
             const eventsResp = await server.getEvents(
               cursor
@@ -551,7 +550,12 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
             if (!cursor || eventsResp.events.length < 200) break;
           }
         } catch {}
-      }
+      };
+
+      await Promise.race([
+        Promise.allSettled(contractList.map((c) => scanOneContract(c.id, c.name))),
+        new Promise((resolve) => setTimeout(resolve, 8000)),
+      ]);
     } catch { /* event scan optional */ }
 
     const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
