@@ -950,25 +950,59 @@ function ExpandableProvenance({ data }: { data: any }) {
       {open && (
         <div className="card p-4 bg-slate-50/50 border-slate-200">
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {(data.timeline || []).slice().reverse().map((e: any, i: number) => (
-              <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
-                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-700">{e.description}</p>
-                  <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                    {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleString()}</span>}
-                    <span>{e.contract}</span>
-                    {e.ledger && <span>ledger #{e.ledger}</span>}
-                  </div>
-                </div>
-                {e.tx_hash && (
-                  <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
-                    🔗 {e.tx_hash.slice(0, 6)}…
-                  </a>
-                )}
-              </div>
-            ))}
+            {(() => {
+              const rev = (data.timeline || []).slice().reverse();
+              const genesis = rev.filter((e: any) => e.type === "genesis");
+              const others = rev.filter((e: any) => e.type !== "genesis");
+              return (
+                <>
+                  {genesis.map((e: any, i: number) => (
+                    <div key={"g"+i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800">{e.description}</p>
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                          <span>{e.contract}</span>
+                          {e.ledger && <span>L#{e.ledger}</span>}
+                        </div>
+                      </div>
+                      {e.tx_hash ? (
+                        <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
+                          🔗 {e.tx_hash.slice(0, 6)}…
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
+                      )}
+                    </div>
+                  ))}
+                  {others.length > 0 && (
+                    <div className="ml-3 pl-4 border-l-2 border-emerald-100 space-y-1.5 pt-1">
+                      {others.map((e: any, i: number) => (
+                        <div key={"o"+i} className="flex items-start gap-2 py-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-slate-600">{e.description}</p>
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                              <span>{e.contract}</span>
+                              {e.ledger && <span>L#{e.ledger}</span>}
+                            </div>
+                          </div>
+                          {e.tx_hash ? (
+                            <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-indigo-500 hover:text-indigo-700 whitespace-nowrap">
+                              🔗 {e.tx_hash.slice(0, 6)}…
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -996,28 +1030,59 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
       {open && (
         <div className="card p-4 bg-slate-50/50 border-slate-200">
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {[...txHistory].reverse().map((e: any, i: number) => (
-                <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
-                  <div className={`w-2 h-2 rounded-full ${typeColors[e.type] || "bg-slate-400"} mt-1.5 flex-shrink-0`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-700">{e.description}</p>
-                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                      {e.timestamp && <span>{e.timestamp}</span>}
-                      <span>{e.contract}</span>
-                      {e.ledger && <span>L#{e.ledger}</span>}
-                      {e.type && <span className="italic">{e.type}</span>}
+            {(() => {
+              const reversed = [...txHistory].reverse();
+              const genesis = reversed.filter((e: any) => e.type === "genesis");
+              const others = reversed.filter((e: any) => e.type !== "genesis");
+              return (
+                <>
+                  {genesis.map((e: any, i: number) => (
+                    <div key={"g"+i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800">{e.description}</p>
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                          {e.contract && <span>{e.contract}</span>}
+                          {e.ledger && <span>L#{e.ledger}</span>}
+                        </div>
+                      </div>
+                      {e.tx_hash ? (
+                        <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
+                          🔗 {e.tx_hash.slice(0, 6)}…
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
+                      )}
                     </div>
-                  </div>
-                  {e.tx_hash ? (
-                    <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
-                      🔗 {e.tx_hash.slice(0, 6)}…
-                    </a>
-                  ) : (
-                    <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
+                  ))}
+                  {others.length > 0 && (
+                    <div className="ml-3 pl-4 border-l-2 border-emerald-100 space-y-1.5 pt-1">
+                      {others.map((e: any, i: number) => (
+                        <div key={"o"+i} className="flex items-start gap-2 py-1">
+                          <div className={`w-1.5 h-1.5 rounded-full ${typeColors[e.type] || "bg-slate-300"} mt-1.5 flex-shrink-0`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-slate-600">{e.description}</p>
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                              {e.contract && <span>{e.contract}</span>}
+                              {e.ledger && <span>L#{e.ledger}</span>}
+                            </div>
+                          </div>
+                          {e.tx_hash ? (
+                            <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-indigo-500 hover:text-indigo-700 whitespace-nowrap">
+                              🔗 {e.tx_hash.slice(0, 6)}…
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </div>
-              ))}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
