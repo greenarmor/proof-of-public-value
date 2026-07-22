@@ -641,12 +641,20 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
           case "scvI128": result[key] = val.i128().lo().toString(); break;
           case "scvString": result[key] = val.str().toString(); break;
           case "scvBool": result[key] = val.b(); break;
+          case "scvSymbol": result[key] = val.sym().toString(); break;
           case "scvVec": result[key] = val.vec(); break;
           case "scvMap": result[key] = parseMap(val); break;
           default: result[key] = null;
         }
       }
       return result;
+    }
+
+    function decodeStatus(val: any): string {
+      if (typeof val === "string") return val;
+      try { return val.sym().toString(); } catch {}
+      try { return val[0]?.sym?.()?.toString() ?? ""; } catch {}
+      return "";
     }
 
     function eventName(ev: any): string {
@@ -687,10 +695,12 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
       }
     }
 
-    // 3. Escrows and gates
+    // 3. Escrows and gates - scan all escrows, match by pvo_id
+    const escrowCountVal = await sim("get_escrow_count", "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7");
+    const eCount = escrowCountVal ? Number(escrowCountVal.u32().toString()) : 0;
     const escrowDetails: any[] = [];
     const gateRecords: any[] = [];
-    for (let escId = 1; escId <= Math.max(1, milestones.length); escId++) {
+    for (let escId = 1; escId <= eCount; escId++) {
       try {
         const escRv = await sim("get_escrow", "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7", nativeToScVal(escId, { type: "u32" }));
         if (!escRv || escRv.switch().name === "scvVoid") continue;
@@ -742,42 +752,48 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
       "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32",
     ];
     const contractNames = ["pvo_core", "escrow", "audit_trail", "community_oracle"];
-    const latestLedger = Number((await server.getLatestLedger()).sequence);
-    const startLedger = Math.max(1, latestLedger - 200000);
+    const startLedger = 1;
 
     for (let ci = 0; ci < contractIds.length; ci++) {
       try {
-        const eventsResp = await server.getEvents({
-          startLedger,
-          filters: [{ type: "contract", contractIds: [contractIds[ci]] }],
-          limit: 200,
-        });
-        for (const ev of eventsResp.events || []) {
-          const name = eventName(ev);
-          const data = decodeEventVal(ev.value);
-          const evPvoId = Number(data.pvo_id ?? data.pvo ?? 0);
-          const escId = data.id ?? data.escrow_id;
-          if (evPvoId !== pvoId && escId === undefined) continue;
+        let cursor: string | undefined;
+        for (let page = 0; page < 3; page++) {
+          const filters = [{ type: "contract" as const, contractIds: [contractIds[ci]] }];
+          const eventsResp = cursor
+            ? await server.getEvents({ filters, cursor, limit: 200 })
+            : await server.getEvents({ filters, startLedger, limit: 200 });
+          if (!eventsResp.events || eventsResp.events.length === 0) break;
 
-          let desc = name;
-          let type = "event";
-          if (name.toLowerCase().includes("created") || name.toLowerCase().includes("pvo_created")) { desc = `PVO "${pvo.title ?? ""}" created`; type = "genesis"; }
-          else if (name.toLowerCase().includes("status")) { desc = `Status changed to ${data.new_status ?? data.status ?? ""}`; type = "status"; }
-          else if (name.toLowerCase().includes("milestone")) { desc = `Milestone "${data.title ?? "#" + (data.milestone_id ?? "")}" created`; type = "milestone"; }
-          else if (name.toLowerCase().includes("evidence")) { desc = `Evidence submitted (${data.evidence_type ?? "unknown"})`; type = "evidence"; }
-          else if (name.toLowerCase().includes("condition")) { desc = `Gate updated: ${data.status ?? ""}`; type = "gate"; }
-          else if (name.toLowerCase().includes("funded")) { desc = `Escrow funded`; type = "escrow"; }
-          else if (name.toLowerCase().includes("released")) { desc = `Escrow released`; type = "escrow"; }
+          for (const ev of eventsResp.events) {
+            const name = eventName(ev);
+            const data = decodeEventVal(ev.value);
+            const evPvoId = Number(data.pvo_id ?? data.pvo ?? 0);
+            const escId = data.id ?? data.escrow_id;
+            if (evPvoId !== pvoId && escId === undefined) continue;
 
-          timeline.push({
-            order: timeline.length,
-            timestamp: ev.ledgerClosedAt ? new Date(ev.ledgerClosedAt).getTime() : 0,
-            type,
-            description: desc,
-            tx_hash: ev.txHash,
-            ledger: ev.ledger,
-            contract: contractNames[ci],
-          });
+            let desc = name;
+            let type = "event";
+            if (name.toLowerCase().includes("created") || name.toLowerCase().includes("pvo_created")) { desc = `PVO "${pvo.title ?? ""}" created`; type = "genesis"; }
+            else if (name.toLowerCase().includes("status")) { desc = `Status changed to ${data.new_status ?? data.status ?? ""}`; type = "status"; }
+            else if (name.toLowerCase().includes("milestone")) { desc = `Milestone "${data.title ?? "#" + (data.milestone_id ?? "")}" created`; type = "milestone"; }
+            else if (name.toLowerCase().includes("evidence")) { desc = `Evidence submitted (${data.evidence_type ?? "unknown"})`; type = "evidence"; }
+            else if (name.toLowerCase().includes("condition")) { desc = `Gate updated: ${data.status ?? ""}`; type = "gate"; }
+            else if (name.toLowerCase().includes("funded")) { desc = `Escrow funded`; type = "escrow"; }
+            else if (name.toLowerCase().includes("released")) { desc = `Escrow released`; type = "escrow"; }
+
+            timeline.push({
+              order: timeline.length,
+              timestamp: ev.ledgerClosedAt ? new Date(ev.ledgerClosedAt).getTime() : 0,
+              type,
+              description: desc,
+              tx_hash: ev.txHash,
+              ledger: ev.ledger,
+              contract: contractNames[ci],
+            });
+          }
+
+          cursor = eventsResp.cursor;
+          if (!cursor || eventsResp.events.length < 200) break;
         }
       } catch {}
     }
@@ -807,7 +823,7 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
       municipality: pvo.municipality ?? "",
       description: pvo.description ?? "",
       total_budget: Number(pvo.total_budget ?? 0),
-      status: pvo.status ?? "Proposed",
+      status: decodeStatus(pvo.status) || "Proposed",
       fund_source: pvo.fund_source ?? "",
       public_value_score: pvo.public_value_score ?? 0,
       milestones: milestones.map((m: any) => ({
@@ -815,7 +831,7 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
         milestone_title: m.title ?? "",
         description: m.description ?? "",
         budget: Number(m.budget ?? 0),
-        status: m.status ?? "Proposed",
+        status: decodeStatus(m.status) || "Proposed",
         evidence_count: m.evidence_ids?.vec ? m.evidence_ids.vec().length : 0,
         evidence_types: [],
         evidence_items: [],
