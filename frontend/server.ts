@@ -265,22 +265,29 @@ async function handleReportChallenge(req: http.IncomingMessage, res: http.Server
 }
 
 async function handleProvenance(req: http.IncomingMessage, res: http.ServerResponse) {
+  // Try live indexer first
   try {
     const pvoId = req.url?.match(/^\/api\/provenance\/(\d+)/)?.[1];
     const targetPath = pvoId ? `/api/provenance/${pvoId}` : "/api/provenance";
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const timer = setTimeout(() => ctrl.abort(), 3000);
     const resp = await fetch(`http://127.0.0.1:3111${targetPath}`, { signal: ctrl.signal });
     clearTimeout(timer);
     if (resp.ok) {
       const data = await resp.json();
       return sendJson(res, 200, data);
     }
-  } catch { /* indexer not running, fall back to file */ }
+  } catch { /* indexer not running */ }
 
+  // Fallback: read from provenance-store.json
   try {
     const raw = readFileSync(PROVENANCE_PATH, "utf-8");
     const parsed = JSON.parse(raw);
+    if (req.url?.match(/^\/api\/provenance\/(\d+)/)) {
+      const pvoId = parseInt(RegExp.$1);
+      const pvo = (parsed.pvOs || []).find((p: any) => p.pvo_id === pvoId);
+      return sendJson(res, 200, pvo || {});
+    }
     sendJson(res, 200, parsed.pvOs || []);
   } catch {
     sendJson(res, 200, []);
