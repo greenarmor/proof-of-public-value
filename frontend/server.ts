@@ -579,6 +579,38 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
       ]);
     } catch { /* event scan optional */ }
 
+    // Check provenance-store.json for captured events to fill tx_history
+    try {
+      const raw = readFileSync(PROVENANCE_PATH, "utf-8");
+      const store = JSON.parse(raw);
+      for (const ev of store.events || []) {
+        const pvoId = ev.data?.pvo_id ?? ev.data?.pvo ?? 0;
+        if (pvoId > 0 && ev.txHash) {
+          const contractName = ev.contract || "pvo_core";
+          const evName = (ev.eventName || "").toLowerCase();
+          let desc = ev.eventName || "";
+          let type = "event";
+          if (evName.includes("created") || evName.includes("pvo_created")) { desc = `PVO created`; type = "genesis"; }
+          else if (evName.includes("status")) { desc = `Status changed`; type = "status"; }
+          else if (evName.includes("milestone")) { desc = `Milestone event`; type = "milestone"; }
+          else if (evName.includes("condition")) { desc = `Gate updated`; type = "gate"; }
+          else if (evName.includes("funded")) { desc = "Escrow funded"; type = "escrow_funded"; }
+          if (!pvoTxHistory[pvoId]) pvoTxHistory[pvoId] = [];
+          const hasTx = pvoTxHistory[pvoId].some((t: any) => t.tx_hash === ev.txHash);
+          if (!hasTx) {
+            pvoTxHistory[pvoId].push({
+              description: `${desc} on ${contractName}`,
+              tx_hash: ev.txHash,
+              ledger: ev.ledger,
+              timestamp: ev.ledgerClosedAt || "",
+              contract: contractName,
+              type,
+            });
+          }
+        }
+      }
+    } catch {}
+
     const statusMap: Record<number, string> = { 0: "Proposed", 1: "Approved", 2: "InProgress", 3: "UnderReview", 4: "Completed", 5: "Suspended", 6: "Terminated" };
     const formatted = pvos.map((p: any) => {
       const pid = Number(p.id);
@@ -858,6 +890,32 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
       }
     }
     timeline.sort((a, b) => (a.ledger || 0) - (b.ledger || 0));
+
+    // Check provenance-store.json for captured events with tx hashes
+    try {
+      const raw = readFileSync(PROVENANCE_PATH, "utf-8");
+      const store = JSON.parse(raw);
+      const capturedEvents = (store.events || []).filter((e: any) => e.data?.pvo_id === pvoId);
+      for (const timelineEntry of timeline) {
+        if (timelineEntry.tx_hash) continue;
+        for (const ce of capturedEvents) {
+          const ceName = (ce.eventName || "").toLowerCase();
+          const teType = timelineEntry.type;
+          if ((teType === "genesis" && (ceName.includes("created") || ceName.includes("pvo_created"))) ||
+              (teType === "milestone" && ceName.includes("milestone")) ||
+              (teType === "escrow_funded" && ceName.includes("funded")) ||
+              (teType === "escrow_created" && ceName.includes("created") && ce.contract === "escrow") ||
+              (teType === "status" && ceName.includes("status")) ||
+              (teType === "evidence" && ceName.includes("evidence")) ||
+              (teType.startsWith("gate") && ceName.includes("condition"))) {
+            timelineEntry.tx_hash = ce.txHash;
+            timelineEntry.ledger = ce.ledger;
+            timelineEntry.timestamp = ce.ledgerClosedAt ? new Date(ce.ledgerClosedAt).getTime() : timelineEntry.timestamp;
+            break;
+          }
+        }
+      }
+    } catch {}
 
     // 5. Evidence items from milestones
     const evidence: any[] = [];
