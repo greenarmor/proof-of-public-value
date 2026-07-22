@@ -970,24 +970,6 @@ function ExpandableProvenance({ data }: { data: any }) {
               </div>
             ))}
           </div>
-          {(data.milestones || []).filter((m: any) => m.gates?.length > 0).map((m: any) => (
-            <div key={m.milestone_id} className="mt-3 pt-3 border-t border-slate-200">
-              <p className="text-xs font-medium text-slate-500 mb-2">{m.milestone_title}</p>
-              <div className="grid grid-cols-5 gap-1">
-                {(m.gates || []).map((g: any) => (
-                  <div key={g.gate_number} className={`rounded px-1.5 py-1 text-center text-[10px] font-medium ${g.tx_hash ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
-                    <div>{g.gate_name}</div>
-                    {g.tx_hash && (
-                      <a href={`https://stellar.expert/explorer/testnet/tx/${g.tx_hash}`} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:text-indigo-700">
-                        {g.status === 'passed' ? '✓' : g.status}
-                      </a>
-                    )}
-                    {!g.tx_hash && <div>{g.status}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
