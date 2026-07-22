@@ -610,6 +610,235 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
   }
 }
 
+async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerResponse) {
+  const pvoIdMatch = req.url?.match(/^\/api\/provenance\/(\d+)/);
+  if (!pvoIdMatch) return sendJson(res, 404, { error: "Missing pvoId" });
+  const pvoId = parseInt(pvoIdMatch[1]);
+
+  try {
+    const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
+    const server = new rpc.Server(RPC_URL);
+    const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+    const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
+
+    async function sim(fnName: string, contractId: string, ...args: any[]) {
+      const contract = new Contract(contractId);
+      const tx = new TransactionBuilder(dummySource as any, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
+        .addOperation(contract.call(fnName, ...args)).setTimeout(30).build();
+      const s: any = await server.simulateTransaction(tx);
+      if (s.error) return null;
+      return s.result?.retval;
+    }
+
+    function parseMap(sv: any): Record<string, any> {
+      const result: Record<string, any> = {};
+      for (const entry of sv.map()) {
+        const key = entry.key().sym().toString();
+        const val = entry.val();
+        switch (val.switch().name) {
+          case "scvU32": result[key] = val.u32(); break;
+          case "scvU64": result[key] = Number(val.u64().toString()); break;
+          case "scvI128": result[key] = val.i128().lo().toString(); break;
+          case "scvString": result[key] = val.str().toString(); break;
+          case "scvBool": result[key] = val.b(); break;
+          case "scvVec": result[key] = val.vec(); break;
+          case "scvMap": result[key] = parseMap(val); break;
+          default: result[key] = null;
+        }
+      }
+      return result;
+    }
+
+    function eventName(ev: any): string {
+      try { return ev.topic[0].sym().toString(); } catch { return ""; }
+    }
+
+    function decodeEventVal(val: any): Record<string, any> {
+      const data: Record<string, any> = {};
+      try {
+        const entries = val.map();
+        for (const entry of entries) {
+          const k = entry.key().sym().toString();
+          let v: any = entry.val();
+          try { v = v.u32(); } catch {}
+          try { v = v.bool() ? true : false; } catch {}
+          try { v = v.sym()?.toString() ?? v; } catch {}
+          try { v = v.str()?.toString() ?? v; } catch {}
+          try { v = Number(v.i128().lo().toString()); } catch {}
+          data[k] = v;
+        }
+      } catch {}
+      return data;
+    }
+
+    // 1. PVO base data
+    const pvoRv = await sim("get_pvo", "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B", nativeToScVal(pvoId, { type: "u32" }));
+    if (!pvoRv || pvoRv.switch().name === "scvVoid") return sendJson(res, 404, { error: "PVO not found" });
+    const pvo = parseMap(pvoRv);
+
+    // 2. Milestones
+    const msRv = await sim("get_pvo_milestones", "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B", nativeToScVal(pvoId, { type: "u32" }));
+    const milestones: any[] = [];
+    if (msRv && msRv.switch().name !== "scvVoid") {
+      const vec = msRv.vec();
+      for (const m of vec) {
+        const ms = parseMap(m);
+        milestones.push(ms);
+      }
+    }
+
+    // 3. Escrows and gates
+    const escrowDetails: any[] = [];
+    const gateRecords: any[] = [];
+    for (let escId = 1; escId <= Math.max(1, milestones.length); escId++) {
+      try {
+        const escRv = await sim("get_escrow", "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7", nativeToScVal(escId, { type: "u32" }));
+        if (!escRv || escRv.switch().name === "scvVoid") continue;
+        const esc = parseMap(escRv);
+        if (Number(esc.pvo_id) !== pvoId) continue;
+
+        escrowDetails.push({
+          escrow_id: Number(esc.id ?? escId),
+          pvo_id: pvoId,
+          milestone_id: Number(esc.milestone_id ?? 0),
+          amount: Number(esc.amount ?? 0),
+          status: esc.funded ? "Funded" : "Created",
+          funder: esc.funder ?? "",
+          recipient: esc.recipient ?? "",
+          funded: esc.funded === true,
+          released: esc.released === true,
+          released_at: esc.released_at ?? undefined,
+        });
+
+        const conditions = esc.conditions || {};
+        const gateDefs = [
+          { num: 1, name: "Engineer Approval", fn: "engineer_approval", key: "engineer_approval" },
+          { num: 2, name: "Compliance Check", fn: "compliance_validation", key: "compliance_validation" },
+          { num: 3, name: "Community Oracle", fn: "community_oracle_validation", key: "community_oracle_validation" },
+          { num: 4, name: "Community Confirmation", fn: "community_confirmation", key: "community_confirmation", min: conditions.community_required || 1 },
+          { num: 5, name: "AI Risk Check", fn: "ai_risk_check", key: "ai_risk_check" },
+        ];
+        for (const g of gateDefs) {
+          const passed = g.key === "community_confirmation"
+            ? (conditions.community_confirmation || 0) >= g.min
+            : conditions[g.key] === true;
+          gateRecords.push({
+            gate_number: g.num,
+            gate_name: g.name,
+            contract_fn: g.fn,
+            status: passed ? "passed" : "pending",
+            escrow_id: escId,
+          });
+        }
+      } catch {}
+    }
+
+    // 4. Events (timeline)
+    const timeline: any[] = [];
+    const contractIds = [
+      "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B",
+      "CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7",
+      "CB6AXOUYHEOWUUSEP6543GZYHMN6D2VA5WV5LXOMPNMJFYJ3XQNPZBV6",
+      "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32",
+    ];
+    const contractNames = ["pvo_core", "escrow", "audit_trail", "community_oracle"];
+    const latestLedger = Number((await server.getLatestLedger()).sequence);
+    const startLedger = Math.max(1, latestLedger - 200000);
+
+    for (let ci = 0; ci < contractIds.length; ci++) {
+      try {
+        const eventsResp = await server.getEvents({
+          startLedger,
+          filters: [{ type: "contract", contractIds: [contractIds[ci]] }],
+          limit: 200,
+        });
+        for (const ev of eventsResp.events || []) {
+          const name = eventName(ev);
+          const data = decodeEventVal(ev.value);
+          const evPvoId = Number(data.pvo_id ?? data.pvo ?? 0);
+          const escId = data.id ?? data.escrow_id;
+          if (evPvoId !== pvoId && escId === undefined) continue;
+
+          let desc = name;
+          let type = "event";
+          if (name.toLowerCase().includes("created") || name.toLowerCase().includes("pvo_created")) { desc = `PVO "${pvo.title ?? ""}" created`; type = "genesis"; }
+          else if (name.toLowerCase().includes("status")) { desc = `Status changed to ${data.new_status ?? data.status ?? ""}`; type = "status"; }
+          else if (name.toLowerCase().includes("milestone")) { desc = `Milestone "${data.title ?? "#" + (data.milestone_id ?? "")}" created`; type = "milestone"; }
+          else if (name.toLowerCase().includes("evidence")) { desc = `Evidence submitted (${data.evidence_type ?? "unknown"})`; type = "evidence"; }
+          else if (name.toLowerCase().includes("condition")) { desc = `Gate updated: ${data.status ?? ""}`; type = "gate"; }
+          else if (name.toLowerCase().includes("funded")) { desc = `Escrow funded`; type = "escrow"; }
+          else if (name.toLowerCase().includes("released")) { desc = `Escrow released`; type = "escrow"; }
+
+          timeline.push({
+            order: timeline.length,
+            timestamp: ev.ledgerClosedAt ? new Date(ev.ledgerClosedAt).getTime() : 0,
+            type,
+            description: desc,
+            tx_hash: ev.txHash,
+            ledger: ev.ledger,
+            contract: contractNames[ci],
+          });
+        }
+      } catch {}
+    }
+    timeline.sort((a, b) => a.timestamp - b.timestamp);
+
+    // 5. Evidence items from milestones
+    const evidence: any[] = [];
+    for (const ms of milestones) {
+      const evidenceIds = ms.evidence_ids;
+      if (evidenceIds) {
+        const vec = evidenceIds.vec ? evidenceIds.vec() : [];
+        for (const eid of vec) {
+          try {
+            evidence.push({
+              id: typeof eid === "object" && !Array.isArray(eid) ? parseMap(eid) : { id: Number(eid) },
+              milestone_id: Number(ms.id ?? ms.milestone_id ?? 0),
+            });
+          } catch {}
+        }
+      }
+    }
+
+    sendJson(res, 200, {
+      pvo_id: pvoId,
+      title: pvo.title ?? "Untitled",
+      department: pvo.department ?? "",
+      municipality: pvo.municipality ?? "",
+      description: pvo.description ?? "",
+      total_budget: Number(pvo.total_budget ?? 0),
+      status: pvo.status ?? "Proposed",
+      fund_source: pvo.fund_source ?? "",
+      public_value_score: pvo.public_value_score ?? 0,
+      milestones: milestones.map((m: any) => ({
+        milestone_id: Number(m.id ?? m.milestone_id ?? 0),
+        milestone_title: m.title ?? "",
+        description: m.description ?? "",
+        budget: Number(m.budget ?? 0),
+        status: m.status ?? "Proposed",
+        evidence_count: m.evidence_ids?.vec ? m.evidence_ids.vec().length : 0,
+        evidence_types: [],
+        evidence_items: [],
+        escrow: escrowDetails.find((e: any) => e.milestone_id === Number(m.id ?? m.milestone_id ?? 0)) ?? null,
+        gates: gateRecords,
+        gates_passed: gateRecords.filter((g: any) => g.status === "passed").length,
+        gates_total: gateRecords.length,
+      })),
+      timeline,
+      stats: {
+        total_escrowed: escrowDetails.reduce((s: number, e: any) => s + (e.funded ? e.amount : 0), 0),
+        total_released: escrowDetails.reduce((s: number, e: any) => s + (e.released ? e.amount : 0), 0),
+        total_funded: escrowDetails.filter((e: any) => e.funded).length,
+        gates_passed: gateRecords.filter((g: any) => g.status === "passed").length,
+        gates_total: gateRecords.length,
+        evidence_submitted: evidence.length,
+      },
+    });
+  } catch (err: any) {
+    sendJson(res, 500, { error: safeError(err) });
+  }
+}
+
 const MIME: Record<string, string> = {
   ".html": "text/html",
   ".js": "application/javascript",
@@ -827,7 +1056,10 @@ const server = http.createServer(async (req, res) => {
     if (pathName === "/api/setup-trustline") return await handleSetupTrustline(req, res);
     if (pathName === "/api/submit-report") return await handleSubmitReport(req, res);
     if (pathName === "/api/report-challenge") return await handleReportChallenge(req, res);
-    if (pathName === "/api/provenance" || pathName.startsWith("/api/provenance/")) return await handleProvenance(req, res);
+    if (pathName === "/api/provenance" || pathName.startsWith("/api/provenance/")) {
+  if (pathName.match(/^\/api\/provenance\/\d+/)) return await handlePvoProvenance(req, res);
+  return await handleProvenance(req, res);
+}
     if (pathName === "/api/send-payment") return await handleSendPayment(req, res);
     if (pathName === "/api/upload-ipfs") return await handleUploadIpfs(req, res);
     if (pathName === "/api/build-trustline") return await handleBuildTrustline(req, res);
