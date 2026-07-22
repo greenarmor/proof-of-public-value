@@ -456,7 +456,8 @@ async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) 
 
     try {
       const latestLedger = Number((await server.getLatestLedger()).sequence);
-      const startLedger = Math.max(1, latestLedger - 200000);
+      // RPC retention is ~121k ledgers, use safe 100k window
+      const startLedger = Math.max(1, latestLedger - 100000);
 
       const contractList = [
         { id: PVO_CORE_ID, name: "pvo_core" },
@@ -752,7 +753,8 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
       "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32",
     ];
     const contractNames = ["pvo_core", "escrow", "audit_trail", "community_oracle"];
-    const startLedger = 1;
+    const latestLedger = Number((await server.getLatestLedger()).sequence);
+    const startLedger = Math.max(0, latestLedger - 100000);
 
     for (let ci = 0; ci < contractIds.length; ci++) {
       try {
