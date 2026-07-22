@@ -268,7 +268,10 @@ async function handleProvenance(req: http.IncomingMessage, res: http.ServerRespo
   try {
     const pvoId = req.url?.match(/^\/api\/provenance\/(\d+)/)?.[1];
     const targetPath = pvoId ? `/api/provenance/${pvoId}` : "/api/provenance";
-    const resp = await fetch(`http://127.0.0.1:3111${targetPath}`, { signal: AbortSignal.timeout(5000) });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    const resp = await fetch(`http://127.0.0.1:3111${targetPath}`, { signal: ctrl.signal });
+    clearTimeout(timer);
     if (resp.ok) {
       const data = await resp.json();
       return sendJson(res, 200, data);
