@@ -37,6 +37,8 @@ interface PVOData {
   milestonesReleased: number;
   milestonesTotal: number;
   budgetReleased: number;
+  tx_history?: Array<{ description: string; tx_hash: string; ledger: number; timestamp: string; contract: string; type: string }>;
+  gates?: any;
 }
 
 function parseCoords(desc: string): { lat?: number; lng?: number; clean: string } {
@@ -618,6 +620,10 @@ export function TransparencyPortal() {
               {/* Provenance Chain */}
               {provenanceLoading ? (
                 <div className="mt-4 card p-4 text-center text-sm text-slate-400">Loading provenance chain...</div>
+              ) : provenanceData?.timeline?.length > 0 ? (
+                <ExpandableProvenance data={provenanceData} />
+              ) : (selected as any)?.tx_history?.length > 0 ? (
+                <TxHistoryChain txHistory={(selected as any).tx_history} />
               ) : provenanceData ? (
                 <ExpandableProvenance data={provenanceData} />
               ) : (
@@ -982,6 +988,53 @@ function ExpandableProvenance({ data }: { data: any }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Transaction History Chain (from tx_history) ─────────
+function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
+  const [open, setOpen] = useState(false);
+  const typeColors: Record<string, string> = {
+    genesis: "bg-emerald-400", status: "bg-sky-400", milestone: "bg-violet-400", evidence: "bg-amber-400",
+    contractor: "bg-teal-400", score: "bg-fuchsia-400", escrow_created: "bg-blue-400",
+    escrow_funded: "bg-green-400", escrow_released: "bg-green-400", escrow_disputed: "bg-red-400",
+    gate1: "bg-orange-400", gate2: "bg-orange-400", gate3: "bg-orange-400", gate4: "bg-orange-400", gate5: "bg-orange-400",
+    audit: "bg-slate-400", community: "bg-rose-400",
+  };
+  return (
+    <div className="mt-4 space-y-3">
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors">
+        <span>{open ? "▼" : "▶"}</span>
+        🔗 Transaction History ({txHistory.length} events)
+      </button>
+      {open && (
+        <div className="card p-4 bg-slate-50/50 border-slate-200">
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {txHistory.map((e: any, i: number) => (
+                <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                  <div className={`w-2 h-2 rounded-full ${typeColors[e.type] || "bg-slate-400"} mt-1.5 flex-shrink-0`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-700">{e.description}</p>
+                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                      {e.timestamp && <span>{e.timestamp}</span>}
+                      <span>{e.contract}</span>
+                      {e.ledger && <span>L#{e.ledger}</span>}
+                      {e.type && <span className="italic">{e.type}</span>}
+                    </div>
+                  </div>
+                  {e.tx_hash && (
+                    <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
+                      🔗 {e.tx_hash.slice(0, 6)}…
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
         </div>
       )}
     </div>

@@ -799,6 +799,64 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
     }
     timeline.sort((a, b) => a.timestamp - b.timestamp);
 
+    // Add synthetic entries from contract data if RPC events are missing
+    const hasGenesis = timeline.some((e: any) => e.type === "genesis");
+    if (!hasGenesis) {
+      timeline.push({
+        order: 0,
+        timestamp: pvo.created_at ? Number(pvo.created_at) * 1000 : 0,
+        type: "genesis",
+        description: `PVO "${pvo.title ?? ""}" created`,
+        tx_hash: null,
+        ledger: null,
+        contract: "pvo_core",
+      });
+    }
+    for (const ms of milestones) {
+      const msId = Number(ms.id ?? ms.milestone_id ?? 0);
+      const hasMs = timeline.some((e: any) => e.type === "milestone" && e.description.includes(msId.toString()));
+      if (!hasMs) {
+        timeline.push({
+          order: timeline.length,
+          timestamp: 0,
+          type: "milestone",
+          description: `Milestone "${ms.title ?? ""}" (#${msId}) created`,
+          tx_hash: null,
+          ledger: null,
+          contract: "pvo_core",
+        });
+      }
+    }
+    for (const esc of escrowDetails) {
+      const hasEscCreated = timeline.some((e: any) => e.type === "escrow_created" && e.description.includes(esc.escrow_id.toString()));
+      if (!hasEscCreated && esc.escrow_id > 0) {
+        timeline.push({
+          order: timeline.length,
+          timestamp: 0,
+          type: "escrow_created",
+          description: `Escrow #${esc.escrow_id} created (PHP ${(esc.amount / 10_000_000).toFixed(1)}M)`,
+          tx_hash: null,
+          ledger: null,
+          contract: "escrow",
+        });
+      }
+      if (esc.funded) {
+        const hasEscFunded = timeline.some((e: any) => e.type === "escrow_funded");
+        if (!hasEscFunded) {
+          timeline.push({
+            order: timeline.length,
+            timestamp: 0,
+            type: "escrow_funded",
+            description: `Escrow #${esc.escrow_id} funded`,
+            tx_hash: null,
+            ledger: null,
+            contract: "escrow",
+          });
+        }
+      }
+    }
+    timeline.sort((a, b) => a.timestamp - b.timestamp);
+
     // 5. Evidence items from milestones
     const evidence: any[] = [];
     for (const ms of milestones) {
