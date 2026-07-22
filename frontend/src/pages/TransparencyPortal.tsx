@@ -13,7 +13,7 @@ import { getCached, setCached } from "../dataCache";
 import { signTransaction } from "@stellar/freighter-api";
 import { Address, Contract, TransactionBuilder, nativeToScVal, rpc, xdr } from "@stellar/stellar-sdk";
 
-const PROVENANCE_API_BASE = "https://provenance.chain.popv.quest";
+const PROVENANCE_API_BASE = "";
 const PROV_API_KEY = "";
 
 const ProjectMap = lazy(() => import("./ProjectMap"));

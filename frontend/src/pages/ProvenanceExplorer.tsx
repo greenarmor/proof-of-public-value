@@ -91,7 +91,7 @@ interface HealthInfo {
 }
 
 // ── Config ──────────────────────────────────────────────
-const API_BASE = "https://provenance.chain.popv.quest";
+const API_BASE = "";
 
 const PROV_API_KEY = "";
 

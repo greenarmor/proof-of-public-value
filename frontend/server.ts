@@ -264,7 +264,17 @@ async function handleReportChallenge(req: http.IncomingMessage, res: http.Server
   sendJson(res, 200, { challenge: c, expiresIn: 300 });
 }
 
-async function handleProvenance(_req: http.IncomingMessage, res: http.ServerResponse) {
+async function handleProvenance(req: http.IncomingMessage, res: http.ServerResponse) {
+  try {
+    const pvoId = req.url?.match(/^\/api\/provenance\/(\d+)/)?.[1];
+    const targetPath = pvoId ? `/api/provenance/${pvoId}` : "/api/provenance";
+    const resp = await fetch(`http://127.0.0.1:3111${targetPath}`, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      return sendJson(res, 200, data);
+    }
+  } catch { /* indexer not running, fall back to file */ }
+
   try {
     const raw = readFileSync(PROVENANCE_PATH, "utf-8");
     const parsed = JSON.parse(raw);
@@ -807,7 +817,7 @@ const server = http.createServer(async (req, res) => {
     if (pathName === "/api/setup-trustline") return await handleSetupTrustline(req, res);
     if (pathName === "/api/submit-report") return await handleSubmitReport(req, res);
     if (pathName === "/api/report-challenge") return await handleReportChallenge(req, res);
-    if (pathName === "/api/provenance") return await handleProvenance(req, res);
+    if (pathName === "/api/provenance" || pathName.startsWith("/api/provenance/")) return await handleProvenance(req, res);
     if (pathName === "/api/send-payment") return await handleSendPayment(req, res);
     if (pathName === "/api/upload-ipfs") return await handleUploadIpfs(req, res);
     if (pathName === "/api/build-trustline") return await handleBuildTrustline(req, res);
