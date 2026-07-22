@@ -1014,7 +1014,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
       {open && (
         <div className="card p-4 bg-slate-50/50 border-slate-200">
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {txHistory.map((e: any, i: number) => (
+            {[...txHistory].reverse().map((e: any, i: number) => (
                 <div key={i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
                   <div className={`w-2 h-2 rounded-full ${typeColors[e.type] || "bg-slate-400"} mt-1.5 flex-shrink-0`} />
                   <div className="flex-1 min-w-0">
@@ -1026,11 +1026,13 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
                       {e.type && <span className="italic">{e.type}</span>}
                     </div>
                   </div>
-                  {e.tx_hash && (
+                  {e.tx_hash ? (
                     <a href={`https://stellar.expert/explorer/testnet/tx/${e.tx_hash}`} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 px-1.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[10px] font-medium whitespace-nowrap">
                       🔗 {e.tx_hash.slice(0, 6)}…
                     </a>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 whitespace-nowrap">on-chain</span>
                   )}
                 </div>
               ))}
