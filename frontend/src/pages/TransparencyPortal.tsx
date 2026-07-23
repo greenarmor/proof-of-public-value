@@ -960,9 +960,9 @@ function ExpandableProvenance({ data }: { data: any }) {
                     <div key={"g"+i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">{e.description}</p>
+                        <p className="text-xs font-semibold text-slate-800">{e.description || e.action || "Event"}</p>
                         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                          {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleString()}</span>}
+                          {e.timestamp > 0 && <span>{new Date(e.timestamp > 1000000000000 ? e.timestamp : e.timestamp * 1000).toLocaleString()}</span>}
                           <span>{e.contract}</span>
                           {e.ledger && <span>L#{e.ledger}</span>}
                         </div>
@@ -983,9 +983,9 @@ function ExpandableProvenance({ data }: { data: any }) {
                         <div key={"o"+i} className="flex items-start gap-2 py-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-slate-600">{e.description}</p>
+                            <p className="text-[11px] text-slate-600">{e.description || e.action || "Event"}</p>
                             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                              {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleString()}</span>}
+                              {e.timestamp > 0 && <span>{new Date(e.timestamp > 1000000000000 ? e.timestamp : e.timestamp * 1000).toLocaleString()}</span>}
                               <span>{e.contract}</span>
                               {e.ledger && <span>L#{e.ledger}</span>}
                             </div>
@@ -1042,7 +1042,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
                     <div key={"g"+i} className="flex items-start gap-3 py-1.5 border-b border-slate-100 last:border-0">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">{e.description}</p>
+                        <p className="text-xs font-semibold text-slate-800">{e.description || e.action || "Event"}</p>
                         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                           {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleDateString()}</span>}
                           {e.contract && <span>{e.contract}</span>}
@@ -1065,7 +1065,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
                         <div key={"o"+i} className="flex items-start gap-2 py-1">
                           <div className={`w-1.5 h-1.5 rounded-full ${typeColors[e.type] || "bg-slate-300"} mt-1.5 flex-shrink-0`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-slate-600">{e.description}</p>
+                            <p className="text-[11px] text-slate-600">{e.description || e.action || "Event"}</p>
                             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                               {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleDateString()}</span>}
                               {e.contract && <span>{e.contract}</span>}
