@@ -4,6 +4,20 @@ import { readFileSync, existsSync, statSync } from "fs";
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const RPC_FALLBACK = "https://soroban-rpc.testnet.stellar.gateway.fm";
+
+async function getRpcServer(_rpc?: any) {
+  for (const url of [RPC_URL, RPC_FALLBACK]) {
+    try {
+      const { rpc: r } = await import("@stellar/stellar-sdk");
+      const s = new r.Server(url);
+      await s.getLatestLedger();
+      return s;
+    } catch {}
+  }
+  const { rpc } = await import("@stellar/stellar-sdk");
+  return new rpc.Server(RPC_URL);
+}
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const RPT_ISSUER = "GBDNQETDDXGJ42PTL2ODGTBSNV6BYN5P7T3CF27JCN7KT2QMJOEACMSV";
 const PPHP_ISSUER = "GBRDP6UQ625API2MGOMSV3Z3ZWJIABCDCKGOOCOCJNNZYNZ32XYBBBHO";
@@ -210,7 +224,7 @@ async function handleSubmitReport(req: http.IncomingMessage, res: http.ServerRes
     const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY;
     if (!ADMIN_SECRET) return sendJson(res, 500, { error: "Server not configured" });
 
-    const { Keypair, Address, Contract, TransactionBuilder, rpc, xdr } = await import("@stellar/stellar-sdk");
+    const { Keypair, Address, Contract, TransactionBuilder, xdr } = await import("@stellar/stellar-sdk");
     const rptResp = await fetch(`${HORIZON_URL}/accounts/${citizenAddress}`);
     if (!rptResp.ok) return sendJson(res, 403, { error: "Wallet not found" });
     const rptData: any = await rptResp.json();
@@ -221,7 +235,7 @@ async function handleSubmitReport(req: http.IncomingMessage, res: http.ServerRes
     if (challenge && !challenge.startsWith("popv-report-")) return sendJson(res, 401, { error: "Invalid challenge" });
 
     const adminKp = Keypair.fromSecret(ADMIN_SECRET);
-    const server = new rpc.Server(RPC_URL);
+    const server = await getRpcServer();
     const account = await server.getAccount(adminKp.publicKey());
     const dataHash = `mobile:${Date.now()}:${lat}:${lng}`.slice(0, 64);
     const latMicro = Math.round((lat || 0) * 1_000_000);
@@ -343,8 +357,8 @@ function handleHealth(_req: http.IncomingMessage, res: http.ServerResponse) {
 
 async function handlePvos(_req: http.IncomingMessage, res: http.ServerResponse) {
   try {
-    const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
-    const server = new rpc.Server(RPC_URL);
+    const { Contract, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
+    const server = await getRpcServer();
     const contract = new Contract(PVO_CORE);
     const escrowContract = new Contract("CCH4G475KDLUSKKZUWIDYALEDOLRA2ZZQOO33V4IGX3NLJRVYSMNRFU7"); // escrow contract
     const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
@@ -649,8 +663,8 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
   const pvoId = parseInt(pvoIdMatch[1]);
 
   try {
-    const { Contract, rpc, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
-    const server = new rpc.Server(RPC_URL);
+    const { Contract, nativeToScVal, TransactionBuilder } = await import("@stellar/stellar-sdk");
+    const server = await getRpcServer();
     const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
     const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };
 
@@ -1155,8 +1169,8 @@ function handleReputation(req: http.IncomingMessage, res: http.ServerResponse) {
 
   (async () => {
     try {
-      const { Contract, rpc, TransactionBuilder, Address } = await import("@stellar/stellar-sdk");
-      const server = new rpc.Server(RPC_URL);
+      const { Contract, TransactionBuilder, Address } = await import("@stellar/stellar-sdk");
+      const server = await getRpcServer();
       const contract = new Contract(COMMUNITY_ORACLE);
       const dummyPub = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
       const dummySource = { accountId: () => dummyPub, sequenceNumber: () => "0", incrementSequenceNumber: () => {} };

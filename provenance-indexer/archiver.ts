@@ -21,7 +21,10 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──────────────────────────────────────────────
-const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const RPC_URLS = [
+  "https://soroban-testnet.stellar.org:443",
+  "https://soroban-rpc.testnet.stellar.gateway.fm",
+];
 const POLL_INTERVAL_MS = 30_000;
 
 const CONTRACT_IDS: Record<string, string> = {
@@ -54,7 +57,19 @@ interface ProvenanceStore {
   events: CapturedEvent[];
 }
 
-const server = new rpc.Server(RPC_URL);
+let activeRpcUrl = RPC_URLS[0];
+
+async function getServer(): Promise<rpc.Server | null> {
+  for (const url of RPC_URLS) {
+    try {
+      const s = new rpc.Server(url);
+      await s.getLatestLedger();
+      activeRpcUrl = url;
+      return s;
+    } catch {}
+  }
+  return null;
+}
 
 function loadStore(): ProvenanceStore {
   try {
@@ -107,7 +122,7 @@ function decodeEventVal(val: any): Record<string, any> {
   return data;
 }
 
-async function captureNewEvents(store: ProvenanceStore): Promise<number> {
+async function captureNewEvents(store: ProvenanceStore, server: rpc.Server): Promise<number> {
   let captured = 0;
   const knownTxHashes = new Set(store.events.map((e) => e.txHash));
 
@@ -187,17 +202,25 @@ async function main() {
   console.log("╔══════════════════════════════════════╗");
   console.log("║  PoPV Provenance Event Archiver      ║");
   console.log("╚══════════════════════════════════════╝");
-  console.log(`  RPC: ${RPC_URL}`);
+  console.log(`  Primary RPC: ${RPC_URLS[0]}`);
+  console.log(`  Fallback RPC: ${RPC_URLS[1]}`);
   console.log(`  Store: ${STORE_PATH}`);
   console.log(`  Poll: ${POLL_INTERVAL_MS / 1000}s`);
   console.log("");
 
   const store = loadStore();
   console.log(`  Loaded: ${store.eventCount} events, ${store.events.length} total`);
+
+  let server = await getServer();
+  if (!server) {
+    console.error("  All RPC endpoints unreachable. Exiting.");
+    process.exit(1);
+  }
+  console.log(`  Connected: ${activeRpcUrl}`);
   console.log("");
 
-  // Initial capture from stored cursor
-  const initial = await captureNewEvents(store);
+  // Initial capture
+  const initial = await captureNewEvents(store, server);
   if (initial > 0) {
     saveStore(store);
     console.log(`  Captured ${initial} new events (total: ${store.eventCount})`);
@@ -205,7 +228,7 @@ async function main() {
 
   // Poll for new events
   setInterval(async () => {
-    const captured = await captureNewEvents(store);
+    const captured = await captureNewEvents(store, server);
     if (captured > 0) {
       saveStore(store);
       console.log(`  [+${captured}] New events captured (total: ${store.eventCount})`);
