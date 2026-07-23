@@ -51,7 +51,11 @@ if (existsSync(envPath)) {
 }
 
 // ── Config ──────────────────────────────────────────────
-const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const RPC_URLS = [
+  "https://soroban-testnet.stellar.org:443",
+  "https://soroban-rpc.testnet.stellar.gateway.fm",
+];
+const RPC_URL = RPC_URLS[0];
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const POLL_INTERVAL_MS = 60_000;
 
@@ -297,11 +301,12 @@ const opts = {
 // SDK-based submission (bypasses CLI identity issues)
 async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Promise<boolean> {
   if (!AI_AUDITOR_SECRET) { console.error("  AI_AUDITOR_SECRET not set"); return false; }
-  try {
-    const { Keypair, Contract, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
-    const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
-    const server = new rpc.Server(RPC_URL);
-    const account = await server.getAccount(kp.publicKey());
+  for (const rpcUrl of RPC_URLS) {
+    try {
+      const { Keypair, Contract, TransactionBuilder, rpc } = await import("@stellar/stellar-sdk");
+      const kp = Keypair.fromSecret(AI_AUDITOR_SECRET);
+      const server = new rpc.Server(rpcUrl);
+      const account = await server.getAccount(kp.publicKey());
     const contract = new Contract(contractId);
     const op = contract.call(method, ...scvArgs);
     const tx = new TransactionBuilder(account, { fee: "100000", networkPassphrase: NETWORK_PASSPHRASE })
@@ -313,10 +318,11 @@ async function sdkInvoke(contractId: string, method: string, scvArgs: any[]): Pr
       console.error(`  [${method}] Tx failed: ${result.status} ${result.hash?.slice(0,10)??""}`);
     }
     return result.status === "PENDING" || result.status === "DUPLICATE";
-  } catch (e: any) {
-    console.error(`  [${method}] failed: ${e.message?.slice(0, 100)}`);
-    return false;
+    } catch (e: any) {
+      console.error(`  [${method}] failed on ${rpcUrl}: ${e.message?.slice(0, 80)}`);
+    }
   }
+  return false;
 }
 
 // SDK-based submission helper for ai_oracle contract
@@ -620,7 +626,7 @@ async function rewardCitizenForReport(
 
     const { Keypair, Address, Contract, TransactionBuilder, rpc, nativeToScVal } = await import("@stellar/stellar-sdk");
     const cbKp = Keypair.fromSecret(CENTRAL_BANK_SECRET);
-    const server = new rpc.Server("https://soroban-testnet.stellar.org:443");
+    const server = new rpc.Server(RPC_URLS[0]);
     // Retry getAccount up to 3 times for RPC rate limit resilience
     let account: any = null;
     for (let attempt = 0; attempt < 3; attempt++) {
