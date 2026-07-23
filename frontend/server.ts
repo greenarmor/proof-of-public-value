@@ -930,7 +930,10 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
     try {
       const raw = readFileSync(PROVENANCE_PATH, "utf-8");
       const store = JSON.parse(raw);
-      const capturedEvents = (store.events || []).filter((e: any) => e.data?.pvo_id === pvoId);
+      // Include events with matching pvo_id OR events without pvo_id (applies to all)
+      const capturedEvents = (store.events || []).filter((e: any) =>
+        e.data?.pvo_id === pvoId || e.data?.pvo_id === undefined || e.data?.pvo_id === 0
+      );
       for (const timelineEntry of timeline) {
         if (timelineEntry.tx_hash) continue;
         for (const ce of capturedEvents) {
