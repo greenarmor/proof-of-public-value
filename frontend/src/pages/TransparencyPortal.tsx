@@ -1015,7 +1015,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
   const [open, setOpen] = useState(false);
   const typeColors: Record<string, string> = {
     genesis: "bg-emerald-400", status: "bg-sky-400", milestone: "bg-violet-400", evidence: "bg-amber-400",
-    contractor: "bg-teal-400", score: "bg-fuchsia-400", escrow_created: "bg-blue-400",
+    contractor: "bg-teal-400", procurement: "bg-yellow-400", score: "bg-fuchsia-400", escrow_created: "bg-blue-400",
     escrow_funded: "bg-green-400", escrow_released: "bg-green-400", escrow_disputed: "bg-red-400",
     gate1: "bg-orange-400", gate2: "bg-orange-400", gate3: "bg-orange-400", gate4: "bg-orange-400", gate5: "bg-orange-400",
     audit: "bg-slate-400", community: "bg-rose-400",

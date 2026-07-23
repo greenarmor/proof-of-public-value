@@ -675,6 +675,7 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
           case "scvString": result[key] = val.str().toString(); break;
           case "scvBool": result[key] = val.b(); break;
           case "scvSymbol": result[key] = val.sym().toString(); break;
+          case "scvAddress": result[key] = val.address().toString(); break;
           case "scvVec": result[key] = val.vec(); break;
           case "scvMap": result[key] = parseMap(val); break;
           default: result[key] = null;
@@ -845,6 +846,30 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
         tx_hash: null,
         contract: "pvo_core",
       });
+    }
+    // Tender & contractor events (before milestones in lifecycle order)
+    if (pvo.contractor_assigned && pvo.contractor) {
+      const hasContractor = timeline.some((e: any) => e.type === "contractor");
+      if (!hasContractor) {
+        timeline.push({
+          order: timeline.length,
+          timestamp: 0,
+          ledger: -0.5,
+          type: "contractor",
+          description: `Contractor assigned: ${String(pvo.contractor).substring(0, 8)}...`,
+          tx_hash: null,
+          contract: "pvo_core",
+        });
+        timeline.push({
+          order: timeline.length,
+          timestamp: 0,
+          ledger: -0.8,
+          type: "procurement",
+          description: `Tender/bidding opened for "${pvo.title ?? ""}"`,
+          tx_hash: null,
+          contract: "procurement_market",
+        });
+      }
     }
     for (const ms of milestones) {
       const msId = Number(ms.id ?? ms.milestone_id ?? 0);
