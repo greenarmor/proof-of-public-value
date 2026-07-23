@@ -32,7 +32,11 @@ import { rpc } from "@stellar/stellar-sdk";
 const __dirname_local = dirname(fileURLToPath(import.meta.url));
 
 // ── Config ──────────────────────────────────────────────
-const RPC_URL = "https://soroban-testnet.stellar.org:443";
+const RPC_URLS = [
+  "https://soroban-testnet.stellar.org:443",
+  "https://soroban-rpc.testnet.stellar.gateway.fm",
+];
+const RPC_URL = RPC_URLS[0];
 const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
 const POLL_INTERVAL_MS = 30_000;
 const HTTP_PORT = 3111;
@@ -89,7 +93,28 @@ const opts = {
   timeout: 30_000,
 };
 
-const sdkServer = new rpc.Server(RPC_URL);
+let sdkServer: rpc.Server;
+let sdkServerReady = false;
+
+async function getSdkServer(): Promise<rpc.Server> {
+  if (sdkServerReady) return sdkServer;
+  sdkServer = await initSdkServer();
+  sdkServerReady = true;
+  return sdkServer;
+}
+
+async function initSdkServer(): Promise<rpc.Server> {
+  for (const url of RPC_URLS) {
+    try {
+      const s = new rpc.Server(url);
+      await s.getLatestLedger();
+      console.log(`  RPC connected: ${url}`);
+      return s;
+    } catch {}
+  }
+  console.warn("  All RPC endpoints unreachable, using primary");
+  return new rpc.Server(RPC_URLS[0]);
+}
 
 // ── Types ───────────────────────────────────────────────
 type GateStatus = "pending" | "passed" | "failed";
@@ -307,7 +332,8 @@ async function fetchEvents(
     const batch = contractIdList.slice(i, i + batchSize);
 
     try {
-      const resp = await sdkServer.getEvents({
+      const srv = await getSdkServer();
+      const resp = await srv.getEvents({
         startLedger,
         endLedger,
         limit: 200,
@@ -730,7 +756,8 @@ async function buildProvenance(
   let earliestScanned = existingStore?.earliestLedger ?? lastLedger;
 
   try {
-    const latest = await sdkServer.getLatestLedger();
+    const srv = await getSdkServer();
+    const latest = await srv.getLatestLedger();
     const endLedger = Number(latest.sequence ?? latest);
     let startLedger: number;
 
