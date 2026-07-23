@@ -84,16 +84,26 @@ function decodeEventVal(val: any): Record<string, any> {
   try {
     const entries = val.map();
     for (const entry of entries) {
-      const k = entry.key().sym().toString();
-      let v: any = entry.val();
-      try { v = parseInt(v.u32().toString(), 10); } catch {}
-      try { v = v.bool(); } catch {}
-      try { v = v.sym()?.toString() ?? v; } catch {}
-      try { v = v.str()?.toString() ?? v; } catch {}
-      try { v = Number(BigInt(v.i128().hi().toString()) << 64n | BigInt(v.i128().lo().toString())); } catch {}
-      data[k] = v;
+      const key = entry.key().sym().toString();
+      const v = entry.val();
+      switch (v.switch().name) {
+        case "scvU32": data[key] = v.u32(); break;
+        case "scvU64": data[key] = Number(v.u64().toString()); break;
+        case "scvI128": data[key] = Number(BigInt(v.i128().hi().toString()) << 64n | BigInt(v.i128().lo().toString())); break;
+        case "scvString": data[key] = v.str().toString(); break;
+        case "scvBool": data[key] = v.b(); break;
+        case "scvSymbol": data[key] = v.sym().toString(); break;
+        case "scvAddress": data[key] = v.address().toString(); break;
+        case "scvMap": data[key] = decodeEventVal(v); break;
+        case "scvVec": data[key] = v.vec().map((item: any) => {
+          try { return decodeEventVal(item); } catch { return null; }
+        }); break;
+        default: data[key] = null;
+      }
     }
   } catch {}
+  // Also extract pvo_id from nested data if present
+  if (!data.pvo_id && data.id && typeof data.id === "number") data.pvo_id = data.id;
   return data;
 }
 
