@@ -25,7 +25,7 @@ const ACCESS_CONTROL = "CCZ3IEI6QUGRCVVN5BKVHNVI3UV3Y7J6FDXHFM2W75CMKNZNX3Q7W7YI
 const COMMUNITY_ORACLE = "CCMVMF2ZJUULQFDZW2WA5GUORCKU2QIJOZC7TKKPPOJUTRTKN3JPUP32";
 const PVO_CORE = "CCFANPZQ2EIMFEEITTF7MS6SNSJSA5RV365JDR6YA3OOKAIXFFR5ST2B";
 
-const PROVENANCE_PATH = join(process.cwd(), "provenance-store.json");
+const PROVENANCE_PATH = join(process.cwd(), "..", "provenance-store.json");
 const DIST_DIR = join(process.cwd(), "dist");
 const PORT = 5174;
 
@@ -279,26 +279,12 @@ async function handleReportChallenge(req: http.IncomingMessage, res: http.Server
 }
 
 async function handleProvenance(req: http.IncomingMessage, res: http.ServerResponse) {
-  // Try live indexer first
-  try {
-    const pvoId = req.url?.match(/^\/api\/provenance\/(\d+)/)?.[1];
-    const targetPath = pvoId ? `/api/provenance/${pvoId}` : "/api/provenance";
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    const resp = await fetch(`http://127.0.0.1:3111${targetPath}`, { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (resp.ok) {
-      const data = await resp.json();
-      return sendJson(res, 200, data);
-    }
-  } catch { /* indexer not running */ }
-
-  // Fallback: read from provenance-store.json
   try {
     const raw = readFileSync(PROVENANCE_PATH, "utf-8");
     const parsed = JSON.parse(raw);
-    if (req.url?.match(/^\/api\/provenance\/(\d+)/)) {
-      const pvoId = parseInt(RegExp.$1);
+    const pvoIdMatch = req.url?.match(/^\/api\/provenance\/(\d+)/);
+    if (pvoIdMatch) {
+      const pvoId = parseInt(pvoIdMatch[1]);
       const pvo = (parsed.pvOs || []).find((p: any) => p.pvo_id === pvoId);
       return sendJson(res, 200, pvo || {});
     }
