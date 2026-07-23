@@ -916,6 +916,16 @@ async function handlePvoProvenance(req: http.IncomingMessage, res: http.ServerRe
     }
     timeline.sort((a, b) => (a.ledger || 0) - (b.ledger || 0));
 
+    // Derive timestamps from ledger numbers (~5s per ledger on testnet)
+    const now = Date.now();
+    for (const entry of timeline) {
+      if (entry.timestamp > 0) continue;
+      if (entry.ledger && entry.ledger > 0) {
+        const ledgersAgo = latestLedger - entry.ledger;
+        entry.timestamp = now - ledgersAgo * 5000;
+      }
+    }
+
     // Check provenance-store.json for captured events with tx hashes
     try {
       const raw = readFileSync(PROVENANCE_PATH, "utf-8");

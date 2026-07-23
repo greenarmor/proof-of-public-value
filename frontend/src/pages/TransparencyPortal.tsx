@@ -962,6 +962,7 @@ function ExpandableProvenance({ data }: { data: any }) {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-800">{e.description}</p>
                         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                          {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleString()}</span>}
                           <span>{e.contract}</span>
                           {e.ledger && <span>L#{e.ledger}</span>}
                         </div>
@@ -984,6 +985,7 @@ function ExpandableProvenance({ data }: { data: any }) {
                           <div className="flex-1 min-w-0">
                             <p className="text-[11px] text-slate-600">{e.description}</p>
                             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                              {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleString()}</span>}
                               <span>{e.contract}</span>
                               {e.ledger && <span>L#{e.ledger}</span>}
                             </div>
@@ -1042,6 +1044,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-slate-800">{e.description}</p>
                         <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                          {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleDateString()}</span>}
                           {e.contract && <span>{e.contract}</span>}
                           {e.ledger && <span>L#{e.ledger}</span>}
                         </div>
@@ -1064,6 +1067,7 @@ function TxHistoryChain({ txHistory }: { txHistory: any[] }) {
                           <div className="flex-1 min-w-0">
                             <p className="text-[11px] text-slate-600">{e.description}</p>
                             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                              {e.timestamp > 0 && <span>{new Date(e.timestamp).toLocaleDateString()}</span>}
                               {e.contract && <span>{e.contract}</span>}
                               {e.ledger && <span>L#{e.ledger}</span>}
                             </div>
