@@ -1234,6 +1234,21 @@ function startHTTPServer(): void {
   });
 }
 
+// Register signal handlers early (before any async work)
+process.on("SIGINT", () => {
+  console.log("\n👋 Shutting down (SIGINT)...");
+  if (currentStore) {
+    currentStore.lastUpdated = Date.now();
+    writeFileSync(STORE_PATH, JSON.stringify(currentStore, null, 2));
+    console.log("  📦 Store preserved.");
+  }
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  console.log("\n👋 Shutting down (SIGTERM)...");
+  process.exit(0);
+});
+
 // ── Main ────────────────────────────────────────────────
 const args = process.argv.slice(2);
 const runOnce = args.includes("--once");
@@ -1286,10 +1301,6 @@ async function main(): Promise<void> {
     }, 10_000);
   }
 
-  process.on("SIGINT", () => {
-    console.log("\n👋 Shutting down.");
-    process.exit(0);
-  });
 }
 
 main().catch((e) => {
